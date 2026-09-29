@@ -94,8 +94,8 @@ const CAPS = [
 const IMG = window.GARY_IMG || '';
 
 const $ = id => document.getElementById(id);
-const cv = $('c'), ctx = cv.getContext('2d'), stage = $('stage');
-const grinVid = $('grinVid');
+const cv = $('c'), ctx = cv ? cv.getContext('2d') : null, stage = $('stage');
+const grinVid = $('grinVid'); // If null, we'll handle it safely below
 
 let K = 1, state = 'menu', score = 0, best = 0, tierMax = 0, lane = 1, target = 1, scrollY = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
@@ -113,6 +113,7 @@ function tierOf(s) {
 }
 
 function lx(l) { return ROAD_LEFT + (l + 0.5) * LANE_WIDTH; }
+
 
 /* ---------- Image cache & offscreen bitmap ---------- */
 let spr = null, ar = 1;
@@ -484,7 +485,8 @@ function drawPlayer() {
   if (spr) { w = h * ar; if (w > 80) { w = 80; h = w / ar; } }
 
  // Only draw the animation if it is grinning AND has loaded fully
-const isGrinning = grinTimer > 0 && grinVid.complete && grinVid.naturalWidth > 0;
+// Add 'grinVid &&' right at the start to protect against null elements
+const isGrinning = grinTimer > 0 && grinVid && grinVid.complete && grinVid.naturalWidth > 0;
 
 if (isGrinning) {
   ctx.drawImage(grinVid, -w / 2, -h / 2, w, h);
@@ -493,6 +495,7 @@ if (isGrinning) {
 } else {
   fbFace(ctx, 40);
 }
+
 
 
   ctx.restore();
