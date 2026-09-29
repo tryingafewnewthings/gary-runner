@@ -489,20 +489,22 @@ function drawPlayer() {
   let w = 80, h = 80;
   if (spr) { w = h * ar; if (w > 80) { w = 80; h = w / ar; } }
 
+  // Check if video is active AND actually ready to show frames (readyState >= 2)
   const grinVid = document.getElementById('grinVid');
-  // Simplified check so mobile draws it immediately without waiting for strict readyStates
-  const isGrinning = grinTimer > 0 && grinVid;
+  const isGrinning = grinTimer > 0 && grinVid && grinVid.readyState >= 2;
 
   if (isGrinning) {
+    // Draw the video frame
     ctx.drawImage(grinVid, -w / 2, -h / 2, w, h);
   } else {
+    // Fallback: If video isn't ready yet, show normal sprite so he doesn't disappear!
     if (spr) ctx.drawImage(spr, -w / 2, -h / 2, w, h);
     else fbFace(ctx, 40);
   }
 
   ctx.restore();
 
-  // Draw Star Particles
+  // Draw Star Particles (Don't forget this part!)
   for (const s of stars) {
     const p = s.life / s.maxLife;
     ctx.save();
@@ -514,6 +516,8 @@ function drawPlayer() {
     ctx.restore();
   }
 }
+
+
 
 
 
