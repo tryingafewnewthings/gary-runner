@@ -1,86 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Gary Eats! — Professional Edition</title>
-  <style>
-    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-    body {
-      margin: 0; padding: 0; background: #0a0c14; color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex; justify-content: center; align-items: center;
-      height: 100vh; height: 100dvh; overflow: hidden;
-    }
-    #stage {
-      position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 850px;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7); overflow: hidden;
-    }
-    canvas {
-      display: block; width: 100%; height: auto; touch-action: none; background: #1a1e24;
-    }
-    .overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(10, 12, 20, 0.95); display: flex; flex-direction: column;
-      justify-content: center; align-items: center; opacity: 0; pointer-events: none;
-      transition: opacity 0.5s ease-in-out; z-index: 10; padding: 30px; text-align: center;
-    }
-    .overlay.show { opacity: 1; pointer-events: auto; }
-    h1 { font-size: 2.2rem; margin: 0 0 12px 0; color: #ffe600; text-transform: uppercase; font-weight: 900; letter-spacing: -0.5px; }
-    p { font-size: 1rem; margin: 0 0 25px 0; color: #cfd6e0; line-height: 1.4; }
-    button {
-      background: #ffe600; color: #111; border: none; padding: 16px 42px;
-      font-size: 1.05rem; font-weight: 900; border-radius: 32px; cursor: pointer;
-      text-transform: uppercase; box-shadow: 0 6px 24px rgba(255,230,0,0.35);
-      transition: transform 0.1s ease, background 0.2s ease;
-    }
-    button:active { transform: scale(0.96); background: #e5ce00; }
-    
-    #introOverlay { background: rgba(8, 10, 16, 0.98); }
-    .sub-btn {
-      background: transparent; color: #8a99ad; border: 2px solid #333c4d; padding: 12px 30px;
-      font-size: 0.85rem; margin-top: 16px; box-shadow: none; border-radius: 24px; cursor: pointer;
-    }
-    .sub-btn:active { background: #1a2230; color: #fff; }
-    .profile-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid #ffe600; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
-    
-    #introAvatar {
-      width: 180px; height: 180px; margin-bottom: 24px; border-radius: 50%;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Gary Eats! — Professional Edition</title>
+<style>
+* { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+body {
+  margin: 0; padding: 0; background: #0a0c14; color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex; justify-content: center; align-items: center;
+  height: 100vh; height: 100dvh; overflow: hidden;
+}
+#stage {
+  position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 850px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7); overflow: hidden;
+}
+canvas { display: block; width: 100%; height: auto; touch-action: none; background: #1a1e24; }
+.overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(10, 12, 20, 0.95); display: flex; flex-direction: column;
+  justify-content: center; align-items: center; opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease-in-out; z-index: 10; padding: 30px; text-align: center;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+h1 { font-size: 2.2rem; margin: 0 0 12px 0; color: #ffe600; text-transform: uppercase; font-weight: 900; letter-spacing: -0.5px; }
+p { font-size: 1rem; margin: 0 0 25px 0; color: #cfd6e0; line-height: 1.4; }
+button {
+  background: #ffe600; color: #111; border: none; padding: 16px 42px;
+  font-size: 1.05rem; font-weight: 900; border-radius: 32px; cursor: pointer;
+  text-transform: uppercase; box-shadow: 0 6px 24px rgba(255,230,0,0.35);
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+button:active { transform: scale(0.96); background: #e5ce00; }
+.profile-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid #ffe600; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+
+/* Intro: solid white, Gary only. Appears instantly, fades out slowly. */
+#intro { background: #fff; padding: 0; transition: opacity 0.8s ease; z-index: 20; }
+#intro.show { transition: none; }
+#introAvatar { background: transparent; width: 80%; max-width: 340px; height: auto; aspect-ratio: 1 / 1; }
+
+/* Only visible if an asset fails to load */
+#dbg {
+  display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+  background: #c00; color: #fff; font: 11px/1.4 monospace; padding: 8px;
+  word-break: break-all; white-space: pre-wrap;
+}
+</style>
 </head>
 <body>
 
-  <div id="stage">
-    <canvas id="c"></canvas>
-    
-    <!-- Audio source for syncing -->
-    <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div id="dbg"></div>
 
-    <!-- Main Menu -->
-    <div id="menu" class="overlay show">
-      <img class="profile-img" src="gary_closed.png" alt="Gary" onerror="this.src='gary_open.png'">
-      <h1>Gary Eats!</h1>
-      <p>Navigate the high street, dodge hazards, and collect proper decent grub.</p>
-      <button id="startBtn">Play Game</button>
-    </div>
+  <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
 
-    <!-- Audio-Reactive Intro Screen -->
-    <div id="introOverlay" class="overlay">
-      <canvas id="introAvatar" width="180" height="180"></canvas>
-      <p id="introCaption" style="font-weight: 700; color: #ffe600; font-size: 1.1rem; margin-bottom: 15px;">"Right, let's get some proper decent grub!"</p>
-      <button id="skipIntroBtn" class="sub-btn">Skip</button>
-    </div>
-
-    <!-- Game Over Overlay -->
-    <div id="over" class="overlay">
-      <h1>Proper Ruined!</h1>
-      <p id="fScore">Score: 0</p>
-      <p id="fTier">Tier: Absolute Rubbish</p>
-      <button id="againBtn">Try Again</button>
-    </div>
+  <div id="menu" class="overlay show">
+    <img class="profile-img" src="gary_closed.png" alt="Gary" onerror="this.onerror=null;this.src='gary_open.png'">
+    <h1>Gary Eats!</h1>
+    <p>Navigate the high street, dodge hazards, and collect proper decent grub.</p>
+    <button id="startBtn">Play Game</button>
   </div>
+
+  <div id="intro" class="overlay">
+    <canvas id="introAvatar"></canvas>
+  </div>
+
+  <div id="over" class="overlay">
+    <h1>Proper Ruined!</h1>
+    <p id="fScore">Score: 0</p>
+    <p id="fTier">Tier: Absolute Rubbish</p>
+    <button id="againBtn">Try Again</button>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -97,7 +91,6 @@ const TIERS = [
   { n: 'BEAUTIFUL!', c: '#00ffff' },
   { n: "I'll have to bring Danny here one day", c: '#ffe600' }
 ];
-
 const FOODS = { kebab: 5, fish: 10, roast: 25 };
 const CAPS = [
   "Look at the absolute size of that portion, fellas! Phrwoar.",
@@ -107,54 +100,88 @@ const CAPS = [
 ];
 
 const $ = id => document.getElementById(id);
-const cv = $('c'), ctx = cv ? cv.getContext('2d') : null, stage = $('stage');
+const cv = $('c'), ctx = cv.getContext('2d'), stage = $('stage');
 const garyAudio = $('garyAudio');
-const introAvatarCv = $('introAvatar'), introCtx = introAvatarCv.getContext('2d');
+const introCv = $('introAvatar'), introCtx = introCv.getContext('2d');
 
 let K = 1, state = 'menu', score = 0, best = 0, tierMax = 0, lane = 1, target = 1, scrollY = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
-let grinTimer = 0, stars = [];
-let lastTierIndex = 0;
-
-// Audio & Animation Variables
-let audioCtx, analyser, dataArray;
+let grinTimer = 0, stars = [], lastTierIndex = 0;
 let animTimer = 0, currentFrame = 0;
 
-// Direct Image Instances
+// ---------- Error reporting (red box, only shown on failure) ----------
+function report(m) { const d = $('dbg'); d.textContent += m + '\n'; d.style.display = 'block'; }
+
+// ---------- Images ----------
+let openLoaded = false, closedLoaded = false;
 const imgOpen = new Image();
+imgOpen.onload = () => { openLoaded = true; };
+imgOpen.onerror = () => report("Can't load " + imgOpen.src);
 imgOpen.src = 'gary_open.png';
 const imgClosed = new Image();
+imgClosed.onload = () => { closedLoaded = true; };
+imgClosed.onerror = () => report("Can't load " + imgClosed.src);
 imgClosed.src = 'gary_closed.png';
 
 function getActiveImage(isOpen) {
-  const openReady = imgOpen.complete && imgOpen.naturalWidth > 0;
-  const closedReady = imgClosed.complete && imgClosed.naturalWidth > 0;
-  
-  if (isOpen) {
-    return openReady ? imgOpen : (closedReady ? imgClosed : null);
-  } else {
-    return closedReady ? imgClosed : (openReady ? imgOpen : null);
-  }
+  if (isOpen && openLoaded) return imgOpen;
+  if (!isOpen && closedLoaded) return imgClosed;
+  if (openLoaded) return imgOpen;
+  if (closedLoaded) return imgClosed;
+  return null;
 }
+
+// ---------- Audio + lip-sync ----------
+let audioCtx, analyser, dataArray;
+let lipOpen = false, lipHold = 0, lipLevel = 0, lipPeak = 0, heardAudio = false, flapT = 0;
+let introFade = 0;
 
 function initAudio() {
   if (audioCtx) return;
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AudioContext();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;
     dataArray = new Uint8Array(analyser.frequencyBinCount);
-    
     const source = audioCtx.createMediaElementSource(garyAudio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
-  } catch(e) {
-    console.warn("Audio Context init error:", e);
+  } catch (e) {
+    analyser = null;
+    console.warn('Audio Context init error:', e);
   }
 }
 
-try { best = +localStorage.getItem('garyBest') || 0; } catch(e){}
+// Returns true when Gary's mouth should be open right now.
+function lipSync(dt) {
+  if (garyAudio.paused || garyAudio.ended) { lipOpen = false; return false; }
+  if (analyser) {
+    analyser.getByteFrequencyData(dataArray);
+    let sum = 0; const n = 40; // voice range of the spectrum
+    for (let i = 1; i <= n; i++) sum += dataArray[i];
+    const lvl = sum / n;
+    lipLevel += (lvl - lipLevel) * Math.min(1, dt * 25);
+    lipPeak = Math.max(lvl, lipPeak * (1 - dt * 0.5));
+    if (lvl > 2) heardAudio = true;
+    // Analyser is live (or we're still in the first 0.6s): follow the sound.
+    if (heardAudio || garyAudio.currentTime < 0.6) {
+      lipHold -= dt;
+      if (lipHold <= 0) {
+        const ref = Math.max(lipPeak, 25);
+        const want = lipOpen ? lipLevel > ref * 0.3 : lipLevel > ref * 0.5;
+        if (want !== lipOpen) { lipOpen = want; lipHold = 0.06; }
+      }
+      return lipOpen;
+    }
+  }
+  // Fallback (analyser silent, e.g. opened from file://): flap on a timer.
+  flapT += dt;
+  if (flapT > 0.12) { flapT = 0; lipOpen = !lipOpen; }
+  return lipOpen;
+}
+
+try { best = +localStorage.getItem('garyBest') || 0; } catch (e) {}
 
 function tierOf(s) {
   if (s <= 50) return 0;
@@ -163,9 +190,9 @@ function tierOf(s) {
   if (s <= 500) return 3;
   return 4;
 }
-
 function lx(l) { return ROAD_LEFT + (l + 0.5) * LANE_WIDTH; }
 
+// ---------- Sprites ----------
 function mk(fn) {
   const s = document.createElement('canvas');
   s.width = s.height = 120;
@@ -173,7 +200,6 @@ function mk(fn) {
   c.translate(60, 60); c.lineJoin = 'round'; c.lineCap = 'round';
   fn(c); return s;
 }
-
 function dMush(c) {
   c.lineWidth = 3; c.strokeStyle = '#2b1810'; c.fillStyle = '#f5eedc';
   c.beginPath(); c.moveTo(-12, 5); c.lineTo(-10, 38); c.lineTo(10, 38); c.lineTo(12, 5); c.closePath(); c.fill(); c.stroke();
@@ -216,9 +242,9 @@ function dRoast(c) {
   c.fillStyle = '#e9b04f'; c.beginPath(); c.moveTo(12, 8); c.lineTo(15, -10); c.quadraticCurveTo(22, -18, 29, -10); c.lineTo(32, 8); c.quadraticCurveTo(22, 14, 12, 8); c.closePath(); c.fill(); c.stroke();
   c.fillStyle = '#4caf3a'; [[-5, 20], [2, 23], [-11, 23], [6, 18]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill(); });
 }
-
 const SP = { m: mk(dMush), fork: mk(dFork), kebab: mk(dKebab), fish: mk(dFish), roast: mk(dRoast) };
 
+// ---------- Drawing helpers ----------
 function rr(c, x, y, w, h, r) {
   c.beginPath(); c.moveTo(x + r, y);
   c.arcTo(x + w, y, x + w, y + h, r);
@@ -227,14 +253,12 @@ function rr(c, x, y, w, h, r) {
   c.arcTo(x, y, x + w, y, r);
   c.closePath();
 }
-
 function txt(s, x, y, size, col, al) {
   ctx.font = '900 ' + size + 'px "Arial Black",Impact,sans-serif';
   ctx.textAlign = al; ctx.textBaseline = 'middle';
   ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.85)';
   ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y);
 }
-
 function fbFace(c, r) {
   c.fillStyle = '#ffd166'; c.strokeStyle = '#4a2a10'; c.lineWidth = 4;
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill(); c.stroke();
@@ -242,12 +266,12 @@ function fbFace(c, r) {
   c.beginPath(); c.arc(0, 0, r * .5, .15 * Math.PI, .85 * Math.PI); c.stroke();
 }
 
+// ---------- Game logic ----------
 function triggerGrin() {
   grinTimer = 1.3;
   const px = lx(lane);
   for (let i = 0; i < 20; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 40 + Math.random() * 90;
+    const angle = Math.random() * Math.PI * 2, speed = 40 + Math.random() * 90;
     const side = Math.random() < 0.5 ? -30 : 30;
     stars.push({ x: px + side, y: PLAYER_Y - 35, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0.6 + Math.random() * 0.5, maxLife: 1.1, size: 4 + Math.random() * 5 });
   }
@@ -258,9 +282,7 @@ function reset() {
   objs = []; fx = []; cap = null; mile = 0; crashT = 0; grinTimer = 0; stars = [];
 }
 
-function move(d) {
-  if (state === 'play') target = Math.max(0, Math.min(2, target + d));
-}
+function move(d) { if (state === 'play') target = Math.max(0, Math.min(2, target + d)); }
 
 function spawnRow() {
   const L = [0, 1, 2].sort(() => Math.random() - .5);
@@ -289,78 +311,55 @@ function collect(o) {
   }
 }
 
-function crash(hitType) {
-  crashT = 0; cap = null; state = 'crash_' + hitType;
-}
+function crash(hitType) { crashT = 0; cap = null; state = 'crash_' + hitType; }
 
 function endGame() {
   state = 'over';
-  if (score > best) {
-    best = score;
-    try { localStorage.setItem('garyBest', best); } catch (e) {}
-  }
-  try {
-    $('fScore').textContent = 'Score: ' + score;
-    const T = TIERS[tierMax] || TIERS[TIERS.length - 1];
-    $('fTier').textContent = 'Tier: ' + T.n;
-    $('fTier').style.color = T.c;
-    $('over').classList.add('show');
-  } catch (e) {}
+  if (score > best) { best = score; try { localStorage.setItem('garyBest', best); } catch (e) {} }
+  $('fScore').textContent = 'Score: ' + score;
+  const T = TIERS[tierMax] || TIERS[TIERS.length - 1];
+  $('fTier').textContent = 'Tier: ' + T.n;
+  $('fTier').style.color = T.c;
+  $('over').classList.add('show');
 }
 
+// ---------- Intro flow ----------
+// Called when the audio ends (or if it can't play): fade the white screen out and start the game.
 function startGameplay() {
-  $('introOverlay').classList.remove('show');
+  if (state !== 'intro') return;
+  garyAudio.onended = null;
   garyAudio.pause();
   garyAudio.currentTime = 0;
   reset();
   state = 'play';
-}
-
-function isTalkingAudio() {
-  if (analyser && !garyAudio.paused) {
-    analyser.getByteFrequencyData(dataArray);
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-    return (sum / dataArray.length) > 18; // Sensitive threshold for speech peak detection
-  }
-  return false;
+  introFade = 1;                       // keep drawing Gary while the white fades
+  $('intro').classList.remove('show'); // CSS fades opacity 1 -> 0 over 0.8s
 }
 
 function update(dt) {
   clock += dt;
   lane += (target - lane) * Math.min(1, dt * 16);
   if (grinTimer > 0) grinTimer = Math.max(0, grinTimer - dt);
+  if (introFade > 0) introFade -= dt;
 
   for (let i = stars.length - 1; i >= 0; i--) {
     const s = stars[i];
     s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
     if (s.life <= 0) stars.splice(i, 1);
   }
-
   if (cap) { cap.t += dt; if (cap.t > 2.2) cap = null; }
   for (const f of fx) f.t += dt;
   fx = fx.filter(f => f.t < f.life);
 
   const speed = 200 + Math.floor(score / 80) * 15;
 
-  if (state === 'menu' || state === 'intro') {
-    scrollY = (scrollY + 120 * dt) % 640;
-    return;
-  }
-
-  if (state.startsWith('crash')) {
-    crashT += dt;
-    if (crashT > 2.0) endGame();
-    return;
-  }
-
+  if (state === 'menu' || state === 'intro') { scrollY = (scrollY + 120 * dt) % 640; return; }
+  if (state.startsWith('crash')) { crashT += dt; if (crashT > 2.0) endGame(); return; }
   if (state !== 'play') return;
 
   scrollY = (scrollY + speed * dt) % 640;
   acc += speed * dt;
-  if (acc >= gap) {
-    acc -= gap; gap = 140 + Math.random() * 80; spawnRow();
-  }
+  if (acc >= gap) { acc -= gap; gap = 140 + Math.random() * 80; spawnRow(); }
 
   for (const o of objs) {
     o.y += speed * dt;
@@ -373,6 +372,7 @@ function update(dt) {
   objs = objs.filter(o => !o.d && o.y < H + 60);
 }
 
+// ---------- Rendering ----------
 function drawHighStreet() {
   ctx.fillStyle = '#222'; ctx.fillRect(0, 0, W, H);
   const totalH = 640, offY = scrollY % totalH;
@@ -429,66 +429,49 @@ function drawObj(o) {
   ctx.drawImage(SP[o.t], x - 35, y - 35 + bob, 70, 70);
 }
 
+// Gary on transparent canvas (the overlay behind it is solid white).
 function drawIntroAvatar(dt) {
-  introCtx.clearRect(0, 0, 180, 180);
-  introCtx.fillStyle = '#111';
-  introCtx.beginPath(); introCtx.arc(90, 90, 90, 0, Math.PI * 2); introCtx.fill();
-  
-  let isOpen = isTalkingAudio();
-  if (!garyAudio.paused && !analyser) {
-    // Fallback animation toggle if Web Audio API isn't available
-    animTimer += dt;
-    if (animTimer > 0.12) { currentFrame = currentFrame === 0 ? 1 : 0; animTimer = 0; }
-    isOpen = currentFrame === 1;
-  }
-  
-  const img = getActiveImage(isOpen);
+  const S = introCv.width;
+  introCtx.setTransform(1, 0, 0, 1, 0, 0);
+  introCtx.clearRect(0, 0, S, S);
+  const img = getActiveImage(lipSync(dt));
   if (img) {
     const ar = img.naturalWidth / img.naturalHeight;
-    let h = 175, w = h * ar;
-    if (w > 175) { w = 175; h = w / ar; }
-    introCtx.drawImage(img, 90 - w / 2, 90 - h / 2, w, h);
+    let w = S * 0.96, h = w / ar;
+    if (h > S * 0.96) { h = S * 0.96; w = h * ar; }
+    introCtx.drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
   } else {
-    introCtx.save();
-    introCtx.translate(90, 90);
-    fbFace(introCtx, 60);
-    introCtx.restore();
+    introCtx.save(); introCtx.translate(S / 2, S / 2); fbFace(introCtx, S * 0.35); introCtx.restore();
   }
-  
-  introCtx.lineWidth = 6;
-  introCtx.strokeStyle = '#ffe600';
-  introCtx.beginPath(); introCtx.arc(90, 90, 86, 0, Math.PI * 2); introCtx.stroke();
 }
 
 function drawPlayer(dt) {
   const px = lx(lane), py = PLAYER_Y;
-  
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.beginPath(); ctx.ellipse(px, py + 22, 32, 9, 0, 0, 7); ctx.fill();
   ctx.save();
   ctx.translate(px, py);
-  
-  let isOpen = false;
+
+  let isOpen = grinTimer > 0;
+  if (grinTimer > 0) { const g = 1.2 + 0.08 * Math.sin(clock * 30); ctx.scale(g, g); }
   if (cap !== null) {
     animTimer += dt;
     if (animTimer > 0.12) { currentFrame = currentFrame === 0 ? 1 : 0; animTimer = 0; }
     isOpen = currentFrame === 1;
-  } else {
-    isOpen = false;
   }
 
   const img = getActiveImage(isOpen);
   let w = 80, h = 80;
   if (img) {
     const ar = img.naturalWidth / img.naturalHeight;
-    w = h * ar; 
+    w = h * ar;
     if (w > 80) { w = 80; h = w / ar; }
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
   } else {
     fbFace(ctx, 40);
   }
   ctx.restore();
-  
+
   for (const s of stars) {
     const p = s.life / s.maxLife;
     ctx.save(); ctx.fillStyle = Math.floor(clock * 20) % 2 ? '#ffe600' : '#ffffff'; ctx.globalAlpha = Math.max(0, p);
@@ -542,12 +525,12 @@ function drawBubble() {
 }
 
 function render(dt) {
-  if (state === 'intro') drawIntroAvatar(dt);
+  if (state === 'intro' || introFade > 0) drawIntroAvatar(dt);
 
   ctx.setTransform(K, 0, 0, K, 0, 0);
   ctx.save();
   drawHighStreet(); drawPavements(); drawRoad();
-  
+
   if (state !== 'menu' && state !== 'intro') {
     for (let i = objs.length - 1; i >= 0; i--) drawObj(objs[i]);
     drawPlayer(dt);
@@ -574,6 +557,7 @@ function render(dt) {
   }
 }
 
+// ---------- Input ----------
 addEventListener('keydown', e => {
   if (e.repeat) return;
   const k = e.key.toLowerCase();
@@ -590,35 +574,27 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault();
 });
 
+// 1. Play Game -> white screen with Gary, audio starts
 $('startBtn').addEventListener('click', e => {
   e.currentTarget.blur();
   initAudio();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
   $('menu').classList.remove('show');
   state = 'intro';
-  $('introOverlay').classList.add('show');
-  
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-  
+  heardAudio = false; lipOpen = false; lipLevel = 0; lipPeak = 0; lipHold = 0; flapT = 0;
+  $('intro').classList.add('show');
+
+  // 4. When the audio finishes, fade to gameplay
+  garyAudio.onended = startGameplay;
   garyAudio.currentTime = 0;
-  const playPromise = garyAudio.play();
-  
-  if (playPromise !== undefined) {
-    playPromise.catch(err => {
-      console.warn("Autoplay blocked or audio missing:", err);
-      // Fallback timer if audio fails to play
-      setTimeout(() => {
-        if (state === 'intro') startGameplay();
-      }, 2500);
+  const p = garyAudio.play();
+  if (p !== undefined) {
+    p.catch(err => {
+      report("Can't play " + garyAudio.src + " (" + err.name + ")");
+      setTimeout(startGameplay, 2500); // audio missing/blocked: don't leave the player stuck
     });
   }
-
-  garyAudio.onended = () => {
-    startGameplay();
-  };
-});
-
-$('skipIntroBtn').addEventListener('click', () => {
-  startGameplay();
 });
 
 $('againBtn').addEventListener('click', e => {
@@ -633,6 +609,8 @@ function resize() {
   const w = stage.clientWidth, dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   cv.width = Math.round(w * dpr); cv.height = Math.round(w * 16 / 9 * dpr); K = cv.width / W;
   ctx.imageSmoothingQuality = 'high';
+  const s = Math.round((introCv.clientWidth || 300) * dpr);
+  introCv.width = introCv.height = s;
 }
 
 let last = performance.now();
@@ -648,6 +626,5 @@ resize();
 requestAnimationFrame(loop);
 })();
 </script>
-
 </body>
 </html>
