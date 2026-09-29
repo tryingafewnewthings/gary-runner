@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gary Eats! — Professional Edition</title>
   <style>
-    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
     body {
       margin: 0; padding: 0; background: #0a0c14; color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       display: flex; justify-content: center; align-items: center;
-      height: 100vh; height: 100dvh; overflow: hidden;
+      height: 100vh; overflow: hidden;
     }
     #stage {
       position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 850px;
@@ -37,13 +37,13 @@
     }
     button:active { transform: scale(0.96); background: #e5ce00; }
     
-    /* Semi-transparent white background for intro */
-    #introOverlay { background: rgba(255, 255, 255, 0.85); }
+    /* Transparent white background for intro so the game is visible behind it */
+    #introOverlay { background: rgba(255, 255, 255, 0.75); }
     
-    .profile-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid #ffe600; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+    .profile-img { width: 90px; height: 90px; object-fit: cover; margin-bottom: 16px; }
     
     #introAvatar {
-      width: 180px; height: 180px; border-radius: 50%;
+      width: 180px; height: 180px;
     }
   </style>
 </head>
@@ -52,24 +52,20 @@
   <div id="stage">
     <canvas id="c"></canvas>
     
-    <!-- Audio source -->
     <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
 
-    <!-- Main Menu -->
     <div id="menu" class="overlay show">
-      <!-- Updated PNG extensions -->
       <img class="profile-img" src="gary_closed.png.PNG" alt="Gary" onerror="this.src='gary_open.png.PNG'">
       <h1>Gary Eats!</h1>
       <p>Navigate the high street, dodge hazards, and collect proper decent grub.</p>
       <button id="startBtn">Play Game</button>
     </div>
 
-    <!-- Audio Intro Screen (Clean with just Gary) -->
+    <!-- Clean white intro screen overlay -->
     <div id="introOverlay" class="overlay">
       <canvas id="introAvatar" width="180" height="180"></canvas>
     </div>
 
-    <!-- Game Over Overlay -->
     <div id="over" class="overlay">
       <h1>Proper Ruined!</h1>
       <p id="fScore">Score: 0</p>
@@ -116,17 +112,13 @@ let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0;
 
 let openLoaded = false, closedLoaded = false;
-let loadErrorLog = [];
 
-// Updated PNG extensions
 const imgOpen = new Image();
 imgOpen.onload = () => { openLoaded = true; };
-imgOpen.onerror = () => { loadErrorLog.push('gary_open.png.PNG not found'); };
 imgOpen.src = 'gary_open.png.PNG';
 
 const imgClosed = new Image();
 imgClosed.onload = () => { closedLoaded = true; };
-imgClosed.onerror = () => { loadErrorLog.push('gary_closed.png.PNG not found'); };
 imgClosed.src = 'gary_closed.png.PNG';
 
 function getActiveImage(isOpen) {
@@ -305,13 +297,17 @@ function crash(hitType) {
   state = 'crashing';
 }
 
-// Analyser data processing: lowered threshold to 12
+// Audio logic updated to check volume spikes in speech frequencies
 function isTalkingAudio() {
   if (analyser && !garyAudio.paused) {
     analyser.getByteFrequencyData(dataArray);
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-    return (sum / dataArray.length) > 12; // Lowered from 18 to trigger more frequently
+    let maxVolume = 0;
+    // Bins 0-30 map exactly to where the human voice sits (avoids high-pitch static)
+    for (let i = 0; i < 30; i++) {
+      if (dataArray[i] > maxVolume) maxVolume = dataArray[i];
+    }
+    // Snap mouth open immediately if a syllable hits this threshold
+    return maxVolume > 50; 
   }
   return false;
 }
@@ -331,15 +327,8 @@ function drawIntroAvatar(dt) {
   
   const img = getActiveImage(isOpen);
   if (img) {
-    introCtx.save();
-    introCtx.beginPath();
-    introCtx.arc(90, 90, 86, 0, Math.PI * 2);
-    introCtx.clip();
+    // CIRCULAR CLIP REMOVED - Drawing PNG as it is
     introCtx.drawImage(img, 0, 0, 180, 180);
-    introCtx.restore();
-    introCtx.lineWidth = 8;
-    introCtx.strokeStyle = '#ffe600';
-    introCtx.stroke();
   } else {
     introCtx.save();
     introCtx.translate(90, 90);
@@ -369,13 +358,8 @@ function renderPlayer() {
   const img = getActiveImage(isGrinning);
   if (img) {
     const s = 45;
-    ctx.beginPath();
-    ctx.arc(0, 0, s, 0, Math.PI * 2);
-    ctx.clip();
+    // CIRCULAR CLIP REMOVED - Drawing PNG natively in gameplay
     ctx.drawImage(img, -s, -s, s * 2, s * 2);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = isGrinning ? '#39ff88' : '#ffe600';
-    ctx.stroke();
   } else {
     fbFace(ctx, 45);
     if (isGrinning) {
