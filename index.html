@@ -237,9 +237,11 @@ function fbFace(c, r) {
 
 /* ---------- Game Flow & Trigger ---------- */
 function triggerGrin() {
-  grinTimer = 2.0; // 2 seconds long
+  grinTimer = 1.3; // Matches your 1.29-second video
   
+  const grinVid = document.getElementById('grinVid');
   if (grinVid) {
+    grinVid.load();
     grinVid.currentTime = 0;
     grinVid.play().catch(e => console.log("Video play prevented:", e));
   }
@@ -257,6 +259,7 @@ function triggerGrin() {
     });
   }
 }
+
 
 
 function reset() {
@@ -486,14 +489,13 @@ function drawPlayer() {
   let w = 80, h = 80;
   if (spr) { w = h * ar; if (w > 80) { w = 80; h = w / ar; } }
 
-  // Check if the grin video is active and ready to draw
-  const isGrinning = grinTimer > 0 && grinVid && grinVid.readyState >= 2 && !grinVid.ended;
+  const grinVid = document.getElementById('grinVid');
+  // Simplified check so mobile draws it immediately without waiting for strict readyStates
+  const isGrinning = grinTimer > 0 && grinVid;
 
   if (isGrinning) {
-    // Paints your 2-second video frame-by-frame onto Gary!
     ctx.drawImage(grinVid, -w / 2, -h / 2, w, h);
   } else {
-    // Fallback to normal sprite or vector face
     if (spr) ctx.drawImage(spr, -w / 2, -h / 2, w, h);
     else fbFace(ctx, 40);
   }
@@ -512,6 +514,7 @@ function drawPlayer() {
     ctx.restore();
   }
 }
+
 
 
 
