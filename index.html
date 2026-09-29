@@ -476,19 +476,18 @@ function drawPlayer() {
   let w = 80, h = 80;
   if (spr) { w = h * ar; if (w > 80) { w = 80; h = w / ar; } }
 
-  if (grinTimer > 0) {
-    const progress = Math.sin((1.5 - grinTimer) / 1.5 * Math.PI);
-    
-    if (spr) {
-      // 1. Image Grin (Warp)
+  try {
+    if (grinTimer > 0 && spr) {
+      const progress = Math.sin((1.5 - grinTimer) / 1.5 * Math.PI);
       const warpOffset = progress * 10;
       const rows = 12;
       const sliceH = h / rows;
 
       for (let i = 0; i < rows; i++) {
-        // Use Math.floor to prevent IndexSizeErrors on fractional source pixels
+        // Safe slice calculation preventing 0-height errors
         const sy = Math.floor((i / rows) * spr.height);
-        const sh = Math.floor(spr.height / rows);
+        const nextSy = Math.floor(((i + 1) / rows) * spr.height);
+        const sh = Math.max(1, nextSy - sy);
         const dy = -h / 2 + i * sliceH;
 
         let dx = -w / 2;
@@ -503,20 +502,22 @@ function drawPlayer() {
           dy += comp;
         }
 
-        // Prevent drawing 0-height slices
-        if (sh > 0) {
-          ctx.drawImage(spr, 0, sy, spr.width, sh, dx, dy, dw, sliceH);
-        }
+        ctx.drawImage(spr, 0, sy, spr.width, sh, dx, dy, dw, sliceH);
       }
-    } else {
-      // 2. Vector Face Grin Fallback (Squash & Bob)
+    } else if (grinTimer > 0 && !spr) {
+      // Vector Face Grin Fallback
+      const progress = Math.sin((1.5 - grinTimer) / 1.5 * Math.PI);
       ctx.save();
       ctx.translate(0, progress * -8);
       ctx.scale(1 + progress * 0.15, 1 - progress * 0.05);
       fbFace(ctx, 40);
       ctx.restore();
+    } else {
+      if (spr) ctx.drawImage(spr, -w / 2, -h / 2, w, h);
+      else fbFace(ctx, 40);
     }
-  } else {
+  } catch (e) {
+    // Ultimate fallback if any drawing glitch occurs
     if (spr) ctx.drawImage(spr, -w / 2, -h / 2, w, h);
     else fbFace(ctx, 40);
   }
@@ -535,6 +536,7 @@ function drawPlayer() {
     ctx.restore();
   }
 }
+
 
 
 function drawHud() {
