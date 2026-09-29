@@ -650,6 +650,17 @@ function loop(ts) {
 }
 
 addEventListener('resize', resize);
+// Somewhere near your other event listeners or at the bottom of your script:
+window.addEventListener('pointerdown', () => {
+  const grinVid = document.getElementById('grinVid');
+  if (grinVid && grinVid.paused) {
+    grinVid.play().then(() => {
+      grinVid.pause();
+      grinVid.currentTime = 0;
+    }).catch(e => console.log("Unlock prevented:", e));
+  }
+}, { once: true });
+
 resize(); requestAnimationFrame(loop);
 })();
 </script>
