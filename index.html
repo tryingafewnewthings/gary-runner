@@ -44,7 +44,8 @@ h2 span{display:block;font-size:calc(var(--u)*8.5);color:#fff;margin-top:calc(va
 <div id="stage">
   <canvas id="c"></canvas>
   <!-- Hidden, but NOT display:none, so browsers still decode frames -->
-  <video id="grinVid" src="grin.MP4" muted playsinline preload="auto" style="position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none"></video>
+  <img id="grinVid" src="GaryRoast.webp" style="position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none">
+
 
   <div id="menu" class="screen show">
     <h1><span>GARY EATS:</span> <span>THE RUNNER</span></h1>
@@ -237,14 +238,13 @@ function fbFace(c, r) {
 
 /* ---------- Grin video ---------- */
 // When the clip ends, rewind it straight away so the next grin can start instantly.
-grinVid.addEventListener('ended', () => { grinVid.currentTime = 0; });
+
 
 function triggerGrin() {
-  grinTimer = 1.3; // Matches the 1.29-second video
+  grinTimer = 1.3; // Matches the animation duration
 
-  // No load() here: it resets the video and makes it unready for a while.
-  if (grinVid.currentTime > 0) grinVid.currentTime = 0;
-  grinVid.play().catch(e => console.log('Video play prevented:', e));
+  // Optional: Uncomment the line below if you want the WebP to restart from frame 1 every time it triggers
+  // grinVid.src = grinVid.src;
 
   const px = lx(lane);
   for (let i = 0; i < 20; i++) {
@@ -259,6 +259,7 @@ function triggerGrin() {
     });
   }
 }
+
 
 /* ---------- Game Flow ---------- */
 function reset() {
@@ -482,16 +483,17 @@ function drawPlayer() {
   let w = 80, h = 80;
   if (spr) { w = h * ar; if (w > 80) { w = 80; h = w / ar; } }
 
-  // Only draw the video if it is grinning AND has a frame ready
-  const isGrinning = grinTimer > 0 && grinVid.readyState >= 2;
+ // Only draw the animation if it is grinning AND has loaded fully
+const isGrinning = grinTimer > 0 && grinVid.complete && grinVid.naturalWidth > 0;
 
-  if (isGrinning) {
-    ctx.drawImage(grinVid, -w / 2, -h / 2, w, h);
-  } else if (spr) {
-    ctx.drawImage(spr, -w / 2, -h / 2, w, h);
-  } else {
-    fbFace(ctx, 40);
-  }
+if (isGrinning) {
+  ctx.drawImage(grinVid, -w / 2, -h / 2, w, h);
+} else if (spr) {
+  ctx.drawImage(spr, -w / 2, -h / 2, w, h);
+} else {
+  fbFace(ctx, 40);
+}
+
 
   ctx.restore();
 
@@ -611,9 +613,14 @@ cv.addEventListener('pointerdown', e => {
 });
 
 $('startBtn').addEventListener('click', e => {
-  e.currentTarget.blur(); reset(); state = 'play'; $('menu').classList.remove('show');
-  // Unlock the video inside a real tap so later play() calls are allowed
-  grinVid.play().then(() => { grinVid.pause(); grinVid.currentTime = 0; }).catch(() => {});
+  e.currentTarget.blur(); 
+  reset(); 
+  state = 'play'; 
+  $('menu').classList.remove('show');
+  
+  // Animated WebP images play automatically, so we removed the video unlock line!
+});
+
 });
 
 $('againBtn').addEventListener('click', e => {
@@ -630,9 +637,17 @@ function resize() {
 let last = performance.now();
 function loop(ts) {
   const dt = Math.max(0, Math.min(.05, (ts - last) / 1000)); last = ts;
-  update(dt); render();
-if (/debug/.test(location.search)) txt('vid rs:' + grinVid.readyState + ' net:' + grinVid.networkState + ' err:' + (grinVid.error ? grinVid.error.code : 0), CX, 610, 11, '#0f0', 'center');
-requestAnimationFrame(loop);
+  update(dt); 
+  render();
+  
+  // Updated debug line for an image element instead of a video
+  if (/debug/.test(location.search)) {
+    txt('img complete:' + grinVid.complete, CX, 610, 11, '#0f0', 'center');
+  }
+  
+  requestAnimationFrame(loop);
+}
+
 
 }
 
