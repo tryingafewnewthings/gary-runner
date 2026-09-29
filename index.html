@@ -15,7 +15,7 @@
     #stage {
       position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 850px;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+      background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7); overflow: hidden;
     }
     canvas {
       display: block; width: 100%; height: auto; touch-action: none; background: #1a1e24;
@@ -24,7 +24,7 @@
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(10, 12, 20, 0.95); display: flex; flex-direction: column;
       justify-content: center; align-items: center; opacity: 0; pointer-events: none;
-      transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10; padding: 30px; text-align: center;
+      transition: opacity 0.5s ease-in-out; z-index: 10; padding: 30px; text-align: center;
     }
     .overlay.show { opacity: 1; pointer-events: auto; }
     h1 { font-size: 2.2rem; margin: 0 0 12px 0; color: #ffe600; text-transform: uppercase; font-weight: 900; letter-spacing: -0.5px; }
@@ -46,7 +46,7 @@
     .profile-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid #ffe600; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
     
     #introAvatar {
-      width: 180px; height: 180px; margin-bottom: 24px;
+      width: 180px; height: 180px; margin-bottom: 24px; border-radius: 50%;
     }
   </style>
 </head>
@@ -60,7 +60,7 @@
 
     <!-- Main Menu -->
     <div id="menu" class="overlay show">
-      <img class="profile-img" src="gary_closed.png" alt="Gary">
+      <img class="profile-img" src="gary_closed.png" alt="Gary" onerror="this.src='gary_open.png'">
       <h1>Gary Eats!</h1>
       <p>Navigate the high street, dodge hazards, and collect proper decent grub.</p>
       <button id="startBtn">Play Game</button>
@@ -118,42 +118,43 @@ let lastTierIndex = 0;
 
 // Audio & Animation Variables
 let audioCtx, analyser, dataArray;
-let sprOpen = null, sprClosed = null, ar = 1;
-let currentFrame = 0, animTimer = 0;
+let animTimer = 0, currentFrame = 0;
 
-try { best = +localStorage.getItem('garyBest') || 0; } catch(e){}
+// Direct Image Instances
+const imgOpen = new Image();
+imgOpen.src = 'gary_open.png';
+const imgClosed = new Image();
+imgClosed.src = 'gary_closed.png';
 
-function loadSprite(src, callback) {
-  const img = new Image();
-  img.onload = () => {
-    if (!img.naturalWidth) return;
-    ar = img.naturalWidth / img.naturalHeight; // Using last loaded aspect ratio
-    const h = Math.min(256, img.naturalHeight);
-    const spr = document.createElement('canvas');
-    spr.height = h; spr.width = Math.round(h * ar);
-    const c = spr.getContext('2d');
-    c.imageSmoothingQuality = 'high';
-    c.drawImage(img, 0, 0, spr.width, spr.height);
-    callback(spr);
-  };
-  img.src = src;
+function getActiveImage(isOpen) {
+  const openReady = imgOpen.complete && imgOpen.naturalWidth > 0;
+  const closedReady = imgClosed.complete && imgClosed.naturalWidth > 0;
+  
+  if (isOpen) {
+    return openReady ? imgOpen : (closedReady ? imgClosed : null);
+  } else {
+    return closedReady ? imgClosed : (openReady ? imgOpen : null);
+  }
 }
-
-loadSprite('gary_open.png', (s) => { sprOpen = s; });
-loadSprite('gary_closed.png', (s) => { sprClosed = s; });
 
 function initAudio() {
   if (audioCtx) return;
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  audioCtx = new AudioContext();
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  dataArray = new Uint8Array(analyser.frequencyBinCount);
-  
-  const source = audioCtx.createMediaElementSource(garyAudio);
-  source.connect(analyser);
-  analyser.connect(audioCtx.destination);
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    
+    const source = audioCtx.createMediaElementSource(garyAudio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  } catch(e) {
+    console.warn("Audio Context init error:", e);
+  }
 }
+
+try { best = +localStorage.getItem('garyBest') || 0; } catch(e){}
 
 function tierOf(s) {
   if (s <= 50) return 0;
@@ -236,9 +237,9 @@ function txt(s, x, y, size, col, al) {
 
 function fbFace(c, r) {
   c.fillStyle = '#ffd166'; c.strokeStyle = '#4a2a10'; c.lineWidth = 4;
-  c.beginPath(); c.arc(0, -r, r, 0, 7); c.fill(); c.stroke();
-  c.fillStyle = '#222'; c.beginPath(); c.arc(-r * .35, -r * 1.15, r * .1, 0, 7); c.arc(r * .35, -r * 1.15, r * .1, 0, 7); c.fill();
-  c.beginPath(); c.arc(0, -r * .85, r * .5, .15 * Math.PI, .85 * Math.PI); c.stroke();
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.fillStyle = '#222'; c.beginPath(); c.arc(-r * .35, -r * .2, r * .12, 0, Math.PI * 2); c.arc(r * .35, -r * .2, r * .12, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(0, 0, r * .5, .15 * Math.PI, .85 * Math.PI); c.stroke();
 }
 
 function triggerGrin() {
@@ -313,6 +314,16 @@ function startGameplay() {
   garyAudio.currentTime = 0;
   reset();
   state = 'play';
+}
+
+function isTalkingAudio() {
+  if (analyser && !garyAudio.paused) {
+    analyser.getByteFrequencyData(dataArray);
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+    return (sum / dataArray.length) > 18; // Sensitive threshold for speech peak detection
+  }
+  return false;
 }
 
 function update(dt) {
@@ -418,47 +429,34 @@ function drawObj(o) {
   ctx.drawImage(SP[o.t], x - 35, y - 35 + bob, 70, 70);
 }
 
-function getActiveSprite(dt) {
-  let isOpen = false;
-  
-  // Real-time Audio Sync
-  if (analyser && !garyAudio.paused) {
-    analyser.getByteFrequencyData(dataArray);
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-    isOpen = (sum / dataArray.length) > 25; // Volume threshold
-  } 
-  // Fallback timer for text pop-ups during gameplay when audio isn't playing
-  else if (cap !== null) {
-    animTimer += dt;
-    if (animTimer > 0.15) {
-      currentFrame = currentFrame === 0 ? 1 : 0;
-      animTimer = 0;
-    }
-    isOpen = currentFrame === 1;
-  } else {
-    currentFrame = 0;
-  }
-  
-  return isOpen ? (sprOpen || sprClosed) : (sprClosed || sprOpen);
-}
-
 function drawIntroAvatar(dt) {
   introCtx.clearRect(0, 0, 180, 180);
-  introCtx.fillStyle = '#222';
+  introCtx.fillStyle = '#111';
   introCtx.beginPath(); introCtx.arc(90, 90, 90, 0, Math.PI * 2); introCtx.fill();
   
-  const activeSpr = getActiveSprite(dt);
-  if (activeSpr) {
-    let w = 180, h = 180;
-    w = h * ar; 
-    if (w > 180) { w = 180; h = w / ar; }
-    introCtx.drawImage(activeSpr, 90 - w/2, 90 - h/2, w, h);
-  } else {
-    introCtx.save(); introCtx.translate(90, 90); fbFace(introCtx, 80); introCtx.restore();
+  let isOpen = isTalkingAudio();
+  if (!garyAudio.paused && !analyser) {
+    // Fallback animation toggle if Web Audio API isn't available
+    animTimer += dt;
+    if (animTimer > 0.12) { currentFrame = currentFrame === 0 ? 1 : 0; animTimer = 0; }
+    isOpen = currentFrame === 1;
   }
   
-  introCtx.lineWidth = 8; introCtx.strokeStyle = '#ffe600';
+  const img = getActiveImage(isOpen);
+  if (img) {
+    const ar = img.naturalWidth / img.naturalHeight;
+    let h = 175, w = h * ar;
+    if (w > 175) { w = 175; h = w / ar; }
+    introCtx.drawImage(img, 90 - w / 2, 90 - h / 2, w, h);
+  } else {
+    introCtx.save();
+    introCtx.translate(90, 90);
+    fbFace(introCtx, 60);
+    introCtx.restore();
+  }
+  
+  introCtx.lineWidth = 6;
+  introCtx.strokeStyle = '#ffe600';
   introCtx.beginPath(); introCtx.arc(90, 90, 86, 0, Math.PI * 2); introCtx.stroke();
 }
 
@@ -470,12 +468,22 @@ function drawPlayer(dt) {
   ctx.save();
   ctx.translate(px, py);
   
-  const activeSpr = getActiveSprite(dt);
+  let isOpen = false;
+  if (cap !== null) {
+    animTimer += dt;
+    if (animTimer > 0.12) { currentFrame = currentFrame === 0 ? 1 : 0; animTimer = 0; }
+    isOpen = currentFrame === 1;
+  } else {
+    isOpen = false;
+  }
+
+  const img = getActiveImage(isOpen);
   let w = 80, h = 80;
-  if (activeSpr) {
+  if (img) {
+    const ar = img.naturalWidth / img.naturalHeight;
     w = h * ar; 
     if (w > 80) { w = 80; h = w / ar; }
-    ctx.drawImage(activeSpr, -w / 2, -h / 2, w, h);
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
   } else {
     fbFace(ctx, 40);
   }
@@ -589,12 +597,20 @@ $('startBtn').addEventListener('click', e => {
   state = 'intro';
   $('introOverlay').classList.add('show');
   
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  garyAudio.currentTime = 0;
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   
-  garyAudio.play().catch(() => {
-    startGameplay(); // Fallback if audio block occurs
-  });
+  garyAudio.currentTime = 0;
+  const playPromise = garyAudio.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.catch(err => {
+      console.warn("Autoplay blocked or audio missing:", err);
+      // Fallback timer if audio fails to play
+      setTimeout(() => {
+        if (state === 'intro') startGameplay();
+      }, 2500);
+    });
+  }
 
   garyAudio.onended = () => {
     startGameplay();
