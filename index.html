@@ -1,76 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Gary Eats! — Professional Edition</title>
-  <style>
-    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-    html, body {
-      margin: 0; padding: 0; width: 100%; height: 100%; background: #0a0c14; color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex; justify-content: center; align-items: center; overflow: hidden;
-    }
-    #stage {
-      position: relative; width: 100vw; height: 100vh; max-width: 420px; max-height: 850px;
-      display: flex; justify-content: center; align-items: center;
-      background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7); overflow: hidden;
-    }
-    #c {
-      width: 100%; height: 100%; object-fit: contain; touch-action: none; background: #1a1e24; display: block;
-    }
-    .overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(10, 12, 20, 0.95); display: flex; flex-direction: column;
-      justify-content: center; align-items: center; opacity: 0; pointer-events: none;
-      transition: opacity 0.4s ease-in-out; z-index: 10; padding: 30px; text-align: center;
-    }
-    .overlay.show { opacity: 1; pointer-events: auto; }
-    h1 { font-size: 2.2rem; margin: 0 0 12px 0; color: #ffe600; text-transform: uppercase; font-weight: 900; letter-spacing: -0.5px; }
-    p { font-size: 1rem; margin: 0 0 25px 0; color: #cfd6e0; line-height: 1.4; }
-    button {
-      background: #ffe600; color: #111; border: none; padding: 16px 42px;
-      font-size: 1.05rem; font-weight: 900; border-radius: 32px; cursor: pointer;
-      text-transform: uppercase; box-shadow: 0 6px 24px rgba(255,230,0,0.35);
-      transition: transform 0.1s ease, background 0.2s ease;
-    }
-    button:active { transform: scale(0.96); background: #e5ce00; }
-    
-    #introOverlay { background: rgba(255, 255, 255, 0.85); }
-    .profile-img { width: 90px; height: 90px; object-fit: cover; margin-bottom: 16px; }
-    #introAvatar { width: 180px; height: 180px; background: transparent; display: block; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Gary Eats! — Professional Edition</title>
+<style>
+* { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+body {
+  margin: 0; padding: 0; background: #0a0c14; color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex; justify-content: center; align-items: center;
+  height: 100vh; height: 100dvh; overflow: hidden;
+}
+#stage {
+  position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 850px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7); overflow: hidden;
+}
+canvas { display: block; width: 100%; height: auto; touch-action: none; background: #1a1e24; }
+.overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(10, 12, 20, 0.95); display: flex; flex-direction: column;
+  justify-content: center; align-items: center; opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease-in-out; z-index: 10; padding: 30px; text-align: center;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+h1 { font-size: 2.2rem; margin: 0 0 12px 0; color: #ffe600; text-transform: uppercase; font-weight: 900; letter-spacing: -0.5px; }
+p { font-size: 1rem; margin: 0 0 25px 0; color: #cfd6e0; line-height: 1.4; }
+button {
+  background: #ffe600; color: #111; border: none; padding: 16px 42px;
+  font-size: 1.05rem; font-weight: 900; border-radius: 32px; cursor: pointer;
+  text-transform: uppercase; box-shadow: 0 6px 24px rgba(255,230,0,0.35);
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+button:active { transform: scale(0.96); background: #e5ce00; }
+.profile-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid #ffe600; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+
+/* Intro: solid white, Gary only. Appears instantly, fades out slowly. */
+#intro { background: #fff; padding: 0; transition: opacity 0.8s ease; z-index: 20; }
+#intro.show { transition: none; }
+#introAvatar { background: transparent; width: 80%; max-width: 340px; height: auto; aspect-ratio: 1 / 1; }
+
+/* Only visible if an asset fails to load */
+#dbg {
+  display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+  background: #c00; color: #fff; font: 11px/1.4 monospace; padding: 8px;
+  word-break: break-all; white-space: pre-wrap;
+}
+</style>
 </head>
 <body>
 
-  <div id="stage">
-    <canvas id="c" width="360" height="640"></canvas>
-    
-    <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div id="dbg"></div>
 
-    <div id="menu" class="overlay show">
-      <img class="profile-img" src="gary_closed.png.PNG" alt="Gary" onerror="this.src='gary_open.png.PNG'">
-      <h1>Gary Eats!</h1>
-      <p>Navigate the high street, dodge hazards, and collect proper decent grub.</p>
-      <button id="startBtn">Play Game</button>
-    </div>
+  <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
 
-    <div id="introOverlay" class="overlay">
-      <canvas id="introAvatar" width="180" height="180"></canvas>
-    </div>
-
-    <div id="over" class="overlay">
-      <h1>Proper Ruined!</h1>
-      <p id="fScore">Score: 0</p>
-      <p id="fTier">Tier: Absolute Rubbish</p>
-      <button id="againBtn">Try Again</button>
-    </div>
+  <div id="menu" class="overlay show">
+    <img class="profile-img" src="gary_closed.png.PNG" alt="Gary" onerror="this.onerror=null;this.src='gary_open.png.PNG'">
+    <h1>Gary Eats!</h1>
+    <p>Navigate the high street, dodge hazards, and collect proper decent grub.</p>
+    <button id="startBtn">Play Game</button>
   </div>
+
+  <div id="intro" class="overlay">
+    <canvas id="introAvatar"></canvas>
+  </div>
+
+  <div id="over" class="overlay">
+    <h1>Proper Ruined!</h1>
+    <p id="fScore">Score: 0</p>
+    <p id="fTier">Tier: Absolute Rubbish</p>
+    <button id="againBtn">Try Again</button>
+  </div>
+</div>
 
 <script>
 (() => {
 'use strict';
-const W = 360, H = 640;
+const W = 360, H = 640, CX = 180;
 const ROAD_LEFT = 75, ROAD_RIGHT = 285, ROAD_WIDTH = 210;
 const LANE_WIDTH = ROAD_WIDTH / 3;
 const PLAYER_Y = 540;
@@ -82,7 +91,6 @@ const TIERS = [
   { n: 'BEAUTIFUL!', c: '#00ffff' },
   { n: "I'll have to bring Danny here one day", c: '#ffe600' }
 ];
-
 const FOODS = { kebab: 5, fish: 10, roast: 25 };
 const CAPS = [
   "Look at the absolute size of that portion, fellas! Phrwoar.",
@@ -92,24 +100,27 @@ const CAPS = [
 ];
 
 const $ = id => document.getElementById(id);
-const cv = $('c'), ctx = cv.getContext('2d'), stage =$('stage');
+const cv = $('c'), ctx = cv.getContext('2d'), stage = $('stage');
 const garyAudio = $('garyAudio');
-const introAvatarCv = $('introAvatar'), introCtx = introAvatarCv.getContext('2d');
+const introCv = $('introAvatar'), introCtx = introCv.getContext('2d');
 
-let state = 'menu', score = 0, best = 0, tierMax = 0, lane = 1, target = 1, scrollY = 0, acc = 0, gap = 160;
+let K = 1, state = 'menu', score = 0, best = 0, tierMax = 0, lane = 1, target = 1, scrollY = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
-let grinTimer = 0, stars = [];
-let lastTierIndex = 0;
+let grinTimer = 0, stars = [], lastTierIndex = 0;
+let animTimer = 0, currentFrame = 0;
 
-let audioCtx, analyser, dataArray;
+// ---------- Error reporting (red box, only shown on failure) ----------
+function report(m) { const d = $('dbg'); d.textContent += m + '\n'; d.style.display = 'block'; }
+
+// ---------- Images ----------
 let openLoaded = false, closedLoaded = false;
-
 const imgOpen = new Image();
 imgOpen.onload = () => { openLoaded = true; };
+imgOpen.onerror = () => report("Can't load " + imgOpen.src);
 imgOpen.src = 'gary_open.png.PNG';
-
 const imgClosed = new Image();
 imgClosed.onload = () => { closedLoaded = true; };
+imgClosed.onerror = () => report("Can't load " + imgClosed.src);
 imgClosed.src = 'gary_closed.png.PNG';
 
 function getActiveImage(isOpen) {
@@ -120,24 +131,57 @@ function getActiveImage(isOpen) {
   return null;
 }
 
+// ---------- Audio + lip-sync ----------
+let audioCtx, analyser, dataArray;
+let lipOpen = false, lipHold = 0, lipLevel = 0, lipPeak = 0, heardAudio = false, flapT = 0;
+let introFade = 0;
+
 function initAudio() {
   if (audioCtx) return;
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AudioContext();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 128;
+    analyser.fftSize = 256;
     dataArray = new Uint8Array(analyser.frequencyBinCount);
-    
     const source = audioCtx.createMediaElementSource(garyAudio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
-  } catch(e) {
-    console.warn("Audio Context init fallback:", e);
+  } catch (e) {
+    analyser = null;
+    console.warn('Audio Context init error:', e);
   }
 }
 
-try { best = +localStorage.getItem('garyBest') || 0; } catch(e){}
+// Returns true when Gary's mouth should be open right now.
+function lipSync(dt) {
+  if (garyAudio.paused || garyAudio.ended) { lipOpen = false; return false; }
+  if (analyser) {
+    analyser.getByteFrequencyData(dataArray);
+    let sum = 0; const n = 40; // voice range of the spectrum
+    for (let i = 1; i <= n; i++) sum += dataArray[i];
+    const lvl = sum / n;
+    lipLevel += (lvl - lipLevel) * Math.min(1, dt * 25);
+    lipPeak = Math.max(lvl, lipPeak * (1 - dt * 0.5));
+    if (lvl > 2) heardAudio = true;
+    // Analyser is live (or we're still in the first 0.6s): follow the sound.
+    if (heardAudio || garyAudio.currentTime < 0.6) {
+      lipHold -= dt;
+      if (lipHold <= 0) {
+        const ref = Math.max(lipPeak, 25);
+        const want = lipOpen ? lipLevel > ref * 0.3 : lipLevel > ref * 0.5;
+        if (want !== lipOpen) { lipOpen = want; lipHold = 0.06; }
+      }
+      return lipOpen;
+    }
+  }
+  // Fallback (analyser silent, e.g. opened from file://): flap on a timer.
+  flapT += dt;
+  if (flapT > 0.12) { flapT = 0; lipOpen = !lipOpen; }
+  return lipOpen;
+}
+
+try { best = +localStorage.getItem('garyBest') || 0; } catch (e) {}
 
 function tierOf(s) {
   if (s <= 50) return 0;
@@ -146,9 +190,9 @@ function tierOf(s) {
   if (s <= 500) return 3;
   return 4;
 }
-
 function lx(l) { return ROAD_LEFT + (l + 0.5) * LANE_WIDTH; }
 
+// ---------- Sprites ----------
 function mk(fn) {
   const s = document.createElement('canvas');
   s.width = s.height = 120;
@@ -156,7 +200,6 @@ function mk(fn) {
   c.translate(60, 60); c.lineJoin = 'round'; c.lineCap = 'round';
   fn(c); return s;
 }
-
 function dMush(c) {
   c.lineWidth = 3; c.strokeStyle = '#2b1810'; c.fillStyle = '#f5eedc';
   c.beginPath(); c.moveTo(-12, 5); c.lineTo(-10, 38); c.lineTo(10, 38); c.lineTo(12, 5); c.closePath(); c.fill(); c.stroke();
@@ -199,9 +242,9 @@ function dRoast(c) {
   c.fillStyle = '#e9b04f'; c.beginPath(); c.moveTo(12, 8); c.lineTo(15, -10); c.quadraticCurveTo(22, -18, 29, -10); c.lineTo(32, 8); c.quadraticCurveTo(22, 14, 12, 8); c.closePath(); c.fill(); c.stroke();
   c.fillStyle = '#4caf3a'; [[-5, 20], [2, 23], [-11, 23], [6, 18]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill(); });
 }
-
 const SP = { m: mk(dMush), fork: mk(dFork), kebab: mk(dKebab), fish: mk(dFish), roast: mk(dRoast) };
 
+// ---------- Drawing helpers ----------
 function rr(c, x, y, w, h, r) {
   c.beginPath(); c.moveTo(x + r, y);
   c.arcTo(x + w, y, x + w, y + h, r);
@@ -210,14 +253,12 @@ function rr(c, x, y, w, h, r) {
   c.arcTo(x, y, x + w, y, r);
   c.closePath();
 }
-
 function txt(s, x, y, size, col, al) {
   ctx.font = '900 ' + size + 'px "Arial Black",Impact,sans-serif';
   ctx.textAlign = al; ctx.textBaseline = 'middle';
   ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.85)';
   ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y);
 }
-
 function fbFace(c, r) {
   c.fillStyle = '#ffd166'; c.strokeStyle = '#4a2a10'; c.lineWidth = 4;
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill(); c.stroke();
@@ -225,12 +266,12 @@ function fbFace(c, r) {
   c.beginPath(); c.arc(0, 0, r * .5, .15 * Math.PI, .85 * Math.PI); c.stroke();
 }
 
+// ---------- Game logic ----------
 function triggerGrin() {
   grinTimer = 1.3;
   const px = lx(lane);
   for (let i = 0; i < 20; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 40 + Math.random() * 90;
+    const angle = Math.random() * Math.PI * 2, speed = 40 + Math.random() * 90;
     const side = Math.random() < 0.5 ? -30 : 30;
     stars.push({ x: px + side, y: PLAYER_Y - 35, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0.6 + Math.random() * 0.5, maxLife: 1.1, size: 4 + Math.random() * 5 });
   }
@@ -241,9 +282,7 @@ function reset() {
   objs = []; fx = []; cap = null; mile = 0; crashT = 0; grinTimer = 0; stars = [];
 }
 
-function move(d) {
-  if (state === 'play') target = Math.max(0, Math.min(2, target + d));
-}
+function move(d) { if (state === 'play') target = Math.max(0, Math.min(2, target + d)); }
 
 function spawnRow() {
   const L = [0, 1, 2].sort(() => Math.random() - .5);
@@ -272,287 +311,319 @@ function collect(o) {
   }
 }
 
-function crash(hitType) {
-  crashT = 0; cap = null;
-  if (hitType === 'fork') {
-    cap = { s: "You can't tackle a premium dinner with a plastic fork! Unprofessional!", t: 0, life: 3.5 };
-  } else {
-    cap = { s: "Absolute Rubbish!", t: 0, life: 3 };
-  }
-  const currentBest = +localStorage.getItem('garyBest') || 0;
-  if (score > currentBest) { best = score; localStorage.setItem('garyBest', best); }
-  $('fScore').innerText = 'Score: ' + score;
-  $('fTier').innerText = 'Tier: ' + TIERS[tierOf(score)].n;
-  $('fTier').style.color = TIERS[tierOf(score)].c;
-  setTimeout(() => { state = 'over'; $('over').classList.add('show'); }, hitType === 'fork' ? 3000 : 1800);
-  state = 'crashing';
+function crash(hitType) { crashT = 0; cap = null; state = 'crash_' + hitType; }
+
+function endGame() {
+  state = 'over';
+  if (score > best) { best = score; try { localStorage.setItem('garyBest', best); } catch (e) {} }
+  $('fScore').textContent = 'Score: ' + score;
+  const T = TIERS[tierMax] || TIERS[TIERS.length - 1];
+  $('fTier').textContent = 'Tier: ' + T.n;
+  $('fTier').style.color = T.c;
+  $('over').classList.add('show');
 }
 
-function isTalkingAudio() {
-  if (garyAudio.paused || garyAudio.ended) return false;
-  if (analyser) {
-    analyser.getByteFrequencyData(dataArray);
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-    if ((sum / dataArray.length) > 3) return true;
-  }
-  return Math.floor(garyAudio.currentTime * 7) % 2 === 0;
+// ---------- Intro flow ----------
+// Called when the audio ends (or if it can't play): fade the white screen out and start the game.
+function startGameplay() {
+  if (state !== 'intro') return;
+  garyAudio.onended = null;
+  garyAudio.pause();
+  garyAudio.currentTime = 0;
+  reset();
+  state = 'play';
+  introFade = 1;                       // keep drawing Gary while the white fades
+  $('intro').classList.remove('show'); // CSS fades opacity 1 -> 0 over 0.8s
 }
 
-function drawIntroAvatar() {
-  introCtx.clearRect(0, 0, 180, 180);
-  const isOpen = isTalkingAudio();
-  const img = getActiveImage(isOpen);
-  if (img) {
-    introCtx.drawImage(img, 0, 0, 180, 180);
-  } else {
-    introCtx.save();
-    introCtx.translate(90, 90);
-    fbFace(introCtx, 80);
-    if (isOpen) {
-      introCtx.fillStyle = '#222';
-      introCtx.beginPath();
-      introCtx.ellipse(0, 18, 18, 26, 0, 0, Math.PI * 2);
-      introCtx.fill();
+function update(dt) {
+  clock += dt;
+  lane += (target - lane) * Math.min(1, dt * 16);
+  if (grinTimer > 0) grinTimer = Math.max(0, grinTimer - dt);
+  if (introFade > 0) introFade -= dt;
+
+  for (let i = stars.length - 1; i >= 0; i--) {
+    const s = stars[i];
+    s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
+    if (s.life <= 0) stars.splice(i, 1);
+  }
+  if (cap) { cap.t += dt; if (cap.t > 2.2) cap = null; }
+  for (const f of fx) f.t += dt;
+  fx = fx.filter(f => f.t < f.life);
+
+  const speed = 200 + Math.floor(score / 80) * 15;
+
+  if (state === 'menu' || state === 'intro') { scrollY = (scrollY + 120 * dt) % 640; return; }
+  if (state.startsWith('crash')) { crashT += dt; if (crashT > 2.0) endGame(); return; }
+  if (state !== 'play') return;
+
+  scrollY = (scrollY + speed * dt) % 640;
+  acc += speed * dt;
+  if (acc >= gap) { acc -= gap; gap = 140 + Math.random() * 80; spawnRow(); }
+
+  for (const o of objs) {
+    o.y += speed * dt;
+    if (!o.d && Math.abs(o.y - PLAYER_Y) < 36 && Math.abs(lane - o.l) < .55) {
+      o.d = 1;
+      if (o.t === 'm' || o.t === 'fork') { crash(o.t); return; }
+      collect(o);
     }
-    introCtx.restore();
+  }
+  objs = objs.filter(o => !o.d && o.y < H + 60);
+}
+
+// ---------- Rendering ----------
+function drawHighStreet() {
+  ctx.fillStyle = '#222'; ctx.fillRect(0, 0, W, H);
+  const totalH = 640, offY = scrollY % totalH;
+  const drawSide = (isRight) => {
+    const xBase = isRight ? ROAD_RIGHT : 0, w = 75;
+    for (let pass = -1; pass <= 1; pass++) {
+      const py = pass * totalH + offY;
+      ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, py - 640, w, 200);
+      ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, py - 580, w - 16, 50);
+      ctx.fillStyle = '#fceabb'; ctx.fillRect(xBase + 12, py - 576, w - 24, 42);
+      ctx.fillStyle = '#e82525'; ctx.fillRect(xBase + 4, py - 610, w - 8, 20);
+      ctx.fillStyle = '#fff'; ctx.font = '900 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('CHIPPY', xBase + w / 2, py - 600);
+      ctx.fillStyle = '#5c4033'; ctx.fillRect(xBase, py - 440, w, 220);
+      ctx.fillStyle = '#1c2833'; ctx.fillRect(xBase + 8, py - 380, w - 16, 60);
+      ctx.fillStyle = '#fff8dc'; ctx.fillRect(xBase + 12, py - 376, w - 24, 52);
+      ctx.fillStyle = '#28b463'; ctx.fillRect(xBase + 4, py - 415, w - 8, 20);
+      ctx.fillStyle = '#fff'; ctx.fillText('BAKERS', xBase + w / 2, py - 405);
+      ctx.fillStyle = '#34495e'; ctx.fillRect(xBase, py - 220, w, 220);
+      ctx.fillStyle = '#1a252f'; ctx.fillRect(xBase + 8, py - 160, w - 16, 60);
+      ctx.fillStyle = '#f9e79f'; ctx.fillRect(xBase + 12, py - 156, w - 24, 52);
+      ctx.fillStyle = '#900c3f'; ctx.fillRect(xBase + 4, py - 195, w - 8, 22);
+      ctx.fillStyle = '#ffe600'; ctx.fillText('THE RED LION', xBase + w / 2, py - 184);
+    }
+  };
+  drawSide(false); drawSide(true);
+}
+
+function drawPavements() {
+  const pWidth = 15, bh = 20, offY = scrollY % bh;
+  for (let side = 0; side < 2; side++) {
+    const x = side === 0 ? ROAD_LEFT - pWidth : ROAD_RIGHT;
+    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(x, 0, pWidth, H);
+    ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2;
+    for (let y = -bh + offY; y < H + bh; y += bh) ctx.strokeRect(x, y, pWidth, bh);
   }
 }
 
-function renderPlayer() {
+function drawRoad() {
+  ctx.fillStyle = '#3a3f47'; ctx.fillRect(ROAD_LEFT, 0, ROAD_WIDTH, H);
+  const dashH = 35, gapH = 25, totalD = dashH + gapH, offY = scrollY % totalD;
+  ctx.fillStyle = '#ffffff';
+  for (let l = 1; l <= 2; l++) {
+    const lineX = ROAD_LEFT + l * LANE_WIDTH - 3;
+    for (let y = -totalD + offY; y < H + totalD; y += totalD) ctx.fillRect(lineX, y, 6, dashH);
+  }
+}
+
+function drawObj(o) {
+  const x = lx(o.l), y = o.y;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(x, y + 20, 22, 7, 0, 0, 7); ctx.fill();
+  const bob = Math.sin(clock * 6 + o.id) * 3;
+  ctx.drawImage(SP[o.t], x - 35, y - 35 + bob, 70, 70);
+}
+
+// Gary on transparent canvas (the overlay behind it is solid white).
+function drawIntroAvatar(dt) {
+  const S = introCv.width;
+  introCtx.setTransform(1, 0, 0, 1, 0, 0);
+  introCtx.clearRect(0, 0, S, S);
+  const img = getActiveImage(lipSync(dt));
+  if (img) {
+    const ar = img.naturalWidth / img.naturalHeight;
+    let w = S * 0.96, h = w / ar;
+    if (h > S * 0.96) { h = S * 0.96; w = h * ar; }
+    introCtx.drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
+  } else {
+    introCtx.save(); introCtx.translate(S / 2, S / 2); fbFace(introCtx, S * 0.35); introCtx.restore();
+  }
+}
+
+function drawPlayer(dt) {
+  const px = lx(lane), py = PLAYER_Y;
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.ellipse(px, py + 22, 32, 9, 0, 0, 7); ctx.fill();
   ctx.save();
-  ctx.translate(lx(lane), PLAYER_Y + (state === 'crashing' ? -15 : Math.sin(clock * 12) * 6));
-  if (state === 'crashing') {
-    ctx.rotate((crashT % 0.4 > 0.2 ? 1 : -1) * .3);
-    const scale = Math.max(0, 1 - crashT);
-    ctx.scale(scale, scale);
+  ctx.translate(px, py);
+
+  let isOpen = grinTimer > 0;
+  if (grinTimer > 0) { const g = 1.2 + 0.08 * Math.sin(clock * 30); ctx.scale(g, g); }
+  if (cap !== null) {
+    animTimer += dt;
+    if (animTimer > 0.12) { currentFrame = currentFrame === 0 ? 1 : 0; animTimer = 0; }
+    isOpen = currentFrame === 1;
   }
-  let isGrinning = false;
-  if (state === 'play' && grinTimer > 0) isGrinning = true;
-  if (state === 'crashing' && crashT < 1) isGrinning = true;
-  
-  const img = getActiveImage(isGrinning);
+
+  const img = getActiveImage(isOpen);
+  let w = 80, h = 80;
   if (img) {
-    const s = 45;
-    ctx.drawImage(img, -s, -s, s * 2, s * 2);
+    const ar = img.naturalWidth / img.naturalHeight;
+    w = h * ar;
+    if (w > 80) { w = 80; h = w / ar; }
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
   } else {
-    fbFace(ctx, 45);
-    if (isGrinning) {
-      ctx.fillStyle = '#222';
-      ctx.beginPath();
-      ctx.ellipse(0, 10, 15, 20, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    fbFace(ctx, 40);
+  }
+  ctx.restore();
+
+  for (const s of stars) {
+    const p = s.life / s.maxLife;
+    ctx.save(); ctx.fillStyle = Math.floor(clock * 20) % 2 ? '#ffe600' : '#ffffff'; ctx.globalAlpha = Math.max(0, p);
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.size * p, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawHud() {
+  const T = TIERS[tierOf(score)];
+  ctx.fillStyle = 'rgba(10,12,20,.85)';
+  rr(ctx, 10, 10, 340, 38, 10); ctx.fill();
+  ctx.strokeStyle = T.c; ctx.lineWidth = 3; ctx.stroke();
+  txt('Tier: ' + T.n, CX, 29, 13, T.c, 'center');
+  txt('SCORE ' + score, 20, 70, 18, '#fff', 'left');
+  txt('BEST ' + best, 340, 70, 13, '#cfd6e0', 'right');
+}
+
+function drawCap() {
+  if (!cap) return;
+  const t = cap.t, a = t > 1.8 ? 1 - (t - 1.8) / .4 : 1;
+  ctx.save(); ctx.globalAlpha = Math.max(0, a);
+  ctx.translate(CX, 240 + Math.sin(t * 6) * 3);
+  ctx.font = '900 18px "Arial Black",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const fit = Math.min(1, 310 / ctx.measureText(cap.s).width);
+  ctx.scale(fit, fit);
+  ctx.lineJoin = 'round'; ctx.lineWidth = 7; ctx.strokeStyle = '#1b0326';
+  ctx.strokeText(cap.s, 0, 0); ctx.fillStyle = '#ffe600'; ctx.fillText(cap.s, 0, 0);
+  ctx.restore();
+}
+
+function drawBubble() {
+  const s = Math.min(1, crashT * 6), px = lx(lane), bx = Math.max(115, Math.min(245, px)), by = 380, bw = 240, bh = 110;
+  ctx.save(); ctx.translate(bx, by); ctx.scale(s, s);
+  const tx = Math.max(-80, Math.min(80, px - bx)), ty = PLAYER_Y - 60 - by;
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(-14, bh / 2 - 2); ctx.lineTo(tx, ty); ctx.lineTo(14, bh / 2 - 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+  rr(ctx, -bw / 2, -bh / 2, bw, bh, 20); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillRect(-12, bh / 2 - 4, 24, 7);
+  ctx.fillStyle = '#111'; ctx.font = '900 15px "Arial Black",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (state === 'crash_fork') {
+    ctx.fillText("You can't tackle a", 0, -22);
+    ctx.fillText("premium dinner with a plastic", 0, 0);
+    ctx.fillText("fork! Unprofessional!", 0, 22);
+  } else {
+    ctx.fillText("Right, that's", 0, -18);
+    ctx.fillText("absolutely", 0, 4);
+    ctx.fillText("ruined it!", 0, 26);
   }
   ctx.restore();
 }
 
-function drawHighStreet() {
-  ctx.fillStyle = '#3a4a5a'; ctx.fillRect(0, 0, W, H);
-  const bx = Math.sin(scrollY * 0.01) * 10;
-  ctx.fillStyle = '#ff4d4d'; ctx.fillRect(20 + bx, scrollY % 300 - 100, 50, 80);
-  ctx.fillStyle = '#ffd23f'; txt("CHIPPY", 45 + bx, scrollY % 300 - 80, 12, '#fff', 'center');
-  ctx.fillStyle = '#f0b640'; ctx.fillRect(W - 70 + bx, (scrollY + 150) % 300 - 100, 50, 80);
-  ctx.fillStyle = '#d8322c'; txt("LION", W - 45 + bx, (scrollY + 150) % 300 - 80, 12, '#fff', 'center');
-}
+function render(dt) {
+  if (state === 'intro' || introFade > 0) drawIntroAvatar(dt);
 
-function drawPavements() {
-  ctx.fillStyle = '#7a8a9a';
-  ctx.fillRect(0, 0, ROAD_LEFT, H); ctx.fillRect(ROAD_RIGHT, 0, W - ROAD_RIGHT, H);
-  ctx.fillStyle = '#6a7a8a';
-  for (let y = scrollY % 60 - 60; y < H; y += 60) {
-    ctx.fillRect(0, y, ROAD_LEFT, 2); ctx.fillRect(ROAD_RIGHT, y, W - ROAD_RIGHT, 2);
-  }
-  ctx.fillStyle = '#3a4a5a'; ctx.fillRect(ROAD_LEFT - 4, 0, 4, H); ctx.fillRect(ROAD_RIGHT, 0, 4, H);
-}
-
-function drawRoad() {
-  ctx.fillStyle = '#2a2e38'; ctx.fillRect(ROAD_LEFT, 0, ROAD_WIDTH, H);
-  ctx.fillStyle = '#4a5060';
-  for (let i = 1; i <= 2; i++) {
-    for (let y = scrollY % 80 - 80; y < H; y += 80) ctx.fillRect(ROAD_LEFT + i * LANE_WIDTH - 2, y, 4, 40);
-  }
-}
-
-function drawHUD() {
-  rr(ctx, 10, 10, 160, 40, 8); ctx.fillStyle = 'rgba(10,12,20,.85)'; ctx.fill();
-  txt(`Score: ${score}`, 20, 30, 20, '#fff', 'left');
-  
-  const bTxt = `Best: ${best}`;
-  ctx.font = '900 16px "Arial Black",Impact,sans-serif';
-  const bw = ctx.measureText(bTxt).width;
-  rr(ctx, W - 20 - bw - 20, 10, bw + 30, 30, 8); ctx.fillStyle = 'rgba(10,12,20,.85)'; ctx.fill();
-  txt(bTxt, W - 20 - bw - 5, 25, 16, '#cfd6e0', 'left');
-  
-  const tr = TIERS[tierOf(score)];
-  rr(ctx, 10, 60, W - 20, 32, 8); ctx.fillStyle = 'rgba(10,12,20,.85)'; ctx.fill();
-  txt(tr.n, W / 2, 76, 18, tr.c, 'center');
-}
-
-let lastT = performance.now();
-function render(time) {
-  requestAnimationFrame(render);
-  const dt = Math.min((time - lastT) / 1000, 0.05); lastT = time;
-  clock += dt;
-
-  ctx.clearRect(0, 0, W, H);
-
-  if (state === 'intro') {
-    drawIntroAvatar();
-  }
-
+  ctx.setTransform(K, 0, 0, K, 0, 0);
+  ctx.save();
   drawHighStreet(); drawPavements(); drawRoad();
 
-  if (state === 'menu' || state === 'intro') {
-    scrollY = (scrollY + 120 * dt) % 640;
-    return;
-  }
-
-  if (state === 'play') {
-    acc = Math.min(acc + dt * 250, 450);
-    scrollY = (scrollY + acc * dt) % 640;
-    const g = 180 - Math.min(score, 800) * 0.08;
-    gap -= acc * dt; if (gap <= 0) { spawnRow(); gap = g; }
-    
-    lane += (target - lane) * (dt * 15);
-    if (Math.abs(lane - target) < 0.05) lane = target;
-    
-    if (grinTimer > 0) grinTimer -= dt;
-    
-    const py = PLAYER_Y;
-    const px = ROAD_LEFT + (lane + 0.5) * LANE_WIDTH;
-    const pRad = 28;
-    
-    for (let i = objs.length - 1; i >= 0; i--) {
-      const o = objs[i];
-      o.y += acc * dt;
-      if (o.y > H + 50) { objs.splice(i, 1); continue; }
-      
-      const ox = lx(o.l);
-      const hit = Math.hypot(px - ox, py - o.y) < pRad + 25;
-      
-      if (hit) {
-        if (o.t === 'm' || o.t === 'fork') { crash(o.t); break; }
-        else { collect(o); objs.splice(i, 1); }
-      }
-    }
-  }
-
-  if (state === 'crashing') { crashT += dt; acc *= 0.9; scrollY = (scrollY + acc * dt) % 640; }
-
-  objs.forEach(o => {
-    ctx.save(); ctx.translate(lx(o.l), o.y);
-    if (o.t === 'm' || o.t === 'fork') {
-      const s = 1 + Math.sin(clock * 6 + o.id) * 0.08;
-      ctx.scale(s, s); ctx.rotate(Math.sin(clock * 3 + o.id) * 0.1);
-    } else {
-      ctx.translate(0, Math.sin(clock * 5 + o.id) * 5);
-      const rt = o.t === 'fish' ? Math.sin(clock * 2 + o.id) * 0.15 : 0;
-      if (rt) ctx.rotate(rt);
-    }
-    ctx.drawImage(SP[o.t], -60, -60); ctx.restore();
-  });
-
-  renderPlayer();
-  
-  for (let i = stars.length - 1; i >= 0; i--) {
-    let s = stars[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 200 * dt; s.life -= dt;
-    if (s.life <= 0) { stars.splice(i, 1); continue; }
-    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.life * 10);
-    ctx.globalAlpha = Math.max(0, s.life / s.maxLife);
-    ctx.fillStyle = '#ffef5c'; ctx.beginPath();
-    for (let j = 0; j < 5; j++) {
-      ctx.lineTo(Math.cos((18 + j * 72) * Math.PI / 180) * s.size, -Math.sin((18 + j * 72) * Math.PI / 180) * s.size);
-      ctx.lineTo(Math.cos((54 + j * 72) * Math.PI / 180) * (s.size / 2.5), -Math.sin((54 + j * 72) * Math.PI / 180) * (s.size / 2.5));
-    }
-    ctx.closePath(); ctx.fill(); ctx.restore();
-  }
-
-  for (let i = fx.length - 1; i >= 0; i--) {
-    const f = fx[i]; f.t += dt; f.y -= 40 * dt;
-    if (f.t > f.life) { fx.splice(i, 1); continue; }
-    ctx.globalAlpha = 1 - (f.t / f.life); txt(f.txt, f.x, f.y, 28, '#39ff88', 'center');
-    ctx.globalAlpha = 1;
-  }
-
-  if (cap) {
-    cap.t += dt; const maxL = cap.life || 4;
-    if (cap.t > maxL) cap = null;
-    else {
-      ctx.save(); ctx.globalAlpha = Math.min(1, maxL - cap.t);
-      const padding = 16, cw = W - 40;
-      ctx.font = '900 18px "Arial Black",Impact,sans-serif';
-      const words = cap.s.split(' '), lines = []; let cur = words[0];
-      for (let i = 1; i < words.length; i++) {
-        if (ctx.measureText(cur + " " + words[i]).width < cw - padding * 2) cur += " " + words[i];
-        else { lines.push(cur); cur = words[i]; }
-      }
-      lines.push(cur);
-      const ch = lines.length * 24 + padding * 2;
-      const cy = Math.max(100, PLAYER_Y - 140 - (state === 'crashing' ? 50 : 0));
-      
-      rr(ctx, 20, cy, cw, ch, 12); ctx.fillStyle = '#fff'; ctx.fill();
-      ctx.lineWidth = 4; ctx.strokeStyle = '#222'; ctx.stroke();
-      
-      ctx.beginPath(); ctx.moveTo(20 + cw / 2 - 10, cy + ch); ctx.lineTo(20 + cw / 2 + 10, cy + ch);
-      ctx.lineTo(20 + cw / 2, cy + ch + 15); ctx.closePath(); ctx.fill(); ctx.stroke();
-      
-      lines.forEach((l, i) => txt(l, W / 2, cy + padding + 12 + i * 24, 18, '#222', 'center'));
+  if (state !== 'menu' && state !== 'intro') {
+    for (let i = objs.length - 1; i >= 0; i--) drawObj(objs[i]);
+    drawPlayer(dt);
+    for (const f of fx) {
+      const k = f.t / f.life;
+      ctx.save(); ctx.globalAlpha = 1 - k; ctx.strokeStyle = '#ffe600'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(f.x, f.y, 8 + k * 20, 0, 7); ctx.stroke();
+      ctx.restore();
+      ctx.save(); ctx.globalAlpha = 1 - k * k;
+      txt(f.txt, f.x, f.y - k * 25, 16, '#ffe600', 'center');
       ctx.restore();
     }
   }
-
-  drawHUD();
+  ctx.restore();
+  if (state !== 'menu' && state !== 'intro') {
+    drawHud(); drawCap();
+    if (state.startsWith('crash') || state === 'over') {
+      if (state.startsWith('crash')) {
+        ctx.fillStyle = 'rgba(255,40,40,' + Math.max(0, .45 - crashT) + ')';
+        ctx.fillRect(0, 0, W, H);
+      }
+      drawBubble();
+    }
+  }
 }
 
-function handleInput(e) {
-  if (state !== 'play') return;
-  const t = e.type.includes('touch') ? e.touches[0] : e;
-  const cr = cv.getBoundingClientRect();
-  const tx = (t.clientX - cr.left) * (W / cr.width);
-  const ty = (t.clientY - cr.top) * (H / cr.height);
-  if (tx < ROAD_LEFT || tx > ROAD_RIGHT || ty < 100) return;
-  const l = Math.floor((tx - ROAD_LEFT) / LANE_WIDTH);
-  if (l >= 0 && l <= 2) target = l;
-}
-
-cv.addEventListener('mousedown', handleInput);
-cv.addEventListener('touchstart', handleInput, { passive: true });
-window.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft' || e.key === 'a') move(-1);
-  if (e.key === 'ArrowRight' || e.key === 'd') move(1);
+// ---------- Input ----------
+addEventListener('keydown', e => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === 'arrowleft' || k === 'a') move(-1);
+  else if (k === 'arrowright' || k === 'd') move(1);
+  else return;
+  if (state === 'play') e.preventDefault();
 });
 
-$('startBtn').onclick = () => {
-  $('menu').classList.remove('show');$('introOverlay').classList.add('show');
-  state = 'intro';
-  
+cv.addEventListener('pointerdown', e => {
+  if (state !== 'play') return;
+  const r = cv.getBoundingClientRect();
+  move(e.clientX - r.left < r.width / 2 ? -1 : 1);
+  e.preventDefault();
+});
+
+// 1. Play Game -> white screen with Gary, audio starts
+$('startBtn').addEventListener('click', e => {
+  e.currentTarget.blur();
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-  
+
+  $('menu').classList.remove('show');
+  state = 'intro';
+  heardAudio = false; lipOpen = false; lipLevel = 0; lipPeak = 0; lipHold = 0; flapT = 0;
+  $('intro').classList.add('show');
+
+  // 4. When the audio finishes, fade to gameplay
+  garyAudio.onended = startGameplay;
   garyAudio.currentTime = 0;
-  garyAudio.play().catch(e => {
-    console.warn("Audio blocked or unavailable", e);
-    setTimeout(startGame, 1500);
-  });
-};
+  const p = garyAudio.play();
+  if (p !== undefined) {
+    p.catch(err => {
+      report("Can't play " + garyAudio.src + " (" + err.name + ")");
+      setTimeout(startGameplay, 2500); // audio missing/blocked: don't leave the player stuck
+    });
+  }
+});
 
-garyAudio.onended = () => {
-  $('introOverlay').classList.remove('show');
-  startGame();
-};
-
-function startGame() {
-  $('introOverlay').classList.remove('show');
+$('againBtn').addEventListener('click', e => {
+  e.currentTarget.blur();
+  $('over').classList.remove('show');
   reset();
-  state = 'play';
+  state = 'menu';
+  $('menu').classList.add('show');
+});
+
+function resize() {
+  const w = stage.clientWidth, dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(w * 16 / 9 * dpr); K = cv.width / W;
+  ctx.imageSmoothingQuality = 'high';
+  const s = Math.round((introCv.clientWidth || 300) * dpr);
+  introCv.width = introCv.height = s;
 }
 
-$('againBtn').onclick = () => {$('over').classList.remove('show');
-  reset(); state = 'play';
-};
+let last = performance.now();
+function loop(ts) {
+  const dt = Math.max(0, Math.min(.05, (ts - last) / 1000)); last = ts;
+  update(dt);
+  render(dt);
+  requestAnimationFrame(loop);
+}
 
-requestAnimationFrame(render);
+addEventListener('resize', resize);
+resize();
+requestAnimationFrame(loop);
 })();
 </script>
 </body>
