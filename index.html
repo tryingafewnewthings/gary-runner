@@ -278,7 +278,7 @@ function spawnRow() {
 function collect(o) {
   const pts = FOODS[o.t];
   score += pts;
-  fx.push({ x: lx(o.l), y: o.y, t: 0, life: 1.4, txt: '+' + pts });
+  fx.push({ x: lx(o.l), y: o.y, t: 0, life: 1.5, txt: '+' + pts });
 
   const currentTier = tierOf(score);
   let grin = o.t === 'roast';
@@ -338,54 +338,7 @@ function update(dt) {
   for (const f of fx) f.t += dt;
   fx = fx.filter(f => f.t < f.life);
 
-  // Smoother, fairer speed ramp-up
   const speed = 200 + Math.floor(score / 80) * 15;
-
-  if (state === 'menu') {
-    scrollY = (scrollY + 120 * dt) % 640;
-    return;
-  }
-
-  if (state.startsWith('crash')) {
-    crashT += dt;
-    if (crashT > 2.0) endGame();
-    return;
-  }
-
-  if (state !== 'play') return;
-
-  scrollY = (scrollY + speed * dt) % 640;
-  acc += speed * dt;
-  if (acc >= gap) {
-    acc -= gap;
-    gap = 140 + Math.random() * 80;
-    spawnRow();
-  }
-
-  for (const o of objs) {
-    o.y += speed * dt;
-    if (!o.d && Math.abs(o.y - PLAYER_Y) < 36 && Math.abs(lane - o.l) < .55) {
-      o.d = 1;
-      if (o.t === 'm' || o.t === 'fork') {
-        crash(o.t);
-        return;
-      }
-      collect(o);
-    }
-  }
-  objs = objs.filter(o => !o.d && o.y < H + 60);
-}
-
-
-  if (cap) {
-    cap.t += dt;
-    if (cap.t > 2.2) cap = null;
-  }
-
-  for (const f of fx) f.t += dt;
-  fx = fx.filter(f => f.t < f.life);
-
-  const speed = 260 + Math.floor(score / 50) * 20;
 
   if (state === 'menu') {
     scrollY = (scrollY + 120 * dt) % 640;
@@ -605,7 +558,7 @@ function render() {
     for (let i = objs.length - 1; i >= 0; i--) drawObj(objs[i]);
     drawPlayer();
 
-        for (const f of fx) {
+    for (const f of fx) {
       const k = f.t / f.life; 
       ctx.save(); 
       ctx.globalAlpha = 1 - k;
@@ -615,10 +568,9 @@ function render() {
       
       ctx.save(); 
       ctx.globalAlpha = 1 - k * k; 
-      txt(f.txt, f.x, f.y - k * 25, 16, '#ffe600', 'center'); // 👈 Font size dropped from 22 to 16
+      txt(f.txt, f.x, f.y - k * 25, 16, '#ffe600', 'center'); 
       ctx.restore();
     }
-
   }
 
   ctx.restore();
