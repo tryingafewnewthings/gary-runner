@@ -132,7 +132,7 @@ imgOpen.src = 'gary_open.png.PNG';
 const imgClosed = new Image();
 imgClosed.onload = () => { closedLoaded = true; };
 imgClosed.onerror = () => { loadErrorLog.push('gary_closed.png not found'); };
-imgClosed.src = 'gary_closed.png.PNG';
+imgClosed.src = 'gary_closed.png';
 
 function getActiveImage(isOpen) {
   if (isOpen && openLoaded) return imgOpen;
