@@ -281,17 +281,30 @@ function crash(hitType) {
   state = 'crashing';
 }
 
+let lipOpen = false, lipT = 0, lipPeak = 0, heard = false, lastLipT = 0;
+const LIP_MAX_OPEN = 0.16; // longest the mouth stays open (s)
+const LIP_MIN_SHUT = 0.07; // shortest it stays shut (s)
+
 function isTalkingAudio() {
-  if (garyAudio.paused || garyAudio.ended) return false;
+  if (garyAudio.paused || garyAudio.ended) { lipOpen = false; lipT = 0; heard = false; lipPeak = 0; return false; }
+  const now = performance.now() / 1000, dt = Math.min(0.1, now - lastLipT); lastLipT = now;
+  lipT += dt;
+  const timer = Math.floor(garyAudio.currentTime * 7) % 2 === 0;
+  let want = timer;
   if (analyser) {
     analyser.getByteFrequencyData(dataArray);
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-    if ((sum / dataArray.length) > 2) return true;
+    let sum = 0; const n = 12; // voice range
+    for (let i = 1; i <= n; i++) sum += dataArray[i];
+    const lvl = sum / n;
+    lipPeak = Math.max(lvl, lipPeak * (1 - dt * 0.5));
+    if (lvl > 2) heard = true;
+    if (heard || garyAudio.currentTime < 0.6) want = lvl > Math.max(lipPeak, 20) * 0.4;
   }
-  // Faster toggle (multiplier 16) ensuring 4-5+ mouth flaps during the clip
-  return Math.floor(garyAudio.currentTime * 16) % 2 === 0;
+  if (lipOpen && (!want || lipT > LIP_MAX_OPEN)) { lipOpen = false; lipT = 0; }
+  else if (!lipOpen && want && lipT > LIP_MIN_SHUT) { lipOpen = true; lipT = 0; }
+  return lipOpen;
 }
+
 
 function renderPlayer() {
   ctx.save();
