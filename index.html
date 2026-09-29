@@ -301,13 +301,23 @@ function crash(hitType) {
 
 function endGame() {
   state = 'over';
-  if (score > best) { best = score; try { localStorage.setItem('garyBest', best); } catch (e) {} }
-  $('fScore').textContent = score;
-  const T = TIERS[tierMax];
-  $('fTier').textContent = 'Tier: ' + T.n;
-  $('fTier').style.color = T.c;
-  $('over').classList.add('show');
+  if (score > best) { 
+    best = score; 
+    try { localStorage.setItem('garyBest', best); } catch (e) {} 
+  }
+  
+  try {
+    $('fScore').textContent = score;
+    // Fallback: If tierMax exceeds the TIERS array length, use the highest available tier
+    const T = TIERS[tierMax] || TIERS[TIERS.length - 1] || { n: 'Legend', c: '#ffe600' };
+    $('fTier').textContent = 'Tier: ' + T.n;
+    $('fTier').style.color = T.c;
+    $('over').classList.add('show');
+  } catch (e) {
+    console.warn("UI update failed, but saving loop:", e);
+  }
 }
+
 
 function update(dt) {
   clock += dt;
@@ -466,32 +476,45 @@ function drawPlayer() {
   let w = 80, h = 80;
   if (spr) { w = h * ar; if (w > 80) { w = 80; h = w / ar; } }
 
-  if (grinTimer > 0 && spr) {
+  if (grinTimer > 0) {
     const progress = Math.sin((1.5 - grinTimer) / 1.5 * Math.PI);
-    const warpOffset = progress * 10;
+    
+    if (spr) {
+      // 1. Image Grin (Warp)
+      const warpOffset = progress * 10;
+      const rows = 12;
+      const sliceH = h / rows;
 
-    const rows = 12;
-    const sliceH = h / rows;
+      for (let i = 0; i < rows; i++) {
+        // Use Math.floor to prevent IndexSizeErrors on fractional source pixels
+        const sy = Math.floor((i / rows) * spr.height);
+        const sh = Math.floor(spr.height / rows);
+        const dy = -h / 2 + i * sliceH;
 
-    for (let i = 0; i < rows; i++) {
-      const sy = (i / rows) * spr.height;
-      const sh = spr.height / rows;
-      const dy = -h / 2 + i * sliceH;
+        let dx = -w / 2;
+        let dw = w;
 
-      let dx = -w / 2;
-      let dw = w;
+        if (i >= rows - 5) {
+          const pull = Math.sin(((i - (rows - 5)) / 5) * Math.PI) * warpOffset;
+          dx -= pull / 2;
+          dw += pull;
+        } else if (i < 4) {
+          const comp = (4 - i) * 0.8 * (warpOffset / 10);
+          dy += comp;
+        }
 
-      if (i >= rows - 5) {
-        const pull = Math.sin(((i - (rows - 5)) / 5) * Math.PI) * warpOffset;
-        dx -= pull / 2;
-        dw += pull;
+        // Prevent drawing 0-height slices
+        if (sh > 0) {
+          ctx.drawImage(spr, 0, sy, spr.width, sh, dx, dy, dw, sliceH);
+        }
       }
-      else if (i < 4) {
-        const comp = (4 - i) * 0.8 * (warpOffset / 10);
-        dy += comp;
-      }
-
-      ctx.drawImage(spr, 0, sy, spr.width, sh, dx, dy, dw, sliceH);
+    } else {
+      // 2. Vector Face Grin Fallback (Squash & Bob)
+      ctx.save();
+      ctx.translate(0, progress * -8);
+      ctx.scale(1 + progress * 0.15, 1 - progress * 0.05);
+      fbFace(ctx, 40);
+      ctx.restore();
     }
   } else {
     if (spr) ctx.drawImage(spr, -w / 2, -h / 2, w, h);
@@ -500,6 +523,7 @@ function drawPlayer() {
 
   ctx.restore();
 
+  // Draw Stars
   for (const s of stars) {
     const p = s.life / s.maxLife;
     ctx.save();
@@ -511,6 +535,7 @@ function drawPlayer() {
     ctx.restore();
   }
 }
+
 
 function drawHud() {
   const currentTier = tierOf(score);
