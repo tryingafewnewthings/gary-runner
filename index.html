@@ -434,16 +434,22 @@ function drawObj(o) {
   ctx.drawImage(SP[o.t], x - 35, y - 35 + bob, 70, 70);
 }
 
+let introAnimTimer = 0; // Tracks elapsed time in intro mode
+
 function drawIntroAvatar(dt) {
   introCtx.clearRect(0, 0, 180, 180);
   introCtx.fillStyle = '#111';
   introCtx.beginPath(); introCtx.arc(90, 90, 90, 0, Math.PI * 2); introCtx.fill();
   
+  // Track intro duration to force mouth flapping cycles
+  introAnimTimer += dt;
+  
+  // Force 2 extra open/closed cycles during the intro audio
+  // We alternate states based on time intervals (e.g., every 0.35 seconds)
   let isOpen = isTalkingAudio();
-  if (!garyAudio.paused && !analyser) {
-    animTimer += dt;
-    if (animTimer > 0.12) { currentFrame = currentFrame === 0 ? 1 : 0; animTimer = 0; }
-    isOpen = currentFrame === 1;
+  if (!garyAudio.paused) {
+    const cyclePhase = Math.floor(introAnimTimer / 0.35) % 2;
+    isOpen = cyclePhase === 1;
   }
   
   const img = getActiveImage(isOpen);
@@ -463,6 +469,7 @@ function drawIntroAvatar(dt) {
   introCtx.strokeStyle = '#ffe600';
   introCtx.beginPath(); introCtx.arc(90, 90, 86, 0, Math.PI * 2); introCtx.stroke();
 }
+
 
 function drawPlayer(dt) {
   const px = lx(lane), py = PLAYER_Y;
