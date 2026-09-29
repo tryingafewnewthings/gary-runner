@@ -630,7 +630,10 @@ function resize() {
 let last = performance.now();
 function loop(ts) {
   const dt = Math.max(0, Math.min(.05, (ts - last) / 1000)); last = ts;
-  update(dt); render(); requestAnimationFrame(loop);
+  update(dt); render();
+if (/debug/.test(location.search)) txt('vid rs:' + grinVid.readyState + ' net:' + grinVid.networkState + ' err:' + (grinVid.error ? grinVid.error.code : 0), CX, 610, 11, '#0f0', 'center');
+requestAnimationFrame(loop);
+
 }
 
 addEventListener('resize', resize);
