@@ -6,26 +6,24 @@
   <title>Gary Eats! — Professional Edition</title>
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-    body {
-      margin: 0; padding: 0; background: #0a0c14; color: #fff;
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; background: #0a0c14; color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex; justify-content: center; align-items: center;
-      height: 100vh; height: 100dvh; overflow: hidden;
+      display: flex; justify-content: center; align-items: center; overflow: hidden;
     }
     #stage {
-      position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 850px;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      position: relative; width: 100vw; height: 100vh; max-width: 420px; max-height: 850px;
+      display: flex; justify-content: center; align-items: center;
       background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7); overflow: hidden;
     }
-    /* Fixed: Target ONLY the main canvas for the dark background */
     #c {
-      display: block; width: 100%; height: auto; touch-action: none; background: #1a1e24;
+      width: 100%; height: 100%; object-fit: contain; touch-action: none; background: #1a1e24; display: block;
     }
     .overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(10, 12, 20, 0.95); display: flex; flex-direction: column;
       justify-content: center; align-items: center; opacity: 0; pointer-events: none;
-      transition: opacity 0.5s ease-in-out; z-index: 10; padding: 30px; text-align: center;
+      transition: opacity 0.4s ease-in-out; z-index: 10; padding: 30px; text-align: center;
     }
     .overlay.show { opacity: 1; pointer-events: auto; }
     h1 { font-size: 2.2rem; margin: 0 0 12px 0; color: #ffe600; text-transform: uppercase; font-weight: 900; letter-spacing: -0.5px; }
@@ -38,21 +36,15 @@
     }
     button:active { transform: scale(0.96); background: #e5ce00; }
     
-    /* Fixed: Semi-transparent white background so the game is visible */
     #introOverlay { background: rgba(255, 255, 255, 0.85); }
-    
     .profile-img { width: 90px; height: 90px; object-fit: cover; margin-bottom: 16px; }
-    
-    /* Fixed: Ensure avatar canvas has a transparent background to prevent black boxes */
-    #introAvatar {
-      width: 180px; height: 180px; background: transparent;
-    }
+    #introAvatar { width: 180px; height: 180px; background: transparent; display: block; }
   </style>
 </head>
 <body>
 
   <div id="stage">
-    <canvas id="c"></canvas>
+    <canvas id="c" width="360" height="640"></canvas>
     
     <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
 
@@ -63,7 +55,6 @@
       <button id="startBtn">Play Game</button>
     </div>
 
-    <!-- Intro overlay screen -->
     <div id="introOverlay" class="overlay">
       <canvas id="introAvatar" width="180" height="180"></canvas>
     </div>
@@ -79,7 +70,7 @@
 <script>
 (() => {
 'use strict';
-const W = 360, H = 640, CX = 180;
+const W = 360, H = 640;
 const ROAD_LEFT = 75, ROAD_RIGHT = 285, ROAD_WIDTH = 210;
 const LANE_WIDTH = ROAD_WIDTH / 3;
 const PLAYER_Y = 540;
@@ -101,18 +92,16 @@ const CAPS = [
 ];
 
 const $ = id => document.getElementById(id);
-const cv = $('c'), ctx = cv ? cv.getContext('2d') : null, stage = $('stage');
+const cv = $('c'), ctx = cv.getContext('2d'), stage =$('stage');
 const garyAudio = $('garyAudio');
 const introAvatarCv = $('introAvatar'), introCtx = introAvatarCv.getContext('2d');
 
-let K = 1, state = 'menu', score = 0, best = 0, tierMax = 0, lane = 1, target = 1, scrollY = 0, acc = 0, gap = 160;
+let state = 'menu', score = 0, best = 0, tierMax = 0, lane = 1, target = 1, scrollY = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
 let grinTimer = 0, stars = [];
 let lastTierIndex = 0;
 
 let audioCtx, analyser, dataArray;
-let animTimer = 0, currentFrame = 0;
-
 let openLoaded = false, closedLoaded = false;
 
 const imgOpen = new Image();
@@ -137,14 +126,14 @@ function initAudio() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContext();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
+    analyser.fftSize = 128;
     dataArray = new Uint8Array(analyser.frequencyBinCount);
     
     const source = audioCtx.createMediaElementSource(garyAudio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
   } catch(e) {
-    console.warn("Audio Context init error:", e);
+    console.warn("Audio Context init fallback:", e);
   }
 }
 
@@ -299,41 +288,31 @@ function crash(hitType) {
   state = 'crashing';
 }
 
-// Fixed: Lowered audio threshold to 5 so mouth moves more easily
 function isTalkingAudio() {
-  if (analyser && !garyAudio.paused) {
+  if (garyAudio.paused || garyAudio.ended) return false;
+  if (analyser) {
     analyser.getByteFrequencyData(dataArray);
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-    return (sum / dataArray.length) > 5; 
+    if ((sum / dataArray.length) > 3) return true;
   }
-  return false;
+  return Math.floor(garyAudio.currentTime * 7) % 2 === 0;
 }
 
-function drawIntroAvatar(dt) {
+function drawIntroAvatar() {
   introCtx.clearRect(0, 0, 180, 180);
-  let isOpen = isTalkingAudio();
-  
-  if (!garyAudio.paused && !analyser) {
-    animTimer += dt;
-    if (animTimer > 0.15) {
-      animTimer = 0;
-      currentFrame = (currentFrame + 1) % 2;
-    }
-    isOpen = currentFrame === 1;
-  }
-  
+  const isOpen = isTalkingAudio();
   const img = getActiveImage(isOpen);
   if (img) {
     introCtx.drawImage(img, 0, 0, 180, 180);
   } else {
     introCtx.save();
     introCtx.translate(90, 90);
-    fbFace(introCtx, 86);
+    fbFace(introCtx, 80);
     if (isOpen) {
       introCtx.fillStyle = '#222';
       introCtx.beginPath();
-      introCtx.ellipse(0, 20, 20, 30, 0, 0, Math.PI * 2);
+      introCtx.ellipse(0, 18, 18, 26, 0, 0, Math.PI * 2);
       introCtx.fill();
     }
     introCtx.restore();
@@ -416,24 +395,16 @@ function render(time) {
   const dt = Math.min((time - lastT) / 1000, 0.05); lastT = time;
   clock += dt;
 
-  cv.width = W * window.devicePixelRatio; cv.height = H * window.devicePixelRatio;
-  K = Math.min(stage.clientWidth / W, stage.clientHeight / H);
-  cv.style.width = stage.clientWidth + 'px'; cv.style.height = stage.clientHeight + 'px';
+  ctx.clearRect(0, 0, W, H);
 
   if (state === 'intro') {
-    drawIntroAvatar(dt);
+    drawIntroAvatar();
   }
 
-  ctx.setTransform(K * window.devicePixelRatio, 0, 0, K * window.devicePixelRatio,
-                   ((stage.clientWidth - W * K) / 2) * window.devicePixelRatio,
-                   ((stage.clientHeight - H * K) / 2) * window.devicePixelRatio);
-  
-  ctx.save();
   drawHighStreet(); drawPavements(); drawRoad();
 
   if (state === 'menu' || state === 'intro') {
     scrollY = (scrollY + 120 * dt) % 640;
-    ctx.restore();
     return;
   }
 
@@ -532,14 +503,14 @@ function render(time) {
   }
 
   drawHUD();
-  ctx.restore();
 }
 
 function handleInput(e) {
   if (state !== 'play') return;
   const t = e.type.includes('touch') ? e.touches[0] : e;
   const cr = cv.getBoundingClientRect();
-  const tx = (t.clientX - cr.left) / K, ty = (t.clientY - cr.top) / K;
+  const tx = (t.clientX - cr.left) * (W / cr.width);
+  const ty = (t.clientY - cr.top) * (H / cr.height);
   if (tx < ROAD_LEFT || tx > ROAD_RIGHT || ty < 100) return;
   const l = Math.floor((tx - ROAD_LEFT) / LANE_WIDTH);
   if (l >= 0 && l <= 2) target = l;
@@ -561,8 +532,8 @@ $('startBtn').onclick = () => {
   
   garyAudio.currentTime = 0;
   garyAudio.play().catch(e => {
-    console.warn("Audio play blocked", e);
-    startGame();
+    console.warn("Audio blocked or unavailable", e);
+    setTimeout(startGame, 1500);
   });
 };
 
@@ -572,6 +543,7 @@ garyAudio.onended = () => {
 };
 
 function startGame() {
+  $('introOverlay').classList.remove('show');
   reset();
   state = 'play';
 }
