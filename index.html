@@ -121,7 +121,7 @@ let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
 
 // Image Preloading & Status Diagnostics
-let openLoaded = false, closedLoaded = false, crashLoaded = false;
+let openLoaded = false, closedLoaded = false, crashLoaded = false, shopLoaded = false;
 let loadErrorLog = [];
 
 const imgOpen = new Image();
@@ -129,16 +129,10 @@ imgOpen.onload = () => { openLoaded = true; };
 imgOpen.onerror = () => { loadErrorLog.push('gary_open.png not found'); };
 imgOpen.src = 'gary_open.png.PNG';
 
-let openLoaded = false, closedLoaded = false, crashLoaded = false, shopLoaded = false;
-let loadErrorLog = [];
-
-// ... existing gary images ...
-
 const imgShop = new Image();
 imgShop.onload = () => { shopLoaded = true; };
 imgShop.onerror = () => { loadErrorLog.push('chip_shop.png not found'); };
 imgShop.src = 'chip_shop.PNG';
-
 
 const imgClosed = new Image();
 imgClosed.onload = () => { closedLoaded = true; };
@@ -404,11 +398,8 @@ function drawHighStreet() {
       const py = pass * totalH + offY;
       
       if (!isRight && shopLoaded) {
-        // Draw your high-end generated fish & chip shop on the left side
-        // We stretch it vertically to match the 200px block height smoothly
         ctx.drawImage(imgShop, xBase, py - 640, w, 200);
       } else {
-        // Fallback / Right side stylized shop block
         ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, py - 640, w, 200);
         ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, py - 580, w - 16, 50);
         ctx.fillStyle = '#fceabb'; ctx.fillRect(xBase + 12, py - 576, w - 24, 42);
@@ -435,7 +426,6 @@ function drawHighStreet() {
 
   drawSide(false); drawSide(true);
 }
-
 
 function drawPavements() {
   const pWidth = 15, bh = 20, offY = scrollY % bh;
