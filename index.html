@@ -393,7 +393,7 @@ function update(dt) {
 function drawHighStreet() {
   ctx.fillStyle = '#1a1e24'; ctx.fillRect(0, 0, W, H);
   const totalH = 640, offY = scrollY % totalH;
-  const shopH = totalH / 3; // Equal 213.33px per shop slot
+  const shopH = totalH / 3; 
 
   const drawSide = (isRight) => {
     const xBase = isRight ? ROAD_RIGHT : 0, w = isRight ? (W - ROAD_RIGHT) : ROAD_LEFT;
@@ -402,10 +402,38 @@ function drawHighStreet() {
       
       // Top shop (Chippy slot)
       const s1Y = py - totalH;
-      if (!isRight && shopLoaded) {
-        ctx.drawImage(imgShop, xBase, s1Y, w, shopH);
+      if (!isRight && shopLoaded && imgShop.width) {
+        ctx.save();
+        ctx.beginPath();
+        // Math.floor/ceil forces sub-pixel safety so the background doesn't bleed through
+        ctx.rect(xBase, Math.floor(s1Y), w, Math.ceil(shopH) + 1);
+        ctx.clip();
+        
+        const imgRatio = imgShop.width / imgShop.height;
+        const slotRatio = w / shopH;
+        let rW, rH;
+        
+        // Calculate "cover" scale to prevent squishing
+        if (imgRatio > slotRatio) {
+          rH = shopH;
+          rW = imgShop.width * (shopH / imgShop.height);
+        } else {
+          rW = w;
+          rH = imgShop.height * (w / imgShop.width);
+        }
+        
+        // Zoom by 35% to make the shop larger and clip out any baked-in image borders
+        const zoom = 1.35;
+        rW *= zoom;
+        rH *= zoom;
+        
+        const dX = xBase - (rW - w) / 2;
+        const dY = s1Y - (rH - shopH) / 2;
+        
+        ctx.drawImage(imgShop, dX, dY, rW, rH);
+        ctx.restore();
       } else {
-        ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, s1Y, w, shopH);
+        ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, Math.floor(s1Y), w, Math.ceil(shopH) + 1);
         ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, s1Y + 60, w - 16, 50);
         ctx.fillStyle = '#fceabb'; ctx.fillRect(xBase + 12, s1Y + 64, w - 24, 42);
         ctx.fillStyle = '#e82525'; ctx.fillRect(xBase + 4, s1Y + 25, w - 8, 20);
@@ -415,7 +443,7 @@ function drawHighStreet() {
 
       // Middle shop (Bakers slot)
       const s2Y = py - totalH + shopH;
-      ctx.fillStyle = '#5c4033'; ctx.fillRect(xBase, s2Y, w, shopH);
+      ctx.fillStyle = '#5c4033'; ctx.fillRect(xBase, Math.floor(s2Y), w, Math.ceil(shopH) + 1);
       ctx.fillStyle = '#1c2833'; ctx.fillRect(xBase + 8, s2Y + 60, w - 16, 55);
       ctx.fillStyle = '#fff8dc'; ctx.fillRect(xBase + 12, s2Y + 64, w - 24, 47);
       ctx.fillStyle = '#28b463'; ctx.fillRect(xBase + 4, s2Y + 25, w - 8, 20);
@@ -424,7 +452,7 @@ function drawHighStreet() {
 
       // Bottom shop (Pub slot)
       const s3Y = py - shopH;
-      ctx.fillStyle = '#34495e'; ctx.fillRect(xBase, s3Y, w, shopH);
+      ctx.fillStyle = '#34495e'; ctx.fillRect(xBase, Math.floor(s3Y), w, Math.ceil(shopH) + 1);
       ctx.fillStyle = '#1a252f'; ctx.fillRect(xBase + 8, s3Y + 60, w - 16, 55);
       ctx.fillStyle = '#f9e79f'; ctx.fillRect(xBase + 12, s3Y + 64, w - 24, 47);
       ctx.fillStyle = '#900c3f'; ctx.fillRect(xBase + 4, s3Y + 23, w - 8, 22);
