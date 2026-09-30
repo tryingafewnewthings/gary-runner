@@ -86,7 +86,7 @@
 (() => {
 'use strict';
 const W = 360, H = 640, CX = 180;
-const ROAD_WIDTH = 189; // Reduced by 10% from 210
+const ROAD_WIDTH = 189; 
 const ROAD_LEFT = (W - ROAD_WIDTH) / 2; // 85.5px
 const ROAD_RIGHT = ROAD_LEFT + ROAD_WIDTH; // 274.5px
 const LANE_WIDTH = ROAD_WIDTH / 3; // 63px
@@ -393,39 +393,43 @@ function update(dt) {
 function drawHighStreet() {
   ctx.fillStyle = '#1a1e24'; ctx.fillRect(0, 0, W, H);
   const totalH = 640, offY = scrollY % totalH;
+  const shopH = totalH / 3; // Equal 213.33px per shop slot
 
   const drawSide = (isRight) => {
     const xBase = isRight ? ROAD_RIGHT : 0, w = isRight ? (W - ROAD_RIGHT) : ROAD_LEFT;
     for (let pass = -1; pass <= 1; pass++) {
       const py = pass * totalH + offY;
       
+      // Top shop (Chippy slot)
+      const s1Y = py - totalH;
       if (!isRight && shopLoaded) {
-        // Pre-fill building brick backdrop to eliminate black border on transparent asset
-        ctx.fillStyle = '#8b3a2b';
-        ctx.fillRect(xBase, py - 640, w, 200);
-        ctx.drawImage(imgShop, xBase, py - 640, w, 200);
+        ctx.drawImage(imgShop, xBase, s1Y, w, shopH);
       } else {
-        ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, py - 640, w, 200);
-        ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, py - 580, w - 16, 50);
-        ctx.fillStyle = '#fceabb'; ctx.fillRect(xBase + 12, py - 576, w - 24, 42);
-        ctx.fillStyle = '#e82525'; ctx.fillRect(xBase + 4, py - 610, w - 8, 20);
+        ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, s1Y, w, shopH);
+        ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, s1Y + 60, w - 16, 50);
+        ctx.fillStyle = '#fceabb'; ctx.fillRect(xBase + 12, s1Y + 64, w - 24, 42);
+        ctx.fillStyle = '#e82525'; ctx.fillRect(xBase + 4, s1Y + 25, w - 8, 20);
         ctx.fillStyle = '#fff'; ctx.font = '900 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('CHIPPY', xBase + w / 2, py - 600);
+        ctx.fillText('CHIPPY', xBase + w / 2, s1Y + 35);
       }
 
-      // Middle shop (Bakers)
-      ctx.fillStyle = '#5c4033'; ctx.fillRect(xBase, py - 440, w, 220);
-      ctx.fillStyle = '#1c2833'; ctx.fillRect(xBase + 8, py - 380, w - 16, 60);
-      ctx.fillStyle = '#fff8dc'; ctx.fillRect(xBase + 12, py - 376, w - 24, 52);
-      ctx.fillStyle = '#28b463'; ctx.fillRect(xBase + 4, py - 415, w - 8, 20);
-      ctx.fillStyle = '#fff'; ctx.fillText('BAKERS', xBase + w / 2, py - 405);
+      // Middle shop (Bakers slot)
+      const s2Y = py - totalH + shopH;
+      ctx.fillStyle = '#5c4033'; ctx.fillRect(xBase, s2Y, w, shopH);
+      ctx.fillStyle = '#1c2833'; ctx.fillRect(xBase + 8, s2Y + 60, w - 16, 55);
+      ctx.fillStyle = '#fff8dc'; ctx.fillRect(xBase + 12, s2Y + 64, w - 24, 47);
+      ctx.fillStyle = '#28b463'; ctx.fillRect(xBase + 4, s2Y + 25, w - 8, 20);
+      ctx.fillStyle = '#fff'; ctx.font = '900 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('BAKERS', xBase + w / 2, s2Y + 35);
 
-      // Bottom shop (Pub)
-      ctx.fillStyle = '#34495e'; ctx.fillRect(xBase, py - 220, w, 220);
-      ctx.fillStyle = '#1a252f'; ctx.fillRect(xBase + 8, py - 160, w - 16, 60);
-      ctx.fillStyle = '#f9e79f'; ctx.fillRect(xBase + 12, py - 156, w - 24, 52);
-      ctx.fillStyle = '#900c3f'; ctx.fillRect(xBase + 4, py - 195, w - 8, 22);
-      ctx.fillStyle = '#ffe600'; ctx.fillText('THE RED LION', xBase + w / 2, py - 184);
+      // Bottom shop (Pub slot)
+      const s3Y = py - shopH;
+      ctx.fillStyle = '#34495e'; ctx.fillRect(xBase, s3Y, w, shopH);
+      ctx.fillStyle = '#1a252f'; ctx.fillRect(xBase + 8, s3Y + 60, w - 16, 55);
+      ctx.fillStyle = '#f9e79f'; ctx.fillRect(xBase + 12, s3Y + 64, w - 24, 47);
+      ctx.fillStyle = '#900c3f'; ctx.fillRect(xBase + 4, s3Y + 23, w - 8, 22);
+      ctx.fillStyle = '#ffe600'; ctx.font = '900 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('THE RED LION', xBase + w / 2, s3Y + 34);
     }
   };
 
