@@ -86,8 +86,10 @@
 (() => {
 'use strict';
 const W = 360, H = 640, CX = 180;
-const ROAD_LEFT = 75, ROAD_RIGHT = 285, ROAD_WIDTH = 210;
-const LANE_WIDTH = ROAD_WIDTH / 3;
+const ROAD_WIDTH = 189; // Reduced by 10% from 210
+const ROAD_LEFT = (W - ROAD_WIDTH) / 2; // 85.5px
+const ROAD_RIGHT = ROAD_LEFT + ROAD_WIDTH; // 274.5px
+const LANE_WIDTH = ROAD_WIDTH / 3; // 63px
 const PLAYER_Y = 540;
 
 const TIERS = [
@@ -379,7 +381,7 @@ function update(dt) {
 
   for (const o of objs) {
     o.y += speed * dt;
-    if (!o.d && Math.abs(o.y - PLAYER_Y) < 36 && Math.abs(lane - o.l) < .55) {
+    if (!o.d && Math.abs(o.y - PLAYER_Y) < 32 && Math.abs(lane - o.l) < .55) {
       o.d = 1;
       if (o.t === 'm' || o.t === 'fork') { crash(o.t); return; }
       collect(o);
@@ -393,11 +395,14 @@ function drawHighStreet() {
   const totalH = 640, offY = scrollY % totalH;
 
   const drawSide = (isRight) => {
-    const xBase = isRight ? ROAD_RIGHT : 0, w = 75;
+    const xBase = isRight ? ROAD_RIGHT : 0, w = isRight ? (W - ROAD_RIGHT) : ROAD_LEFT;
     for (let pass = -1; pass <= 1; pass++) {
       const py = pass * totalH + offY;
       
       if (!isRight && shopLoaded) {
+        // Pre-fill building brick backdrop to eliminate black border on transparent asset
+        ctx.fillStyle = '#8b3a2b';
+        ctx.fillRect(xBase, py - 640, w, 200);
         ctx.drawImage(imgShop, xBase, py - 640, w, 200);
       } else {
         ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, py - 640, w, 200);
@@ -428,7 +433,7 @@ function drawHighStreet() {
 }
 
 function drawPavements() {
-  const pWidth = 15, bh = 20, offY = scrollY % bh;
+  const pWidth = 13.5, bh = 18, offY = scrollY % bh;
   for (let side = 0; side < 2; side++) {
     const x = side === 0 ? ROAD_LEFT - pWidth : ROAD_RIGHT;
     ctx.fillStyle = '#7f8c8d'; ctx.fillRect(x, 0, pWidth, H);
@@ -439,20 +444,20 @@ function drawPavements() {
 
 function drawRoad() {
   ctx.fillStyle = '#3a3f47'; ctx.fillRect(ROAD_LEFT, 0, ROAD_WIDTH, H);
-  const dashH = 35, gapH = 25, totalD = dashH + gapH, offY = scrollY % totalD;
+  const dashH = 31.5, gapH = 22.5, totalD = dashH + gapH, offY = scrollY % totalD;
   ctx.fillStyle = '#ffffff';
   for (let l = 1; l <= 2; l++) {
-    const lineX = ROAD_LEFT + l * LANE_WIDTH - 3;
-    for (let y = -totalD + offY; y < H + totalD; y += totalD) ctx.fillRect(lineX, y, 6, dashH);
+    const lineX = ROAD_LEFT + l * LANE_WIDTH - 2.7;
+    for (let y = -totalD + offY; y < H + totalD; y += totalD) ctx.fillRect(lineX, y, 5.4, dashH);
   }
 }
 
 function drawObj(o) {
   const x = lx(o.l), y = o.y;
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath(); ctx.ellipse(x, y + 20, 22, 7, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x, y + 18, 20, 6, 0, 0, 7); ctx.fill();
   const bob = Math.sin(clock * 6 + o.id) * 3;
-  ctx.drawImage(SP[o.t], x - 35, y - 35 + bob, 70, 70);
+  ctx.drawImage(SP[o.t], x - 31.5, y - 31.5 + bob, 63, 63);
 }
 
 function drawIntroAvatar(dt) {
@@ -489,7 +494,7 @@ function drawPlayer(dt) {
   const px = lx(lane), py = PLAYER_Y;
   
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.beginPath(); ctx.ellipse(px, py + 22, 32, 9, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(px, py + 20, 29, 8, 0, 0, 7); ctx.fill();
   ctx.save();
   ctx.translate(px, py);
   
@@ -515,14 +520,14 @@ function drawPlayer(dt) {
     imgToDraw = getActiveImage(isOpen);
   }
 
-  let w = 80, h = 80;
+  let w = 72, h = 72;
   if (imgToDraw) {
     const ar = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
     w = h * ar; 
-    if (w > 80) { w = 80; h = w / ar; }
+    if (w > 72) { w = 72; h = w / ar; }
     ctx.drawImage(imgToDraw, -w / 2, -h / 2, w, h);
   } else {
-    fbFace(ctx, 40);
+    fbFace(ctx, 36);
   }
   ctx.restore();
   
