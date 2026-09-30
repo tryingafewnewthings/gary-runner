@@ -129,6 +129,17 @@ imgOpen.onload = () => { openLoaded = true; };
 imgOpen.onerror = () => { loadErrorLog.push('gary_open.png not found'); };
 imgOpen.src = 'gary_open.png.PNG';
 
+let openLoaded = false, closedLoaded = false, crashLoaded = false, shopLoaded = false;
+let loadErrorLog = [];
+
+// ... existing gary images ...
+
+const imgShop = new Image();
+imgShop.onload = () => { shopLoaded = true; };
+imgShop.onerror = () => { loadErrorLog.push('chip_shop.png not found'); };
+imgShop.src = 'chip_shop.png';
+
+
 const imgClosed = new Image();
 imgClosed.onload = () => { closedLoaded = true; };
 imgClosed.onerror = () => { loadErrorLog.push('gary_closed.png not found'); };
@@ -384,23 +395,36 @@ function update(dt) {
 }
 
 function drawHighStreet() {
-  ctx.fillStyle = '#222'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#1a1e24'; ctx.fillRect(0, 0, W, H);
   const totalH = 640, offY = scrollY % totalH;
+
   const drawSide = (isRight) => {
     const xBase = isRight ? ROAD_RIGHT : 0, w = 75;
     for (let pass = -1; pass <= 1; pass++) {
       const py = pass * totalH + offY;
-      ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, py - 640, w, 200);
-      ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, py - 580, w - 16, 50);
-      ctx.fillStyle = '#fceabb'; ctx.fillRect(xBase + 12, py - 576, w - 24, 42);
-      ctx.fillStyle = '#e82525'; ctx.fillRect(xBase + 4, py - 610, w - 8, 20);
-      ctx.fillStyle = '#fff'; ctx.font = '900 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('CHIPPY', xBase + w / 2, py - 600);
+      
+      if (!isRight && shopLoaded) {
+        // Draw your high-end generated fish & chip shop on the left side
+        // We stretch it vertically to match the 200px block height smoothly
+        ctx.drawImage(imgShop, xBase, py - 640, w, 200);
+      } else {
+        // Fallback / Right side stylized shop block
+        ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, py - 640, w, 200);
+        ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, py - 580, w - 16, 50);
+        ctx.fillStyle = '#fceabb'; ctx.fillRect(xBase + 12, py - 576, w - 24, 42);
+        ctx.fillStyle = '#e82525'; ctx.fillRect(xBase + 4, py - 610, w - 8, 20);
+        ctx.fillStyle = '#fff'; ctx.font = '900 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('CHIPPY', xBase + w / 2, py - 600);
+      }
+
+      // Middle shop (Bakers)
       ctx.fillStyle = '#5c4033'; ctx.fillRect(xBase, py - 440, w, 220);
       ctx.fillStyle = '#1c2833'; ctx.fillRect(xBase + 8, py - 380, w - 16, 60);
       ctx.fillStyle = '#fff8dc'; ctx.fillRect(xBase + 12, py - 376, w - 24, 52);
       ctx.fillStyle = '#28b463'; ctx.fillRect(xBase + 4, py - 415, w - 8, 20);
       ctx.fillStyle = '#fff'; ctx.fillText('BAKERS', xBase + w / 2, py - 405);
+
+      // Bottom shop (Pub)
       ctx.fillStyle = '#34495e'; ctx.fillRect(xBase, py - 220, w, 220);
       ctx.fillStyle = '#1a252f'; ctx.fillRect(xBase + 8, py - 160, w - 16, 60);
       ctx.fillStyle = '#f9e79f'; ctx.fillRect(xBase + 12, py - 156, w - 24, 52);
@@ -408,8 +432,10 @@ function drawHighStreet() {
       ctx.fillStyle = '#ffe600'; ctx.fillText('THE RED LION', xBase + w / 2, py - 184);
     }
   };
+
   drawSide(false); drawSide(true);
 }
+
 
 function drawPavements() {
   const pWidth = 15, bh = 20, offY = scrollY % bh;
