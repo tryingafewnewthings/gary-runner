@@ -581,15 +581,15 @@ function drawCap(){
 }
 
 function drawBubble(){
-  const s=Math.min(1,crashT*6),px=lx(lane),bx=Math.max(115,Math.min(245,px)),by=380,bw=240,bh=110;
+  const s=Math.min(1,crashT*6),px=lx(lane),bx=Math.max(90,Math.min(270,px)),by=PLAYER_Y-150,bw=148,bh=34;
   ctx.save();ctx.translate(bx,by);ctx.scale(s,s);
   const tx=Math.max(-80,Math.min(80,px-bx)),ty=PLAYER_Y-60-by;
   ctx.fillStyle='#fff';ctx.strokeStyle='#111';ctx.lineWidth=4;ctx.lineJoin='round';
   ctx.beginPath();ctx.moveTo(-14,bh/2-2);ctx.lineTo(tx,ty);ctx.lineTo(14,bh/2-2);ctx.closePath();ctx.fill();ctx.stroke();
   rr(ctx,-bw/2,-bh/2,bw,bh,20);ctx.fill();ctx.stroke();ctx.fillRect(-12,bh/2-4,24,7);
   ctx.fillStyle='#111';ctx.font='900 15px "Arial Black",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  if(state==='crash_fork'){ctx.fillText("You can't tackle a",0,-22);ctx.fillText("premium dinner with a plastic",0,0);ctx.fillText("fork! Unprofessional!",0,22);}
-  else{ctx.fillText("Right, that's",0,-18);ctx.fillText("absolutely",0,4);ctx.fillText("ruined it!",0,26);}
+  ctx.font='700 13px Arial,sans-serif';
+  ctx.fillText(state==='crash_fork'?"Plastic fork.":"Mushrooms. No.",0,0);
   ctx.restore();
 }
 
@@ -640,7 +640,7 @@ function render(dt){
     drawHud();drawCap();
     if(state.startsWith('crash')||state==='over'){
       if(state.startsWith('crash')){ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')';ctx.fillRect(0,0,W,H);}
-      drawBubble();
+      try{drawBubble();}catch(e){}
     }
   }
   drawDiagnostics();
