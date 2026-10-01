@@ -414,9 +414,9 @@ function checkEvents() {
     if (ev.grin) triggerGrin();
   }
 }
-function crash(hitType){crashT=0;cap=null;lastHit=hitType;state='crash_'+hitType;}
+function crash(hitType){crashT=0;lastHit=hitType;cap={s:hitType==='fork'?'Plastic fork.':'Mushrooms. No.',t:0};state='crash_'+hitType;}
 function endGame(){
-  state='over';
+  state='over';cap=null;
   if(score>best){best=score;try{localStorage.setItem('garyBest',best);}catch(e){}}
   try{
     $('fScore').textContent='Score: '+score;
@@ -571,13 +571,17 @@ function drawHud(){
 }
 
 function drawCap(){
-  if(!cap)return;
+  if(!cap||!cap.s)return;
   const t=cap.t,a=t>1.8?1-(t-1.8)/.4:1;
-  ctx.save();ctx.globalAlpha=Math.max(0,a);ctx.translate(CX,240+Math.sin(t*6)*3);
-  ctx.font='900 18px "Arial Black",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  const fit=Math.min(1,310/ctx.measureText(cap.s).width);ctx.scale(fit,fit);
-  ctx.lineJoin='round';ctx.lineWidth=7;ctx.strokeStyle='#1b0326';ctx.strokeText(cap.s,0,0);
-  ctx.fillStyle='#ffe600';ctx.fillText(cap.s,0,0);ctx.restore();
+  ctx.save();ctx.globalAlpha=Math.max(0,a);
+  ctx.font='700 13px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  const w=Math.min(300,ctx.measureText(cap.s).width+18);
+  const x=CX-w/2,y=PLAYER_Y-124;
+  ctx.fillStyle='rgba(12,14,18,.92)';
+  rr(ctx,x,y,w,24,6);ctx.fill();
+  ctx.fillStyle='#f4f1ea';
+  ctx.fillText(cap.s,CX,y+12);
+  ctx.restore();
 }
 
 function drawBubble(){
@@ -643,7 +647,7 @@ function render(dt){
     drawHud();drawCap();
     if(state.startsWith('crash')){
       if(state.startsWith('crash')){ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')';ctx.fillRect(0,0,W,H);}
-      try{drawBubble();}catch(e){}
+
     }
   }
   drawDiagnostics();
