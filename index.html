@@ -72,9 +72,11 @@
     </div>
   </div>
 
+<script src="game-data.js"></script>
 <script>
 (() => {
 'use strict';
+EVENTS.sort((a, b) => a.at - b.at);
 
 const W = 360, H = 640, CX = 180;
 const ROAD_WIDTH = 150;
@@ -90,21 +92,7 @@ const STREET_SEGMENT_H = 520;
 const BUILDING_H = 236;
 const DETAIL_H = STREET_SEGMENT_H - BUILDING_H;
 
-const TIERS = [
-  { n: 'Absolute Rubbish', c: '#ff4d4d' },
-  { n: 'Bit Dry, Needs Salt', c: '#ffb02e' },
-  { n: 'Proper Decent Food', c: '#39ff88' },
-  { n: 'BEAUTIFUL!', c: '#00ffff' },
-  { n: "I'll have to bring Danny here one day", c: '#ffe600' }
-];
-
-const FOODS = { kebab: 5, fish: 10, roast: 25 };
-const CAPS = [
-  "Look at the absolute size of that portion, fellas! Phrwoar.",
-  "The crackling is elite.",
-  "Swimming in proper thick gravy. Get a load of that.",
-  "That is an absolute unit of a pie."
-];
+const PROPS = DETAILS;
 
 const $ = id => document.getElementById(id);
 const cv = $('c');
@@ -120,7 +108,7 @@ let score = 0, best = 0, tierMax = 0;
 let lane = 1, target = 1;
 let scrollY = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
-let grinTimer = 0, stars = [], lastTierIndex = 0;
+let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0;
 
 let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
@@ -180,11 +168,6 @@ const KEEPERS = [
   { x: 2501, y: 1455, w: 326, h: 444 }
 ];
 
-const PROPS = [
-  { name: 'lamp',    x: 646,  y: 1956, w: 150, h: 715 },
-  { name: 'postbox', x: 1278, y: 2120, w: 255, h: 556 },
-  { name: 'bin',     x: 1859, y: 2226, w: 317, h: 444 }
-];
 
 const imgStreet = new Image();
 imgStreet.onload = () => { streetLoaded = true; };
@@ -478,7 +461,7 @@ function triggerGrin() {
 }
 function reset() {
   score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;acc=0;gap=160;
-  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];
+  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;
 }
 function move(d) { if(state==='play') target=Math.max(0,Math.min(2,target+d)); }
 
@@ -499,7 +482,15 @@ function collect(o) {
   if(currentTier>lastTierIndex){lastTierIndex=currentTier;grin=true;}
   if(grin)triggerGrin();
   tierMax=Math.max(tierMax,currentTier);
-  if(score>=(mile+1)*40){mile=Math.floor(score/40);cap={s:CAPS[Math.floor(Math.random()*CAPS.length)],t:0};}
+  checkEvents();
+  if(!cap && score>=(mile+1)*40){mile=Math.floor(score/40);cap={s:CAPS[Math.floor(Math.random()*CAPS.length)],t:0};}
+}
+function checkEvents() {
+  while (nextEvent < EVENTS.length && score >= EVENTS[nextEvent].at) {
+    const ev = EVENTS[nextEvent++];
+    if (ev.say) cap = { s: ev.say, t: 0 };
+    if (ev.grin) triggerGrin();
+  }
 }
 function crash(hitType){crashT=0;cap=null;state='crash_'+hitType;}
 function endGame(){
