@@ -123,8 +123,37 @@ let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
 
 // Image Preloading & Status Diagnostics
-let openLoaded = false, closedLoaded = false, crashLoaded = false, shopLoaded = false;
+let openLoaded = false, closedLoaded = false, crashLoaded = false, shopLoaded = false, keeperLoaded = false;
 let loadErrorLog = [];
+
+// ---------- SHOP SETTINGS (easy to tweak) ----------
+// The shop picture is 941 x 1672. All the numbers below are positions inside that picture.
+const SHOP_W = 941, SHOP_H = 1672;
+const WIN = { x1: 622, x2: 895, y1: 1000, y2: 1412 }; // the right-hand shop window (glass area)
+const COUNTER_TOP = 1272;      // where the counter starts (he stands behind this line)
+const KEEPER_X = 758;          // middle of the window, left-right
+const KEEPER_FEET = 1332;      // bottom of the shopkeeper picture (hidden behind the counter)
+const KEEPER_SIZE = 278;       // how tall the shopkeeper is, in shop-picture pixels
+const KEEPER_TINT = 'rgba(255,170,70,0.16)'; // warm shop-light colour so he blends in
+let shopCv = null, keeperCv = null;
+
+// Shrinks a big picture down smoothly (stops it looking jagged when scrolling)
+function prescale(img, tw, th) {
+  let cur = img, cw = img.naturalWidth, ch = img.naturalHeight;
+  while (cw / 2 > tw && ch / 2 > th) {
+    const c = document.createElement('canvas');
+    cw = Math.round(cw / 2); ch = Math.round(ch / 2);
+    c.width = cw; c.height = ch;
+    c.getContext('2d').drawImage(cur, 0, 0, cw, ch);
+    cur = c;
+  }
+  const out = document.createElement('canvas');
+  out.width = tw; out.height = th;
+  const o = out.getContext('2d');
+  o.imageSmoothingQuality = 'high';
+  o.drawImage(cur, 0, 0, tw, th);
+  return out;
+}
 
 const imgOpen = new Image();
 imgOpen.onload = () => { openLoaded = true; };
@@ -132,9 +161,26 @@ imgOpen.onerror = () => { loadErrorLog.push('gary_open.png not found'); };
 imgOpen.src = 'gary_open.png.PNG';
 
 const imgShop = new Image();
-imgShop.onload = () => { shopLoaded = true; };
-imgShop.onerror = () => { loadErrorLog.push('chip_shop.png not found'); };
-imgShop.src = 'chip_shop.PNG';
+imgShop.onload = () => {
+  try { shopCv = prescale(imgShop, 192, 576); } catch (e) { shopCv = null; }
+  shopLoaded = true;
+};
+imgShop.onerror = () => { loadErrorLog.push('chip_shopnew.PNG not found'); };
+imgShop.src = 'chip_shopnew.PNG';
+
+const imgKeeper = new Image();
+imgKeeper.onload = () => {
+  try {
+    keeperCv = prescale(imgKeeper, 130, 133);
+    const kc = keeperCv.getContext('2d');
+    kc.globalCompositeOperation = 'source-atop'; // only tints the shopkeeper, not the empty space
+    kc.fillStyle = KEEPER_TINT;
+    kc.fillRect(0, 0, keeperCv.width, keeperCv.height);
+  } catch (e) { keeperCv = null; }
+  keeperLoaded = true;
+};
+imgKeeper.onerror = () => { loadErrorLog.push('shop_keeper.PNG not found'); };
+imgKeeper.src = 'shop_keeper.PNG';
 
 const imgClosed = new Image();
 imgClosed.onload = () => { closedLoaded = true; };
@@ -390,6 +436,50 @@ function update(dt) {
   objs = objs.filter(o => !o.d && o.y < H + 60);
 }
 
+// Draws the chip shop squeezed to fit the side strip (like a wall seen at an angle),
+// with the shopkeeper standing behind the counter in the right-hand window.
+function drawShopFacade(x0, y0, w, h) {
+  const src = shopCv || imgShop;
+  ctx.drawImage(src, x0, y0, w, h);
+
+  if (keeperLoaded) {
+    const X = v => x0 + v / SHOP_W * w;
+    const Y = v => y0 + v / SHOP_H * h;
+
+    // Shopkeeper animation: gentle bob + breathing + a lean towards the road every 5 seconds
+    const bob = Math.sin(clock * 2.4) * 1.2;
+    const breathe = 1 + Math.sin(clock * 2.4 + 1) * 0.02;
+    const ph = (clock % 5) / 0.7;                          // 0 to 1 = the lean moment
+    const lean = ph < 1 ? Math.sin(ph * Math.PI) * 0.1 : 0;
+    const hop = ph < 1 ? -Math.sin(ph * Math.PI) * 1.5 : 0;
+    const kh = KEEPER_SIZE / SHOP_H * h;
+    const kw = KEEPER_SIZE * (imgKeeper.naturalWidth / imgKeeper.naturalHeight) / SHOP_W * w;
+
+    // 1) draw him, only inside the window glass
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(X(WIN.x1), Y(WIN.y1), X(WIN.x2) - X(WIN.x1), Y(WIN.y2) - Y(WIN.y1));
+    ctx.clip();
+    ctx.translate(X(KEEPER_X), Y(KEEPER_FEET) + bob + hop);
+    ctx.rotate(lean + Math.sin(clock * 1.7) * 0.02);
+    ctx.scale(1, breathe);
+    ctx.drawImage(keeperCv || imgKeeper, -kw / 2, -kh, kw, kh);
+    ctx.restore();
+
+    // 2) draw the counter again on top, so he looks like he is behind it
+    const fx2 = src.width / SHOP_W, fy2 = src.height / SHOP_H;
+    ctx.drawImage(src, WIN.x1 * fx2, COUNTER_TOP * fy2, (WIN.x2 - WIN.x1) * fx2, (WIN.y2 - COUNTER_TOP) * fy2,
+                  X(WIN.x1), Y(COUNTER_TOP), X(WIN.x2) - X(WIN.x1), Y(WIN.y2) - Y(COUNTER_TOP));
+  }
+
+  // soft shadow where the shop meets the pavement
+  const g = ctx.createLinearGradient(x0 + w - 12, 0, x0 + w, 0);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, 'rgba(0,0,0,0.3)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x0 + w - 12, y0, 12, h);
+}
+
 function drawHighStreet() {
   ctx.fillStyle = '#1a1e24'; ctx.fillRect(0, 0, W, H);
   const totalH = 640, offY = scrollY % totalH;
@@ -403,35 +493,8 @@ function drawHighStreet() {
       // Top shop (Chippy slot)
       const s1Y = py - totalH;
       if (!isRight && shopLoaded && imgShop.width) {
-        ctx.save();
-        ctx.beginPath();
-        // Math.floor/ceil forces sub-pixel safety so the background doesn't bleed through
-        ctx.rect(xBase, Math.floor(s1Y), w, Math.ceil(shopH) + 1);
-        ctx.clip();
-        
-        const imgRatio = imgShop.width / imgShop.height;
-        const slotRatio = w / shopH;
-        let rW, rH;
-        
-        // Calculate "cover" scale to prevent squishing
-        if (imgRatio > slotRatio) {
-          rH = shopH;
-          rW = imgShop.width * (shopH / imgShop.height);
-        } else {
-          rW = w;
-          rH = imgShop.height * (w / imgShop.width);
-        }
-        
-        // Zoom by 35% to make the shop larger and clip out any baked-in image borders
-        const zoom = 1.35;
-        rW *= zoom;
-        rH *= zoom;
-        
-        const dX = xBase - (rW - w) / 2;
-        const dY = s1Y - (rH - shopH) / 2;
-        
-        ctx.drawImage(imgShop, dX, dY, rW, rH);
-        ctx.restore();
+        // the visible strip is the building area minus the pavement (+1px so there is no gap)
+        drawShopFacade(xBase, Math.floor(s1Y), ROAD_LEFT - 13.5 + 1, Math.ceil(shopH) + 1);
       } else {
         ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, Math.floor(s1Y), w, Math.ceil(shopH) + 1);
         ctx.fillStyle = '#2b1d14'; ctx.fillRect(xBase + 8, s1Y + 60, w - 16, 50);
