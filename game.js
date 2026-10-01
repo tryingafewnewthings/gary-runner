@@ -421,6 +421,7 @@ function dRoast(c) {
 
 const imgMush = loadGary('mushroom.png?v=1');
 const imgFork = loadGary('fork.png?v=1');
+const imgRoast = loadGary('roast.png');
 const SP = { m: mk(dMush), fork: mk(dFork), kebab: mk(dKebab), fish: mk(dFish), roast: mk(dRoast) };
 
 function rr(c,x,y,w,h,r) {
@@ -582,9 +583,19 @@ function drawObj(o){
   }else{
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+18*S,20*S,6*S,0,0,7);ctx.fill();
   }
-  const bob=Math.sin(clock*6+o.id)*3*S,sz=o.t==='fork'?44:(hazard?52:63*S);
-  const pic=o.t==='m'&&imgMush.ready?imgMush:(o.t==='fork'&&imgFork.ready?imgFork:SP[o.t]);
+  const bob=Math.sin(clock*6+o.id)*3*S,sz=o.t==='fork'?44:(o.t==='roast'?62:(hazard?52:63*S));
+  const pic=o.t==='m'&&imgMush.ready?imgMush:(o.t==='fork'&&imgFork.ready?imgFork:(o.t==='roast'&&imgRoast.ready?imgRoast:SP[o.t]));
   ctx.drawImage(pic,x-sz/2,y-sz/2+bob,sz,sz);
+  if(o.t==='roast'){
+    const g = (clock*0.7+o.id)%1;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.sin(g*Math.PI)*0.45);
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(x-sz*0.18+g*sz*0.3, y-sz*0.12+bob, 3, 1.4, -0.4, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 function drawIntroAvatar(dt){
