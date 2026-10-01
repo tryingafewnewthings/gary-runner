@@ -581,9 +581,9 @@ function drawCap(){
 }
 
 function drawBubble(){
-  const s=Math.min(1,crashT*6),px=lx(lane),bx=Math.max(90,Math.min(270,px)),by=PLAYER_Y-150,bw=148,bh=34;
+  const s=Math.min(1,crashT*6),px=lx(lane),bx=px<180?px+72:px-72,by=PLAYER_Y-118,bw=112,bh=28;
   ctx.save();ctx.translate(bx,by);ctx.scale(s,s);
-  const tx=Math.max(-80,Math.min(80,px-bx)),ty=PLAYER_Y-60-by;
+  const tx=px-bx,ty=18;
   ctx.fillStyle='#fff';ctx.strokeStyle='#111';ctx.lineWidth=4;ctx.lineJoin='round';
   ctx.beginPath();ctx.moveTo(-14,bh/2-2);ctx.lineTo(tx,ty);ctx.lineTo(14,bh/2-2);ctx.closePath();ctx.fill();ctx.stroke();
   rr(ctx,-bw/2,-bh/2,bw,bh,20);ctx.fill();ctx.stroke();ctx.fillRect(-12,bh/2-4,24,7);
