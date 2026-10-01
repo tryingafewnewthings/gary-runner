@@ -88,7 +88,7 @@ const PLAYER_Y = 540;
 
 const PAVEMENT_WIDTH = 13.5;
 const BUILDING_WIDTH = ROAD_LEFT - PAVEMENT_WIDTH; // 91.5px on the 360px canvas
-const STREET_SEGMENT_H = 520;
+const STREET_SEGMENT_H = 360;
 const BUILDING_H = 236;
 const DETAIL_H = STREET_SEGMENT_H - BUILDING_H;
 
@@ -327,12 +327,14 @@ function drawHighStreet() {
     return;
   }
 
-  const offY = distance % STREET_SEGMENT_H;
-  const base = Math.floor(distance / STREET_SEGMENT_H);
+  // The next roof stays just above the screen, so a shop approaches instead of popping in.
+  const peek = 56;
+  const base = Math.floor((distance + peek) / STREET_SEGMENT_H);
 
   for (let pass = -1; pass <= 3; pass++) {
     const index = base + pass;
-    const y = pass * STREET_SEGMENT_H + offY - STREET_SEGMENT_H;
+    if (index < 0) continue;
+    const y = distance - index * STREET_SEGMENT_H + (STREET_SEGMENT_H - peek);
 
     const plan = STREET[((index % STREET.length) + STREET.length) % STREET.length];
     drawStreetBuilding(
