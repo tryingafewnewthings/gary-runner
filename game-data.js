@@ -65,10 +65,10 @@ const STREET = [
 const ROWS = [
   { lanes: ['kebab', 'none', 'fish'] },
   { lanes: ['none', 'fork', 'kebab'] },
-  { lanes: ['roast', 'none', 'none'] },
+  { lanes: ['none', 'fish', 'none'] },
   { lanes: ['none', 'fish', 'm'] },
   { lanes: ['kebab', 'none', 'fork'] },
-  { lanes: ['none', 'roast', 'fish'] },
+  { lanes: ['none', 'kebab', 'fish'] },
   { lanes: ['m', 'kebab', 'none'] },
   { lanes: ['fish', 'none', 'roast'] }
 ];
