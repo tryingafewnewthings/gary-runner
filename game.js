@@ -141,12 +141,12 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   // Glass under the awning. Most fronts have the door on the right, so the
   // pane is left of centre. Red Lion is a wider glazed front.
   const panes = [
-    { x: 0.07, y: 0.575, w: 0.54, h: 0.255 },
-    { x: 0.08, y: 0.578, w: 0.50, h: 0.250 },
-    { x: 0.09, y: 0.568, w: 0.50, h: 0.258 },
-    { x: 0.14, y: 0.548, w: 0.70, h: 0.292 },
+    { x: 0.06, y: 0.560, w: 0.56, h: 0.280 },
+    { x: 0.06, y: 0.558, w: 0.55, h: 0.282 },
+    { x: 0.07, y: 0.558, w: 0.54, h: 0.282 },
+    { x: 0.10, y: 0.540, w: 0.58, h: 0.300 },
     { x: 0.08, y: 0.575, w: 0.52, h: 0.255 },
-    { x: 0.08, y: 0.575, w: 0.52, h: 0.255 }
+    { x: 0.06, y: 0.560, w: 0.55, h: 0.280 }
   ];
   const pane = panes[index] || panes[0];
   const wx = x + w * pane.x;
@@ -159,10 +159,17 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012;
   const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6;
 
-  const keeperH = wh * 0.98;
-  const keeperW = keeperH * (keeper.w / keeper.h);
-  const baseX = wx + ww * 0.48 + shift;
-  const baseY = wy + wh + bob;
+  // Fit the glass, like the butcher: head in the window, shoulders in, feet on the counter.
+  const fitH = wh * 0.96;
+  const fitW = ww * 0.86;
+  let keeperH = fitH;
+  let keeperW = keeperH * (keeper.w / keeper.h);
+  if (keeperW > fitW) {
+    keeperW = fitW;
+    keeperH = keeperW * (keeper.h / keeper.w);
+  }
+  const baseX = wx + ww * 0.5 + shift;
+  const baseY = wy + wh - 1 + bob;
 
   ctx.save();
   ctx.beginPath();
