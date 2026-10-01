@@ -17,6 +17,13 @@ const TIERS = [
 
 const FOODS = { kebab: 5, fish: 10, roast: 25 };
 
+// Lines the caption can say. The run looks these up. It does not write them.
+const LINES = {
+  fork: 'Plastic fork.',
+  m: 'Mushrooms. No.',
+  close: 'Close one.'
+};
+
 const CAPS = [
   "Look at the absolute size of that portion, fellas! Phrwoar.",
   "The crackling is elite.",

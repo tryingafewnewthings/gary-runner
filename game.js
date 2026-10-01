@@ -414,7 +414,7 @@ function checkEvents() {
     if (ev.grin) triggerGrin();
   }
 }
-function crash(hitType){crashT=0;lastHit=hitType;cap={s:hitType==='fork'?'Plastic fork.':'Mushrooms. No.',t:0};state='crash_'+hitType;}
+function crash(hitType){crashT=0;lastHit=hitType;cap={s:LINES[hitType]||LINES.m,t:0};state='crash_'+hitType;}
 function endGame(){
   state='over';cap=null;
   if(score>best){best=score;try{localStorage.setItem('garyBest',best);}catch(e){}}
@@ -483,7 +483,7 @@ function update(dt){
       collect(o);
     }else if(!o.near&&(o.t==='m'||o.t==='fork')&&Math.abs(o.y-PLAYER_Y)<26&&Math.abs(lane-o.l)>0.55&&Math.abs(lane-o.l)<1.05){
       o.near=1;
-      if(nearCd<=0){nearCd=1.4;score+=5;fx.push({x:lx(lane),y:PLAYER_Y-20,t:0,life:1,txt:'+5'});if(!cap)cap={s:'Close one.',t:0};}
+      if(nearCd<=0){nearCd=1.4;score+=5;fx.push({x:lx(lane),y:PLAYER_Y-20,t:0,life:1,txt:'+5'});if(!cap)cap={s:LINES.close,t:0};}
     }
   }
   objs=objs.filter(o=>!o.d&&o.y<H+60);
