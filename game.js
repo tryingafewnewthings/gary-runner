@@ -581,17 +581,42 @@ function drawCap(){
 }
 
 function drawBubble(){
-  const px=lx(lane);
-  const line=state==='crash_fork'?"Plastic fork.":"Mushrooms. No.";
-  const bw=150,bh=36,by=PLAYER_Y-128;
-  const bx=px<CX?px+78:px-78;
-  ctx.save();
-  ctx.fillStyle='#111';ctx.strokeStyle='#111';ctx.lineWidth=3;ctx.lineJoin='round';
-  rr(ctx,bx-bw/2,by-bh/2,bw,bh,12);ctx.fill();
-  ctx.beginPath();ctx.moveTo(bx-8,by+bh/2);ctx.lineTo(px,PLAYER_Y-70);ctx.lineTo(bx+8,by+bh/2);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#f4f1ea';ctx.font='700 14px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(line,bx,by);
+  const s=Math.min(1,crashT*6),px=lx(lane),bx=Math.max(115,Math.min(245,px)),by=380,bw=240,bh=110;
+  ctx.save();ctx.translate(bx,by);ctx.scale(s,s);
+  const tx=Math.max(-80,Math.min(80,px-bx)),ty=PLAYER_Y-60-by;
+  ctx.fillStyle='#fff';ctx.strokeStyle='#111';ctx.lineWidth=4;ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(-14,bh/2-2);ctx.lineTo(tx,ty);ctx.lineTo(14,bh/2-2);ctx.closePath();ctx.fill();ctx.stroke();
+  rr(ctx,-bw/2,-bh/2,bw,bh,20);ctx.fill();ctx.stroke();ctx.fillRect(-12,bh/2-4,24,7);
+  ctx.fillStyle='#111';ctx.font='900 15px "Arial Black",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  if(state==='crash_fork'){ctx.fillText("You can't tackle a",0,-22);ctx.fillText("premium dinner with a plastic",0,0);ctx.fillText("fork! Unprofessional!",0,22);}
+  else{ctx.fillText("Right, that's",0,-18);ctx.fillText("absolutely",0,4);ctx.fillText("ruined it!",0,26);}
   ctx.restore();
+}
+
+function drawStreetLight(){
+  // A restrained warm reflection keeps the storefronts connected to the road
+  // without locking the system to one particular shop.
+  const flick=.92+Math.sin(clock*7)*.04+Math.sin(clock*3.1)*.03;
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  for(let pass=-1;pass<=3;pass++){
+    const y=pass*STREET_SEGMENT_H+(scrollY%STREET_SEGMENT_H)-STREET_SEGMENT_H;
+    const cy=y+BUILDING_H*.64;
+    for(const side of [0,1]){
+      const cx=side===0?ROAD_LEFT-2:ROAD_RIGHT+2;
+      const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,58);
+      grad.addColorStop(0,'rgba(255,180,90,'+(.09*flick)+')');
+      grad.addColorStop(1,'rgba(255,180,90,0)');
+      ctx.fillStyle=grad;ctx.fillRect(side===0?0:ROAD_RIGHT,y,ROAD_WIDTH*.25,BUILDING_H);
+    }
+  }
+  ctx.restore();
+}
+
+function drawVignette(){
+  const t=ctx.createLinearGradient(0,0,0,150);t.addColorStop(0,'rgba(4,6,16,.5)');t.addColorStop(1,'rgba(4,6,16,0)');
+  ctx.fillStyle=t;ctx.fillRect(0,0,W,150);
+  const b=ctx.createLinearGradient(0,H-130,0,H);b.addColorStop(0,'rgba(4,6,16,0)');b.addColorStop(1,'rgba(4,6,16,.45)');
+  ctx.fillStyle=b;ctx.fillRect(0,H-130,W,130);
 }
 
 function render(dt){
@@ -615,7 +640,7 @@ function render(dt){
     drawHud();drawCap();
     if(state.startsWith('crash')||state==='over'){
       if(state.startsWith('crash')){ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')';ctx.fillRect(0,0,W,H);}
-      try{drawBubble();}catch(e){}
+      drawBubble();
     }
   }
   drawDiagnostics();
@@ -671,9 +696,7 @@ function resize(){
 let last=performance.now();
 function loop(ts){
   const dt=Math.max(0,Math.min(.05,(ts-last)/1000));last=ts;
-  try{update(dt);}catch(e){}
-  try{render(dt);}catch(e){}
-  requestAnimationFrame(loop);
+  update(dt);render(dt);requestAnimationFrame(loop);
 }
 
 addEventListener('resize',resize);
