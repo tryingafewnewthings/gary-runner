@@ -235,46 +235,31 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   if (!streetLoaded || !keeper) return;
 
   const phase = clock * 2.1 + phaseSeed;
-  const bob = Math.sin(phase) * 1.1;
-  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.014;
-  const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.9;
-  const leanPulse = Math.max(0, Math.sin(clock * 0.42 + phaseSeed));
-  const lean = (isRight ? -1 : 1) * leanPulse * 0.018;
 
-  const keeperH = Math.min(82, h * 0.39);
+  // Very subtle movement so the keeper feels alive without looking oversized.
+  const bob = Math.sin(phase) * 0.8;
+  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.01;
+  const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.5;
+
+  // Keep the character comfortably inside the shop window.
+  const keeperH = Math.min(52, h * 0.235);
   const keeperW = keeperH * (keeper.w / keeper.h);
+
   const baseX = x + w * 0.50 + shift;
-  const baseY = y + h * 0.88 + bob;
+  const baseY = y + h * 0.79 + bob;
 
   ctx.save();
 
-  // Window/glass depth plate hides the static embedded figure and reads as
-  // a natural darker interior/reflection behind the animated keeper.
-  const plateW = Math.min(w * 0.58, 58);
-  const plateH = Math.min(h * 0.40, 94);
-  const plateX = baseX - plateW / 2;
-  const plateY = baseY - plateH + 2;
-
-  const glass = ctx.createLinearGradient(plateX, plateY, plateX, plateY + plateH);
-  glass.addColorStop(0, 'rgba(12,20,26,0.18)');
-  glass.addColorStop(0.45, 'rgba(8,13,18,0.80)');
-  glass.addColorStop(1, 'rgba(8,12,16,0.94)');
-  ctx.fillStyle = glass;
-  ctx.fillRect(plateX, plateY, plateW, plateH);
-
-  // Small contact shadow.
-  ctx.fillStyle = 'rgba(0,0,0,0.28)';
-  ctx.beginPath();
-  ctx.ellipse(baseX, baseY + 1, keeperW * 0.38, 2.2, 0, 0, Math.PI * 2);
-  ctx.fill();
-
   ctx.translate(baseX, baseY);
-  ctx.rotate(lean);
   ctx.scale(1, breathe);
+
   ctx.drawImage(
     imgStreet,
     keeper.x, keeper.y, keeper.w, keeper.h,
-    -keeperW / 2, -keeperH, keeperW, keeperH
+    -keeperW / 2,
+    -keeperH,
+    keeperW,
+    keeperH
   );
 
   ctx.restore();
