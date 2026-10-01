@@ -191,6 +191,12 @@ imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
 imgStreet.src = 'high_street_sprites.webp?v=6';
 
+const imgPath = new Image();
+let pathLoaded = false;
+imgPath.onload = () => { pathLoaded = true; };
+imgPath.onerror = () => { loadErrorLog.push('path.png not found'); };
+imgPath.src = 'path.png';
+
 /*
   Each building has an intentional detail zone underneath it. The gap is
   deliberately kept as a separate rendering layer so we can later add:
@@ -296,25 +302,23 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
 }
 
 function drawCobbles(x, y, w, h) {
-  ctx.fillStyle = '#6e7276';
-  ctx.fillRect(x, y, w, h);
-  const slabW = 24, slabH = 14;
-  const off = scrollY % slabH;
-  ctx.strokeStyle = 'rgba(48,50,54,0.34)';
-  ctx.lineWidth = 1;
-  for (let row = -1, yy = y - slabH + off; yy < y + h + slabH; yy += slabH, row++) {
-    const shift = (row % 2) ? slabW * 0.5 : 0;
-    ctx.beginPath();
-    ctx.moveTo(x, yy);
-    ctx.lineTo(x + w, yy);
-    ctx.stroke();
-    for (let xx = x - shift; xx < x + w; xx += slabW) {
-      ctx.beginPath();
-      ctx.moveTo(xx, yy);
-      ctx.lineTo(xx, yy + slabH);
-      ctx.stroke();
-    }
+  // The whole path is this one picture. Replace path.png to change every pavement.
+  if (!pathLoaded) {
+    ctx.fillStyle = '#6e7276';
+    ctx.fillRect(x, y, w, h);
+    return;
   }
+  const tileH = imgPath.height;
+  const off = scrollY % tileH;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  ctx.translate(0, off);
+  const pattern = ctx.createPattern(imgPath, 'repeat');
+  ctx.fillStyle = pattern;
+  ctx.fillRect(x, y - tileH, w, h + tileH * 2);
+  ctx.restore();
 }
 
 function drawHighStreet() {
