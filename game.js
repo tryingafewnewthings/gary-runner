@@ -53,7 +53,7 @@ function loadGary(file) {
   img.src = file;
   return img;
 }
-const imgRun = [loadGary('gary_run1.png?v=4'), loadGary('gary_run2.png?v=4')];
+const imgRun = [loadGary('gary_run1.png?v=5'), loadGary('gary_run2.png?v=5')];
 const imgCheer = loadGary('gary_cheer.png?v=1');
 const imgCrash = loadGary('gary_crash.png?v=1');
 let runFrame = 0, runTimer = 0;
@@ -612,14 +612,15 @@ function drawPlayer(dt){
   else if(grinTimer>0 && imgCheer.ready) imgToDraw=imgCheer;
   else {
     runTimer+=dt;
-    if(runTimer>0.16){runTimer=0;runFrame=runFrame===0?1:0;}
+    if(runTimer>0.22){runTimer=0;runFrame=runFrame===0?1:0;}
     imgToDraw=imgRun[runFrame].ready?imgRun[runFrame]:(imgRun[0].ready?imgRun[0]:null);
   }
   const h=142;
+    const step = runFrame===1 && !isCrashing && grinTimer<=0 ? -3 : 0;
   if(imgToDraw){
     const ar=imgToDraw.naturalWidth/imgToDraw.naturalHeight;
     const w=h*ar;
-    ctx.drawImage(imgToDraw,-w/2,-h+6,w,h);
+    ctx.drawImage(imgToDraw,-w/2,-h+6+step,w,h);
   }else fbFace(ctx,36*S);
   ctx.restore();
 
