@@ -282,7 +282,6 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
 }
 
 function drawCobbles(x, y, w, h) {
-  // The whole path is this one picture. Replace path.png to change every pavement.
   if (!pathLoaded) {
     ctx.fillStyle = '#6e7276';
     ctx.fillRect(x, y, w, h);
@@ -298,6 +297,22 @@ function drawCobbles(x, y, w, h) {
   const pattern = ctx.createPattern(imgPath, 'repeat');
   ctx.fillStyle = pattern;
   ctx.fillRect(x, y - tileH, w, h + tileH * 2);
+  ctx.globalAlpha = 0.22;
+  ctx.translate(tileH * 0.5, tileH * 0.5);
+  ctx.fillRect(x - tileH, y - tileH * 2, w + tileH, h + tileH * 3);
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  for (let i = 0; i < 4; i++) {
+    const cy = ((i * 210 - scrollY * 0.35) % (h + 180)) - 40;
+    const wash = ctx.createRadialGradient(x + w * (0.3 + (i % 2) * 0.4), y + cy, 4, x + w * 0.5, y + cy, w * 0.7);
+    wash.addColorStop(0, i % 2 ? 'rgba(255,255,255,.05)' : 'rgba(20,24,28,.08)');
+    wash.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = wash;
+    ctx.fillRect(x, y + cy - 50, w, 100);
+  }
   ctx.restore();
 }
 
