@@ -11,7 +11,7 @@ const ROAD_RIGHT = ROAD_LEFT + ROAD_WIDTH;
 const LANE_WIDTH = ROAD_WIDTH / 3;
 const PLAYER_Y = 540;
 
-const PAVEMENT_WIDTH = 13.5;
+const PAVEMENT_WIDTH = 6;
 const BUILDING_WIDTH = ROAD_LEFT - PAVEMENT_WIDTH; // 91.5px on the 360px canvas
 const STREET_SEGMENT_H = 360;
 const BUILDING_H = 236;
@@ -103,7 +103,7 @@ const imgPath = new Image();
 let pathLoaded = false;
 imgPath.onload = () => { pathLoaded = true; };
 imgPath.onerror = () => { loadErrorLog.push('path.png not found'); };
-imgPath.src = 'path.png?v=3';
+imgPath.src = 'path.png?v=4';
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -239,8 +239,8 @@ function drawHighStreet() {
   ctx.fillRect(0, 0, W, H);
 
   // Cobbles sit behind the shops, so the space around each chimney is pavement.
-  const leftW = ROAD_LEFT;
-  const rightX = ROAD_RIGHT;
+  const leftW = ROAD_LEFT - PAVEMENT_WIDTH;
+  const rightX = ROAD_RIGHT + PAVEMENT_WIDTH;
   drawCobbles(0, 0, leftW, H);
   drawCobbles(rightX, 0, W - rightX, H);
 
@@ -279,10 +279,23 @@ function drawHighStreet() {
 }
 
 function drawPavements() {
-  // A hairline only. A stone band here reads as a wall and lifts the road above the shops.
-  ctx.fillStyle = 'rgba(28,30,34,0.55)';
-  ctx.fillRect(ROAD_LEFT - 1, 0, 1, H);
-  ctx.fillRect(ROAD_RIGHT, 0, 1, H);
+  const pWidth = PAVEMENT_WIDTH;
+  const slab = 22;
+  const offY = scrollY % slab;
+  for (let side = 0; side < 2; side++) {
+    const x = side === 0 ? ROAD_LEFT - pWidth : ROAD_RIGHT;
+    // Flat border only. No pale lip, no dark gutter, so it does not lift the road.
+    ctx.fillStyle = '#9a9e98';
+    ctx.fillRect(x, 0, pWidth, H);
+    ctx.strokeStyle = 'rgba(70,74,68,0.4)';
+    ctx.lineWidth = 1;
+    for (let y = -slab + offY; y < H + slab; y += slab) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + pWidth, y);
+      ctx.stroke();
+    }
+  }
 }
 
 function mk(fn) {
