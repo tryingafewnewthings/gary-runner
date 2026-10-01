@@ -39,6 +39,7 @@ const EVENTS = [
   { at: 500, say: "I'll have to bring Danny here one day.", grin: true }
 ];
 
+// A new prop needs a name, a picture, width, height and cap. The street adds the shadow and the ground sit.
 const DETAILS = [
   { name: 'lamp', x: 646, y: 1956, w: 150, h: 715 },
   { name: 'postbox', file: 'postbox.png', w: 400, h: 900, cap: 64 },

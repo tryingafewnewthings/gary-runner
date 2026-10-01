@@ -142,8 +142,22 @@ function drawDetailZone(x, y, w, h, objectName) {
   const cap = prop.cap || (objectName === 'bin' ? 46 : 72);
   const propH = Math.min(cap, h - 6);
   const propW = propH * (prop.w / prop.h);
-  const px = x + w * 0.5 - propW / 2;
-  const py = y + h - propH - 2;
+  const shift = ((objectName.length * 17 + Math.round(x)) % 11) - 5;
+  const px = x + w * 0.5 - propW / 2 + shift;
+  const py = y + h - propH + 2;
+  const foot = px + propW / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(12,14,18,.35)';
+  ctx.beginPath();
+  ctx.ellipse(foot, y + h - 3, Math.max(8, propW * 0.28), 4, 0, 0, 7);
+  ctx.fill();
+  if (objectName === 'bin' || objectName === 'tree') {
+    ctx.fillStyle = 'rgba(40,48,42,.28)';
+    ctx.beginPath();
+    ctx.ellipse(foot + 6, y + h - 2, 7, 3, 0, 0, 7);
+    ctx.fill();
+  }
+  ctx.restore();
   if (prop.file && prop.img && prop.img.complete && prop.img.naturalWidth) {
     ctx.drawImage(prop.img, px, py, propW, propH);
     return;
