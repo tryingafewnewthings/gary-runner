@@ -465,7 +465,7 @@ function update(dt){
   for(const f of fx)f.t+=dt;
   fx=fx.filter(f=>f.t<f.life);
 
-  const aim=200+Math.floor(score/100)*12;
+  const aim=Math.min(300,200+Math.floor(score/150)*10);
   shownSpeed+=(aim-shownSpeed)*Math.min(1,dt*0.7);
   const speed=shownSpeed;
   if(state==='menu'||state==='intro'){return;}
@@ -494,8 +494,8 @@ function update(dt){
 
 function drawRoad(){
   ctx.fillStyle='#3a3f47';ctx.fillRect(ROAD_LEFT,0,ROAD_WIDTH,H);
-  const dashH=31.5*S,gapH=22.5*S,totalD=dashH+gapH,offY=scrollY%totalD;
-  ctx.fillStyle='#fff';
+  const dashH=42*S,gapH=28*S,totalD=dashH+gapH,offY=scrollY%totalD;
+  ctx.fillStyle='#c5c8cc';
   for(let l=1;l<=2;l++){
     const lineX=ROAD_LEFT+l*LANE_WIDTH-2.7*S;
     for(let y=-totalD+offY;y<H+totalD;y+=totalD)ctx.fillRect(lineX,y,5.4*S,dashH);
@@ -562,7 +562,7 @@ function drawPlayer(dt){
 function drawDiagnostics(){
   if(!loadErrorLog.length)return;
   ctx.fillStyle='rgba(255,0,0,.85)';ctx.fillRect(0,0,W,24*loadErrorLog.length+8);
-  ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillStyle='#c5c8cc';ctx.font='11px monospace';ctx.textAlign='left';ctx.textBaseline='top';
   loadErrorLog.forEach((err,i)=>ctx.fillText('⚠️ ERROR: '+err,10,6+i*22));
 }
 
