@@ -45,7 +45,7 @@ const STREET = [
   { left: 'Fish & Chips', right: 'Bakery', object: 'postbox' },
   { left: 'none', right: 'none', object: 'lamp' },
   { left: 'Peri Peri Chicken', right: 'Butchers', object: 'bin' },
-  { left: 'none', right: 'The Red Lion', object: 'postbox' },
-  { left: 'Mallace Cafe', right: 'none', object: 'bin' },
+  { left: 'none', right: 'none', object: 'postbox' },
+  { left: 'The Red Lion', right: 'Mallace Cafe', object: 'bin' },
   { left: 'none', right: 'none', object: 'lamp' }
 ];

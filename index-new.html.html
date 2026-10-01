@@ -72,7 +72,7 @@
     </div>
   </div>
 
-<script src="game-data.js"></script>
+<script src="game-data.js?v=3"></script>
 <script>
 (() => {
 'use strict';
@@ -549,7 +549,7 @@ function update(dt){
   fx=fx.filter(f=>f.t<f.life);
 
   const speed=200+Math.floor(score/80)*15;
-  if(state==='menu'||state==='intro'){distance+=120*dt; scrollY=distance;return;}
+  if(state==='menu'||state==='intro'){return;}
   if(state.startsWith('crash')){crashT+=dt;if(crashT>2)endGame();return;}
   if(state!=='play')return;
 
