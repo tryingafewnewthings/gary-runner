@@ -123,6 +123,18 @@ function shopByName(name) {
   return BUILDINGS.findIndex(b => b.name === name);
 }
 
+
+function sideSlot(plan, side, slot) {
+  if (slot === 'middle') return plan[side + 'Middle'] || plan[side + 'Object'] || 'none';
+  const key = side + slot.charAt(0).toUpperCase() + slot.slice(1);
+  return plan[key] || 'none';
+}
+function drawSideLayers(x, y, w, h, plan, side) {
+  drawDetailZone(x, y, w, h * 0.75, sideSlot(plan, side, 'back'));
+  drawDetailZone(x, y, w, h, sideSlot(plan, side, 'middle'));
+  drawDetailZone(x, y + h * 0.4, w, h * 0.6, sideSlot(plan, side, 'front'));
+}
+
 function drawDetailZone(x, y, w, h, objectName) {
   if (!objectName || objectName === 'none' || h < 28) return;
   const prop = PROPS.find(p => p.name === objectName);
@@ -287,15 +299,15 @@ function drawHighStreet() {
     drawStreetBuilding(
       shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
-    drawDetailZone(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftObject);
+    drawSideLayers(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan, 'left');
 
     drawStreetBuilding(
       shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, index * 2.1 + 2.7
     );
-    drawDetailZone(
+    drawSideLayers(
       ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
-      W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightObject
+      W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan, 'right'
     );
   }
 }

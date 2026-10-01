@@ -53,8 +53,10 @@ const DETAILS = [
 // object is a name from DETAILS, or "none".
 // leftObject and rightObject are separate. A real street does not mirror itself,
 // so most stretches have an object on one side only.
+// Each side has three slots. Back is behind, middle is the main object, front is the small detail.
+// leftObject and rightObject still mean the middle slot.
 const STREET = [
-  { left: 'Fish & Chips', right: 'none', leftObject: 'postbox', rightObject: 'lamp' },
+  { left: 'Fish & Chips', right: 'none', leftMiddle: 'postbox', rightBack: 'lamp', rightFront: 'board' },
   { left: 'none', right: 'Bakery', leftObject: 'none', rightObject: 'none' },
   { left: 'none', right: 'none', leftObject: 'bench', rightObject: 'tree' },
   { left: 'Peri Peri Chicken', right: 'none', leftObject: 'bin', rightObject: 'none' },
