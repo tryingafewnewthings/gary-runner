@@ -615,7 +615,7 @@ function render(dt){
     drawHud();drawCap();
     if(state.startsWith('crash')||state==='over'){
       if(state.startsWith('crash')){ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')';ctx.fillRect(0,0,W,H);}
-      drawBubble();
+      try{drawBubble();}catch(e){}
     }
   }
   drawDiagnostics();
@@ -671,7 +671,9 @@ function resize(){
 let last=performance.now();
 function loop(ts){
   const dt=Math.max(0,Math.min(.05,(ts-last)/1000));last=ts;
-  update(dt);render(dt);requestAnimationFrame(loop);
+  try{update(dt);}catch(e){}
+  try{render(dt);}catch(e){}
+  requestAnimationFrame(loop);
 }
 
 addEventListener('resize',resize);
