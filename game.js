@@ -147,6 +147,19 @@ function drawGroundPatch(x, y, w, h, kind) {
 }
 
 
+
+function drawWallAndFloor(x, y, w, h, side) {
+  if (h < 20) return;
+  const floorW = Math.min(36, w * 0.4);
+  const wallW = w - floorW;
+  ctx.fillStyle = '#8d7364';
+  if (side === 'left') ctx.fillRect(x, y, wallW, h);
+  else ctx.fillRect(x + floorW, y, wallW, h);
+  ctx.fillStyle = '#5c534c';
+  const kerb = side === 'left' ? x + w - 3 : x;
+  ctx.fillRect(kerb, y, 3, h);
+}
+
 function drawSideLayers(x, y, w, h, plan, side) {
   drawDetailZone(x, y, w, h * 0.75, sideSlot(plan, side, 'back'), side);
   drawDetailZone(x, y, w, h, sideSlot(plan, side, 'middle'), side);
@@ -160,8 +173,9 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   const cap = prop.cap || (objectName === 'bin' ? 46 : 72);
   const propH = Math.min(cap, h - 6);
   const propW = propH * (prop.w / prop.h);
-  const shift = ((objectName.length * 17 + Math.round(x)) % 11) - 5;
-  const px = x + w * 0.5 - propW / 2 + shift;
+  const floorW = Math.min(36, w * 0.4);
+  const anchor = side === 'right' ? x + floorW * 0.5 : x + w - floorW * 0.5;
+  const px = anchor - propW / 2;
   const py = y + h - propH + 2;
   const foot = px + propW / 2;
   const cast = side === 'right' ? 8 : -8;
@@ -356,6 +370,7 @@ function drawHighStreet() {
     drawStreetBuilding(
       shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
+    drawWallAndFloor(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, 'left');
     drawSideLayers(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan, 'left');
     drawGroundPatch(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround);
 
@@ -363,6 +378,7 @@ function drawHighStreet() {
       shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, index * 2.1 + 2.7
     );
+    drawWallAndFloor(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, 'right');
     drawSideLayers(
       ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan, 'right'
