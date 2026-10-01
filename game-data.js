@@ -44,7 +44,7 @@ const DETAILS = [
   { name: 'lamp', x: 646, y: 1956, w: 150, h: 715 },
   { name: 'postbox', file: 'postbox.png', w: 400, h: 900, cap: 64 },
   { name: 'bin', file: 'bin.png', w: 571, h: 750, cap: 52 },
-  { name: 'bench', file: 'bench.png?v=5', w: 484, h: 545, cap: 78 },
+  { name: 'bench', file: 'bench.png?v=6', w: 180, h: 280, cap: 52 },
   { name: 'tree', file: 'tree.png?v=2', w: 463, h: 864, cap: 78 },
   { name: 'board', file: 'board.png', w: 635, h: 940, cap: 58 }
 ];
