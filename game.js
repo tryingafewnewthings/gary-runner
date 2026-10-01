@@ -111,6 +111,10 @@ let pathLoaded = false;
 imgPath.onload = () => { pathLoaded = true; };
 imgPath.onerror = () => { loadErrorLog.push('path.png not found'); };
 imgPath.src = 'path.png?v=4';
+const imgDamp = new Image();
+let dampLoaded = false;
+imgDamp.onload = () => { dampLoaded = true; };
+imgDamp.src = 'path_damp.png';
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -129,6 +133,17 @@ function sideSlot(plan, side, slot) {
   const key = side + slot.charAt(0).toUpperCase() + slot.slice(1);
   return plan[key] || 'none';
 }
+
+function drawGroundPatch(x, y, w, h, kind) {
+  if (kind !== 'damp' || !dampLoaded || h < 20) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x + w * 0.5, y + h * 0.72, w * 0.34, h * 0.28, 0, 0, 7);
+  ctx.clip();
+  ctx.drawImage(imgDamp, x, y, w, h);
+  ctx.restore();
+}
+
 function drawSideLayers(x, y, w, h, plan, side) {
   drawDetailZone(x, y, w, h * 0.75, sideSlot(plan, side, 'back'));
   drawDetailZone(x, y, w, h, sideSlot(plan, side, 'middle'));
@@ -316,6 +331,7 @@ function drawHighStreet() {
       shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
     drawSideLayers(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan, 'left');
+    drawGroundPatch(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround);
 
     drawStreetBuilding(
       shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
@@ -325,6 +341,7 @@ function drawHighStreet() {
       ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan, 'right'
     );
+    drawGroundPatch(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightGround);
   }
 }
 
@@ -661,6 +678,19 @@ function drawStreetLight(){
 }
 
 function drawVignette(){
+  ctx.save();
+  const leftShade = ctx.createLinearGradient(0, 0, ROAD_LEFT, 0);
+  leftShade.addColorStop(0, 'rgba(8,10,14,.28)');
+  leftShade.addColorStop(1, 'rgba(8,10,14,0)');
+  ctx.fillStyle = leftShade;
+  ctx.fillRect(0, 0, ROAD_LEFT, H);
+  const rightShade = ctx.createLinearGradient(W, 0, ROAD_RIGHT, 0);
+  rightShade.addColorStop(0, 'rgba(8,10,14,.28)');
+  rightShade.addColorStop(1, 'rgba(8,10,14,0)');
+  ctx.fillStyle = rightShade;
+  ctx.fillRect(ROAD_RIGHT, 0, W - ROAD_RIGHT, H);
+  ctx.restore();
+
   const t=ctx.createLinearGradient(0,0,0,150);t.addColorStop(0,'rgba(4,6,16,.5)');t.addColorStop(1,'rgba(4,6,16,0)');
   ctx.fillStyle=t;ctx.fillRect(0,0,W,150);
   const b=ctx.createLinearGradient(0,H-130,0,H);b.addColorStop(0,'rgba(4,6,16,0)');b.addColorStop(1,'rgba(4,6,16,.45)');

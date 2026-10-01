@@ -59,8 +59,8 @@ const DETAILS = [
 const STREET = [
   { left: 'Fish & Chips', right: 'none', leftMiddle: 'postbox', rightBack: 'lamp', rightFront: 'board' },
   { left: 'none', right: 'Bakery', leftObject: 'none', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'bench', rightObject: 'tree' },
-  { left: 'Peri Peri Chicken', right: 'none', leftObject: 'bin', rightObject: 'none' },
+  { left: 'none', right: 'none', leftObject: 'bench', rightObject: 'tree', rightGround: 'damp' },
+  { left: 'Peri Peri Chicken', right: 'none', leftObject: 'bin', rightObject: 'none', leftGround: 'damp' },
   { left: 'none', right: 'Butchers', leftObject: 'lamp', rightObject: 'none' },
   { left: 'none', right: 'none', leftObject: 'board', rightObject: 'none' },
   { left: 'none', right: 'none', leftObject: 'postbox', rightObject: 'none' },
