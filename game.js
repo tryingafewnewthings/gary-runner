@@ -405,7 +405,7 @@ function collect(o) {
   if(grin)triggerGrin();
   tierMax=Math.max(tierMax,currentTier);
   checkEvents();
-  if(!cap && score>=(mile+1)*40){mile=Math.floor(score/40);cap={s:CAPS[Math.floor(Math.random()*CAPS.length)],t:0};}
+  mile=Math.floor(score/40);
 }
 function checkEvents() {
   while (nextEvent < EVENTS.length && score >= EVENTS[nextEvent].at) {
