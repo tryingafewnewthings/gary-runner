@@ -103,7 +103,7 @@ const imgPath = new Image();
 let pathLoaded = false;
 imgPath.onload = () => { pathLoaded = true; };
 imgPath.onerror = () => { loadErrorLog.push('path.png not found'); };
-imgPath.src = 'path.png';
+imgPath.src = 'path.png?v=2';
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
