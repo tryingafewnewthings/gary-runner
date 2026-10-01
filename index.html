@@ -137,6 +137,7 @@ const KEEPER_FEET = 1332;      // bottom of the shopkeeper picture (hidden behin
 const KEEPER_SIZE = 278;       // how tall the shopkeeper is, in shop-picture pixels
 const KEEPER_TINT = 'rgba(255,170,70,0.16)'; // warm shop-light colour so he blends in
 let shopCv = null, keeperCv = null;
+let shopSpots = []; // where the chip shop is on screen this frame (used for its light glow)
 
 // Shrinks a big picture down smoothly (stops it looking jagged when scrolling)
 function prescale(img, tw, th) {
@@ -482,6 +483,7 @@ function drawShopFacade(x0, y0, w, h) {
 }
 
 function drawHighStreet() {
+  shopSpots.length = 0;
   ctx.fillStyle = '#1a1e24'; ctx.fillRect(0, 0, W, H);
   const totalH = 640, offY = scrollY % totalH;
   const shopH = totalH / 3; 
@@ -495,6 +497,7 @@ function drawHighStreet() {
       const s1Y = py - totalH;
       if (!isRight && shopLoaded && imgShop.width) {
         // the visible strip is the building area minus the pavement (+1px so there is no gap)
+        shopSpots.push({ y: Math.floor(s1Y), h: Math.ceil(shopH) + 1 });
         drawShopFacade(xBase, Math.floor(s1Y), ROAD_LEFT - 13.5 + 1, Math.ceil(shopH) + 1);
       } else {
         ctx.fillStyle = '#8b3a2b'; ctx.fillRect(xBase, Math.floor(s1Y), w, Math.ceil(shopH) + 1);
@@ -522,6 +525,13 @@ function drawHighStreet() {
       ctx.fillStyle = '#900c3f'; ctx.fillRect(xBase + 4, s3Y + 23, w - 8, 22);
       ctx.fillStyle = '#ffe600'; ctx.font = '900 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('THE RED LION', xBase + w / 2, s3Y + 34);
+
+      // dark gap under the roof line of each building, so they read as separate buildings
+      [s1Y, s2Y, s3Y].forEach(yy => {
+        const gg = ctx.createLinearGradient(0, yy, 0, yy + 9);
+        gg.addColorStop(0, 'rgba(0,0,0,0.6)'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gg; ctx.fillRect(xBase, Math.floor(yy), w, 9);
+      });
     }
   };
 
@@ -535,6 +545,13 @@ function drawPavements() {
     ctx.fillStyle = '#7f8c8d'; ctx.fillRect(x, 0, pWidth, H);
     ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2;
     for (let y = -bh + offY; y < H + bh; y += bh) ctx.strokeRect(x, y, pWidth, bh);
+    // shadow where the pavement meets the buildings + a light edge on the kerb
+    const edge = side === 0 ? x : x + pWidth;
+    const dir = side === 0 ? 1 : -1;
+    const sg = ctx.createLinearGradient(edge, 0, edge + dir * 8, 0);
+    sg.addColorStop(0, 'rgba(0,0,0,0.5)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg; ctx.fillRect(Math.min(edge, edge + dir * 8), 0, 8, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(side === 0 ? x + pWidth - 1.5 : x, 0, 1.5, H);
   }
 }
 
@@ -694,12 +711,44 @@ function drawBubble() {
   ctx.restore();
 }
 
+// Warm light from the chip shop windows spilling onto the pavement and road
+function drawShopLight() {
+  if (!shopSpots.length) return;
+  const flick = 0.92 + Math.sin(clock * 7) * 0.04 + Math.sin(clock * 3.1) * 0.03;
+  const cx = ROAD_LEFT - 13.5, rx = 62;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (const sp of shopSpots) {
+    const wy1 = sp.y + WIN.y1 / SHOP_H * sp.h, wy2 = sp.y + WIN.y2 / SHOP_H * sp.h;
+    const cy = (wy1 + wy2) / 2, ry = (wy2 - wy1) * 0.8;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(cx, sp.y - 20, rx + 4, sp.h + 40); ctx.clip();
+    ctx.translate(cx, cy); ctx.scale(1, ry / rx);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, 'rgba(255,170,70,' + (0.4 * flick) + ')');
+    g.addColorStop(1, 'rgba(255,170,70,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, -rx, rx + 4, rx * 2);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// Darkens the top and bottom edges so the street feels like one scene
+function drawVignette() {
+  const t = ctx.createLinearGradient(0, 0, 0, 150);
+  t.addColorStop(0, 'rgba(4,6,16,0.5)'); t.addColorStop(1, 'rgba(4,6,16,0)');
+  ctx.fillStyle = t; ctx.fillRect(0, 0, W, 150);
+  const b = ctx.createLinearGradient(0, H - 130, 0, H);
+  b.addColorStop(0, 'rgba(4,6,16,0)'); b.addColorStop(1, 'rgba(4,6,16,0.45)');
+  ctx.fillStyle = b; ctx.fillRect(0, H - 130, W, 130);
+}
+
 function render(dt) {
   if (state === 'intro') drawIntroAvatar(dt);
 
   ctx.setTransform(K, 0, 0, K, 0, 0);
   ctx.save();
-  drawHighStreet(); drawPavements(); drawRoad();
+  drawHighStreet(); drawPavements(); drawRoad(); drawShopLight();
   
   if (state !== 'menu' && state !== 'intro') {
     for (let i = objs.length - 1; i >= 0; i--) drawObj(objs[i]);
@@ -715,6 +764,7 @@ function render(dt) {
     }
   }
   ctx.restore();
+  drawVignette();
   if (state !== 'menu' && state !== 'intro') {
     drawHud(); drawCap();
     if (state.startsWith('crash') || state === 'over') {
