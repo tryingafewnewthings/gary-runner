@@ -63,12 +63,12 @@ const STREET = [
 // none leaves a lane empty. kebab, fish and roast are food. fork and m are hazards.
 // The pictures do not change. This only decides what comes next.
 const ROWS = [
+  { lanes: ['none', 'kebab', 'none'] },
+  { lanes: ['none', 'kebab', 'none'] },
+  { lanes: ['none', 'kebab', 'none'] },
+  { lanes: ['none', 'fork', 'none'] },
   { lanes: ['kebab', 'none', 'fish'] },
-  { lanes: ['none', 'fork', 'kebab'] },
-  { lanes: ['none', 'fish', 'none'] },
   { lanes: ['none', 'fish', 'm'] },
-  { lanes: ['kebab', 'none', 'fork'] },
-  { lanes: ['none', 'kebab', 'fish'] },
-  { lanes: ['m', 'kebab', 'none'] },
-  { lanes: ['fish', 'none', 'roast'] }
+  { lanes: ['m', 'roast', 'm'] },
+  { lanes: ['fish', 'none', 'kebab'] }
 ];
