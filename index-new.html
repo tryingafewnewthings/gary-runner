@@ -309,6 +309,13 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
   const b = BUILDINGS[buildingIndex];
   if (!streetLoaded || !b) return;
 
+  // Fill the slot first so the holes around the chimneys match the roof,
+  // instead of showing the sky as a white outline.
+  ctx.fillStyle = '#4a5563';
+  ctx.fillRect(x, y, w, h * 0.34);
+  ctx.fillStyle = '#8d4638';
+  ctx.fillRect(x, y + h * 0.28, w, h * 0.72);
+
   ctx.drawImage(imgStreet, b.x, b.y, b.w, b.h, x, y, w, h);
 
   // Fine outer shadow gives each shop a physical edge against the detail zone.
@@ -326,14 +333,6 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
 function drawHighStreet() {
   ctx.fillStyle = '#1a1e24';
   ctx.fillRect(0, 0, W, H);
-
-  // Sky sits behind the shops, so the gaps around chimneys are not black.
-  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.72);
-  sky.addColorStop(0, '#8eabc4');
-  sky.addColorStop(1, '#d5ddd8');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, ROAD_LEFT - PAVEMENT_WIDTH, H);
-  ctx.fillRect(ROAD_RIGHT + PAVEMENT_WIDTH, 0, W - ROAD_RIGHT - PAVEMENT_WIDTH, H);
 
   if (!streetLoaded) {
     ctx.fillStyle = '#3a3030';
