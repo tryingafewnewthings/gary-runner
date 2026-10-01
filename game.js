@@ -352,6 +352,8 @@ function dRoast(c) {
   c.fillStyle='#4caf3a';[[-5,20],[2,23],[-11,23],[6,18]].forEach(([x,y])=>{c.beginPath();c.arc(x,y,3,0,7);c.fill();});
 }
 
+const imgMush = loadGary('mushroom.png?v=1');
+const imgFork = loadGary('fork.png?v=1');
 const SP = { m: mk(dMush), fork: mk(dFork), kebab: mk(dKebab), fish: mk(dFish), roast: mk(dRoast) };
 
 function rr(c,x,y,w,h,r) {
@@ -495,9 +497,16 @@ function drawRoad(){
 
 function drawObj(o){
   const x=lx(o.l),y=o.y;
-  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+18*S,20*S,6*S,0,0,7);ctx.fill();
-  const bob=Math.sin(clock*6+o.id)*3*S,sz=63*S;
-  ctx.drawImage(SP[o.t],x-sz/2,y-sz/2+bob,sz,sz);
+  const hazard=o.t==='m'||o.t==='fork';
+  if(hazard){
+    ctx.fillStyle='rgba(18,20,24,.45)';
+    ctx.beginPath();ctx.ellipse(x,y+16,18,7,0,0,7);ctx.fill();
+  }else{
+    ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+18*S,20*S,6*S,0,0,7);ctx.fill();
+  }
+  const bob=Math.sin(clock*6+o.id)*3*S,sz=hazard?52:63*S;
+  const pic=o.t==='m'&&imgMush.ready?imgMush:(o.t==='fork'&&imgFork.ready?imgFork:SP[o.t]);
+  ctx.drawImage(pic,x-sz/2,y-sz/2+bob,sz,sz);
 }
 
 function drawIntroAvatar(dt){
