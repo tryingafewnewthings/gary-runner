@@ -166,8 +166,8 @@ imgShop.onload = () => {
   try { shopCv = prescale(imgShop, 192, 576); } catch (e) { shopCv = null; }
   shopLoaded = true;
 };
-imgShop.onerror = () => { loadErrorLog.push('chip_shopnew.png not found'); };
-imgShop.src = 'chip_shopnew.png';
+imgShop.onerror = () => { loadErrorLog.push('chip_shopnew.PNG not found'); };
+imgShop.src = 'chip_shopnew.PNG';
 
 const imgKeeper = new Image();
 imgKeeper.onload = () => {
@@ -180,8 +180,8 @@ imgKeeper.onload = () => {
   } catch (e) { keeperCv = null; }
   keeperLoaded = true;
 };
-imgKeeper.onerror = () => { loadErrorLog.push('shop_keeper.png not found'); };
-imgKeeper.src = 'shop_keeper.png';
+imgKeeper.onerror = () => { loadErrorLog.push('shop_keeper.PNG not found'); };
+imgKeeper.src = 'shop_keeper.PNG';
 
 const imgClosed = new Image();
 imgClosed.onload = () => { closedLoaded = true; };
