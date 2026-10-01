@@ -605,8 +605,14 @@ function drawIntroAvatar(dt){
 function drawPlayer(dt){
   const px=lx(lane),py=PLAYER_Y;
   const planted = runFrame===0 || state.startsWith('crash');
-  ctx.fillStyle=planted?'rgba(0,0,0,.35)':'rgba(0,0,0,.22)';
-  ctx.beginPath();ctx.ellipse(px+(planted?0:4),py+8,planted?20:14,planted?5:3,0,0,7);ctx.fill();
+  const sx = px + (planted ? 0 : 3);
+  const shade = ctx.createRadialGradient(sx, py+6, 2, sx, py+6, planted ? 16 : 11);
+  shade.addColorStop(0, planted ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.16)');
+  shade.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shade;
+  ctx.beginPath();
+  ctx.ellipse(sx, py+6, planted ? 16 : 11, planted ? 4 : 2.5, 0, 0, 7);
+  ctx.fill();
   ctx.save();ctx.translate(px,py);
   const isCrashing=state.startsWith('crash');
   let imgToDraw=null;
