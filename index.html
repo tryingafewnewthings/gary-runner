@@ -189,7 +189,7 @@ const PROPS = [
 const imgStreet = new Image();
 imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
-imgStreet.src = 'high_street_sprites.webp?v=3';
+imgStreet.src = 'high_street_sprites.webp?v=4';
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -198,36 +198,44 @@ imgStreet.src = 'high_street_sprites.webp?v=3';
   dressing without changing the building system.
 */
 function drawDetailZone(x, y, w, h, seed) {
-  ctx.fillStyle = '#686c70';
+  // Quiet paving. The repeat is only the ground; the objects on it change.
+  const tone = 104 + (seed % 5) * 3;
+  ctx.fillStyle = 'rgb(' + tone + ',' + (tone + 2) + ',' + (tone - 2) + ')';
   ctx.fillRect(x, y, w, h);
 
-  // Subtle cobbled paving.
-  const rowH = 11;
-  const offset = ((seed * 17) % 2) * 0.5;
-  ctx.strokeStyle = 'rgba(35,38,42,0.38)';
+  const slabW = 22 + (seed % 3) * 4;
+  const slabH = 14;
+  ctx.strokeStyle = 'rgba(55,58,62,0.35)';
   ctx.lineWidth = 1;
-
-  for (let row = -1; row < h / rowH + 1; row++) {
-    const yy = y + row * rowH + offset;
+  for (let row = 0, yy = y; yy < y + h; yy += slabH, row++) {
+    const shift = (row % 2) ? slabW * 0.45 : (seed % 7);
     ctx.beginPath();
     ctx.moveTo(x, yy);
     ctx.lineTo(x + w, yy);
     ctx.stroke();
-
-    const stagger = (row & 1) ? w * 0.18 : 0;
-    for (let xx = x - stagger; xx < x + w; xx += 17) {
+    for (let xx = x - shift; xx < x + w; xx += slabW) {
       ctx.beginPath();
       ctx.moveTo(xx, yy);
-      ctx.lineTo(xx, yy + rowH);
+      ctx.lineTo(xx, yy + slabH);
       ctx.stroke();
     }
   }
 
-  // Kerb-side highlight/shadow keeps the empty space visually intentional.
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  // One street object per gap, picked so neighbours do not match.
+  if (streetLoaded && PROPS.length && h > 28) {
+    const prop = PROPS[Math.abs(seed * 3 + 1) % PROPS.length];
+    const propH = Math.min(h - 6, h * 0.92);
+    const propW = propH * (prop.w / prop.h);
+    const side = (seed % 2) ? 0.72 : 0.28;
+    const px = x + w * side - propW / 2;
+    const py = y + h - propH - 2;
+    ctx.drawImage(imgStreet, prop.x, prop.y, prop.w, prop.h, px, py, propW, propH);
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
   ctx.fillRect(x, y, w, 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.16)';
-  ctx.fillRect(x, y + h - 5, w, 5);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(x, y + h - 4, w, 4);
 }
 
 /*
@@ -318,6 +326,14 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
 function drawHighStreet() {
   ctx.fillStyle = '#1a1e24';
   ctx.fillRect(0, 0, W, H);
+
+  // Sky sits behind the shops, so the gaps around chimneys are not black.
+  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.72);
+  sky.addColorStop(0, '#8eabc4');
+  sky.addColorStop(1, '#d5ddd8');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, ROAD_LEFT - PAVEMENT_WIDTH, H);
+  ctx.fillRect(ROAD_RIGHT + PAVEMENT_WIDTH, 0, W - ROAD_RIGHT - PAVEMENT_WIDTH, H);
 
   if (!streetLoaded) {
     ctx.fillStyle = '#3a3030';
