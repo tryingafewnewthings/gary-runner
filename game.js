@@ -11,7 +11,7 @@ const ROAD_RIGHT = ROAD_LEFT + ROAD_WIDTH;
 const LANE_WIDTH = ROAD_WIDTH / 3;
 const PLAYER_Y = 540;
 
-const PAVEMENT_WIDTH = 16;
+const PAVEMENT_WIDTH = 13.5;
 const BUILDING_WIDTH = ROAD_LEFT - PAVEMENT_WIDTH; // 91.5px on the 360px canvas
 const STREET_SEGMENT_H = 360;
 const BUILDING_H = 236;
@@ -280,18 +280,17 @@ function drawHighStreet() {
 
 function drawPavements() {
   const pWidth = PAVEMENT_WIDTH;
-  const slab = 34;
+  const slab = 28;
   const offY = scrollY % slab;
 
   for (let side = 0; side < 2; side++) {
     const x = side === 0 ? ROAD_LEFT - pWidth : ROAD_RIGHT;
-    const roadSide = side === 0 ? x + pWidth : x;
 
-    ctx.fillStyle = '#b7b2a6';
+    // Flat stone, same plane as the cobbles. No lip or gutter, so the road does not look raised.
+    ctx.fillStyle = '#8d9294';
     ctx.fillRect(x, 0, pWidth, H);
 
-    // Long stones, joints across the kerb, so it reads as a curb rather than a fence.
-    ctx.strokeStyle = 'rgba(78,74,66,0.55)';
+    ctx.strokeStyle = 'rgba(62,66,70,0.35)';
     ctx.lineWidth = 1;
     for (let y = -slab + offY; y < H + slab; y += slab) {
       ctx.beginPath();
@@ -299,32 +298,8 @@ function drawPavements() {
       ctx.lineTo(x + pWidth, y);
       ctx.stroke();
     }
-
-    // Pale lip on the pavement side, dark gutter on the road side.
-    const lipX = side === 0 ? x : x + pWidth - 2;
-    ctx.fillStyle = 'rgba(255,248,236,0.45)';
-    ctx.fillRect(lipX, 0, 2, H);
-    const gutterX = side === 0 ? roadSide - 3 : roadSide;
-    ctx.fillStyle = '#5c574e';
-    ctx.fillRect(gutterX, 0, 3, H);
-
-    // A drain on the left only, every few kerb lengths, so the two sides are not copies.
-    if (side === 0) {
-      const drainGap = slab * 7;
-      const dy = scrollY % drainGap;
-      for (let y = -drainGap + dy; y < H; y += drainGap) {
-        ctx.fillStyle = '#3e3a34';
-        ctx.fillRect(x + 2, y + 8, pWidth - 5, 10);
-        ctx.fillStyle = '#6a655c';
-        ctx.fillRect(x + 3, y + 10, pWidth - 7, 2);
-      }
-    }
   }
 }
-
-/* -------------------------------------------------------------------------- */
-/* Game objects                                                               */
-/* -------------------------------------------------------------------------- */
 
 function mk(fn) {
   const s = document.createElement('canvas');
