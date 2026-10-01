@@ -189,7 +189,7 @@ const PROPS = [
 const imgStreet = new Image();
 imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
-imgStreet.src = 'high_street_sprites.webp';
+imgStreet.src = 'high_street_sprites.webp?v=3';
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -240,25 +240,39 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   const keeper = KEEPERS[index];
   if (!streetLoaded || !keeper) return;
 
+  // Glass under the awning. Most fronts have the door on the right, so the
+  // pane is left of centre. Red Lion is a wider glazed front.
+  const panes = [
+    { x: 0.07, y: 0.575, w: 0.54, h: 0.255 },
+    { x: 0.08, y: 0.578, w: 0.50, h: 0.250 },
+    { x: 0.09, y: 0.568, w: 0.50, h: 0.258 },
+    { x: 0.14, y: 0.548, w: 0.70, h: 0.292 },
+    { x: 0.08, y: 0.575, w: 0.52, h: 0.255 },
+    { x: 0.08, y: 0.575, w: 0.52, h: 0.255 }
+  ];
+  const pane = panes[index] || panes[0];
+  const wx = x + w * pane.x;
+  const wy = y + h * pane.y;
+  const ww = w * pane.w;
+  const wh = h * pane.h;
+
   const phase = clock * 2.1 + phaseSeed;
+  const bob = Math.sin(phase) * 0.7;
+  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012;
+  const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6;
 
-  // Very subtle movement so the keeper feels alive without looking oversized.
-  const bob = Math.sin(phase) * 0.8;
-  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.01;
-  const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.5;
-
-  // Keep the character comfortably inside the shop window.
-  const keeperH = Math.min(52, h * 0.235);
+  const keeperH = wh * 0.98;
   const keeperW = keeperH * (keeper.w / keeper.h);
-
-  const baseX = x + w * 0.50 + shift;
-  const baseY = y + h * 0.79 + bob;
+  const baseX = wx + ww * 0.48 + shift;
+  const baseY = wy + wh + bob;
 
   ctx.save();
+  ctx.beginPath();
+  ctx.rect(wx + 1, wy + 1, Math.max(1, ww - 2), Math.max(1, wh - 2));
+  ctx.clip();
 
   ctx.translate(baseX, baseY);
   ctx.scale(1, breathe);
-
   ctx.drawImage(
     imgStreet,
     keeper.x, keeper.y, keeper.w, keeper.h,
@@ -267,7 +281,19 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
     keeperW,
     keeperH
   );
+  ctx.restore();
 
+  // A light sheen keeps them reading as behind the glass, not stuck on it.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(wx, wy, ww, wh);
+  ctx.clip();
+  const sheen = ctx.createLinearGradient(wx, wy, wx + ww * 0.65, wy + wh);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.12)');
+  sheen.addColorStop(0.38, 'rgba(255,255,255,0)');
+  sheen.addColorStop(1, 'rgba(8,16,28,0.08)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(wx, wy, ww, wh);
   ctx.restore();
 }
 

@@ -189,7 +189,7 @@ const PROPS = [
 const imgStreet = new Image();
 imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
-imgStreet.src = 'high_street_sprites.webp';
+imgStreet.src = 'high_street_sprites.webp?v=3';
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -240,49 +240,60 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   const keeper = KEEPERS[index];
   if (!streetLoaded || !keeper) return;
 
-  const phase = clock * 2.1 + phaseSeed;
-  const bob = Math.sin(phase) * 1.1;
-  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.014;
-  const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.9;
-  const leanPulse = Math.max(0, Math.sin(clock * 0.42 + phaseSeed));
-  const lean = (isRight ? -1 : 1) * leanPulse * 0.018;
+  // Glass under the awning. Most fronts have the door on the right, so the
+  // pane is left of centre. Red Lion is a wider glazed front.
+  const panes = [
+    { x: 0.07, y: 0.575, w: 0.54, h: 0.255 },
+    { x: 0.08, y: 0.578, w: 0.50, h: 0.250 },
+    { x: 0.09, y: 0.568, w: 0.50, h: 0.258 },
+    { x: 0.14, y: 0.548, w: 0.70, h: 0.292 },
+    { x: 0.08, y: 0.575, w: 0.52, h: 0.255 },
+    { x: 0.08, y: 0.575, w: 0.52, h: 0.255 }
+  ];
+  const pane = panes[index] || panes[0];
+  const wx = x + w * pane.x;
+  const wy = y + h * pane.y;
+  const ww = w * pane.w;
+  const wh = h * pane.h;
 
-  const keeperH = Math.min(82, h * 0.39);
+  const phase = clock * 2.1 + phaseSeed;
+  const bob = Math.sin(phase) * 0.7;
+  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012;
+  const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6;
+
+  const keeperH = wh * 0.98;
   const keeperW = keeperH * (keeper.w / keeper.h);
-  const baseX = x + w * 0.50 + shift;
-  const baseY = y + h * 0.88 + bob;
+  const baseX = wx + ww * 0.48 + shift;
+  const baseY = wy + wh + bob;
 
   ctx.save();
-
-  // Window/glass depth plate hides the static embedded figure and reads as
-  // a natural darker interior/reflection behind the animated keeper.
-  const plateW = Math.min(w * 0.58, 58);
-  const plateH = Math.min(h * 0.40, 94);
-  const plateX = baseX - plateW / 2;
-  const plateY = baseY - plateH + 2;
-
-  const glass = ctx.createLinearGradient(plateX, plateY, plateX, plateY + plateH);
-  glass.addColorStop(0, 'rgba(12,20,26,0.18)');
-  glass.addColorStop(0.45, 'rgba(8,13,18,0.80)');
-  glass.addColorStop(1, 'rgba(8,12,16,0.94)');
-  ctx.fillStyle = glass;
-  ctx.fillRect(plateX, plateY, plateW, plateH);
-
-  // Small contact shadow.
-  ctx.fillStyle = 'rgba(0,0,0,0.28)';
   ctx.beginPath();
-  ctx.ellipse(baseX, baseY + 1, keeperW * 0.38, 2.2, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.rect(wx + 1, wy + 1, Math.max(1, ww - 2), Math.max(1, wh - 2));
+  ctx.clip();
 
   ctx.translate(baseX, baseY);
-  ctx.rotate(lean);
   ctx.scale(1, breathe);
   ctx.drawImage(
     imgStreet,
     keeper.x, keeper.y, keeper.w, keeper.h,
-    -keeperW / 2, -keeperH, keeperW, keeperH
+    -keeperW / 2,
+    -keeperH,
+    keeperW,
+    keeperH
   );
+  ctx.restore();
 
+  // A light sheen keeps them reading as behind the glass, not stuck on it.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(wx, wy, ww, wh);
+  ctx.clip();
+  const sheen = ctx.createLinearGradient(wx, wy, wx + ww * 0.65, wy + wh);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.12)');
+  sheen.addColorStop(0.38, 'rgba(255,255,255,0)');
+  sheen.addColorStop(1, 'rgba(8,16,28,0.08)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(wx, wy, ww, wh);
   ctx.restore();
 }
 
