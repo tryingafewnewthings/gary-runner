@@ -193,8 +193,10 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   const wh = h * pane.h;
 
   const phase = clock * 2.1 + phaseSeed;
-  const bob = Math.sin(phase) * 0.7;
-  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012;
+  const near = Math.abs((y + h * 0.72) - PLAYER_Y) < 80;
+  const cheer = near ? Math.max(0, Math.sin(clock * 10)) : 0;
+  const bob = Math.sin(phase) * 0.7 - cheer * 5;
+  const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 + cheer * 0.06;
   const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6;
 
   // Other windows are large, so the keeper fills them. The pub glass is smaller,
