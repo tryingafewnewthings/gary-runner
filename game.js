@@ -33,7 +33,7 @@ let score = 0, best = 0, tierMax = 0;
 let lane = 1, target = 1;
 let scrollY = 0, distance = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
-let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, nearCd = 0;
+let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, nearCd = 0, lastHit = null;
 
 let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
@@ -385,7 +385,7 @@ function triggerGrin() {
 }
 function reset() {
   score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=160;
-  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;nearCd=0;
+  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;nearCd=0;lastHit=null;
 }
 function move(d) { if(state==='play') target=Math.max(0,Math.min(2,target+d)); }
 
@@ -414,7 +414,7 @@ function checkEvents() {
     if (ev.grin) triggerGrin();
   }
 }
-function crash(hitType){crashT=0;cap=null;state='crash_'+hitType;}
+function crash(hitType){crashT=0;cap=null;lastHit=hitType;state='crash_'+hitType;}
 function endGame(){
   state='over';
   if(score>best){best=score;try{localStorage.setItem('garyBest',best);}catch(e){}}
@@ -582,7 +582,8 @@ function drawCap(){
 
 function drawBubble(){
   const px=lx(lane);
-  const line=state==='crash_fork'?"Plastic fork.":"Mushrooms. No.";
+  if(state==='over')return;
+  const line=lastHit==='fork'?"Plastic fork.":"Mushrooms. No.";
   ctx.save();
   ctx.font='700 13px Arial,sans-serif';
   const w=ctx.measureText(line).width+16;
@@ -640,7 +641,7 @@ function render(dt){
 
   if(state!=='menu'&&state!=='intro'){
     drawHud();drawCap();
-    if(state.startsWith('crash')||state==='over'){
+    if(state.startsWith('crash')){
       if(state.startsWith('crash')){ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')';ctx.fillRect(0,0,W,H);}
       try{drawBubble();}catch(e){}
     }
