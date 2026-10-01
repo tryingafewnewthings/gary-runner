@@ -414,7 +414,7 @@ function checkEvents() {
     if (ev.grin) triggerGrin();
   }
 }
-function crash(hitType){crashT=0;lastHit=hitType;cap={s:LINES[hitType]||LINES.m,t:0};state='crash_'+hitType;}
+function crash(hitType){crashT=0;lastHit=hitType;cap=null;state='crash_'+hitType;}
 function endGame(){
   state='over';cap=null;
   if(score>best){best=score;try{localStorage.setItem('garyBest',best);}catch(e){}}
@@ -511,7 +511,7 @@ function drawObj(o){
   }else{
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+18*S,20*S,6*S,0,0,7);ctx.fill();
   }
-  const bob=Math.sin(clock*6+o.id)*3*S,sz=hazard?52:63*S;
+  const bob=Math.sin(clock*6+o.id)*3*S,sz=o.t==='fork'?68:(hazard?52:63*S);
   const pic=o.t==='m'&&imgMush.ready?imgMush:(o.t==='fork'&&imgFork.ready?imgFork:SP[o.t]);
   ctx.drawImage(pic,x-sz/2,y-sz/2+bob,sz,sz);
 }
@@ -575,16 +575,17 @@ function drawHud(){
 }
 
 function drawCap(){
-  if(!cap||!cap.s)return;
-  const t=cap.t,a=t>1.8?1-(t-1.8)/.4:1;
+  const line=state.startsWith('crash')?(LINES[lastHit]||LINES.m):(cap&&cap.s);
+  if(!line)return;
+  const t=cap?cap.t:0,a=t>1.8?1-(t-1.8)/.4:1;
   ctx.save();ctx.globalAlpha=Math.max(0,a);
   ctx.font='700 13px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  const w=Math.min(300,ctx.measureText(cap.s).width+18);
+  const w=Math.min(300,ctx.measureText(line).width+18);
   const x=CX-w/2,y=PLAYER_Y-124;
   ctx.fillStyle='rgba(12,14,18,.92)';
   rr(ctx,x,y,w,24,6);ctx.fill();
   ctx.fillStyle='#f4f1ea';
-  ctx.fillText(cap.s,CX,y+12);
+  ctx.fillText(line,CX,y+12);
   ctx.restore();
 }
 
