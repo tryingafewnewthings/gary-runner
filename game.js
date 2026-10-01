@@ -147,29 +147,6 @@ function drawGroundPatch(x, y, w, h, kind) {
 }
 
 
-function drawPavementFloor(x, y, w, h, side) {
-  if (h < 24) return;
-  const floorW = Math.min(34, w * 0.42);
-  const fx = side === 'left' ? x + w - floorW : x;
-  ctx.save();
-  ctx.fillStyle = 'rgba(18,20,24,.18)';
-  ctx.fillRect(x, y, w, h);
-  if (pathLoaded) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(fx, y, floorW, h);
-    ctx.clip();
-    ctx.drawImage(imgPath, fx, y, floorW, h);
-    ctx.restore();
-  } else {
-    ctx.fillStyle = '#7a756c';
-    ctx.fillRect(fx, y, floorW, h);
-  }
-  ctx.fillStyle = 'rgba(28,30,34,.55)';
-  ctx.fillRect(side === 'left' ? fx : fx + floorW - 2, y, 2, h);
-  ctx.restore();
-}
-
 function drawSideLayers(x, y, w, h, plan, side) {
   drawDetailZone(x, y, w, h * 0.75, sideSlot(plan, side, 'back'), side);
   drawDetailZone(x, y, w, h, sideSlot(plan, side, 'middle'), side);
@@ -183,9 +160,8 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   const cap = prop.cap || (objectName === 'bin' ? 46 : 72);
   const propH = Math.min(cap, h - 6);
   const propW = propH * (prop.w / prop.h);
-  const floorW = Math.min(34, w * 0.42);
-  const anchor = side === 'right' ? x + floorW * 0.55 : x + w - floorW * 0.45;
-  const px = anchor - propW / 2;
+  const shift = ((objectName.length * 17 + Math.round(x)) % 11) - 5;
+  const px = x + w * 0.5 - propW / 2 + shift;
   const py = y + h - propH + 2;
   const foot = px + propW / 2;
   const cast = side === 'right' ? 8 : -8;
@@ -379,7 +355,6 @@ function drawHighStreet() {
     drawStreetBuilding(
       shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
-    drawPavementFloor(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, 'left');
     drawSideLayers(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan, 'left');
     drawGroundPatch(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround);
 
@@ -387,7 +362,6 @@ function drawHighStreet() {
       shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, index * 2.1 + 2.7
     );
-    drawPavementFloor(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, 'right');
     drawSideLayers(
       ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan, 'right'
