@@ -42,7 +42,10 @@ const EVENTS = [
 const DETAILS = [
   { name: 'lamp', x: 646, y: 1956, w: 150, h: 715 },
   { name: 'postbox', x: 1278, y: 2120, w: 255, h: 556 },
-  { name: 'bin', x: 1792, y: 2168, w: 420, h: 490 }
+  { name: 'bin', x: 1792, y: 2168, w: 420, h: 490 },
+  { name: 'bench', file: 'bench.png', w: 953, h: 493, cap: 36 },
+  { name: 'tree', file: 'tree.png', w: 438, h: 894, cap: 78 },
+  { name: 'board', file: 'board.png', w: 635, h: 940, cap: 58 }
 ];
 
 // The street in order, from the start of a run. It repeats when it reaches the end.
@@ -53,10 +56,10 @@ const DETAILS = [
 const STREET = [
   { left: 'Fish & Chips', right: 'none', leftObject: 'postbox', rightObject: 'lamp' },
   { left: 'none', right: 'Bakery', leftObject: 'none', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'postbox' },
+  { left: 'none', right: 'none', leftObject: 'bench', rightObject: 'tree' },
   { left: 'Peri Peri Chicken', right: 'none', leftObject: 'bin', rightObject: 'none' },
   { left: 'none', right: 'Butchers', leftObject: 'lamp', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin' },
+  { left: 'none', right: 'none', leftObject: 'board', rightObject: 'none' },
   { left: 'none', right: 'none', leftObject: 'postbox', rightObject: 'none' },
   { left: 'The Red Lion', right: 'Mallace Cafe', leftObject: 'none', rightObject: 'lamp' },
   { left: 'none', right: 'none', leftObject: 'bin', rightObject: 'none' },

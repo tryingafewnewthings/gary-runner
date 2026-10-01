@@ -18,6 +18,7 @@ const BUILDING_H = 236;
 const DETAIL_H = STREET_SEGMENT_H - BUILDING_H;
 
 const PROPS = DETAILS;
+PROPS.forEach(p => { if (p.file) { p.img = new Image(); p.img.src = p.file; } });
 
 const $ = id => document.getElementById(id);
 const cv = $('c');
@@ -123,15 +124,19 @@ function shopByName(name) {
 }
 
 function drawDetailZone(x, y, w, h, objectName) {
-  // The pavement is already drawn. This only places the object named in the street plan.
-  if (!streetLoaded || !objectName || objectName === 'none' || h < 28) return;
+  if (!objectName || objectName === 'none' || h < 28) return;
   const prop = PROPS.find(p => p.name === objectName);
   if (!prop) return;
-  const cap = objectName === 'bin' ? 46 : 72;
+  const cap = prop.cap || (objectName === 'bin' ? 46 : 72);
   const propH = Math.min(cap, h - 6);
   const propW = propH * (prop.w / prop.h);
   const px = x + w * 0.5 - propW / 2;
   const py = y + h - propH - 2;
+  if (prop.file && prop.img && prop.img.complete && prop.img.naturalWidth) {
+    ctx.drawImage(prop.img, px, py, propW, propH);
+    return;
+  }
+  if (!streetLoaded || prop.x == null) return;
   ctx.drawImage(imgStreet, prop.x, prop.y, prop.w, prop.h, px, py, propW, propH);
 }
 
