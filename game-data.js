@@ -51,11 +51,17 @@ const DETAILS = [
 // leftObject and rightObject are separate. A real street does not mirror itself,
 // so most stretches have an object on one side only.
 const STREET = [
-  { left: 'Fish & Chips', right: 'Bakery', leftObject: 'postbox', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'lamp' },
-  { left: 'Peri Peri Chicken', right: 'Butchers', leftObject: 'bin', rightObject: 'none' },
+  { left: 'Fish & Chips', right: 'none', leftObject: 'postbox', rightObject: 'lamp' },
+  { left: 'none', right: 'Bakery', leftObject: 'none', rightObject: 'none' },
   { left: 'none', right: 'none', leftObject: 'none', rightObject: 'postbox' },
-  { left: 'The Red Lion', right: 'Mallace Cafe', leftObject: 'lamp', rightObject: 'none' },
+  { left: 'Peri Peri Chicken', right: 'none', leftObject: 'bin', rightObject: 'none' },
+  { left: 'none', right: 'Butchers', leftObject: 'lamp', rightObject: 'none' },
+  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin' },
+  { left: 'none', right: 'none', leftObject: 'postbox', rightObject: 'none' },
+  { left: 'The Red Lion', right: 'Mallace Cafe', leftObject: 'none', rightObject: 'lamp' },
+  { left: 'none', right: 'none', leftObject: 'bin', rightObject: 'none' },
+  { left: 'none', right: 'Fish & Chips', leftObject: 'none', rightObject: 'postbox' },
+  { left: 'Bakery', right: 'none', leftObject: 'lamp', rightObject: 'none' },
   { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin' }
 ];
 
