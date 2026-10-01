@@ -486,7 +486,7 @@ function update(dt){
       collect(o);
     }else if(!o.near&&(o.t==='m'||o.t==='fork')&&Math.abs(o.y-PLAYER_Y)<26&&Math.abs(lane-o.l)>0.55&&Math.abs(lane-o.l)<1.05){
       o.near=1;
-      if(nearCd<=0){nearCd=1.4;flash=0.28;score+=5;fx.push({x:lx(lane),y:PLAYER_Y-20,t:0,life:1,txt:'+5'});}
+      if(nearCd<=0){nearCd=1.4;score+=5;fx.push({x:lx(lane),y:PLAYER_Y-20,t:0,life:1,txt:'+5'});}
     }
   }
   objs=objs.filter(o=>!o.d&&o.y<H+60);
@@ -511,7 +511,7 @@ function drawObj(o){
   }else{
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+18*S,20*S,6*S,0,0,7);ctx.fill();
   }
-  const bob=Math.sin(clock*6+o.id)*3*S,sz=o.t==='fork'?68:(hazard?52:63*S);
+  const bob=Math.sin(clock*6+o.id)*3*S,sz=o.t==='fork'?44:(hazard?52:63*S);
   const pic=o.t==='m'&&imgMush.ready?imgMush:(o.t==='fork'&&imgFork.ready?imgFork:SP[o.t]);
   ctx.drawImage(pic,x-sz/2,y-sz/2+bob,sz,sz);
 }
@@ -534,7 +534,6 @@ function drawIntroAvatar(dt){
 function drawPlayer(dt){
   const px=lx(lane),py=PLAYER_Y;
   ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(px,py+8,22,6,0,0,7);ctx.fill();
-  if(flash>0){ctx.save();ctx.globalAlpha=flash*1.4;ctx.strokeStyle='#f4f1ea';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(px,py-20,18,28,0,0,7);ctx.stroke();ctx.restore();}
   ctx.save();ctx.translate(px,py);
   const isCrashing=state.startsWith('crash');
   let imgToDraw=null;
