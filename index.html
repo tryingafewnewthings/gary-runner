@@ -156,28 +156,34 @@ imgCrash.src = 'gary_crash.png';
   Adding more buildings later only requires another entry in BUILDINGS and,
   when supplied, its matching keeper entry in KEEPERS.
 
-  Source sheet: 1320 x 786.
-  Buildings occupy the upper 566px; keepers are separate on the lower row.
+  Source sheet: 2912 x 2688.
+  Buildings occupy the top row, keepers the middle row, street props the bottom.
 */
-const STREET_SHEET_W = 1320;
-const STREET_SHEET_H = 786;
+const STREET_SHEET_W = 2912;
+const STREET_SHEET_H = 2688;
 
 const BUILDINGS = [
-  { name: 'Fish & Chips',       x: 2,    y: 0, w: 215, h: 566, keeper: 0 },
-  { name: 'Peri Peri Chicken',  x: 229,  y: 0, w: 201, h: 566, keeper: 1 },
-  { name: 'Bakery',             x: 451,  y: 0, w: 199, h: 566, keeper: 2 },
-  { name: 'The Red Lion',       x: 660,  y: 0, w: 220, h: 566, keeper: 3 },
-  { name: 'Butchers',           x: 889,  y: 0, w: 201, h: 566, keeper: 4 },
-  { name: 'Mallaca Cafe',       x: 1103, y: 0, w: 213, h: 566, keeper: 5 }
+  { name: 'Fish & Chips',       x: 12,   y: 57, w: 484, h: 1287, keeper: 0 },
+  { name: 'Peri Peri Chicken',  x: 527,  y: 57, w: 443, h: 1287, keeper: 1 },
+  { name: 'Bakery',             x: 999,  y: 57, w: 442, h: 1287, keeper: 2 },
+  { name: 'The Red Lion',       x: 1467, y: 57, w: 442, h: 1287, keeper: 3 },
+  { name: 'Butchers',           x: 1940, y: 57, w: 446, h: 1287, keeper: 4 },
+  { name: 'Mallace Cafe',       x: 2422, y: 57, w: 476, h: 1287, keeper: 5 }
 ];
 
 const KEEPERS = [
-  { x: 24,   y: 586, w: 171, h: 195 },
-  { x: 246,  y: 586, w: 168, h: 195 },
-  { x: 475,  y: 586, w: 150, h: 195 },
-  { x: 676,  y: 586, w: 187, h: 195 },
-  { x: 898,  y: 586, w: 184, h: 195 },
-  { x: 1136, y: 586, w: 148, h: 195 }
+  { x: 53,   y: 1455, w: 383, h: 444 },
+  { x: 534,  y: 1455, w: 378, h: 444 },
+  { x: 1045, y: 1455, w: 333, h: 444 },
+  { x: 1479, y: 1455, w: 412, h: 444 },
+  { x: 1971, y: 1455, w: 411, h: 444 },
+  { x: 2501, y: 1455, w: 326, h: 444 }
+];
+
+const PROPS = [
+  { name: 'lamp',    x: 646,  y: 1956, w: 150, h: 715 },
+  { name: 'postbox', x: 1278, y: 2120, w: 255, h: 556 },
+  { name: 'bin',     x: 1859, y: 2226, w: 317, h: 444 }
 ];
 
 const imgStreet = new Image();
