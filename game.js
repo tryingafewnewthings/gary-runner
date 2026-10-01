@@ -604,7 +604,9 @@ function drawIntroAvatar(dt){
 
 function drawPlayer(dt){
   const px=lx(lane),py=PLAYER_Y;
-  ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(px,py+8,22,6,0,0,7);ctx.fill();
+  const planted = runFrame===0 || state.startsWith('crash');
+  ctx.fillStyle=planted?'rgba(0,0,0,.35)':'rgba(0,0,0,.22)';
+  ctx.beginPath();ctx.ellipse(px+(planted?0:4),py+8,planted?20:14,planted?5:3,0,0,7);ctx.fill();
   ctx.save();ctx.translate(px,py);
   const isCrashing=state.startsWith('crash');
   let imgToDraw=null;
