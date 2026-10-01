@@ -33,7 +33,7 @@ let score = 0, best = 0, tierMax = 0;
 let lane = 1, target = 1;
 let scrollY = 0, distance = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
-let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, nearCd = 0, lastHit = null, shownSpeed = 200, flash = 0;
+let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, roadQueue = [], nearCd = 0, lastHit = null, shownSpeed = 200, flash = 0;
 
 let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
@@ -385,13 +385,17 @@ function triggerGrin() {
 }
 function reset() {
   score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=160;
-  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;nearCd=0;lastHit=null;shownSpeed=200;flash=0;
+  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;roadQueue=[];nearCd=0;lastHit=null;shownSpeed=200;flash=0;
 }
 function move(d) { if(state==='play') target=Math.max(0,Math.min(2,target+d)); }
 
+function nextStretch() {
+  const bag = score < 250 ? STRETCHES.early : score < 900 ? STRETCHES.mid : STRETCHES.late;
+  return bag[Math.floor(Math.random() * bag.length)];
+}
 function spawnRow() {
-  const row = ROWS[nextRow % ROWS.length];
-  nextRow++;
+  if (!roadQueue.length) roadQueue = nextStretch().map(lanes => ({ lanes: lanes }));
+  const row = roadQueue.shift();
   row.lanes.forEach((kind, lane) => {
     if (!kind || kind === 'none') return;
     objs.push({ t: kind, l: lane, y: -60, id: uid++ });

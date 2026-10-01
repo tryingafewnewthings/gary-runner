@@ -66,9 +66,24 @@ const ROWS = [
   { lanes: ['none', 'kebab', 'none'] },
   { lanes: ['none', 'kebab', 'none'] },
   { lanes: ['none', 'kebab', 'none'] },
-  { lanes: ['none', 'fork', 'none'] },
-  { lanes: ['kebab', 'none', 'fish'] },
-  { lanes: ['none', 'fish', 'm'] },
-  { lanes: ['m', 'roast', 'm'] },
-  { lanes: ['fish', 'none', 'kebab'] }
+  { lanes: ['none', 'fork', 'none'] }
 ];
+
+// Stretches are short patterns. The run picks one, so the road does not repeat eight rows.
+const STRETCHES = {
+  early: [
+    [ ['none','kebab','none'], ['none','kebab','none'], ['none','kebab','none'], ['none','fork','none'] ],
+    [ ['kebab','none','fish'], ['none','fish','none'], ['fork','none','kebab'] ],
+    [ ['none','none','fish'], ['none','kebab','none'], ['m','none','fish'] ]
+  ],
+  mid: [
+    [ ['none','kebab','none'], ['none','kebab','none'], ['none','fork','none'], ['fish','none','none'] ],
+    [ ['m','roast','m'], ['none','fish','none'], ['kebab','none','fork'] ],
+    [ ['none','fork','kebab'], ['fish','none','none'], ['none','m','fish'], ['kebab','none','none'] ]
+  ],
+  late: [
+    [ ['none','kebab','none'], ['none','fork','none'], ['m','fish','none'], ['none','roast','m'] ],
+    [ ['fork','none','m'], ['none','kebab','none'], ['fish','none','fork'] ],
+    [ ['m','none','fork'], ['none','fish','none'], ['kebab','none','m'], ['none','none','roast'] ]
+  ]
+};
