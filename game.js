@@ -615,7 +615,7 @@ function drawPlayer(dt){
     if(runTimer>0.16){runTimer=0;runFrame=runFrame===0?1:0;}
     imgToDraw=imgRun[runFrame].ready?imgRun[runFrame]:(imgRun[0].ready?imgRun[0]:null);
   }
-  const h=126;
+  const h=142;
   if(imgToDraw){
     const ar=imgToDraw.naturalWidth/imgToDraw.naturalHeight;
     const w=h*ar;
@@ -651,7 +651,7 @@ function drawCap(){
   ctx.save();ctx.globalAlpha=Math.max(0,a);
   ctx.font='700 13px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   const w=Math.min(300,ctx.measureText(line).width+18);
-  const x=CX-w/2,y=PLAYER_Y-124;
+  const x=CX-w/2,y=PLAYER_Y-168;
   ctx.fillStyle='rgba(12,14,18,.92)';
   rr(ctx,x,y,w,24,6);ctx.fill();
   ctx.fillStyle='#f4f1ea';
