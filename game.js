@@ -135,13 +135,15 @@ function sideSlot(plan, side, slot) {
 }
 
 function drawGroundPatch(x, y, w, h, kind) {
-  if (kind !== 'damp' || !dampLoaded || h < 20) return;
-  ctx.save();
+  if (kind !== 'damp' || h < 20) return;
+  const cx = x + w * 0.5, cy = y + h * 0.72;
+  const wash = ctx.createRadialGradient(cx, cy, 4, cx, cy, w * 0.42);
+  wash.addColorStop(0, 'rgba(18,22,26,.28)');
+  wash.addColorStop(1, 'rgba(18,22,26,0)');
+  ctx.fillStyle = wash;
   ctx.beginPath();
-  ctx.ellipse(x + w * 0.5, y + h * 0.72, w * 0.34, h * 0.28, 0, 0, 7);
-  ctx.clip();
-  ctx.drawImage(imgDamp, x, y, w, h);
-  ctx.restore();
+  ctx.ellipse(cx, cy, w * 0.4, h * 0.32, 0, 0, 7);
+  ctx.fill();
 }
 
 function drawSideLayers(x, y, w, h, plan, side) {
