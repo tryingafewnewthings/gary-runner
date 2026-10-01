@@ -52,7 +52,7 @@ function loadGary(file) {
   img.src = file;
   return img;
 }
-const imgRun = [loadGary('gary_run1.png?v=3'), loadGary('gary_run2.png?v=3')];
+const imgRun = [loadGary('gary_run1.png?v=4'), loadGary('gary_run2.png?v=4')];
 const imgCheer = loadGary('gary_cheer.png?v=1');
 const imgCrash = loadGary('gary_crash.png?v=1');
 let runFrame = 0, runTimer = 0;
