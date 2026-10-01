@@ -7,3 +7,5 @@ Style. Painted British cartoon. Clean dark outlines. Semi-realistic, not cute, n
 Scale, Gary is the ruler. A plate is about a third of his height. A hazard is no taller than a plate. A bin, postbox, bench or board is between his knee and his chest. A tree is about chest height. A shop is taller than him and the window is not resized.
 
 Reject a picture that is the right style and the wrong angle, or the right angle and a different outline. Pack into a sheet only after the set is agreed.
+
+Realism. Gary is the most realistic asset. Do not simplify his face. The shops are the other end: flatter, more like a painted set. Props, food and hazards sit between them, closer to the shop than to Gary. A bin should not be as rendered as Gary. It should not be a flat icon either.
