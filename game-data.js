@@ -35,7 +35,7 @@ const EVENTS = [
 const DETAILS = [
   { name: 'lamp', x: 646, y: 1956, w: 150, h: 715 },
   { name: 'postbox', x: 1278, y: 2120, w: 255, h: 556 },
-  { name: 'bin', x: 1859, y: 2226, w: 317, h: 444 }
+  { name: 'bin', x: 1792, y: 2168, w: 420, h: 490 }
 ];
 
 // The street in order, from the start of a run. It repeats when it reaches the end.

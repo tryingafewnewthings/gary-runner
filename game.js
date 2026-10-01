@@ -121,7 +121,8 @@ function drawDetailZone(x, y, w, h, objectName) {
   if (!streetLoaded || !objectName || objectName === 'none' || h < 28) return;
   const prop = PROPS.find(p => p.name === objectName);
   if (!prop) return;
-  const propH = Math.min(72, h - 6);
+  const cap = objectName === 'bin' ? 46 : 72;
+  const propH = Math.min(cap, h - 6);
   const propW = propH * (prop.w / prop.h);
   const px = x + w * 0.5 - propW / 2;
   const py = y + h - propH - 2;
