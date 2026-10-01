@@ -147,12 +147,12 @@ function drawGroundPatch(x, y, w, h, kind) {
 }
 
 function drawSideLayers(x, y, w, h, plan, side) {
-  drawDetailZone(x, y, w, h * 0.75, sideSlot(plan, side, 'back'));
-  drawDetailZone(x, y, w, h, sideSlot(plan, side, 'middle'));
-  drawDetailZone(x, y + h * 0.4, w, h * 0.6, sideSlot(plan, side, 'front'));
+  drawDetailZone(x, y, w, h * 0.75, sideSlot(plan, side, 'back'), side);
+  drawDetailZone(x, y, w, h, sideSlot(plan, side, 'middle'), side);
+  drawDetailZone(x, y + h * 0.4, w, h * 0.6, sideSlot(plan, side, 'front'), side);
 }
 
-function drawDetailZone(x, y, w, h, objectName) {
+function drawDetailZone(x, y, w, h, objectName, side) {
   if (!objectName || objectName === 'none' || h < 28) return;
   const prop = PROPS.find(p => p.name === objectName);
   if (!prop) return;
@@ -163,10 +163,11 @@ function drawDetailZone(x, y, w, h, objectName) {
   const px = x + w * 0.5 - propW / 2 + shift;
   const py = y + h - propH + 2;
   const foot = px + propW / 2;
+  const cast = side === 'right' ? 8 : -8;
   ctx.save();
   ctx.fillStyle = 'rgba(12,14,18,.35)';
   ctx.beginPath();
-  ctx.ellipse(foot, y + h - 3, Math.max(8, propW * 0.28), 4, 0, 0, 7);
+  ctx.ellipse(foot + cast, y + h - 3, Math.max(8, propW * 0.34), 4, 0, 0, 7);
   ctx.fill();
   if (objectName === 'bin' || objectName === 'tree') {
     ctx.fillStyle = 'rgba(40,48,42,.28)';
