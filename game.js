@@ -218,7 +218,8 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   const wh = h * pane.h;
 
   const phase = clock * 2.1 + phaseSeed;
-  const near = Math.abs((y + h * 0.72) - PLAYER_Y) < 80;
+  const ahead = PLAYER_Y - (y + h * 0.72);
+  const near = ahead > -40 && ahead < 150;
   const cheer = near ? Math.max(0, Math.sin(clock * 10)) : 0;
   const bob = Math.sin(phase) * 0.7 - cheer * 5;
   const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 + cheer * 0.06;
