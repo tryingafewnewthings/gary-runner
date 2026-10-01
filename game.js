@@ -45,20 +45,17 @@ let loadErrorLog = [];
 /* Gary assets                                                                */
 /* -------------------------------------------------------------------------- */
 
-const imgOpen = new Image();
-imgOpen.onload = () => { openLoaded = true; };
-imgOpen.onerror = () => { loadErrorLog.push('gary_open.png.PNG not found'); };
-imgOpen.src = 'gary_open.png.PNG';
-
-const imgClosed = new Image();
-imgClosed.onload = () => { closedLoaded = true; };
-imgClosed.onerror = () => { loadErrorLog.push('gary_closed.png.PNG not found'); };
-imgClosed.src = 'gary_closed.png.PNG';
-
-const imgCrash = new Image();
-imgCrash.onload = () => { crashLoaded = true; };
-imgCrash.onerror = () => { loadErrorLog.push('gary_crash.png not found'); };
-imgCrash.src = 'gary_crash.png';
+function loadGary(file) {
+  const img = new Image();
+  img.onload = () => { img.ready = true; };
+  img.onerror = () => { loadErrorLog.push(file + ' not found'); };
+  img.src = file;
+  return img;
+}
+const imgRun = [loadGary('gary_run1.png?v=1'), loadGary('gary_run2.png?v=1')];
+const imgCheer = loadGary('gary_cheer.png?v=1');
+const imgCrash = loadGary('gary_crash.png?v=1');
+let runFrame = 0, runTimer = 0;
 
 /* -------------------------------------------------------------------------- */
 /* High-street sprite library                                                 */
@@ -511,22 +508,22 @@ function drawIntroAvatar(dt){
 
 function drawPlayer(dt){
   const px=lx(lane),py=PLAYER_Y;
-  ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(px,py+20*S,29*S,8*S,0,0,7);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(px,py+8,22,6,0,0,7);ctx.fill();
   ctx.save();ctx.translate(px,py);
   const isCrashing=state.startsWith('crash');
-  if(isCrashing){const p=Math.min(1,crashT/.3);ctx.rotate(p*Math.PI/2);ctx.translate(0,p*15);}
   let imgToDraw=null;
-  if(isCrashing&&crashLoaded)imgToDraw=imgCrash;
-  else{
-    let isOpen=false;
-    if(cap!==null){animTimer+=dt;if(animTimer>.12){currentFrame=currentFrame===0?1:0;animTimer=0;}isOpen=currentFrame===1;}
-    imgToDraw=getActiveImage(isOpen);
+  if(isCrashing && imgCrash.ready) imgToDraw=imgCrash;
+  else if(grinTimer>0 && imgCheer.ready) imgToDraw=imgCheer;
+  else {
+    runTimer+=dt;
+    if(runTimer>0.16){runTimer=0;runFrame=runFrame===0?1:0;}
+    imgToDraw=imgRun[runFrame].ready?imgRun[runFrame]:(imgRun[0].ready?imgRun[0]:null);
   }
-  let w=72*S,h=72*S;
+  const h=108;
   if(imgToDraw){
-    const ar=imgToDraw.naturalWidth/imgToDraw.naturalHeight;w=h*ar;
-    if(w>72*S){w=72*S;h=w/ar;}
-    ctx.drawImage(imgToDraw,-w/2,-h/2,w,h);
+    const ar=imgToDraw.naturalWidth/imgToDraw.naturalHeight;
+    const w=h*ar;
+    ctx.drawImage(imgToDraw,-w/2,-h+6,w,h);
   }else fbFace(ctx,36*S);
   ctx.restore();
 
