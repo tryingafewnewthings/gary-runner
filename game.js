@@ -103,7 +103,7 @@ const KEEPERS = [
 const imgStreet = new Image();
 imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
-imgStreet.src = 'high_street_sprites.webp?v=7';
+imgStreet.src = 'high_street_sprites.webp?v=8';
 
 const imgPath = new Image();
 let pathLoaded = false;
