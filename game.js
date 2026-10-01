@@ -239,8 +239,8 @@ function drawHighStreet() {
   ctx.fillRect(0, 0, W, H);
 
   // Cobbles sit behind the shops, so the space around each chimney is pavement.
-  const leftW = ROAD_LEFT - PAVEMENT_WIDTH;
-  const rightX = ROAD_RIGHT + PAVEMENT_WIDTH;
+  const leftW = ROAD_LEFT;
+  const rightX = ROAD_RIGHT;
   drawCobbles(0, 0, leftW, H);
   drawCobbles(rightX, 0, W - rightX, H);
 
@@ -279,23 +279,10 @@ function drawHighStreet() {
 }
 
 function drawPavements() {
-  const pWidth = PAVEMENT_WIDTH;
-  const slab = 22;
-  const offY = scrollY % slab;
-  for (let side = 0; side < 2; side++) {
-    const x = side === 0 ? ROAD_LEFT - pWidth : ROAD_RIGHT;
-    // Flat border only. No pale lip, no dark gutter, so it does not lift the road.
-    ctx.fillStyle = '#9a9e98';
-    ctx.fillRect(x, 0, pWidth, H);
-    ctx.strokeStyle = 'rgba(70,74,68,0.4)';
-    ctx.lineWidth = 1;
-    for (let y = -slab + offY; y < H + slab; y += slab) {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + pWidth, y);
-      ctx.stroke();
-    }
-  }
+  // A dark edge only. A lighter band reads as the top of a step and lifts the road above the roofs.
+  ctx.fillStyle = 'rgba(32,34,36,0.85)';
+  ctx.fillRect(ROAD_LEFT - 2, 0, 2, H);
+  ctx.fillRect(ROAD_RIGHT, 0, 2, H);
 }
 
 function mk(fn) {
