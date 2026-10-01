@@ -177,7 +177,13 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   }
   ctx.restore();
   if (prop.file && prop.img && prop.img.complete && prop.img.naturalWidth) {
-    ctx.drawImage(prop.img, px, py, propW, propH);
+    if (objectName === 'bench' && side === 'right') {
+      ctx.save();
+      ctx.translate(px + propW, py);
+      ctx.scale(-1, 1);
+      ctx.drawImage(prop.img, 0, 0, propW, propH);
+      ctx.restore();
+    } else ctx.drawImage(prop.img, px, py, propW, propH);
     return;
   }
   if (!streetLoaded || prop.x == null) return;

@@ -43,8 +43,8 @@ const EVENTS = [
 const DETAILS = [
   { name: 'lamp', x: 646, y: 1956, w: 150, h: 715 },
   { name: 'postbox', file: 'postbox.png', w: 400, h: 900, cap: 64 },
-  { name: 'bin', file: 'bin.png', w: 500, h: 700, cap: 52 },
-  { name: 'bench', file: 'bench.png', w: 953, h: 493, cap: 36 },
+  { name: 'bin', file: 'bin.png', w: 571, h: 750, cap: 52 },
+  { name: 'bench', file: 'bench.png', w: 745, h: 529, cap: 40 },
   { name: 'tree', file: 'tree.png', w: 555, h: 764, cap: 78 },
   { name: 'board', file: 'board.png', w: 635, h: 940, cap: 58 }
 ];
