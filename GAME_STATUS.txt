@@ -1105,3 +1105,47 @@ gary_open.png.PNG  gary_closed.png.PNG  intro face
 gary_audio.mp3
 roast.png  mushroom.png  fork.png
 bench.png?v=7  tree.png?v=2  bin.png  postbox.png  board.png
+
+7. ASSET DIRECTORY MAP
+All files are in the site root, next to index.html. There is no images folder.
+The code asks for these exact names.
+
+Gary
+- gary_run1.png?v=5
+- gary_run2.png?v=5
+- gary_cheer.png?v=1
+- gary_crash.png?v=1
+- gary_open.png.PNG
+- gary_closed.png.PNG
+- gary_audio.mp3
+
+Street
+- high_street_sprites.webp?v=8  shops, keepers, and the lamp crop
+- path.png?v=4  the one pavement
+- path_damp.png  loaded, not used
+
+Food and hazards
+- roast.png
+- mushroom.png
+- fork.png
+- kebab and fish are drawn in code, not files
+
+Pavement objects
+- postbox.png
+- bin.png
+- bench.png?v=7
+- tree.png?v=2
+- board.png
+- lamp is a crop of high_street_sprites.webp, not its own file
+
+8. ART BIBLE STYLE LOCK
+Camera. Flat. Not a street going into the distance. Lanes are three bands. Shops are front-on with a little of the top showing. Props use that camera. Gary is from behind, head turned, face visible. One ground line. Light from the left. A shadow on the right pavement falls outward.
+
+Realism. Gary is the most realistic asset. Do not simplify his face, hair, blue quilted gilet, blue knit jumper, or the mic with the fuzzy windscreen. Shops are the flat painted set. Props, food and hazards sit between them, closer to the shop.
+
+Canvas. 360 by 640. Gary is drawn 142px tall, about a fifth of the screen. Do not stretch him. A plate is about 50px. The fork is 44. The roast is 46. The mushroom is 52. A bin is about 52. A bench about 58. A postbox about 64. A tree about 78, chest height. A shop is 236 tall and about 92 wide. The window is not resized. Cut-outs on flat black. No border, no painted shadow, no black fringe.
+
+Reject a picture with the right style and the wrong angle.
+
+9. UNIVERSAL ART PROMPT
+Painted British cartoon for a flat three-lane runner, clean dark outline, soft daylight from the left, front-on with a little of the top showing, closer to a shop front than to a realistic man, cut out on pure black, no border, no shadow, no text, sized against a man of 142px in a blue quilted gilet.
