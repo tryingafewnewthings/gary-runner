@@ -581,15 +581,17 @@ function drawCap(){
 }
 
 function drawBubble(){
-  const s=Math.min(1,crashT*6),px=lx(lane),bx=px<180?px+72:px-72,by=PLAYER_Y-118,bw=112,bh=28;
-  ctx.save();ctx.translate(bx,by);ctx.scale(s,s);
-  const tx=px-bx,ty=18;
-  ctx.fillStyle='#fff';ctx.strokeStyle='#111';ctx.lineWidth=4;ctx.lineJoin='round';
-  ctx.beginPath();ctx.moveTo(-14,bh/2-2);ctx.lineTo(tx,ty);ctx.lineTo(14,bh/2-2);ctx.closePath();ctx.fill();ctx.stroke();
-  rr(ctx,-bw/2,-bh/2,bw,bh,20);ctx.fill();ctx.stroke();ctx.fillRect(-12,bh/2-4,24,7);
-  ctx.fillStyle='#111';ctx.font='900 15px "Arial Black",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  const px=lx(lane);
+  const line=state==='crash_fork'?"Plastic fork.":"Mushrooms. No.";
+  ctx.save();
   ctx.font='700 13px Arial,sans-serif';
-  ctx.fillText(state==='crash_fork'?"Plastic fork.":"Mushrooms. No.",0,0);
+  const w=ctx.measureText(line).width+16;
+  const x=Math.max(8,Math.min(W-w-8,px-w/2));
+  const y=PLAYER_Y-124;
+  ctx.fillStyle='rgba(12,14,18,.92)';
+  rr(ctx,x,y,w,24,6);ctx.fill();
+  ctx.fillStyle='#f4f1ea';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(line,x+w/2,y+12);
   ctx.restore();
 }
 
