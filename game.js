@@ -239,8 +239,8 @@ function drawHighStreet() {
   ctx.fillRect(0, 0, W, H);
 
   // Cobbles sit behind the shops, so the space around each chimney is pavement.
-  const leftW = ROAD_LEFT - PAVEMENT_WIDTH;
-  const rightX = ROAD_RIGHT + PAVEMENT_WIDTH;
+  const leftW = ROAD_LEFT;
+  const rightX = ROAD_RIGHT;
   drawCobbles(0, 0, leftW, H);
   drawCobbles(rightX, 0, W - rightX, H);
 
@@ -279,26 +279,10 @@ function drawHighStreet() {
 }
 
 function drawPavements() {
-  const pWidth = PAVEMENT_WIDTH;
-  const slab = 28;
-  const offY = scrollY % slab;
-
-  for (let side = 0; side < 2; side++) {
-    const x = side === 0 ? ROAD_LEFT - pWidth : ROAD_RIGHT;
-
-    // Flat stone, same plane as the cobbles. No lip or gutter, so the road does not look raised.
-    ctx.fillStyle = '#8d9294';
-    ctx.fillRect(x, 0, pWidth, H);
-
-    ctx.strokeStyle = 'rgba(62,66,70,0.35)';
-    ctx.lineWidth = 1;
-    for (let y = -slab + offY; y < H + slab; y += slab) {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + pWidth, y);
-      ctx.stroke();
-    }
-  }
+  // A hairline only. A stone band here reads as a wall and lifts the road above the shops.
+  ctx.fillStyle = 'rgba(28,30,34,0.55)';
+  ctx.fillRect(ROAD_LEFT - 1, 0, 1, H);
+  ctx.fillRect(ROAD_RIGHT, 0, 1, H);
 }
 
 function mk(fn) {
