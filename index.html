@@ -198,44 +198,16 @@ imgStreet.src = 'high_street_sprites.webp?v=6';
   dressing without changing the building system.
 */
 function drawDetailZone(x, y, w, h, seed) {
-  // Quiet paving. The repeat is only the ground; the objects on it change.
-  const tone = 104 + (seed % 5) * 3;
-  ctx.fillStyle = 'rgb(' + tone + ',' + (tone + 2) + ',' + (tone - 2) + ')';
-  ctx.fillRect(x, y, w, h);
-
-  const slabW = 22 + (seed % 3) * 4;
-  const slabH = 14;
-  ctx.strokeStyle = 'rgba(55,58,62,0.35)';
-  ctx.lineWidth = 1;
-  for (let row = 0, yy = y; yy < y + h; yy += slabH, row++) {
-    const shift = (row % 2) ? slabW * 0.45 : (seed % 7);
-    ctx.beginPath();
-    ctx.moveTo(x, yy);
-    ctx.lineTo(x + w, yy);
-    ctx.stroke();
-    for (let xx = x - shift; xx < x + w; xx += slabW) {
-      ctx.beginPath();
-      ctx.moveTo(xx, yy);
-      ctx.lineTo(xx, yy + slabH);
-      ctx.stroke();
-    }
-  }
-
-  // One street object per gap, picked so neighbours do not match.
-  if (streetLoaded && PROPS.length && h > 28) {
-    const prop = PROPS[Math.abs(seed * 3 + 1) % PROPS.length];
-    const propH = Math.min(h - 6, h * 0.92);
-    const propW = propH * (prop.w / prop.h);
-    const side = (seed % 2) ? 0.72 : 0.28;
-    const px = x + w * side - propW / 2;
-    const py = y + h - propH - 2;
-    ctx.drawImage(imgStreet, prop.x, prop.y, prop.w, prop.h, px, py, propW, propH);
-  }
-
-  ctx.fillStyle = 'rgba(255,255,255,0.10)';
-  ctx.fillRect(x, y, w, 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.fillRect(x, y + h - 4, w, 4);
+  // The pavement is already drawn for the whole street. This only places
+  // the object, so the path under the postbox matches the path by the chimney.
+  if (!streetLoaded || !PROPS.length || h < 28) return;
+  const prop = PROPS[Math.abs(seed * 3 + 1) % PROPS.length];
+  const propH = Math.min(h - 6, h * 0.92);
+  const propW = propH * (prop.w / prop.h);
+  const side = (seed % 2) ? 0.72 : 0.28;
+  const px = x + w * side - propW / 2;
+  const py = y + h - propH - 2;
+  ctx.drawImage(imgStreet, prop.x, prop.y, prop.w, prop.h, px, py, propW, propH);
 }
 
 /*
