@@ -57,6 +57,15 @@ const imgCheer = loadGary('gary_cheer.png?v=1');
 const imgCrash = loadGary('gary_crash.png?v=1');
 let runFrame = 0, runTimer = 0;
 
+const imgOpen = new Image();
+imgOpen.onload = () => { openLoaded = true; };
+imgOpen.onerror = () => { loadErrorLog.push('gary_open.png.PNG not found'); };
+imgOpen.src = 'gary_open.png.PNG';
+const imgClosed = new Image();
+imgClosed.onload = () => { closedLoaded = true; };
+imgClosed.onerror = () => { loadErrorLog.push('gary_closed.png.PNG not found'); };
+imgClosed.src = 'gary_closed.png.PNG';
+
 /* -------------------------------------------------------------------------- */
 /* High-street sprite library                                                 */
 /* -------------------------------------------------------------------------- */
