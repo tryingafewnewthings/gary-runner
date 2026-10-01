@@ -51,3 +51,17 @@ const STREET = [
   { left: 'The Red Lion', right: 'Mallace Cafe', leftObject: 'lamp', rightObject: 'none' },
   { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin' }
 ];
+
+// One row of the road, in order. Three lanes: left, middle, right.
+// none leaves a lane empty. kebab, fish and roast are food. fork and m are hazards.
+// The pictures do not change. This only decides what comes next.
+const ROWS = [
+  { lanes: ['kebab', 'none', 'fish'] },
+  { lanes: ['none', 'fork', 'kebab'] },
+  { lanes: ['roast', 'none', 'none'] },
+  { lanes: ['none', 'fish', 'm'] },
+  { lanes: ['kebab', 'none', 'fork'] },
+  { lanes: ['none', 'roast', 'fish'] },
+  { lanes: ['m', 'kebab', 'none'] },
+  { lanes: ['fish', 'none', 'roast'] }
+];
