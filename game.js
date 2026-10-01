@@ -33,7 +33,7 @@ let score = 0, best = 0, tierMax = 0;
 let lane = 1, target = 1;
 let scrollY = 0, distance = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
-let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0;
+let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, nearCd = 0;
 
 let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
@@ -385,7 +385,7 @@ function triggerGrin() {
 }
 function reset() {
   score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=160;
-  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;
+  objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;nearCd=0;
 }
 function move(d) { if(state==='play') target=Math.max(0,Math.min(2,target+d)); }
 
@@ -469,6 +469,7 @@ function update(dt){
   if(state==='menu'||state==='intro'){return;}
   if(state.startsWith('crash')){crashT+=dt;if(crashT>2)endGame();return;}
   if(state!=='play')return;
+  if(nearCd>0)nearCd-=dt;
 
   distance+=speed*dt; scrollY=distance;
   acc+=speed*dt;
@@ -480,6 +481,9 @@ function update(dt){
       o.d=1;
       if(o.t==='m'||o.t==='fork'){crash(o.t);return;}
       collect(o);
+    }else if(!o.near&&(o.t==='m'||o.t==='fork')&&Math.abs(o.y-PLAYER_Y)<26&&Math.abs(lane-o.l)>0.55&&Math.abs(lane-o.l)<1.05){
+      o.near=1;
+      if(nearCd<=0){nearCd=1.4;score+=5;fx.push({x:lx(lane),y:PLAYER_Y-20,t:0,life:1,txt:'+5'});if(!cap)cap={s:'Close one.',t:0};}
     }
   }
   objs=objs.filter(o=>!o.d&&o.y<H+60);
