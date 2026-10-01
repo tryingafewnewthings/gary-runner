@@ -103,7 +103,7 @@ const KEEPERS = [
 const imgStreet = new Image();
 imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
-imgStreet.src = 'high_street_sprites.webp?v=6';
+imgStreet.src = 'high_street_sprites.webp?v=7';
 
 const imgPath = new Image();
 let pathLoaded = false;
@@ -632,9 +632,9 @@ function render(dt){
     drawPlayer(dt);
     for(const f of fx){
       const k=f.t/f.life;
-      ctx.save();ctx.globalAlpha=1-k;ctx.strokeStyle='#ffe600';ctx.lineWidth=2;
-      ctx.beginPath();ctx.arc(f.x,f.y,8+k*20,0,7);ctx.stroke();ctx.restore();
-      ctx.save();ctx.globalAlpha=1-k*k;txt(f.txt,f.x,f.y-k*25,16,'#ffe600','center');ctx.restore();
+      ctx.save();ctx.globalAlpha=1-k;
+      txt(f.txt,f.x,f.y-16-k*28,16,'#fff','center');
+      ctx.restore();
     }
   }
   ctx.restore();drawVignette();
