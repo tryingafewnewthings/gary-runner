@@ -171,7 +171,8 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
     keeperH = keeperW * (keeper.h / keeper.w);
   }
   const baseX = wx + ww * 0.5 + shift;
-  const baseY = wy + wh - 1 + bob;
+  const drop = index === 3 ? wh * 0.22 : 0;
+  const baseY = wy + wh - 1 + bob + drop;
 
   ctx.save();
   ctx.beginPath();
