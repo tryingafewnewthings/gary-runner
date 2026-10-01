@@ -72,7 +72,7 @@
     </div>
   </div>
 
-<script src="game-data.js?v=3"></script>
+<script src="game-data.js?v=4"></script>
 <script>
 (() => {
 'use strict';
@@ -340,7 +340,7 @@ function drawHighStreet() {
     drawStreetBuilding(
       shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
-    drawDetailZone(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.object);
+    drawDetailZone(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftObject);
 
     drawStreetBuilding(
       shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
@@ -348,7 +348,7 @@ function drawHighStreet() {
     );
     drawDetailZone(
       ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
-      W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.object
+      W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightObject
     );
   }
 }

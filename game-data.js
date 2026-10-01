@@ -41,11 +41,13 @@ const DETAILS = [
 // The street in order, from the start of a run. It repeats when it reaches the end.
 // left and right are a shop name, or "none" for just pavement.
 // object is a name from DETAILS, or "none".
+// leftObject and rightObject are separate. A real street does not mirror itself,
+// so most stretches have an object on one side only.
 const STREET = [
-  { left: 'Fish & Chips', right: 'Bakery', object: 'postbox' },
-  { left: 'none', right: 'none', object: 'lamp' },
-  { left: 'Peri Peri Chicken', right: 'Butchers', object: 'bin' },
-  { left: 'none', right: 'none', object: 'postbox' },
-  { left: 'The Red Lion', right: 'Mallace Cafe', object: 'bin' },
-  { left: 'none', right: 'none', object: 'lamp' }
+  { left: 'Fish & Chips', right: 'Bakery', leftObject: 'postbox', rightObject: 'none' },
+  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'lamp' },
+  { left: 'Peri Peri Chicken', right: 'Butchers', leftObject: 'bin', rightObject: 'none' },
+  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'postbox' },
+  { left: 'The Red Lion', right: 'Mallace Cafe', leftObject: 'lamp', rightObject: 'none' },
+  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin' }
 ];
