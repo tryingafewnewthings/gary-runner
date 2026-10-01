@@ -615,7 +615,7 @@ function drawPlayer(dt){
     if(runTimer>0.16){runTimer=0;runFrame=runFrame===0?1:0;}
     imgToDraw=imgRun[runFrame].ready?imgRun[runFrame]:(imgRun[0].ready?imgRun[0]:null);
   }
-  const h=108;
+  const h=126;
   if(imgToDraw){
     const ar=imgToDraw.naturalWidth/imgToDraw.naturalHeight;
     const w=h*ar;
