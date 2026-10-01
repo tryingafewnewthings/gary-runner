@@ -37,3 +37,15 @@ const DETAILS = [
   { name: 'postbox', x: 1278, y: 2120, w: 255, h: 556 },
   { name: 'bin', x: 1859, y: 2226, w: 317, h: 444 }
 ];
+
+// The street in order, from the start of a run. It repeats when it reaches the end.
+// left and right are a shop name, or "none" for just pavement.
+// object is a name from DETAILS, or "none".
+const STREET = [
+  { left: 'Fish & Chips', right: 'Bakery', object: 'postbox' },
+  { left: 'none', right: 'none', object: 'lamp' },
+  { left: 'Peri Peri Chicken', right: 'Butchers', object: 'bin' },
+  { left: 'none', right: 'The Red Lion', object: 'postbox' },
+  { left: 'Mallace Cafe', right: 'none', object: 'bin' },
+  { left: 'none', right: 'none', object: 'lamp' }
+];

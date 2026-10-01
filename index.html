@@ -106,7 +106,7 @@ let K = 1;
 let state = 'menu';
 let score = 0, best = 0, tierMax = 0;
 let lane = 1, target = 1;
-let scrollY = 0, acc = 0, gap = 160;
+let scrollY = 0, distance = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
 let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0;
 
@@ -186,15 +186,19 @@ imgPath.src = 'path.png';
   cobbles, postboxes, bins, lamps, planters, bikes, signs and other street
   dressing without changing the building system.
 */
-function drawDetailZone(x, y, w, h, seed) {
-  // The pavement is already drawn for the whole street. This only places
-  // the object, so the path under the postbox matches the path by the chimney.
-  if (!streetLoaded || !PROPS.length || h < 28) return;
-  const prop = PROPS[Math.abs(seed * 3 + 1) % PROPS.length];
+function shopByName(name) {
+  if (!name || name === 'none') return -1;
+  return BUILDINGS.findIndex(b => b.name === name);
+}
+
+function drawDetailZone(x, y, w, h, objectName) {
+  // The pavement is already drawn. This only places the object named in the street plan.
+  if (!streetLoaded || !objectName || objectName === 'none' || h < 28) return;
+  const prop = PROPS.find(p => p.name === objectName);
+  if (!prop) return;
   const propH = Math.min(72, h - 6);
   const propW = propH * (prop.w / prop.h);
-  const side = (seed % 2) ? 0.72 : 0.28;
-  const px = x + w * side - propW / 2;
+  const px = x + w * 0.5 - propW / 2;
   const py = y + h - propH - 2;
   ctx.drawImage(imgStreet, prop.x, prop.y, prop.w, prop.h, px, py, propW, propH);
 }
@@ -267,6 +271,7 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
 }
 
 function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
+  if (buildingIndex < 0) return;
   const b = BUILDINGS[buildingIndex];
   if (!streetLoaded || !b) return;
 
@@ -322,26 +327,26 @@ function drawHighStreet() {
     return;
   }
 
-  const offY = scrollY % STREET_SEGMENT_H;
+  const offY = distance % STREET_SEGMENT_H;
+  const base = Math.floor(distance / STREET_SEGMENT_H);
 
   for (let pass = -1; pass <= 3; pass++) {
+    const index = base + pass;
     const y = pass * STREET_SEGMENT_H + offY - STREET_SEGMENT_H;
 
-    const leftIndex = ((pass % BUILDINGS.length) + BUILDINGS.length) % BUILDINGS.length;
-    const rightIndex = (leftIndex + 3) % BUILDINGS.length;
-
+    const plan = STREET[((index % STREET.length) + STREET.length) % STREET.length];
     drawStreetBuilding(
-      leftIndex, 0, y, BUILDING_WIDTH, BUILDING_H, false, pass * 2.1 + 0.4
+      shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
-    drawDetailZone(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, pass + 1);
+    drawDetailZone(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.object);
 
     drawStreetBuilding(
-      rightIndex, ROAD_RIGHT + PAVEMENT_WIDTH, y,
-      W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, pass * 2.1 + 2.7
+      shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
+      W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, index * 2.1 + 2.7
     );
     drawDetailZone(
       ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
-      W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, pass + 7
+      W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.object
     );
   }
 }
@@ -460,7 +465,7 @@ function triggerGrin() {
   }
 }
 function reset() {
-  score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;acc=0;gap=160;
+  score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=160;
   objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;
 }
 function move(d) { if(state==='play') target=Math.max(0,Math.min(2,target+d)); }
@@ -544,11 +549,11 @@ function update(dt){
   fx=fx.filter(f=>f.t<f.life);
 
   const speed=200+Math.floor(score/80)*15;
-  if(state==='menu'||state==='intro'){scrollY=(scrollY+120*dt)%STREET_SEGMENT_H;return;}
+  if(state==='menu'||state==='intro'){distance+=120*dt; scrollY=distance;return;}
   if(state.startsWith('crash')){crashT+=dt;if(crashT>2)endGame();return;}
   if(state!=='play')return;
 
-  scrollY=(scrollY+speed*dt)%STREET_SEGMENT_H;
+  distance+=speed*dt; scrollY=distance;
   acc+=speed*dt;
   if(acc>=gap){acc-=gap;gap=140+Math.random()*80;spawnRow();}
 
