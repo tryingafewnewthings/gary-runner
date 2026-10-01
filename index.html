@@ -189,7 +189,7 @@ const PROPS = [
 const imgStreet = new Image();
 imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
-imgStreet.src = 'high_street_sprites.webp?v=5';
+imgStreet.src = 'high_street_sprites.webp?v=6';
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -309,13 +309,6 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
   const b = BUILDINGS[buildingIndex];
   if (!streetLoaded || !b) return;
 
-  // Fill the slot first so the holes around the chimneys match the roof,
-  // instead of showing the sky as a white outline.
-  ctx.fillStyle = '#4a5563';
-  ctx.fillRect(x, y, w, h * 0.34);
-  ctx.fillStyle = '#8d4638';
-  ctx.fillRect(x, y + h * 0.28, w, h * 0.72);
-
   ctx.drawImage(imgStreet, b.x, b.y, b.w, b.h, x, y, w, h);
 
   // Fine outer shadow gives each shop a physical edge against the detail zone.
@@ -330,9 +323,37 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
   drawKeeper(b.keeper, x, y, w, h, isRight, phaseSeed);
 }
 
+function drawCobbles(x, y, w, h) {
+  ctx.fillStyle = '#6e7276';
+  ctx.fillRect(x, y, w, h);
+  const slabW = 24, slabH = 14;
+  const off = scrollY % slabH;
+  ctx.strokeStyle = 'rgba(48,50,54,0.34)';
+  ctx.lineWidth = 1;
+  for (let row = -1, yy = y - slabH + off; yy < y + h + slabH; yy += slabH, row++) {
+    const shift = (row % 2) ? slabW * 0.5 : 0;
+    ctx.beginPath();
+    ctx.moveTo(x, yy);
+    ctx.lineTo(x + w, yy);
+    ctx.stroke();
+    for (let xx = x - shift; xx < x + w; xx += slabW) {
+      ctx.beginPath();
+      ctx.moveTo(xx, yy);
+      ctx.lineTo(xx, yy + slabH);
+      ctx.stroke();
+    }
+  }
+}
+
 function drawHighStreet() {
   ctx.fillStyle = '#1a1e24';
   ctx.fillRect(0, 0, W, H);
+
+  // Cobbles sit behind the shops, so the space around each chimney is pavement.
+  const leftW = ROAD_LEFT - PAVEMENT_WIDTH;
+  const rightX = ROAD_RIGHT + PAVEMENT_WIDTH;
+  drawCobbles(0, 0, leftW, H);
+  drawCobbles(rightX, 0, W - rightX, H);
 
   if (!streetLoaded) {
     ctx.fillStyle = '#3a3030';
