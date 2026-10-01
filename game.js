@@ -159,9 +159,11 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012;
   const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6;
 
-  // Fit the glass, like the butcher: head in the window, shoulders in, feet on the counter.
-  const fitH = wh * 0.96;
-  const fitW = ww * 0.86;
+  // Other windows are large, so the keeper fills them. The pub glass is smaller,
+  // so match the other keepers' size and let the frame crop him.
+  const size = [1, 1, 1, 1.55, 1, 1][index] || 1;
+  const fitH = wh * 0.96 * size;
+  const fitW = ww * 0.86 * size;
   let keeperH = fitH;
   let keeperW = keeperH * (keeper.w / keeper.h);
   if (keeperW > fitW) {
