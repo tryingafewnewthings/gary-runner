@@ -286,16 +286,6 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
   if (!streetLoaded || !b) return;
 
   ctx.drawImage(imgStreet, b.x, b.y, b.w, b.h, x, y, w, h);
-
-  // Fine outer shadow gives each shop a physical edge against the detail zone.
-  const edgeX = isRight ? x : x + w - 7;
-  const dir = isRight ? -1 : 1;
-  const shadow = ctx.createLinearGradient(edgeX, 0, edgeX + dir * 8, 0);
-  shadow.addColorStop(0, 'rgba(0,0,0,0.34)');
-  shadow.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = shadow;
-  ctx.fillRect(Math.min(edgeX, edgeX + dir * 8), y, 8, h);
-
   drawKeeper(b.keeper, x, y, w, h, isRight, phaseSeed);
 }
 
@@ -713,20 +703,21 @@ function drawBubble(){
 }
 
 function drawStreetLight(){
-  // A restrained warm reflection keeps the storefronts connected to the road
-  // without locking the system to one particular shop.
+  // Warm pool on the road only. A box over the facade read as a shadow on the roof.
   const flick=.92+Math.sin(clock*7)*.04+Math.sin(clock*3.1)*.03;
-  ctx.save();ctx.globalCompositeOperation='lighter';
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  ctx.beginPath();
+  ctx.rect(ROAD_LEFT, 0, ROAD_WIDTH, H);
+  ctx.clip();
   for(let pass=-1;pass<=3;pass++){
     const y=pass*STREET_SEGMENT_H+(scrollY%STREET_SEGMENT_H)-STREET_SEGMENT_H;
-    const cy=y+BUILDING_H*.64;
-    for(const side of [0,1]){
-      const cx=side===0?ROAD_LEFT-2:ROAD_RIGHT+2;
-      const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,58);
-      grad.addColorStop(0,'rgba(255,180,90,'+(.09*flick)+')');
-      grad.addColorStop(1,'rgba(255,180,90,0)');
-      ctx.fillStyle=grad;ctx.fillRect(side===0?0:ROAD_RIGHT,y,ROAD_WIDTH*.25,BUILDING_H);
-    }
+    const cy=y+BUILDING_H*.72;
+    const grad=ctx.createRadialGradient(W/2,cy,0,W/2,cy,70);
+    grad.addColorStop(0,'rgba(255,180,90,'+(.05*flick)+')');
+    grad.addColorStop(1,'rgba(255,180,90,0)');
+    ctx.fillStyle=grad;
+    ctx.fillRect(ROAD_LEFT, cy-40, ROAD_WIDTH, 80);
   }
   ctx.restore();
 }
@@ -745,8 +736,8 @@ function drawVignette(){
   ctx.fillRect(ROAD_RIGHT, 0, W - ROAD_RIGHT, H);
   ctx.restore();
 
-  const t=ctx.createLinearGradient(0,0,0,150);t.addColorStop(0,'rgba(4,6,16,.5)');t.addColorStop(1,'rgba(4,6,16,0)');
-  ctx.fillStyle=t;ctx.fillRect(0,0,W,150);
+  const t=ctx.createLinearGradient(0,0,0,70);t.addColorStop(0,'rgba(4,6,16,.18)');t.addColorStop(1,'rgba(4,6,16,0)');
+  ctx.fillStyle=t;ctx.fillRect(0,0,W,70);
   const b=ctx.createLinearGradient(0,H-130,0,H);b.addColorStop(0,'rgba(4,6,16,0)');b.addColorStop(1,'rgba(4,6,16,.45)');
   ctx.fillStyle=b;ctx.fillRect(0,H-130,W,130);
 }
