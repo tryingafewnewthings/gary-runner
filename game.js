@@ -106,15 +106,23 @@ imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
 imgStreet.src = 'high_street_sprites.webp?v=8';
 
-const imgPath = new Image();
-let pathLoaded = false;
-imgPath.onload = () => { pathLoaded = true; };
-imgPath.onerror = () => { loadErrorLog.push('path.png not found'); };
-imgPath.src = 'path.png?v=4';
-const imgDamp = new Image();
-let dampLoaded = false;
-imgDamp.onload = () => { dampLoaded = true; };
-imgDamp.src = 'path_damp.png';
+const COBBLE_KINDS = {
+  base: 'cobble_base.png?v=1',
+  weeds: 'cobble_weeds.png?v=1',
+  light: 'cobble_weeds_light.png?v=1',
+  sparse: 'cobble_weeds_sparse.png?v=1',
+  dense: 'cobble_weeds_dense.png?v=1',
+  moss: 'cobble_moss.png?v=1',
+  damp: 'cobble_moss.png?v=1'
+};
+const cobbleImgs = {};
+Object.entries(COBBLE_KINDS).forEach(([kind, file]) => {
+  const img = new Image();
+  img.onload = () => { img.ready = true; };
+  img.onerror = () => { loadErrorLog.push(file + ' not found'); };
+  img.src = file;
+  cobbleImgs[kind] = img;
+});
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -291,38 +299,28 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
   drawKeeper(b.keeper, x, y, w, h, isRight, phaseSeed);
 }
 
-function drawCobbles(x, y, w, h) {
-  if (!pathLoaded) {
+function cobbleFor(kind) {
+  const img = cobbleImgs[kind] || cobbleImgs.weeds;
+  return img && img.ready ? img : (cobbleImgs.weeds && cobbleImgs.weeds.ready ? cobbleImgs.weeds : null);
+}
+
+function drawCobbles(x, y, w, h, kind) {
+  const img = cobbleFor(kind || 'weeds');
+  if (!img) {
     ctx.fillStyle = '#6e7276';
     ctx.fillRect(x, y, w, h);
     return;
   }
-  const tileH = imgPath.height;
-  const off = scrollY % tileH;
+  const tile = img.height;
+  const off = ((scrollY % tile) + tile) % tile;
   ctx.save();
+  ctx.imageSmoothingEnabled = false;
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
   ctx.translate(0, off);
-  const pattern = ctx.createPattern(imgPath, 'repeat');
-  ctx.fillStyle = pattern;
-  ctx.fillRect(x, y - tileH, w, h + tileH * 2);
-  ctx.globalAlpha = 0.34;
-  ctx.translate(tileH * 0.5, tileH * 0.5);
-  ctx.fillRect(x - tileH, y - tileH * 2, w + tileH, h + tileH * 3);
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-  for (let i = 0; i < 4; i++) {
-    const cy = ((i * 210 - scrollY * 0.35) % (h + 180)) - 40;
-    const wash = ctx.createRadialGradient(x + w * (0.3 + (i % 2) * 0.4), y + cy, 4, x + w * 0.5, y + cy, w * 0.7);
-    wash.addColorStop(0, i % 2 ? 'rgba(255,255,255,.05)' : 'rgba(20,24,28,.08)');
-    wash.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = wash;
-    ctx.fillRect(x, y + cy - 50, w, 100);
-  }
+  ctx.fillStyle = ctx.createPattern(img, 'repeat');
+  ctx.fillRect(x, y - tile, w, h + tile * 2);
   ctx.restore();
 }
 
@@ -333,8 +331,8 @@ function drawHighStreet() {
   // Cobbles sit behind the shops, so the space around each chimney is pavement.
   const leftW = ROAD_LEFT;
   const rightX = ROAD_RIGHT;
-  drawCobbles(0, 0, leftW - 5, H);
-  drawCobbles(rightX + 5, 0, W - rightX - 5, H);
+  drawCobbles(0, 0, leftW - 5, H, 'weeds');
+  drawCobbles(rightX + 5, 0, W - rightX - 5, H, 'weeds');
 
   if (!streetLoaded) {
     ctx.fillStyle = '#3a3030';
@@ -357,6 +355,7 @@ function drawHighStreet() {
     drawStreetBuilding(
       shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
+    drawCobbles(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround || 'weeds');
     drawSideLayers(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan, 'left');
     drawGroundPatch(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround);
 
@@ -364,6 +363,7 @@ function drawHighStreet() {
       shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, index * 2.1 + 2.7
     );
+    drawCobbles(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightGround || 'weeds');
     drawSideLayers(
       ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
       W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan, 'right'

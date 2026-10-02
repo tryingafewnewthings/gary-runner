@@ -57,18 +57,18 @@ const DETAILS = [
 // Each side has three slots. Back is behind, middle is the main object, front is the small detail.
 // leftObject and rightObject still mean the middle slot.
 const STREET = [
-  { left: 'Fish & Chips', right: 'none', leftMiddle: 'postbox', rightBack: 'lamp', rightFront: 'board' },
-  { left: 'none', right: 'Bakery', leftObject: 'none', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'bench', rightObject: 'tree', rightGround: 'damp' },
-  { left: 'Peri Peri Chicken', right: 'none', leftObject: 'bin', rightObject: 'none', leftGround: 'damp' },
-  { left: 'none', right: 'Butchers', leftObject: 'lamp', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'board', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'postbox', rightObject: 'none' },
-  { left: 'The Red Lion', right: 'Mallace Cafe', leftObject: 'none', rightObject: 'lamp' },
-  { left: 'none', right: 'none', leftObject: 'bin', rightObject: 'none' },
-  { left: 'none', right: 'Fish & Chips', leftObject: 'none', rightObject: 'postbox' },
-  { left: 'Bakery', right: 'none', leftObject: 'lamp', rightObject: 'none' },
-  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin' }
+  { left: 'Fish & Chips', right: 'none', leftMiddle: 'postbox', rightBack: 'lamp', rightFront: 'board', leftGround: 'weeds', rightGround: 'base' },
+  { left: 'none', right: 'Bakery', leftObject: 'none', rightObject: 'none', leftGround: 'light', rightGround: 'weeds' },
+  { left: 'none', right: 'none', leftObject: 'bench', rightObject: 'tree', rightGround: 'moss', leftGround: 'sparse' },
+  { left: 'Peri Peri Chicken', right: 'none', leftObject: 'bin', rightObject: 'none', leftGround: 'damp', rightGround: 'dense' },
+  { left: 'none', right: 'Butchers', leftObject: 'lamp', rightObject: 'none', leftGround: 'base', rightGround: 'light' },
+  { left: 'none', right: 'none', leftObject: 'board', rightObject: 'none', leftGround: 'weeds', rightGround: 'moss' },
+  { left: 'none', right: 'none', leftObject: 'postbox', rightObject: 'none', leftGround: 'sparse', rightGround: 'weeds' },
+  { left: 'The Red Lion', right: 'Mallace Cafe', leftObject: 'none', rightObject: 'lamp', leftGround: 'dense', rightGround: 'light' },
+  { left: 'none', right: 'none', leftObject: 'bin', rightObject: 'none', leftGround: 'moss', rightGround: 'base' },
+  { left: 'none', right: 'Fish & Chips', leftObject: 'none', rightObject: 'postbox', leftGround: 'weeds', rightGround: 'dense' },
+  { left: 'Bakery', right: 'none', leftObject: 'lamp', rightObject: 'none', leftGround: 'light', rightGround: 'sparse' },
+  { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin', leftGround: 'base', rightGround: 'moss' }
 ];
 
 // One row of the road, in order. Three lanes: left, middle, right.
