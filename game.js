@@ -35,6 +35,7 @@ let lane = 1, target = 1;
 let scrollY = 0, distance = 0, acc = 0, gap = 160;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
 let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, roadQueue = [], nearCd = 0, lastHit = null, shownSpeed = 200, flash = 0;
+let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0, laneSquash = 0;
 
 let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
@@ -457,30 +458,54 @@ function triggerGrin() {
 function reset() {
   score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=160;
   objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;roadQueue=[];nearCd=0;lastHit=null;shownSpeed=200;flash=0;
+  review=0;reviewMul=1;reviewGap=0;hitStop=0;laneSquash=0;
 }
-function move(d) { if(state==='play') target=Math.max(0,Math.min(2,target+d)); }
+function move(d) {
+  if(state!=='play') return;
+  const next=Math.max(0,Math.min(2,target+d));
+  if(next!==target) laneSquash=0.09;
+  target=next;
+}
 
 function nextStretch() {
   const bag = score < 250 ? STRETCHES.early : score < 900 ? STRETCHES.mid : STRETCHES.late;
-  return bag[Math.floor(Math.random() * bag.length)];
+  const stretch = bag[Math.floor(Math.random() * bag.length)].map(lanes => ({ lanes: lanes.slice() }));
+  const dareLive = objs.some(o => o.dare && !o.d);
+  if (score >= 900 && !dareLive && !stretch.some(row => row.dare)) {
+    stretch.splice(1, 0, { lanes: ['m', 'roast', 'm'], dare: true });
+  }
+  return stretch;
 }
 function spawnRow() {
-  if (!roadQueue.length) roadQueue = nextStretch().map(lanes => ({ lanes: lanes }));
+  if (!roadQueue.length) roadQueue = nextStretch();
   const row = roadQueue.shift();
   row.lanes.forEach((kind, lane) => {
     if (!kind || kind === 'none') return;
-    objs.push({ t: kind, l: lane, y: -60, id: uid++ });
+    const item = { t: kind, l: lane, y: -60, id: uid++ };
+    if (row.dare && kind === 'roast') item.dare = 1;
+    objs.push(item);
   });
 }
 function collect(o) {
-  const pts=FOODS[o.t]; score+=pts;
-  fx.push({x:lx(o.l),y:o.y,t:0,life:1.5,txt:'+'+pts});
-  let grin=o.t==='roast'; const currentTier=tierOf(score);
-  if(currentTier>lastTierIndex){lastTierIndex=currentTier;grin=true;}
-  if(grin)triggerGrin();
-  tierMax=Math.max(tierMax,currentTier);
+  review = Math.min(9, review + 1);
+  reviewGap = 1.5;
+  reviewMul = review >= 5 ? 3 : review >= 3 ? 2 : 1;
+  const pts = FOODS[o.t] * reviewMul;
+  score += pts;
+  hitStop = 0.04;
+  const col = (TIERS[tierOf(score)] || TIERS[0]).c;
+  fx.push({x:lx(o.l),y:o.y,t:0,life:1.1,txt:'+'+pts,col:col,pop:1});
+  let grin = o.t === 'roast' || review === 3 || review === 6;
+  if (o.dare) {
+    grin = true;
+    cap = { s: CAPS[review % CAPS.length], t: 0 };
+  }
+  const currentTier = tierOf(score);
+  if (currentTier > lastTierIndex) { lastTierIndex = currentTier; grin = true; }
+  if (grin) triggerGrin();
+  tierMax = Math.max(tierMax, currentTier);
   checkEvents();
-  mile=Math.floor(score/40);
+  mile = Math.floor(score / 40);
 }
 function checkEvents() {
   while (nextEvent < EVENTS.length && score >= EVENTS[nextEvent].at) {
@@ -530,7 +555,8 @@ function isTalkingAudio(){
 
 function update(dt){
   clock+=dt;
-  lane+=(target-lane)*Math.min(1,dt*16);
+  lane+=(target-lane)*Math.min(1,dt/0.09);
+  if(laneSquash>0)laneSquash=Math.max(0,laneSquash-dt);
   if(grinTimer>0)grinTimer=Math.max(0,grinTimer-dt);
 
   for(let i=stars.length-1;i>=0;i--){
@@ -544,10 +570,15 @@ function update(dt){
   shownSpeed+=(aim-shownSpeed)*Math.min(1,dt*0.7);
   const speed=shownSpeed;
   if(state==='menu'||state==='intro'){return;}
-  if(state.startsWith('crash')){crashT+=dt;if(crashT>2)endGame();return;}
+  if(state.startsWith('crash')){crashT+=dt;if(crashT>0.55)endGame();return;}
   if(state!=='play')return;
   if(nearCd>0)nearCd-=dt;
   if(flash>0)flash-=dt;
+  if(hitStop>0){hitStop-=dt;return;}
+  if(review>0){
+    reviewGap-=dt;
+    if(reviewGap<=0){review=0;reviewMul=1;}
+  }
 
   distance+=speed*dt; scrollY=distance;
   acc+=speed*dt;
@@ -557,11 +588,19 @@ function update(dt){
     o.y+=speed*dt;
     if(!o.d&&Math.abs(o.y-PLAYER_Y)<32*S&&Math.abs(lane-o.l)<.55){
       o.d=1;
-      if(o.t==='m'||o.t==='fork'){crash(o.t);return;}
+      if(o.t==='m'||o.t==='fork'){review=0;reviewMul=1;crash(o.t);return;}
       collect(o);
+    }else if(o.dare&&!o.d&&!o.refused&&o.y>PLAYER_Y+36){
+      o.refused=1;o.d=1;
+      score+=10;
+      fx.push({x:lx(1),y:PLAYER_Y-28,t:0,life:1.1,txt:'+10',col:'#ffe600'});
+      cap={s:LINES.close,t:0};
     }else if(!o.near&&(o.t==='m'||o.t==='fork')&&Math.abs(o.y-PLAYER_Y)<26&&Math.abs(lane-o.l)>0.55&&Math.abs(lane-o.l)<1.05){
       o.near=1;
-      if(nearCd<=0){nearCd=1.4;score+=5;fx.push({x:lx(lane),y:PLAYER_Y-20,t:0,life:1,txt:'+5'});}
+      if(nearCd<=0){
+        nearCd=1.4;score+=5;
+        fx.push({x:lx(lane),y:PLAYER_Y-20,t:0,life:1,txt:'+5',col:'#fff',tick:1});
+      }
     }
   }
   objs=objs.filter(o=>!o.d&&o.y<H+60);
@@ -632,6 +671,7 @@ function drawPlayer(dt){
   ctx.ellipse(sx, py+6, planted ? 16 : 11, planted ? 4 : 2.5, 0, 0, 7);
   ctx.fill();
   ctx.save();ctx.translate(px,py);
+  if(laneSquash>0) ctx.scale(1+laneSquash*1.4, 1-laneSquash*0.8);
   const isCrashing=state.startsWith('crash');
   let imgToDraw=null;
   if(isCrashing && imgCrash.ready) imgToDraw=imgCrash;
@@ -752,9 +792,19 @@ function render(dt){
     drawPlayer(dt);
     for(const f of fx){
       const k=f.t/f.life;
+      const pop=f.pop?1.25-k*0.25:1;
       ctx.save();ctx.globalAlpha=1-k;
-      txt(f.txt,f.x,f.y-16-k*28,16,'#fff','center');
+      ctx.translate(f.x,f.y-16-k*28);ctx.scale(pop,pop);
+      txt(f.txt,0,0,16,f.col||'#fff','center');
       ctx.restore();
+      if(f.tick){
+        ctx.save();ctx.globalAlpha=1-k;ctx.fillStyle='#fff';
+        ctx.fillRect(f.x-1,PLAYER_Y-18,2,14*(1-k));
+        ctx.restore();
+      }
+    }
+    if(review>0 && state==='play'){
+      txt('Proper. x'+reviewMul, lx(lane), PLAYER_Y+22, 11, (TIERS[tierOf(score)]||TIERS[0]).c, 'center');
     }
   }
   ctx.restore();drawVignette();
