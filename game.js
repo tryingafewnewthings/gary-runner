@@ -55,7 +55,7 @@ function loadGary(file) {
   img.src = file;
   return img;
 }
-const imgRun = [loadGary('gary_walk1.png?v=1'), loadGary('gary_walk2.png?v=1')];
+const imgRun = [loadGary('gary_run1.png?v=5'), loadGary('gary_run2.png?v=5')];
 const imgCheer = loadGary('gary_cheer.png?v=1');
 const imgCrash = loadGary('gary_crash.png?v=1');
 let runFrame = 0, runTimer = 0;
@@ -754,31 +754,32 @@ function drawIntroAvatar(dt){
 
 function drawPlayer(dt){
   const px=lx(lane),py=PLAYER_Y;
-  const isCrashing=state.startsWith('crash');
-  const walking=!isCrashing && grinTimer<=0;
-  if(walking){
-    runTimer+=dt;
-    const pace=Math.max(0.16, 0.20*(200/Math.max(160, shownSpeed)));
-    if(runTimer>=pace){runTimer=0;runFrame=runFrame===0?1:0;}
-  }
-  const shade=ctx.createRadialGradient(px, py+6, 2, px, py+6, 16);
-  shade.addColorStop(0,'rgba(0,0,0,.26)');
-  shade.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=shade;
+  const planted = runFrame===0 || state.startsWith('crash');
+  const sx = px + (planted ? 0 : 3);
+  const shade = ctx.createRadialGradient(sx, py+6, 2, sx, py+6, planted ? 16 : 11);
+  shade.addColorStop(0, planted ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.16)');
+  shade.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shade;
   ctx.beginPath();
-  ctx.ellipse(px, py+6, 16, 4.5, 0, 0, 7);
+  ctx.ellipse(sx, py+6, planted ? 16 : 11, planted ? 4 : 2.5, 0, 0, 7);
   ctx.fill();
   ctx.save();ctx.translate(px,py);
   if(laneSquash>0) ctx.scale(1+laneSquash*1.4, 1-laneSquash*0.8);
+  const isCrashing=state.startsWith('crash');
   let imgToDraw=null;
   if(isCrashing && imgCrash.ready) imgToDraw=imgCrash;
   else if(grinTimer>0 && imgCheer.ready) imgToDraw=imgCheer;
-  else imgToDraw=imgRun[runFrame].ready?imgRun[runFrame]:(imgRun[0].ready?imgRun[0]:null);
+  else {
+    runTimer+=dt;
+    if(runTimer>0.22){runTimer=0;runFrame=runFrame===0?1:0;}
+    imgToDraw=imgRun[runFrame].ready?imgRun[runFrame]:(imgRun[0].ready?imgRun[0]:null);
+  }
   const h=142;
+  const step = runFrame===1 && !isCrashing && grinTimer<=0 ? -3 : 0;
   if(imgToDraw){
     const ar=imgToDraw.naturalWidth/imgToDraw.naturalHeight;
     const w=h*ar;
-    ctx.drawImage(imgToDraw,-w/2,-h+6,w,h);
+    ctx.drawImage(imgToDraw,-w/2,-h+6+step,w,h);
   }else fbFace(ctx,36*S);
   ctx.restore();
 
