@@ -307,7 +307,7 @@ function drawCobbles(x, y, w, h) {
   const pattern = ctx.createPattern(imgPath, 'repeat');
   ctx.fillStyle = pattern;
   ctx.fillRect(x, y - tileH, w, h + tileH * 2);
-  ctx.globalAlpha = 0.22;
+  ctx.globalAlpha = 0.34;
   ctx.translate(tileH * 0.5, tileH * 0.5);
   ctx.fillRect(x - tileH, y - tileH * 2, w + tileH, h + tileH * 3);
   ctx.restore();
@@ -333,8 +333,8 @@ function drawHighStreet() {
   // Cobbles sit behind the shops, so the space around each chimney is pavement.
   const leftW = ROAD_LEFT;
   const rightX = ROAD_RIGHT;
-  drawCobbles(0, 0, leftW, H);
-  drawCobbles(rightX, 0, W - rightX, H);
+  drawCobbles(0, 0, leftW - 5, H);
+  drawCobbles(rightX + 5, 0, W - rightX - 5, H);
 
   if (!streetLoaded) {
     ctx.fillStyle = '#3a3030';
@@ -373,12 +373,12 @@ function drawHighStreet() {
 }
 
 function drawPavements() {
-  ctx.fillStyle = 'rgba(22,24,26,0.9)';
-  ctx.fillRect(ROAD_LEFT - 4, 0, 4, H);
-  ctx.fillRect(ROAD_RIGHT, 0, 4, H);
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.fillRect(ROAD_LEFT, 0, 1, H);
-  ctx.fillRect(ROAD_RIGHT - 1, 0, 1, H);
+  ctx.fillStyle = '#2a2724';
+  ctx.fillRect(ROAD_LEFT - 6, 0, 6, H);
+  ctx.fillRect(ROAD_RIGHT, 0, 6, H);
+  ctx.fillStyle = '#4a453f';
+  ctx.fillRect(ROAD_LEFT - 1, 0, 2, H);
+  ctx.fillRect(ROAD_RIGHT - 1, 0, 2, H);
 }
 
 function mk(fn) {
