@@ -373,10 +373,12 @@ function drawHighStreet() {
 }
 
 function drawPavements() {
-  // A dark edge only. A lighter band reads as the top of a step and lifts the road above the roofs.
-  ctx.fillStyle = 'rgba(32,34,36,0.85)';
-  ctx.fillRect(ROAD_LEFT - 2, 0, 2, H);
-  ctx.fillRect(ROAD_RIGHT, 0, 2, H);
+  ctx.fillStyle = 'rgba(22,24,26,0.9)';
+  ctx.fillRect(ROAD_LEFT - 4, 0, 4, H);
+  ctx.fillRect(ROAD_RIGHT, 0, 4, H);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(ROAD_LEFT, 0, 1, H);
+  ctx.fillRect(ROAD_RIGHT - 1, 0, 1, H);
 }
 
 function mk(fn) {
