@@ -107,13 +107,13 @@ imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not foun
 imgStreet.src = 'high_street_sprites.webp?v=8';
 
 const COBBLE_KINDS = {
-  base: 'cobble_base.png?v=1',
-  weeds: 'cobble_weeds.png?v=1',
-  light: 'cobble_weeds_light.png?v=1',
-  sparse: 'cobble_weeds_sparse.png?v=1',
-  dense: 'cobble_weeds_dense.png?v=1',
-  moss: 'cobble_moss.png?v=1',
-  damp: 'cobble_moss.png?v=1'
+  base: 'cobble_base.png?v=2',
+  weeds: 'cobble_weeds.png?v=2',
+  light: 'cobble_weeds_light.png?v=2',
+  sparse: 'cobble_weeds_sparse.png?v=2',
+  dense: 'cobble_weeds_dense.png?v=2',
+  moss: 'cobble_moss.png?v=2',
+  damp: 'cobble_moss.png?v=2'
 };
 const cobbleImgs = {};
 Object.entries(COBBLE_KINDS).forEach(([kind, file]) => {
@@ -322,6 +322,14 @@ function drawCobbles(x, y, w, h, kind) {
   ctx.fillStyle = ctx.createPattern(img, 'repeat');
   ctx.fillRect(x, y - tile, w, h + tile * 2);
   ctx.restore();
+  // Keep the pavement readable, but behind Gary and the road.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(10,14,16,0.28)';
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
 }
 
 function drawHighStreet() {
@@ -331,8 +339,8 @@ function drawHighStreet() {
   // Cobbles sit behind the shops, so the space around each chimney is pavement.
   const leftW = ROAD_LEFT;
   const rightX = ROAD_RIGHT;
-  drawCobbles(0, 0, leftW - 5, H, 'weeds');
-  drawCobbles(rightX + 5, 0, W - rightX - 5, H, 'weeds');
+  drawCobbles(0, 0, leftW - 5, H, 'sparse');
+  drawCobbles(rightX + 5, 0, W - rightX - 5, H, 'sparse');
 
   if (!streetLoaded) {
     ctx.fillStyle = '#3a3030';
