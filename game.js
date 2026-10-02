@@ -32,10 +32,11 @@ let K = 1;
 let state = 'menu';
 let score = 0, best = 0, tierMax = 0;
 let lane = 1, target = 1;
-let scrollY = 0, distance = 0, acc = 0, gap = 160;
+let scrollY = 0, distance = 0, acc = 0, gap = 1.1;
 let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
 let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, roadQueue = [], nearCd = 0, lastHit = null, shownSpeed = 200, flash = 0;
 let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0, laneSquash = 0;
+let lastLanes = ['none', 'none', 'none'];
 
 let audioCtx, analyser, dataArray;
 let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
@@ -163,6 +164,8 @@ function drawSideLayers(x, y, w, h, plan, side) {
   drawDetailZone(x, y + h * 0.4, w, h * 0.6, sideSlot(plan, side, 'front'), side);
 }
 
+const lampGlows = [];
+
 function drawDetailZone(x, y, w, h, objectName, side) {
   if (!objectName || objectName === 'none' || h < 28) return;
   const prop = PROPS.find(p => p.name === objectName);
@@ -170,9 +173,12 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   const cap = prop.cap || (objectName === 'bin' ? 46 : 72);
   const propH = Math.min(cap, h - 6);
   const propW = propH * (prop.w / prop.h);
-  const shift = ((objectName.length * 17 + Math.round(x)) % 11) - 5;
-  const px = x + w * 0.5 - propW / 2 + shift;
+  const shift = objectName === 'lamp' ? 0 : ((objectName.length * 17 + Math.round(x)) % 11) - 5;
+  let px = x + w * 0.5 - propW / 2 + shift;
+  // Stand the lamp on the kerb. The pavement between the shop and the road is only a few pixels wide.
+  if (objectName === 'lamp') px = side === 'left' ? ROAD_LEFT - propW : ROAD_RIGHT + 3;
   const py = y + h - propH + 2;
+  if (objectName === 'lamp') lampGlows.push(py + propH * 0.45);
   const foot = px + propW / 2;
   const cast = side === 'right' ? 8 : -8;
   ctx.save();
@@ -456,9 +462,10 @@ function triggerGrin() {
   }
 }
 function reset() {
-  score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=160;
+  score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=LEARN_GAP;
   objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;roadQueue=[];nearCd=0;lastHit=null;shownSpeed=200;flash=0;
   review=0;reviewMul=1;reviewGap=0;hitStop=0;laneSquash=0;
+  lastLanes=['none','none','none'];
 }
 function move(d) {
   if(state!=='play') return;
@@ -467,25 +474,102 @@ function move(d) {
   target=next;
 }
 
+/* layout:start
+   Gaps are seconds. The street can speed up without shortening the read.
+   Learning floor is 1.1s. At the cap it is 0.8s. A dare is a longer read than a plate.
+   The row after a dare sits past the 1.5s review unless the roast itself was taken.
+*/
+const LEARN_GAP = 1.1;
+const RUN_GAP = 0.8;
+const GAP_SLACK = 0.18;
+const DARE_APPROACH = 1.22;
+const AFTER_DARE = 1.1;
+function isFood(kind) { return kind === 'kebab' || kind === 'fish' || kind === 'roast'; }
+function isSafeKind(kind) { return !kind || kind === 'none' || isFood(kind); }
+function safeLanesOf(lanes) {
+  const out = [];
+  for (let i = 0; i < 3; i++) if (isSafeKind(lanes[i])) out.push(i);
+  return out;
+}
+function hasFood(lanes) { return lanes.some(isFood); }
+function paceGap() {
+  if (score < 250) return LEARN_GAP;
+  const t = Math.min(1, (score - 250) / 650);
+  return LEARN_GAP + (RUN_GAP - LEARN_GAP) * t;
+}
+function gapBefore(nextRow, prevRow) {
+  if (nextRow && nextRow.dare) return DARE_APPROACH;
+  if (prevRow && prevRow.dare) return AFTER_DARE;
+  return paceGap() + Math.random() * GAP_SLACK;
+}
+function forceShare(prev, lanes) {
+  const next = lanes.slice();
+  if (!safeLanesOf(next).length) next[1] = 'none';
+  const prevSafe = safeLanesOf(prev);
+  if (!prevSafe.length || prevSafe.some(i => isSafeKind(next[i]))) return next;
+  next[prevSafe.indexOf(1) >= 0 ? 1 : prevSafe[0]] = 'none';
+  return next;
+}
+function placePlate(prev, lanes) {
+  const next = lanes.slice();
+  if (hasFood(next) || !hasFood(prev)) return next;
+  const stay = [];
+  prev.forEach((k, i) => { if (isFood(k)) stay.push(i); });
+  let slot = -1;
+  for (const i of stay) if (!next[i] || next[i] === 'none') { slot = i; break; }
+  if (slot < 0) {
+    for (const i of safeLanesOf(prev)) if (!next[i] || next[i] === 'none') { slot = i; break; }
+  }
+  if (slot >= 0) next[slot] = 'kebab';
+  return next;
+}
+function prepareRow(prev, row) {
+  return { lanes: placePlate(prev, forceShare(prev, row.lanes)), dare: row.dare || false };
+}
+function cloneStretch(rows) {
+  return rows.map(lanes => ({ lanes: lanes.slice(), dare: false }));
+}
+function insertDare(stretch, prev) {
+  const dare = { lanes: ['m', 'roast', 'm'], dare: true };
+  for (let i = 0; i <= stretch.length; i++) {
+    const before = i === 0 ? prev : stretch[i - 1].lanes;
+    const after = i === stretch.length ? null : stretch[i].lanes;
+    if (isSafeKind(before[1]) && (!after || isSafeKind(after[1]))) {
+      stretch.splice(i, 0, dare);
+      return;
+    }
+  }
+  stretch.unshift({ lanes: ['none', 'kebab', 'none'], dare: false });
+  stretch.splice(1, 0, dare);
+}
 function nextStretch() {
   const bag = score < 250 ? STRETCHES.early : score < 900 ? STRETCHES.mid : STRETCHES.late;
-  const stretch = bag[Math.floor(Math.random() * bag.length)].map(lanes => ({ lanes: lanes.slice() }));
+  const stretch = cloneStretch(bag[Math.floor(Math.random() * bag.length)]);
   const dareLive = objs.some(o => o.dare && !o.d);
-  if (score >= 900 && !dareLive && !stretch.some(row => row.dare)) {
-    stretch.splice(1, 0, { lanes: ['m', 'roast', 'm'], dare: true });
+  if (score >= 900 && !dareLive && !stretch.some(row => row.dare)) insertDare(stretch, lastLanes);
+  let prev = lastLanes;
+  const out = [];
+  for (const row of stretch) {
+    const ready = prepareRow(prev, row);
+    out.push(ready);
+    prev = ready.lanes;
   }
-  return stretch;
+  return out;
 }
 function spawnRow() {
   if (!roadQueue.length) roadQueue = nextStretch();
   const row = roadQueue.shift();
-  row.lanes.forEach((kind, lane) => {
+  row.lanes.forEach((kind, laneIndex) => {
     if (!kind || kind === 'none') return;
-    const item = { t: kind, l: lane, y: -60, id: uid++ };
+    const item = { t: kind, l: laneIndex, y: -60, id: uid++ };
     if (row.dare && kind === 'roast') item.dare = 1;
     objs.push(item);
   });
+  lastLanes = row.lanes.slice();
+  if (!roadQueue.length) roadQueue = nextStretch();
+  gap = gapBefore(roadQueue[0], row);
 }
+/* layout:end */
 function collect(o) {
   review = Math.min(9, review + 1);
   reviewGap = 1.5;
@@ -581,8 +665,9 @@ function update(dt){
   }
 
   distance+=speed*dt; scrollY=distance;
-  acc+=speed*dt;
-  if(acc>=gap){acc-=gap;gap=140+Math.random()*80;spawnRow();}
+  acc+=dt;
+  let spawned = 0;
+  while (acc >= gap && spawned < 3) { acc -= gap; spawnRow(); spawned++; }
 
   for(const o of objs){
     o.y+=speed*dt;
@@ -624,6 +709,14 @@ function drawObj(o){
     ctx.beginPath();ctx.ellipse(x,y+16,18,7,0,0,7);ctx.fill();
   }else{
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+18*S,20*S,6*S,0,0,7);ctx.fill();
+  }
+  if (o.dare) {
+    const pulse = 0.45 + Math.sin(clock * 5) * 0.25;
+    ctx.strokeStyle = 'rgba(255,230,0,' + pulse + ')';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 18, 28, 11, 0, 0, 7);
+    ctx.stroke();
   }
   const bob=Math.sin(clock*6+o.id)*3*S,sz=o.t==='fork'?44:(o.t==='roast'?46:(hazard?52:63*S));
   const pic=o.t==='m'&&imgMush.ready?imgMush:(o.t==='fork'&&imgFork.ready?imgFork:(o.t==='roast'&&imgRoast.ready?imgRoast:SP[o.t]));
@@ -743,22 +836,21 @@ function drawBubble(){
 }
 
 function drawStreetLight(){
-  // Warm pool on the road only. A box over the facade read as a shadow on the roof.
+  if (!lampGlows.length) return;
   const flick=.92+Math.sin(clock*7)*.04+Math.sin(clock*3.1)*.03;
   ctx.save();
   ctx.globalCompositeOperation='lighter';
   ctx.beginPath();
   ctx.rect(ROAD_LEFT, 0, ROAD_WIDTH, H);
   ctx.clip();
-  for(let pass=-1;pass<=3;pass++){
-    const y=pass*STREET_SEGMENT_H+(scrollY%STREET_SEGMENT_H)-STREET_SEGMENT_H;
-    const cy=y+BUILDING_H*.72;
+  for (const cy of lampGlows) {
     const grad=ctx.createRadialGradient(W/2,cy,0,W/2,cy,70);
     grad.addColorStop(0,'rgba(255,180,90,'+(.05*flick)+')');
     grad.addColorStop(1,'rgba(255,180,90,0)');
     ctx.fillStyle=grad;
     ctx.fillRect(ROAD_LEFT, cy-40, ROAD_WIDTH, 80);
   }
+  lampGlows.length = 0;
   ctx.restore();
 }
 
