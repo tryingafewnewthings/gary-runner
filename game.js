@@ -11,7 +11,7 @@ const ROAD_RIGHT = ROAD_LEFT + ROAD_WIDTH;
 const LANE_WIDTH = ROAD_WIDTH / 3;
 const PLAYER_Y = 540;
 
-const PAVEMENT_WIDTH = 6;
+const PAVEMENT_WIDTH = 16;
 const BUILDING_WIDTH = ROAD_LEFT - PAVEMENT_WIDTH; // 91.5px on the 360px canvas
 const STREET_SEGMENT_H = 360;
 const BUILDING_H = 236;
@@ -107,13 +107,13 @@ imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not foun
 imgStreet.src = 'high_street_sprites.webp?v=8';
 
 const COBBLE_KINDS = {
-  base: 'cobble_base.png?v=2',
-  weeds: 'cobble_weeds.png?v=2',
-  light: 'cobble_weeds_light.png?v=2',
-  sparse: 'cobble_weeds_sparse.png?v=2',
-  dense: 'cobble_weeds_dense.png?v=2',
-  moss: 'cobble_moss.png?v=2',
-  damp: 'cobble_moss.png?v=2'
+  base: 'cobble_base.png?v=3',
+  weeds: 'cobble_weeds.png?v=3',
+  light: 'cobble_weeds_light.png?v=3',
+  sparse: 'cobble_weeds_sparse.png?v=3',
+  dense: 'cobble_weeds_dense.png?v=3',
+  moss: 'cobble_moss.png?v=3',
+  damp: 'cobble_moss.png?v=3'
 };
 const cobbleImgs = {};
 Object.entries(COBBLE_KINDS).forEach(([kind, file]) => {
@@ -322,14 +322,6 @@ function drawCobbles(x, y, w, h, kind) {
   ctx.fillStyle = ctx.createPattern(img, 'repeat');
   ctx.fillRect(x, y - tile, w, h + tile * 2);
   ctx.restore();
-  // Keep the pavement readable, but behind Gary and the road.
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-  ctx.fillStyle = 'rgba(10,14,16,0.28)';
-  ctx.fillRect(x, y, w, h);
-  ctx.restore();
 }
 
 function drawHighStreet() {
@@ -339,8 +331,8 @@ function drawHighStreet() {
   // Cobbles sit behind the shops, so the space around each chimney is pavement.
   const leftW = ROAD_LEFT;
   const rightX = ROAD_RIGHT;
-  drawCobbles(0, 0, leftW - 5, H, 'sparse');
-  drawCobbles(rightX + 5, 0, W - rightX - 5, H, 'sparse');
+  drawCobbles(0, 0, leftW, H, 'base');
+  drawCobbles(rightX, 0, W - rightX, H, 'base');
 
   if (!streetLoaded) {
     ctx.fillStyle = '#3a3030';
@@ -381,12 +373,13 @@ function drawHighStreet() {
 }
 
 function drawPavements() {
-  ctx.fillStyle = '#2a2724';
-  ctx.fillRect(ROAD_LEFT - 6, 0, 6, H);
-  ctx.fillRect(ROAD_RIGHT, 0, 6, H);
-  ctx.fillStyle = '#4a453f';
-  ctx.fillRect(ROAD_LEFT - 1, 0, 2, H);
-  ctx.fillRect(ROAD_RIGHT - 1, 0, 2, H);
+  // A light kerb, not a dark slot, so the shop front does not fuse with the road.
+  ctx.fillStyle = '#c4c2bc';
+  ctx.fillRect(ROAD_LEFT - 3, 0, 3, H);
+  ctx.fillRect(ROAD_RIGHT, 0, 3, H);
+  ctx.fillStyle = '#8d8a84';
+  ctx.fillRect(ROAD_LEFT - 1, 0, 1, H);
+  ctx.fillRect(ROAD_RIGHT, 0, 1, H);
 }
 
 function mk(fn) {
