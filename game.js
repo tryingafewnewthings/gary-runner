@@ -304,20 +304,36 @@ function cobbleFor(kind) {
   return img && img.ready ? img : (cobbleImgs.weeds && cobbleImgs.weeds.ready ? cobbleImgs.weeds : null);
 }
 
-const COBBLE_TILE = 192;
-
+const COBBLE_CELL = 48;
+const COBBLE_MIX = [['base',0.50],['light',0.12],['sparse',0.08],['weeds',0.07],['dense',0.04],['leaves',0.08],['grime',0.05],['cracked',0.06]];
+function cellHash(c, r) {
+  let h = Math.imul(c, 374761393) + Math.imul(r, 668265263) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function mixKind(c, r) {
+  const t = cellHash(c, r);
+  let acc = 0;
+  for (const [k, p] of COBBLE_MIX) { acc += p; if (t < acc) return k; }
+  return 'base';
+}
 function drawCobbles(x, y, w, h, kind) {
-  const img = cobbleFor(kind || 'weeds');
-  if (!img) { ctx.fillStyle = '#6e7276'; ctx.fillRect(x, y, w, h); return; }
-  const T = COBBLE_TILE;
-  const off = ((scrollY % T) + T) % T;
-  const x0 = Math.floor(x / T) * T;
-  const y0 = Math.floor((y - off) / T) * T + off;
+  const C = COBBLE_CELL;
+  const off = ((scrollY % C) + C) % C;
+  const shift = Math.floor(scrollY / C);
+  const j0 = Math.floor((y - off) / C);
+  const c0 = Math.floor(x / C);
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-  for (let ty = y0; ty < y + h; ty += T) {
-    for (let tx = x0; tx < x + w; tx += T) {
-      ctx.drawImage(img, tx, ty, T + 0.5, T + 0.5);
+  for (let j = j0; j * C + off < y + h; j++) {
+    const ty = j * C + off;
+    const r = j - shift;
+    for (let c = c0; c * C < x + w; c++) {
+      const k = (!kind || kind === 'base') ? mixKind(c, r) : kind;
+      const img = cobbleFor(k);
+      if (!img) { ctx.fillStyle = '#6e7276'; ctx.fillRect(c * C, ty, C + 0.5, C + 0.5); continue; }
+      const hw = img.naturalWidth / 2, hh = img.naturalHeight / 2;
+      ctx.drawImage(img, (((c % 2) + 2) % 2) * hw, (((r % 2) + 2) % 2) * hh, hw, hh, c * C, ty, C + 0.5, C + 0.5);
     }
   }
   ctx.restore();
