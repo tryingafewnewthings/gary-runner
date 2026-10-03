@@ -38,7 +38,7 @@ Core loop: three lanes, left and right only. Collect kebab, fish and chips, and 
 - Input: A, D, arrows, or a tap on that half of the screen. No jump, no duck. A lane change starts on that frame.
 - Menu, skippable intro, run, crash, end card ("Proper Ruined!"), try again. Best score is kept.
 - Food: kebab 5, fish 10, roast 25. Hazards: fork and mushroom. Near miss is +5 and the line "Close one."
-- Road patterns are `STRETCHES` (early, mid, late). `ROWS` was removed. Nothing should read it.
+- Road patterns are `STRETCHES` (early, mid, late).
 - Tiers: Absolute Rubbish, Bit Dry Needs Salt, Proper Decent Food, BEAUTIFUL!, I'll have to bring Danny here one day.
 - `EVENTS` at 25, 80, 160, 300, and 500. Captions are looked up. `grin: true` uses the cheer picture.
 - Walk frames `gary_run1.png` and `gary_run2.png`. Cheer and crash are separate. Open and closed mouth pictures drive the intro and the menu portrait.
@@ -50,17 +50,7 @@ Core loop: three lanes, left and right only. Collect kebab, fish and chips, and 
 - Live pavement is `IMG_7141.webp` through `IMG_7148.webp`, loaded as `?v=6`: base, weeds, light, sparse, dense, leaves, grime, cracked. Drawn as a mixed cell grid. A stone kerb covers the edge.
 - Food and hazard pictures: `roast.png`, `fork.png`, `mushroom.png`. Kebab and fish can fall back to drawn plates.
 
-## 4. Do not trust these files
-
-Not loaded by `game.js` or `index.html`. Leave them out of the next commit unless a new reference is added in the same commit.
-
-- `cobble_base.png`, `cobble_moss.png`, `cobble_weeds.png`, `cobble_weeds_dense.png`, `cobble_weeds_light.png`, `cobble_weeds_sparse.png`
-- `cobble_base.jpg`, `cobble_cracked.jpg`, `cobble_grime.jpg`, `cobble_leaves.jpg`, `cobble_leaves_fine.jpg`, `cobble_weeds.jpg`, `cobble_weeds_dense.jpg`, `cobble_weeds_light.jpg`, `cobble_weeds_sparse.jpg`
-- `path.png` and `path_damp.png` are already gone. Do not put them back.
-
-Odd names still in use: `gary_closed.png.PNG`, `gary_open.png.PNG`. Do not rename them without updating every reference. There is no `index-new.html`. Do not recreate a second page.
-
-## 5. Known gaps
+## 4. Known gaps
 
 - `game.js` is still one file. Logic, input, rendering, and state are not split. Split only when a change needs it. Do not mix a new mechanic into the draw function.
 - Score lines still open on the pickup that crosses them.
@@ -68,7 +58,7 @@ Odd names still in use: `gary_closed.png.PNG`, `gary_open.png.PNG`. Do not renam
 - A failed picture must not stop the loop. A bad caption path has frozen a run before. One change per commit.
 - After a script or picture change, bump `?v=` on that file and close the phone tab.
 
-## 6. Files
+## 5. Files
 
 - `index.html` — page, canvas, intro voice tag, menu, intro, game over, CSS. Loads the two scripts.
 - `game-data.js` — `TIERS`, `FOODS`, `LINES`, `CAPS`, `EVENTS`, `DETAILS`, `STREET`, `STRETCHES`.
@@ -77,7 +67,7 @@ Odd names still in use: `gary_closed.png.PNG`, `gary_open.png.PNG`. Do not renam
 - `PROJECT_STATE.md` — this handoff.
 - `GAME_STATUS.txt` — pointer to this file.
 
-## 7. Standards for the professional finish
+## 6. Standards for the professional finish
 
 - Lane change, pickup, crash, and near miss happen on the frame of the action. No delay added to smooth input. No full-screen shake that hides the lanes.
 - Captions are looked up. The run does not write them.

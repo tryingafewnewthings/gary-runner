@@ -2,7 +2,7 @@ GARY EATS — PICKUP NOTE
 Updated 2026-10-03. Live commit 70340079. Page versions: game-data.js?v=30, game.js?v=86.
 Repo: tryingafewnewthings/gary-runner. Live page is index.html on GitHub Pages.
 
-This file is no longer the blueprint. It used to embed an old copy of the scripts (commit 0786856, 2026-10-01). That copy is gone. If this note disagrees with the repo, the repo wins.
+If this note disagrees with the repo, the repo wins.
 
 Read in this order:
 1. PROJECT_STATE.md — where to pick up, what works, what is next.
@@ -11,4 +11,4 @@ Read in this order:
 
 Finish bar. This project needs to end as a professionally made game: tight feel, one coherent art set, no leftover experiments, and a run a stranger can play on a phone without a guide. Prototype shortcuts are not the finish.
 
-Do not load path.png, path_damp.png, cobble_*.png, or cobble_*.jpg. The live pavement is IMG_7141.webp through IMG_7148.webp. The theme is gary_theme_song.mp3. The intro voice is gary_audio.mp3.
+Live pavement is IMG_7141.webp through IMG_7148.webp. The theme is gary_theme_song.mp3. The intro voice is gary_audio.mp3.
