@@ -194,13 +194,17 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   }
   ctx.restore();
   if (prop.file && prop.img && prop.img.complete && prop.img.naturalWidth) {
+    const frames = prop.frames || 1;
+    const fw = prop.img.naturalWidth / frames;
+    const fh = prop.img.naturalHeight;
+    const frame = frames > 1 ? Math.floor(clock / 0.7) % frames : 0;
+    ctx.save();
     if (objectName === 'bench' && side === 'right') {
-      ctx.save();
       ctx.translate(px + propW, py);
       ctx.scale(-1, 1);
-      ctx.drawImage(prop.img, 0, 0, propW, propH);
-      ctx.restore();
-    } else ctx.drawImage(prop.img, px, py, propW, propH);
+      ctx.drawImage(prop.img, frame * fw, 0, fw, fh, 0, 0, propW, propH);
+    } else ctx.drawImage(prop.img, frame * fw, 0, fw, fh, px, py, propW, propH);
+    ctx.restore();
     return;
   }
   if (!streetLoaded || prop.x == null) return;
