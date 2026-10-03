@@ -71,7 +71,11 @@ const STREET = [
   { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin', leftGround: 'base', rightGround: 'moss' }
 ];
 
-// Stretches are short patterns. The run picks one, so the road does not repeat eight rows.
+// Stretches are the difficulty lever. The run picks one, plays it, then picks another.
+// early is biome 1, the friendly gather, used under 250 points.
+// mid is 250 to 900. late is after 900.
+// Do not raise the speed cap to make this harder. Add a denser pattern here.
+// Biome 2, the night version of this street, gets its own pool. It is not wired yet.
 const STRETCHES = {
   early: [
     [ ['none','kebab','none'], ['none','kebab','none'], ['none','kebab','none'], ['none','fork','none'] ],

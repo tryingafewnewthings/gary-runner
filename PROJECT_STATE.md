@@ -17,7 +17,7 @@ Start here. Do not rebuild the runner.
 3. Change lists in `game-data.js`. Change rules and drawing in `game.js`. Keep one page.
 4. Next art job, before a biome: floor and props must sit in the same world. The bench can still read as pinned to the wall. Bin, postbox, and bench are nearer a model than the shops. Tree is flatter. Mushroom and fork are softer than the shops. Props belong between Gary and the shops, closer to the shop.
 5. Next mechanic, after that art pass: a roast the player can refuse. The current roast between mushrooms is a toll, not a dare. Then one-tap restart, only if a run still starts.
-6. Do not add a biome until the floor and prop style agree with `STYLE.txt`. A later biome may change floor, weather, shop paint, and local props. It must not change the camera, Gary, plate size, or outline.
+6. The live street is biome 1, the friendly gather. Do not build biome 2 until the floor and props agree with `STYLE.txt`. Biome 2 is a night version of this same street. It raises difficulty through `STRETCHES`, not through a faster camera.
 
 The person directing the game is not a coder. Explain changes in plain language. The player is on an iPhone.
 
@@ -38,7 +38,7 @@ Core loop: three lanes, left and right only. Collect kebab, fish and chips, and 
 - Input: A, D, arrows, or a tap on that half of the screen. No jump, no duck. A lane change starts on that frame.
 - Menu, skippable intro, run, crash, end card ("Proper Ruined!"), try again. Best score is kept.
 - Food: kebab 5, fish 10, roast 25. Hazards: fork and mushroom. Near miss is +5 and the line "Close one."
-- Road patterns are `STRETCHES` (early, mid, late).
+- Road patterns are `STRETCHES` (early, mid, late). See the difficulty section.
 - Tiers: Absolute Rubbish, Bit Dry Needs Salt, Proper Decent Food, BEAUTIFUL!, I'll have to bring Danny here one day.
 - `EVENTS` at 25, 80, 160, 300, and 500. Captions are looked up. `grin: true` uses the cheer picture.
 - Walk frames `gary_run1.png` and `gary_run2.png`. Cheer and crash are separate. Open and closed mouth pictures drive the intro and the menu portrait.
@@ -50,7 +50,24 @@ Core loop: three lanes, left and right only. Collect kebab, fish and chips, and 
 - Live pavement is `IMG_7141.webp` through `IMG_7148.webp`, loaded as `?v=6`: base, weeds, light, sparse, dense, leaves, grime, cracked. Drawn as a mixed cell grid. A stone kerb covers the edge.
 - Food and hazard pictures: `roast.png`, `fork.png`, `mushroom.png`. Kebab and fish can fall back to drawn plates.
 
-## 4. Known gaps
+
+## 4. Difficulty and the next biome
+
+Gary stays still. The street scrolls toward him. That does not change.
+
+Speed is capped. It starts at 200 and eases up by 10 for every 150 points, then stops at 300. Do not raise that cap to make a later biome feel harder. A faster scroll becomes a blur.
+
+The gap is also capped. Rows start 1.1 seconds apart. From 250 points they ease toward 0.8 seconds and stop there. A dare keeps a longer read than a normal plate. Difficulty after the cap comes from what is in the lanes, not from less time.
+
+`STRETCHES` in `game-data.js` is that lever. The run picks a short pattern, plays it, then picks another. Under 250 points it uses `early`. From 250 to 900 it uses `mid`. After 900 it uses `late`. A stretch is three lanes: `none`, `kebab`, `fish`, `roast`, `fork`, or `m`. Add a harder pattern as another list. Do not write a new spawner.
+
+Biome 1 is the current scene. It is the friendly, gather-yourself stretch: daylight, this high street, the early patterns, room to learn the lanes. Do not make this street hostile.
+
+Biome 2 is the first difficulty step. It is a nighttime version of biome 1, not a new town. Same camera, same Gary, same plate size, same shop outlines. Night changes light, shop glow, pavement tone, and which stretches are allowed. It does not change the rules or fork the renderer.
+
+Night should feel harder because the patterns ask for more decisions, and because the lamps and dark pavement make the lanes slightly less obvious. It should not feel harder because the scroll is faster. Build it as data: a night floor, a night tint, and a night stretch pool. Wire it only after biome 1 props sit in the world.
+
+## 5. Known gaps
 
 - `game.js` is still one file. Logic, input, rendering, and state are not split. Split only when a change needs it. Do not mix a new mechanic into the draw function.
 - Score lines still open on the pickup that crosses them.
@@ -58,7 +75,7 @@ Core loop: three lanes, left and right only. Collect kebab, fish and chips, and 
 - A failed picture must not stop the loop. A bad caption path has frozen a run before. One change per commit.
 - After a script or picture change, bump `?v=` on that file and close the phone tab.
 
-## 5. Files
+## 6. Files
 
 - `index.html` — page, canvas, intro voice tag, menu, intro, game over, CSS. Loads the two scripts.
 - `game-data.js` — `TIERS`, `FOODS`, `LINES`, `CAPS`, `EVENTS`, `DETAILS`, `STREET`, `STRETCHES`.
@@ -67,7 +84,7 @@ Core loop: three lanes, left and right only. Collect kebab, fish and chips, and 
 - `PROJECT_STATE.md` — this handoff.
 - `GAME_STATUS.txt` — pointer to this file.
 
-## 6. Standards for the professional finish
+## 7. Standards for the professional finish
 
 - Lane change, pickup, crash, and near miss happen on the frame of the action. No delay added to smooth input. No full-screen shake that hides the lanes.
 - Captions are looked up. The run does not write them.
