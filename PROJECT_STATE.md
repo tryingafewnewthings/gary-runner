@@ -2,7 +2,7 @@
 
 Source of truth for handoff between models. If a chat disagrees with the repo, the repo wins. This file describes the live tree on `main` as of 2026-10-03. `GAME_STATUS.txt` is an older blueprint (saved 2026-10-01, commit 0786856) and must not override this file or the current scripts.
 
-Repo: `tryingafewnewthings/gary-runner` (public). Live page: `index.html`, served by GitHub Pages. Latest known tree commit before this file: `b7d7b514` ("Remove unreferenced cobble_weeds_sheet.jpg."). Script cache busters on the live page: `game-data.js?v=30`, `game.js?v=84`.
+Repo: `tryingafewnewthings/gary-runner` (public). Live page: `index.html`, served by GitHub Pages. Latest known tree commit before this file: `b7d7b514` ("Remove unreferenced cobble_weeds_sheet.jpg."). Script cache busters on the live page: `game-data.js?v=30`, `game.js?v=85`.
 
 ## 1. Project Overview & Premise
 
@@ -20,7 +20,7 @@ The last playable work, already on `main`, was street polish rather than a new m
 
 - Pickup no longer freezes the street. Hit-stop was removed from the feel of a collect. A `hitStop` value may still be zeroed in reset and is unused.
 - The bench is the seated reader: three frames in `bench.png`, cap 100, placed on the left pavement gap (`leftObject: 'bench'`).
-- Pavement is painted cobble tiles (`cobble_base`, moss, weeds, light, sparse, dense, damp), not one `path.png`. The unused weed sheet `cobble_weeds_sheet.jpg` was deleted.
+- Pavement is the new cobble set (plain, sparse weeds, light weeds, weeds, dense weeds, leaves, fine leaves, grime, cracks). Each patch is chosen in a fixed random order from its place on the street, so it stays put as the street scrolls. Not one `path.png`.
 - A solid stone kerb covers the cobbles. Wear is a shifted copy of the same stones.
 - Shops stay peeking so the next roof approaches instead of popping in. Segment height is 360px. Building height is 236px.
 
@@ -44,7 +44,7 @@ Do not start a biome until the floor and prop style agree with `STYLE.txt`.
 - High street sprite sheet `high_street_sprites.webp` (2912 by 2688, loaded as `?v=8`). Six shops: Fish & Chips, Peri Peri Chicken, Bakery, The Red Lion, Butchers, Mallace Cafe. Keepers are clipped to the shop glass and hop when Gary draws level. Black mattes on keepers were removed. Roof gaps show cobbles, not a grey fill. Far-right sign is MALLACE CAFE.
 - Street is an ordered plan in `STREET`. Each row sets left shop, right shop, and per-side gap objects (back, middle, front). A run starts at the first row and repeats. Most stretches have an object on one side only.
 - Props drawn with a contact shadow: lamp (from the sheet), postbox, bin, bench, tree, A-board. Light from the left, so the shadow falls by side.
-- Cobble variants and a solid stone kerb are drawn. Postboxes are capped so they do not tower over Gary.
+- Cobble patches are mixed in a fixed random order, and a solid stone kerb is drawn. Postboxes are capped so they do not tower over Gary.
 - Food and hazard pictures: `roast.png`, `fork.png`, `mushroom.png`. Kebab and fish can fall back to drawn plates.
 - Page chrome: yellow title, Play, Skip, Try Again. Page background `#0a0c14`. Title and primary button `#ffe600`.
 
@@ -86,7 +86,7 @@ Pictures and sound:
 - `bench.png` — seated reader, three frames, cap 100.
 - `bin.png`, `postbox.png`, `board.png`, `tree.png` — pavement props.
 - `fork.png`, `mushroom.png`, `roast.png` — hazard and roast plate.
-- `cobble_base.png`, `cobble_moss.png`, `cobble_weeds.png`, `cobble_weeds_light.png`, `cobble_weeds_sparse.png`, `cobble_weeds_dense.png` — pavement tiles.
+- `cobble_base.jpg`, `cobble_weeds_sparse.jpg`, `cobble_weeds_light.jpg`, `cobble_weeds.jpg`, `cobble_weeds_dense.jpg`, `cobble_leaves.jpg`, `cobble_leaves_fine.jpg`, `cobble_grime.jpg`, `cobble_cracked.jpg` — pavement tiles, mixed at random. Older `cobble_*.png` files are unused.
 
 There is no `index-new.html` on `main`. Do not recreate a second page.
 
