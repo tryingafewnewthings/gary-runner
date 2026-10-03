@@ -667,10 +667,17 @@ function musicTo(level, secs) {
 }
 function startMusic() {
   musicOn = true;
-  if (musicGain) musicGain.gain.setValueAtTime(0, audioCtx.currentTime); else music.volume = 0;
+  music.volume = 1;
   music.currentTime = 0;
-  const p = music.play(); if (p) p.catch(() => {});
-  musicTo(MUSIC_INTRO_VOL, MUSIC_FADE_IN);
+  if (musicGain && audioCtx) {
+    const t = audioCtx.currentTime;
+    musicGain.gain.cancelScheduledValues(t);
+    musicGain.gain.setValueAtTime(0.04, t);
+    musicGain.gain.linearRampToValueAtTime(MUSIC_INTRO_VOL, t + MUSIC_FADE_IN);
+  }
+  const kick = () => { const p = music.play(); if (p) p.catch(() => {}); };
+  kick();
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().then(kick).catch(() => {});
 }
 function stopMusic() {
   musicOn = false;
