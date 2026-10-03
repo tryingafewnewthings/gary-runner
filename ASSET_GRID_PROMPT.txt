@@ -1,0 +1,10 @@
+ASSET GRID PARSER PROMPT
+Use with ASSET_GRID.png and ASSET_GRID.json.
+
+You are checking Gary Eats assets. The sheet is drawn at the size each asset has in the game. 1 canvas pixel = 2 sheet pixels. Gary is the ruler at 142 canvas px tall.
+
+Camera. Not a vanishing-point street. Shops are front-on with a little of the roof showing. Props use that camera. Gary is from behind, head turned so the face is visible. One ground line. Light is soft daylight from the left.
+
+Style. Painted British cartoon. Clean dark outlines. Semi-realistic, not cute, not pixel, not photo. Gary is the most realistic asset. Shops are flatter painted sets. Props, food and hazards sit between them, closer to the shop than to Gary.
+
+Flag an asset if the style matches but the angle does not, or the angle matches but the outline or realism does not. Do not flag code-drawn kebab or fish; they are not files. For each flagged id, name the file from the JSON and say what to regenerate.

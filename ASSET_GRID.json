@@ -1,0 +1,638 @@
+{
+  "purpose": "True-scale visual lock for Gary Eats. Another model should flag any asset whose style or camera does not match Gary and the shops.",
+  "camera": "Not a vanishing-point street. Lanes are flat bands. Shops are front-on with a little of the top showing. Props use that same camera. Gary is from behind, head turned so the face is visible. One ground line. One light, soft daylight, from the left.",
+  "style": "Painted British cartoon. Clean dark outlines. Semi-realistic, not cute, not pixel, not photo. Gary is the most realistic asset. Shops are flatter painted sets. Props, food and hazards sit between them, closer to the shop than to Gary.",
+  "scale_rule": "Gary is the ruler at 142 canvas px tall. A plate is about a third of his height. A hazard is no taller than a plate. A bin, postbox, bench or board is between his knee and his chest. A tree is about chest height. A shop is taller than him.",
+  "sheet": "ASSET_GRID.png. 1 game canvas pixel = 2 sheet pixels. Background is the game canvas colour #1a1e24.",
+  "assets": [
+    {
+      "id": "gary_run1",
+      "group": "gary",
+      "file": "gary_run1.png",
+      "game_canvas_px": {
+        "w": 43.2,
+        "h": 142
+      },
+      "sheet_px": {
+        "x": 24,
+        "y": 100,
+        "w": 86,
+        "h": 284
+      },
+      "sheet_scale": 2,
+      "note": "Drawn at height 142 canvas px. Feet at player y 540. Camera: from behind, head turned."
+    },
+    {
+      "id": "gary_run2",
+      "group": "gary",
+      "file": "gary_run2.png",
+      "game_canvas_px": {
+        "w": 43.1,
+        "h": 142
+      },
+      "sheet_px": {
+        "x": 134,
+        "y": 100,
+        "w": 86,
+        "h": 284
+      },
+      "sheet_scale": 2,
+      "note": "Drawn at height 142 canvas px. Feet at player y 540. Camera: from behind, head turned."
+    },
+    {
+      "id": "gary_cheer",
+      "group": "gary",
+      "file": "gary_cheer.png",
+      "game_canvas_px": {
+        "w": 52.1,
+        "h": 142
+      },
+      "sheet_px": {
+        "x": 244,
+        "y": 100,
+        "w": 104,
+        "h": 284
+      },
+      "sheet_scale": 2,
+      "note": "Drawn at height 142 canvas px. Feet at player y 540. Camera: from behind, head turned."
+    },
+    {
+      "id": "gary_crash",
+      "group": "gary",
+      "file": "gary_crash.png",
+      "game_canvas_px": {
+        "w": 82.8,
+        "h": 142
+      },
+      "sheet_px": {
+        "x": 372,
+        "y": 100,
+        "w": 166,
+        "h": 284
+      },
+      "sheet_scale": 2,
+      "note": "Drawn at height 142 canvas px. Feet at player y 540. Camera: from behind, head turned."
+    },
+    {
+      "id": "gary_open",
+      "group": "gary",
+      "file": "gary_open.png.PNG",
+      "game_canvas_px": {
+        "w": 106.5,
+        "h": 142
+      },
+      "sheet_px": {
+        "x": 562,
+        "y": 100,
+        "w": 213,
+        "h": 284
+      },
+      "sheet_scale": 2,
+      "note": "Drawn at height 142 canvas px. Feet at player y 540. Camera: from behind, head turned."
+    },
+    {
+      "id": "gary_closed",
+      "group": "gary",
+      "file": "gary_closed.png.PNG",
+      "game_canvas_px": {
+        "w": 106.6,
+        "h": 142
+      },
+      "sheet_px": {
+        "x": 799,
+        "y": 100,
+        "w": 213,
+        "h": 284
+      },
+      "sheet_scale": 2,
+      "note": "Drawn at height 142 canvas px. Feet at player y 540. Camera: from behind, head turned."
+    },
+    {
+      "id": "mushroom",
+      "group": "plate",
+      "file": "mushroom.png",
+      "game_canvas_px": {
+        "w": 52,
+        "h": 52
+      },
+      "sheet_px": {
+        "x": 24,
+        "y": 466,
+        "w": 104,
+        "h": 104
+      },
+      "sheet_scale": 2,
+      "note": "Hazard. Drawn as a 52px square. Cap: no taller than a plate."
+    },
+    {
+      "id": "fork",
+      "group": "plate",
+      "file": "fork.png",
+      "game_canvas_px": {
+        "w": 44,
+        "h": 44
+      },
+      "sheet_px": {
+        "x": 152,
+        "y": 466,
+        "w": 88,
+        "h": 88
+      },
+      "sheet_scale": 2,
+      "note": "Hazard. Drawn as a 44px square."
+    },
+    {
+      "id": "roast",
+      "group": "plate",
+      "file": "roast.png",
+      "game_canvas_px": {
+        "w": 46,
+        "h": 46
+      },
+      "sheet_px": {
+        "x": 264,
+        "y": 466,
+        "w": 92,
+        "h": 92
+      },
+      "sheet_scale": 2,
+      "note": "Food. Drawn as a 46px square. About one third of Gary."
+    },
+    {
+      "id": "kebab",
+      "group": "plate",
+      "file": "none",
+      "game_canvas_px": {
+        "w": 50,
+        "h": 50
+      },
+      "sheet_px": {
+        "x": 380,
+        "y": 466,
+        "w": 100,
+        "h": 100
+      },
+      "sheet_scale": 2,
+      "note": "No file. Fallback plate drawn in code at 50px square (63 * road scale)."
+    },
+    {
+      "id": "fish",
+      "group": "plate",
+      "file": "none",
+      "game_canvas_px": {
+        "w": 50,
+        "h": 50
+      },
+      "sheet_px": {
+        "x": 504,
+        "y": 466,
+        "w": 100,
+        "h": 100
+      },
+      "sheet_scale": 2,
+      "note": "No file. Fallback plate drawn in code at 50px square."
+    },
+    {
+      "id": "lamp",
+      "group": "prop",
+      "file": "sheet crop, no file",
+      "game_canvas_px": {
+        "w": 15.1,
+        "h": 72
+      },
+      "sheet_px": {
+        "x": 24,
+        "y": 652,
+        "w": 30,
+        "h": 144
+      },
+      "sheet_scale": 2,
+      "note": "Pavement prop. Height cap 72, gap allows 72. Aspect from DETAILS."
+    },
+    {
+      "id": "postbox",
+      "group": "prop",
+      "file": "postbox.png",
+      "game_canvas_px": {
+        "w": 28.4,
+        "h": 64
+      },
+      "sheet_px": {
+        "x": 78,
+        "y": 652,
+        "w": 57,
+        "h": 128
+      },
+      "sheet_scale": 2,
+      "note": "Pavement prop. Height cap 64, gap allows 64. Aspect from DETAILS."
+    },
+    {
+      "id": "bin",
+      "group": "prop",
+      "file": "bin.png",
+      "game_canvas_px": {
+        "w": 39.6,
+        "h": 52
+      },
+      "sheet_px": {
+        "x": 159,
+        "y": 652,
+        "w": 79,
+        "h": 104
+      },
+      "sheet_scale": 2,
+      "note": "Pavement prop. Height cap 52, gap allows 52. Aspect from DETAILS."
+    },
+    {
+      "id": "bench",
+      "group": "prop",
+      "file": "bench.png",
+      "game_canvas_px": {
+        "w": 56.5,
+        "h": 100
+      },
+      "sheet_px": {
+        "x": 262,
+        "y": 652,
+        "w": 113,
+        "h": 200
+      },
+      "sheet_scale": 2,
+      "note": "Pavement prop. Height cap 100, gap allows 100. Aspect from DETAILS."
+    },
+    {
+      "id": "tree",
+      "group": "prop",
+      "file": "tree.png",
+      "game_canvas_px": {
+        "w": 41.8,
+        "h": 78
+      },
+      "sheet_px": {
+        "x": 399,
+        "y": 652,
+        "w": 84,
+        "h": 156
+      },
+      "sheet_scale": 2,
+      "note": "Pavement prop. Height cap 78, gap allows 78. Aspect from DETAILS."
+    },
+    {
+      "id": "board",
+      "group": "prop",
+      "file": "board.png",
+      "game_canvas_px": {
+        "w": 39.2,
+        "h": 58
+      },
+      "sheet_px": {
+        "x": 507,
+        "y": 652,
+        "w": 78,
+        "h": 116
+      },
+      "sheet_scale": 2,
+      "note": "Pavement prop. Height cap 58, gap allows 58. Aspect from DETAILS."
+    },
+    {
+      "id": "shop_fish",
+      "group": "shop",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 89.0,
+        "h": 236
+      },
+      "sheet_px": {
+        "x": 24,
+        "y": 934,
+        "w": 178,
+        "h": 472
+      },
+      "sheet_scale": 2,
+      "note": "Front-on shop. Drawn 89 x 236 canvas px. Window is not resized."
+    },
+    {
+      "id": "shop_peri",
+      "group": "shop",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 89.0,
+        "h": 236
+      },
+      "sheet_px": {
+        "x": 226,
+        "y": 934,
+        "w": 178,
+        "h": 472
+      },
+      "sheet_scale": 2,
+      "note": "Front-on shop. Drawn 89 x 236 canvas px. Window is not resized."
+    },
+    {
+      "id": "shop_bakery",
+      "group": "shop",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 89.0,
+        "h": 236
+      },
+      "sheet_px": {
+        "x": 428,
+        "y": 934,
+        "w": 178,
+        "h": 472
+      },
+      "sheet_scale": 2,
+      "note": "Front-on shop. Drawn 89 x 236 canvas px. Window is not resized."
+    },
+    {
+      "id": "shop_lion",
+      "group": "shop",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 89.0,
+        "h": 236
+      },
+      "sheet_px": {
+        "x": 630,
+        "y": 934,
+        "w": 178,
+        "h": 472
+      },
+      "sheet_scale": 2,
+      "note": "Front-on shop. Drawn 89 x 236 canvas px. Window is not resized."
+    },
+    {
+      "id": "shop_butchers",
+      "group": "shop",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 89.0,
+        "h": 236
+      },
+      "sheet_px": {
+        "x": 832,
+        "y": 934,
+        "w": 178,
+        "h": 472
+      },
+      "sheet_scale": 2,
+      "note": "Front-on shop. Drawn 89 x 236 canvas px. Window is not resized."
+    },
+    {
+      "id": "shop_mallace",
+      "group": "shop",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 89.0,
+        "h": 236
+      },
+      "sheet_px": {
+        "x": 24,
+        "y": 1488,
+        "w": 178,
+        "h": 472
+      },
+      "sheet_scale": 2,
+      "note": "Front-on shop. Drawn 89 x 236 canvas px. Window is not resized."
+    },
+    {
+      "id": "keeper_fish",
+      "group": "keeper",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 42.9,
+        "h": 49.7
+      },
+      "sheet_px": {
+        "x": 24,
+        "y": 2042,
+        "w": 86,
+        "h": 99
+      },
+      "sheet_scale": 2,
+      "note": "Drawn inside the shop glass at this size, then cropped by the pane."
+    },
+    {
+      "id": "keeper_peri",
+      "group": "keeper",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 42.1,
+        "h": 49.4
+      },
+      "sheet_px": {
+        "x": 134,
+        "y": 2042,
+        "w": 84,
+        "h": 99
+      },
+      "sheet_scale": 2,
+      "note": "Drawn inside the shop glass at this size, then cropped by the pane."
+    },
+    {
+      "id": "keeper_bakery",
+      "group": "keeper",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 41.3,
+        "h": 55.1
+      },
+      "sheet_px": {
+        "x": 242,
+        "y": 2042,
+        "w": 83,
+        "h": 110
+      },
+      "sheet_scale": 2,
+      "note": "Drawn inside the shop glass at this size, then cropped by the pane."
+    },
+    {
+      "id": "keeper_lion",
+      "group": "keeper",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 61.7,
+        "h": 66.5
+      },
+      "sheet_px": {
+        "x": 349,
+        "y": 2042,
+        "w": 123,
+        "h": 133
+      },
+      "sheet_scale": 2,
+      "note": "Drawn inside the shop glass at this size, then cropped by the pane."
+    },
+    {
+      "id": "keeper_butchers",
+      "group": "keeper",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 39.8,
+        "h": 43.0
+      },
+      "sheet_px": {
+        "x": 496,
+        "y": 2042,
+        "w": 80,
+        "h": 86
+      },
+      "sheet_scale": 2,
+      "note": "Drawn inside the shop glass at this size, then cropped by the pane."
+    },
+    {
+      "id": "keeper_mallace",
+      "group": "keeper",
+      "file": "high_street_sprites.webp",
+      "game_canvas_px": {
+        "w": 42.1,
+        "h": 57.3
+      },
+      "sheet_px": {
+        "x": 600,
+        "y": 2042,
+        "w": 84,
+        "h": 115
+      },
+      "sheet_scale": 2,
+      "note": "Drawn inside the shop glass at this size, then cropped by the pane."
+    },
+    {
+      "id": "cobble_base",
+      "group": "floor",
+      "file": "IMG_7141.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 24,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    },
+    {
+      "id": "cobble_weeds",
+      "group": "floor",
+      "file": "IMG_7142.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 144,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    },
+    {
+      "id": "cobble_light",
+      "group": "floor",
+      "file": "IMG_7143.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 264,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    },
+    {
+      "id": "cobble_sparse",
+      "group": "floor",
+      "file": "IMG_7144.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 384,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    },
+    {
+      "id": "cobble_dense",
+      "group": "floor",
+      "file": "IMG_7145.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 504,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    },
+    {
+      "id": "cobble_leaves",
+      "group": "floor",
+      "file": "IMG_7146.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 624,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    },
+    {
+      "id": "cobble_grime",
+      "group": "floor",
+      "file": "IMG_7147.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 744,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    },
+    {
+      "id": "cobble_cracked",
+      "group": "floor",
+      "file": "IMG_7148.webp",
+      "game_canvas_px": {
+        "w": 48,
+        "h": 48
+      },
+      "sheet_px": {
+        "x": 864,
+        "y": 2257,
+        "w": 96,
+        "h": 96
+      },
+      "sheet_scale": 2,
+      "note": "One pavement cell. Game draws a quarter of this file into a 48px cell."
+    }
+  ]
+}
