@@ -304,24 +304,22 @@ function cobbleFor(kind) {
   return img && img.ready ? img : (cobbleImgs.weeds && cobbleImgs.weeds.ready ? cobbleImgs.weeds : null);
 }
 
-const COBBLE_TILE = 256;
+const COBBLE_TILE = 192;
 
-function cobblePattern(img) {
-  if (!img.pat) {
-    img.pat = ctx.createPattern(img, 'repeat');
-    img.pat.setTransform(new DOMMatrix().scale(COBBLE_TILE / img.naturalWidth));
-  }
-  return img.pat;
-}
 function drawCobbles(x, y, w, h, kind) {
   const img = cobbleFor(kind || 'weeds');
   if (!img) { ctx.fillStyle = '#6e7276'; ctx.fillRect(x, y, w, h); return; }
-  const off = ((scrollY % COBBLE_TILE) + COBBLE_TILE) % COBBLE_TILE;
+  const T = COBBLE_TILE;
+  const off = ((scrollY % T) + T) % T;
+  const x0 = Math.floor(x / T) * T;
+  const y0 = Math.floor((y - off) / T) * T + off;
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-  ctx.translate(0, off);
-  ctx.fillStyle = cobblePattern(img);
-  ctx.fillRect(x, y - COBBLE_TILE, w, h + COBBLE_TILE * 2);
+  for (let ty = y0; ty < y + h; ty += T) {
+    for (let tx = x0; tx < x + w; tx += T) {
+      ctx.drawImage(img, tx, ty, T + 0.5, T + 0.5);
+    }
+  }
   ctx.restore();
 }
 
