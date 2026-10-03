@@ -71,16 +71,6 @@ const STREET = [
   { left: 'none', right: 'none', leftObject: 'none', rightObject: 'bin', leftGround: 'base', rightGround: 'moss' }
 ];
 
-// One row of the road, in order. Three lanes: left, middle, right.
-// none leaves a lane empty. kebab, fish and roast are food. fork and m are hazards.
-// The pictures do not change. This only decides what comes next.
-const ROWS = [
-  { lanes: ['none', 'kebab', 'none'] },
-  { lanes: ['none', 'kebab', 'none'] },
-  { lanes: ['none', 'kebab', 'none'] },
-  { lanes: ['none', 'fork', 'none'] }
-];
-
 // Stretches are short patterns. The run picks one, so the road does not repeat eight rows.
 const STRETCHES = {
   early: [

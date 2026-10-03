@@ -39,9 +39,9 @@ let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0, laneSquash = 0;
 let lastLanes = ['none', 'none', 'none'];
 
 let audioCtx, analyser, dataArray;
-let animTimer = 0, currentFrame = 0, introAnimTimer = 0;
+let introAnimTimer = 0;
 
-let openLoaded = false, closedLoaded = false, crashLoaded = false, streetLoaded = false;
+let openLoaded = false, closedLoaded = false, streetLoaded = false;
 let loadErrorLog = [];
 
 /* -------------------------------------------------------------------------- */
@@ -81,9 +81,6 @@ imgClosed.src = 'gary_closed.png.PNG';
   Source sheet: 2912 x 2688.
   Buildings occupy the top row, keepers the middle row, street props the bottom.
 */
-const STREET_SHEET_W = 2912;
-const STREET_SHEET_H = 2688;
-
 const BUILDINGS = [
   { name: 'Fish & Chips',       x: 12,   y: 57, w: 484, h: 1287, keeper: 0 },
   { name: 'Peri Peri Chicken',  x: 527,  y: 57, w: 443, h: 1287, keeper: 1 },
@@ -217,7 +214,7 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   shadow/backplate so the moving keeper reads as the live foreground figure
   rather than a duplicate. The movement is intentionally restrained.
 */
-function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
+function drawKeeper(index, x, y, w, h, phaseSeed) {
   const keeper = KEEPERS[index];
   if (!streetLoaded || !keeper) return;
 
@@ -291,13 +288,13 @@ function drawKeeper(index, x, y, w, h, isRight, phaseSeed) {
   ctx.restore();
 }
 
-function drawStreetBuilding(buildingIndex, x, y, w, h, isRight, phaseSeed) {
+function drawStreetBuilding(buildingIndex, x, y, w, h, phaseSeed) {
   if (buildingIndex < 0) return;
   const b = BUILDINGS[buildingIndex];
   if (!streetLoaded || !b) return;
 
   ctx.drawImage(imgStreet, b.x, b.y, b.w, b.h, x, y, w, h);
-  drawKeeper(b.keeper, x, y, w, h, isRight, phaseSeed);
+  drawKeeper(b.keeper, x, y, w, h, phaseSeed);
 }
 
 function cobbleFor(kind) {
@@ -626,7 +623,7 @@ function initAudio(){
     audioCtx=new AudioContext();analyser=audioCtx.createAnalyser();analyser.fftSize=256;
     dataArray=new Uint8Array(analyser.frequencyBinCount);
     const source=audioCtx.createMediaElementSource(garyAudio);source.connect(analyser);analyser.connect(audioCtx.destination);
-  }catch(e){console.warn('Audio Context init error:',e);}
+  }catch(e){}
 }
 try{best=+localStorage.getItem('garyBest')||0;}catch(e){}
 function tierOf(s){if(s<=50)return 0;if(s<=150)return 1;if(s<=300)return 2;if(s<=500)return 3;return 4;}
@@ -821,22 +818,6 @@ function drawCap(){
   ctx.restore();
 }
 
-function drawBubble(){
-  const px=lx(lane);
-  if(state==='over')return;
-  const line=lastHit==='fork'?"Plastic fork.":"Mushrooms. No.";
-  ctx.save();
-  ctx.font='700 13px Arial,sans-serif';
-  const w=ctx.measureText(line).width+16;
-  const x=Math.max(8,Math.min(W-w-8,px-w/2));
-  const y=PLAYER_Y-124;
-  ctx.fillStyle='rgba(12,14,18,.92)';
-  rr(ctx,x,y,w,24,6);ctx.fill();
-  ctx.fillStyle='#f4f1ea';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(line,x+w/2,y+12);
-  ctx.restore();
-}
-
 function drawStreetLight(){
   if (!lampGlows.length) return;
   const flick=.92+Math.sin(clock*7)*.04+Math.sin(clock*3.1)*.03;
@@ -905,10 +886,7 @@ function render(dt){
 
   if(state!=='menu'&&state!=='intro'){
     drawHud();drawCap();
-    if(state.startsWith('crash')){
-      if(state.startsWith('crash')){ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')';ctx.fillRect(0,0,W,H);}
-
-    }
+    if(state.startsWith('crash')) ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')',ctx.fillRect(0,0,W,H);
   }
   drawDiagnostics();
 }
@@ -941,7 +919,6 @@ $('startBtn').addEventListener('click',e=>{
   const playPromise=garyAudio.play();
   if(playPromise!==undefined){
     playPromise.catch(err=>{
-      console.warn('Autoplay blocked or audio missing:',err);
       setTimeout(()=>{if(state==='intro')startGameplay();},2500);
     });
   }
