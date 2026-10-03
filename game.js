@@ -576,7 +576,6 @@ function collect(o) {
   reviewMul = review >= 5 ? 3 : review >= 3 ? 2 : 1;
   const pts = FOODS[o.t] * reviewMul;
   score += pts;
-  hitStop = 0.04;
   const col = (TIERS[tierOf(score)] || TIERS[0]).c;
   fx.push({x:lx(o.l),y:o.y,t:0,life:1.1,txt:'+'+pts,col:col,pop:1});
   let grin = o.t === 'roast' || review === 3 || review === 6;
@@ -658,7 +657,6 @@ function update(dt){
   if(state!=='play')return;
   if(nearCd>0)nearCd-=dt;
   if(flash>0)flash-=dt;
-  if(hitStop>0){hitStop-=dt;return;}
   if(review>0){
     reviewGap-=dt;
     if(reviewGap<=0){review=0;reviewMul=1;}
