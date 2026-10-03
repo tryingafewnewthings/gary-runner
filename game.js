@@ -997,8 +997,10 @@ $('againBtn').addEventListener('click',e=>{
 });
 
 function resize(){
-  const w=stage.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2.5);
+  // Design size stays 360x640. The phone picture is 3x that, 1080x1920, when the screen can take it.
+  const w=stage.clientWidth,dpr=Math.min(window.devicePixelRatio||1,3);
   cv.width=Math.round(w*dpr);cv.height=Math.round(w*16/9*dpr);K=cv.width/W;
+  ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality='high';
 }
 

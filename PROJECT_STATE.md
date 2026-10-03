@@ -1,6 +1,6 @@
 # PROJECT_STATE: Gary Eats!
 
-Source of truth for handoff. If a chat disagrees with the repo, the repo wins. This file describes `main` as of 2026-10-03, commit `70340079` ("Start the theme audibly and load the new script."). Live page: `index.html`, GitHub Pages. Script cache busters: `game-data.js?v=30`, `game.js?v=86`.
+Source of truth for handoff. If a chat disagrees with the repo, the repo wins. This file describes `main` as of 2026-10-03, commit `70340079` ("Start the theme audibly and load the new script."). Live page: `index.html`, GitHub Pages. Script cache busters: `game-data.js?v=30`, `game.js?v=87`.
 
 `GAME_STATUS.txt` is a short pointer only. It no longer embeds scripts. `STYLE.txt` is the art lock.
 
@@ -32,7 +32,7 @@ Core loop: three lanes, left and right only. Collect kebab, fish and chips, and 
 ## 3. What is live
 
 - One page. No engine, no framework, no build step. HTML, CSS, plain JavaScript in strict mode.
-- One canvas, 360 by 640, scaled to the phone. Device pixel ratio capped around 2.5.
+- One canvas. Design size is 360 by 640. That is the coordinate system. The phone picture is up to 3x, so a full stage is the usual 1080 by 1920 phone target. Do not change 360 by 640. There is no single mandated game resolution.
 - Loop: `requestAnimationFrame` calls update then render. Delta is capped.
 - States: `menu`, `intro`, `play`, `crash_fork`, `crash_m`, `over`.
 - Input: A, D, arrows, or a tap on that half of the screen. No jump, no duck. A lane change starts on that frame.
