@@ -105,35 +105,25 @@ imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
 imgStreet.src = 'high_street_sprites.webp?v=8';
 
-// Same stones, different litter. A cell keeps its picture for the whole run.
-const COBBLE_TILE = 480;
-const COBBLE_CELL = 96;
-const COBBLE_FILES = [
-  'cobble_base.jpg?v=4',
-  'cobble_weeds_sparse.jpg?v=4',
-  'cobble_weeds_light.jpg?v=4',
-  'cobble_weeds.jpg?v=4',
-  'cobble_weeds_dense.jpg?v=4',
-  'cobble_leaves.jpg?v=4',
-  'cobble_grime.jpg?v=4',
-  'cobble_cracked.jpg?v=4',
-  'cobble_leaves_fine.jpg?v=4'
-];
-// Plain stones are the usual pavement. Weeds, leaves, grime and cracks turn up in clumps.
-const COBBLE_DECK = [0,0,0,0,0,0,1,1,1,2,2,3,4,5,5,6,6,7,7,8];
-const cobbleImgs = COBBLE_FILES.map(file => {
+const COBBLE_KINDS = {
+  base: 'IMG_7141.webp?v=6',
+  weeds: 'IMG_7142.webp?v=6',
+  light: 'IMG_7143.webp?v=6',
+  sparse: 'IMG_7144.webp?v=6',
+  dense: 'IMG_7145.webp?v=6',
+  leaves: 'IMG_7146.webp?v=6',
+  grime: 'IMG_7147.webp?v=6',
+  cracked: 'IMG_7148.webp?v=6'
+};
+const cobbleImgs = {};
+Object.entries(COBBLE_KINDS).forEach(([kind, file]) => {
   const img = new Image();
   img.onload = () => { img.ready = true; };
   img.onerror = () => { loadErrorLog.push(file + ' not found'); };
   img.src = file;
-  return img;
+  cobbleImgs[kind] = img;
 });
-function cobblePick(col, row) {
-  let n = (col * 374761393 + row * 668265263) >>> 0;
-  n = Math.imul(n ^ (n >>> 13), 1274126177) >>> 0;
-  n = (n ^ (n >>> 16)) >>> 0;
-  return cobbleImgs[COBBLE_DECK[n % COBBLE_DECK.length]];
-}
+cobbleImgs.moss = cobbleImgs.damp = cobbleImgs.base;
 
 /*
   Each building has an intentional detail zone underneath it. The gap is
@@ -309,34 +299,29 @@ function drawStreetBuilding(buildingIndex, x, y, w, h, phaseSeed) {
   drawKeeper(b.keeper, x, y, w, h, phaseSeed);
 }
 
-function drawCobbles(x, y, w, h) {
-  const fallback = cobbleImgs[0];
-  if (!fallback || !fallback.ready) {
-    ctx.fillStyle = '#6e7276';
-    ctx.fillRect(x, y, w, h);
-    return;
+function cobbleFor(kind) {
+  const img = cobbleImgs[kind] || cobbleImgs.weeds;
+  return img && img.ready ? img : (cobbleImgs.weeds && cobbleImgs.weeds.ready ? cobbleImgs.weeds : null);
+}
+
+const COBBLE_TILE = 256;
+
+function cobblePattern(img) {
+  if (!img.pat) {
+    img.pat = ctx.createPattern(img, 'repeat');
+    img.pat.setTransform(new DOMMatrix().scale(COBBLE_TILE / img.naturalWidth));
   }
-  const cell = COBBLE_CELL;
-  const tile = COBBLE_TILE;
+  return img.pat;
+}
+function drawCobbles(x, y, w, h, kind) {
+  const img = cobbleFor(kind || 'weeds');
+  if (!img) { ctx.fillStyle = '#6e7276'; ctx.fillRect(x, y, w, h); return; }
+  const off = ((scrollY % COBBLE_TILE) + COBBLE_TILE) % COBBLE_TILE;
   ctx.save();
-  ctx.imageSmoothingEnabled = true;
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-  const startRow = Math.floor((distance - y - h) / cell) - 1;
-  const endRow = Math.floor((distance - y) / cell) + 1;
-  const startCol = Math.floor(x / cell);
-  const endCol = Math.floor((x + w - 1) / cell);
-  for (let row = startRow; row <= endRow; row++) {
-    const sy = distance - row * cell;
-    for (let col = startCol; col <= endCol; col++) {
-      const img = cobblePick(col, row);
-      const src = (img && img.ready) ? img : fallback;
-      const sx = ((col * cell) % tile + tile) % tile;
-      const srcY = ((row * cell) % tile + tile) % tile;
-      ctx.drawImage(src, sx, srcY, cell, cell, col * cell, sy, cell, cell);
-    }
-  }
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  ctx.translate(0, off);
+  ctx.fillStyle = cobblePattern(img);
+  ctx.fillRect(x, y - COBBLE_TILE, w, h + COBBLE_TILE * 2);
   ctx.restore();
 }
 
