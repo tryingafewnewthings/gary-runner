@@ -39,6 +39,14 @@ let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0, laneSquash = 0;
 let lastLanes = ['none', 'none', 'none'];
 
 let audioCtx, analyser, dataArray;
+
+const MUSIC_VOL = 0.2;        // normal level during play (0 to 1). Keep it low: sound effects are coming.
+const MUSIC_INTRO_VOL = 0.12; // quieter while Gary's intro voice plays
+const MUSIC_FADE_IN = 4;      // seconds
+const music = new Audio('gary_theme_song.mp3?v=1');
+music.loop = true;
+music.preload = 'auto';
+let musicGain = null, musicOn = false;
 let introAnimTimer = 0;
 
 let openLoaded = false, closedLoaded = false, streetLoaded = false;
@@ -627,6 +635,7 @@ function endGame(){
 }
 function startGameplay(){
   $('introOverlay').classList.remove('show');garyAudio.pause();garyAudio.currentTime=0;reset();state='play';
+  musicTo(MUSIC_VOL, 2);
 }
 function getActiveImage(isOpen){
   if(isOpen&&openLoaded)return imgOpen;
@@ -641,7 +650,37 @@ function initAudio(){
     dataArray=new Uint8Array(analyser.frequencyBinCount);
     const source=audioCtx.createMediaElementSource(garyAudio);source.connect(analyser);analyser.connect(audioCtx.destination);
   }catch(e){}
+  try {
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0;
+    const musicSource = audioCtx.createMediaElementSource(music);
+    musicSource.connect(musicGain);
+    musicGain.connect(audioCtx.destination);
+  } catch (e) { musicGain = null; }
 }
+function musicTo(level, secs) {
+  if (!musicGain) { music.volume = level; return; }
+  const t = audioCtx.currentTime, g = musicGain.gain;
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(level, t + secs);
+}
+function startMusic() {
+  musicOn = true;
+  if (musicGain) musicGain.gain.setValueAtTime(0, audioCtx.currentTime); else music.volume = 0;
+  music.currentTime = 0;
+  const p = music.play(); if (p) p.catch(() => {});
+  musicTo(MUSIC_INTRO_VOL, MUSIC_FADE_IN);
+}
+function stopMusic() {
+  musicOn = false;
+  musicTo(0, 1);
+  setTimeout(() => { if (!musicOn) music.pause(); }, 1100);
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) music.pause();
+  else if (musicOn) { const p = music.play(); if (p) p.catch(() => {}); }
+});
 try{best=+localStorage.getItem('garyBest')||0;}catch(e){}
 function tierOf(s){if(s<=50)return 0;if(s<=150)return 1;if(s<=300)return 2;if(s<=500)return 3;return 4;}
 
@@ -934,6 +973,7 @@ $('startBtn').addEventListener('click',e=>{
   if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
   garyAudio.currentTime=0;
   const playPromise=garyAudio.play();
+  startMusic();
   if(playPromise!==undefined){
     playPromise.catch(err=>{
       setTimeout(()=>{if(state==='intro')startGameplay();},2500);
@@ -946,6 +986,7 @@ $('skipIntroBtn').addEventListener('click',startGameplay);
 
 $('againBtn').addEventListener('click',e=>{
   e.currentTarget.blur();$('over').classList.remove('show');reset();state='menu';$('menu').classList.add('show');
+  stopMusic();
 });
 
 function resize(){
