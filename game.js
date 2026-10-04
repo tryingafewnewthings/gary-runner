@@ -264,7 +264,7 @@ function drawKeeper(index, x, y, w, h, phaseSeed) {
     keeperH = keeperW * (keeper.h / keeper.w);
   }
   const baseX = wx + ww * 0.5 + shift;
-  const drop = index === 3 ? wh * 0.22 : 0;
+  const drop = [0, 1, 5].includes(index) ? wh * 0.16 : index === 3 ? wh * 0.22 : 0;
   const baseY = wy + wh - 1 + bob + drop;
 
   ctx.save();
