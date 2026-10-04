@@ -702,7 +702,7 @@ function isTalkingAudio(){
 
 function update(dt){
   clock+=dt;
-  lane+=(target-lane)*Math.min(1,dt/0.09);
+  lane+=(target-lane)*Math.min(1,dt/0.16);
   if(laneSquash>0)laneSquash=Math.max(0,laneSquash-dt);
   if(grinTimer>0)grinTimer=Math.max(0,grinTimer-dt);
 
