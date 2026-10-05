@@ -37,6 +37,12 @@ let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
 let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, roadQueue = [], nearCd = 0, lastHit = null, shownSpeed = 200, flash = 0;
 let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0, laneSquash = 0;
 let lastLanes = ['none', 'none', 'none'];
+let playTime = 0, nightMix = 0;
+// Night biome. Stays off on the menu. A run turns it on after NIGHT_AFTER seconds.
+// Set NIGHT_AFTER to 0 to preview night from the first frame of play.
+let NIGHT_MODE = false;
+const NIGHT_AFTER = 28;
+const NIGHT_FADE = 6;
 
 let audioCtx, analyser, dataArray;
 
@@ -172,6 +178,7 @@ function drawSideLayers(x, y, w, h, plan, side) {
 }
 
 const lampGlows = [];
+const lampHeads = [];
 
 function drawDetailZone(x, y, w, h, objectName, side) {
   if (!objectName || objectName === 'none' || h < 28) return;
@@ -185,7 +192,10 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   // Stand the lamp on the kerb. The pavement between the shop and the road is only a few pixels wide.
   if (objectName === 'lamp') px = side === 'left' ? ROAD_LEFT - propW : ROAD_RIGHT + 3;
   const py = y + h - propH + 2;
-  if (objectName === 'lamp') lampGlows.push(py + propH * 0.45);
+  if (objectName === 'lamp') {
+    lampGlows.push(py + propH * 0.45);
+    lampHeads.push(px + propW * 0.5, py + propH * 0.08);
+  }
   const foot = px + propW / 2;
   const cast = side === 'right' ? 8 : -8;
   ctx.save();
@@ -224,25 +234,35 @@ function drawDetailZone(x, y, w, h, objectName, side) {
   shadow/backplate so the moving keeper reads as the live foreground figure
   rather than a duplicate. The movement is intentionally restrained.
 */
+// One set of window fractions. The keeper and the night light both use this,
+// so a later shop change stays aligned.
+const SHOP_PANES = [
+  { x: 0.06, y: 0.560, w: 0.56, h: 0.280 },
+  { x: 0.06, y: 0.558, w: 0.55, h: 0.282 },
+  { x: 0.07, y: 0.558, w: 0.54, h: 0.282 },
+  { x: 0.12, y: 0.628, w: 0.52, h: 0.248 },
+  { x: 0.08, y: 0.575, w: 0.52, h: 0.255 },
+  { x: 0.06, y: 0.560, w: 0.55, h: 0.280 }
+];
+
+function shopWindowRect(index, x, y, w, h) {
+  const pane = SHOP_PANES[index] || SHOP_PANES[0];
+  return {
+    x: x + w * pane.x,
+    y: y + h * pane.y,
+    w: w * pane.w,
+    h: h * pane.h
+  };
+}
+
 function drawKeeper(index, x, y, w, h, phaseSeed) {
   const keeper = KEEPERS[index];
   if (!streetLoaded || !keeper) return;
 
   // Glass under the awning. Most fronts have the door on the right, so the
   // pane is left of centre. Red Lion is a wider glazed front.
-  const panes = [
-    { x: 0.06, y: 0.560, w: 0.56, h: 0.280 },
-    { x: 0.06, y: 0.558, w: 0.55, h: 0.282 },
-    { x: 0.07, y: 0.558, w: 0.54, h: 0.282 },
-    { x: 0.12, y: 0.628, w: 0.52, h: 0.248 },
-    { x: 0.08, y: 0.575, w: 0.52, h: 0.255 },
-    { x: 0.06, y: 0.560, w: 0.55, h: 0.280 }
-  ];
-  const pane = panes[index] || panes[0];
-  const wx = x + w * pane.x;
-  const wy = y + h * pane.y;
-  const ww = w * pane.w;
-  const wh = h * pane.h;
+  const win = shopWindowRect(index, x, y, w, h);
+  const wx = win.x, wy = win.y, ww = win.w, wh = win.h;
 
   const phase = clock * 2.1 + phaseSeed;
   const ahead = PLAYER_Y - (y + h * 0.72);
@@ -347,6 +367,18 @@ function drawCobbles(x, y, w, h, kind) {
   ctx.restore();
 }
 
+function forEachStreetFront(cb) {
+  const peek = 56;
+  const base = Math.floor((distance + peek) / STREET_SEGMENT_H);
+  for (let pass = -1; pass <= 3; pass++) {
+    const index = base + pass;
+    if (index < 0) continue;
+    const y = distance - index * STREET_SEGMENT_H + (STREET_SEGMENT_H - peek);
+    const plan = STREET[((index % STREET.length) + STREET.length) % STREET.length];
+    cb(plan, index, y);
+  }
+}
+
 function drawHighStreet() {
   ctx.fillStyle = '#1a1e24';
   ctx.fillRect(0, 0, W, H);
@@ -366,15 +398,7 @@ function drawHighStreet() {
   }
 
   // The next roof stays just above the screen, so a shop approaches instead of popping in.
-  const peek = 56;
-  const base = Math.floor((distance + peek) / STREET_SEGMENT_H);
-
-  for (let pass = -1; pass <= 3; pass++) {
-    const index = base + pass;
-    if (index < 0) continue;
-    const y = distance - index * STREET_SEGMENT_H + (STREET_SEGMENT_H - peek);
-
-    const plan = STREET[((index % STREET.length) + STREET.length) % STREET.length];
+  forEachStreetFront((plan, index, y) => {
     drawStreetBuilding(
       shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
     );
@@ -392,7 +416,7 @@ function drawHighStreet() {
       W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan, 'right'
     );
     drawGroundPatch(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightGround);
-  }
+  });
 }
 
 function drawPavements() {
@@ -489,6 +513,7 @@ function triggerGrin() {
 }
 function reset() {
   score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=LEARN_GAP;
+  playTime=0;nightMix=0;NIGHT_MODE=false;
   objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;roadQueue=[];nearCd=0;lastHit=null;shownSpeed=200;flash=0;
   review=0;reviewMul=1;reviewGap=0;hitStop=0;laneSquash=0;
   lastLanes=['none','none','none'];
@@ -700,8 +725,22 @@ function isTalkingAudio(){
   return false;
 }
 
+function syncNight(dt) {
+  if (state === 'menu' || state === 'intro') {
+    playTime = 0;
+    nightMix = 0;
+    NIGHT_MODE = false;
+    return;
+  }
+  if (state === 'play') playTime += dt;
+  const u = (playTime - NIGHT_AFTER) / NIGHT_FADE;
+  nightMix = u <= 0 ? 0 : (u >= 1 ? 1 : u);
+  NIGHT_MODE = nightMix > 0.001;
+}
+
 function update(dt){
   clock+=dt;
+  syncNight(dt);
   lane+=(target-lane)*Math.min(1,dt/0.16);
   if(laneSquash>0)laneSquash=Math.max(0,laneSquash-dt);
   if(grinTimer>0)grinTimer=Math.max(0,grinTimer-dt);
@@ -755,12 +794,90 @@ function update(dt){
 
 function drawRoad(){
   ctx.fillStyle='#3a3f47';ctx.fillRect(ROAD_LEFT,0,ROAD_WIDTH,H);
+  paintLaneMarkings('#c5c8cc');
+}
+
+function paintLaneMarkings(color) {
   const dashH=42*S,gapH=28*S,totalD=dashH+gapH,offY=scrollY%totalD;
-  ctx.fillStyle='#c5c8cc';
+  ctx.fillStyle=color;
   for(let l=1;l<=2;l++){
     const lineX=ROAD_LEFT+l*LANE_WIDTH-2.7*S;
     for(let y=-totalD+offY;y<H+totalD;y+=totalD)ctx.fillRect(lineX,y,5.4*S,dashH);
   }
+}
+
+function bakeGlow(size, stops) {
+  const s = document.createElement('canvas');
+  s.width = s.height = size;
+  const g = s.getContext('2d');
+  const rad = g.createRadialGradient(size/2, size/2, size*0.06, size/2, size/2, size/2);
+  for (const stop of stops) rad.addColorStop(stop[0], stop[1]);
+  g.fillStyle = rad;
+  g.fillRect(0, 0, size, size);
+  return s;
+}
+
+// Baked once. The loop only stamps these, so night does not build gradients per window.
+const nightGlow = bakeGlow(96, [
+  [0, 'rgba(255, 244, 214, 0.95)'],
+  [0.28, 'rgba(255, 188, 72, 0.72)'],
+  [0.62, 'rgba(255, 170, 60, 0.18)'],
+  [1, 'rgba(255, 160, 40, 0)']
+]);
+const nightLamp = bakeGlow(64, [
+  [0, 'rgba(255, 220, 150, 0.95)'],
+  [0.4, 'rgba(255, 176, 70, 0.30)'],
+  [1, 'rgba(255, 160, 50, 0)']
+]);
+
+function shopIsLit(seed) {
+  return ((seed * 17 + 3) % 8) !== 0;
+}
+
+function drawNightAmbient() {
+  ctx.fillStyle = 'rgba(12, 20, 48, 0.34)';
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawNightRoadLight() {
+  ctx.fillStyle = 'rgba(14, 24, 52, 0.30)';
+  ctx.fillRect(ROAD_LEFT, 0, ROAD_WIDTH, H);
+  paintLaneMarkings('#fffef8');
+}
+
+function paintWindowLight(keeperIndex, x, y, w, h, seed) {
+  const win = shopWindowRect(keeperIndex, x, y, w, h);
+  if (win.y > H || win.y + win.h < 0) return;
+  const flick = 0.94 + 0.06 * Math.sin(clock * 2.15 + seed);
+  const cx = win.x + win.w * 0.5;
+  const cy = win.y + win.h * 0.46;
+
+  ctx.save();
+  ctx.globalAlpha = nightMix * 0.22 * flick;
+  ctx.drawImage(nightGlow, cx - win.w * 1.08, cy - win.h * 0.92, win.w * 2.16, win.h * 1.85);
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(win.x + 1, win.y + 1, Math.max(1, win.w - 2), Math.max(1, win.h - 2));
+  ctx.clip();
+  ctx.globalAlpha = nightMix * 0.30 * flick;
+  ctx.drawImage(nightGlow, cx - win.w * 0.68, cy - win.h * 0.72, win.w * 1.36, win.h * 1.45);
+  ctx.restore();
+}
+
+function drawNightShopWindows() {
+  forEachStreetFront((plan, index, y) => {
+    const left = shopByName(plan.left);
+    const right = shopByName(plan.right);
+    if (left >= 0 && shopIsLit(index * 2)) {
+      paintWindowLight(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, index * 1.7);
+    }
+    if (right >= 0 && shopIsLit(index * 2 + 1)) {
+      const rw = W - ROAD_RIGHT - PAVEMENT_WIDTH;
+      paintWindowLight(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, rw, BUILDING_H, index * 1.7 + 2.2);
+    }
+  });
 }
 
 function drawObj(o){
@@ -882,21 +999,48 @@ function drawCap(){
 }
 
 function drawStreetLight(){
-  if (!lampGlows.length) return;
-  const flick=.92+Math.sin(clock*7)*.04+Math.sin(clock*3.1)*.03;
-  ctx.save();
-  ctx.globalCompositeOperation='lighter';
-  ctx.beginPath();
-  ctx.rect(ROAD_LEFT, 0, ROAD_WIDTH, H);
-  ctx.clip();
-  for (const cy of lampGlows) {
-    const grad=ctx.createRadialGradient(W/2,cy,0,W/2,cy,70);
-    grad.addColorStop(0,'rgba(255,180,90,'+(.05*flick)+')');
-    grad.addColorStop(1,'rgba(255,180,90,0)');
-    ctx.fillStyle=grad;
-    ctx.fillRect(ROAD_LEFT, cy-40, ROAD_WIDTH, 80);
+  if (lampHeads.length && NIGHT_MODE) {
+    ctx.save();
+    ctx.globalAlpha = 0.45 * nightMix;
+    for (let i = 0; i < lampHeads.length; i += 2) {
+      const hx = lampHeads[i], hy = lampHeads[i + 1];
+      ctx.drawImage(nightLamp, hx - 26, hy - 20, 52, 40);
+    }
+    ctx.restore();
+  }
+  if (lampGlows.length) {
+    const flick=.92+Math.sin(clock*7)*.04+Math.sin(clock*3.1)*.03;
+    const pool = (NIGHT_MODE ? 0.05 + 0.11 * nightMix : 0.05) * flick;
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    ctx.beginPath();
+    ctx.rect(ROAD_LEFT, 0, ROAD_WIDTH, H);
+    ctx.clip();
+    for (const cy of lampGlows) {
+      const grad=ctx.createRadialGradient(W/2,cy,0,W/2,cy,70);
+      grad.addColorStop(0,'rgba(255,180,90,'+pool+')');
+      grad.addColorStop(1,'rgba(255,180,90,0)');
+      ctx.fillStyle=grad;
+      ctx.fillRect(ROAD_LEFT, cy-40, ROAD_WIDTH, 80);
+    }
+    ctx.restore();
   }
   lampGlows.length = 0;
+  lampHeads.length = 0;
+}
+
+function drawNightVignette() {
+  ctx.save();
+  const left = ctx.createLinearGradient(0, 0, 42, 0);
+  left.addColorStop(0, 'rgba(6, 10, 28, 0.42)');
+  left.addColorStop(1, 'rgba(6, 10, 28, 0)');
+  ctx.fillStyle = left;
+  ctx.fillRect(0, 0, 42, H);
+  const right = ctx.createLinearGradient(W, 0, W - 42, 0);
+  right.addColorStop(0, 'rgba(6, 10, 28, 0.42)');
+  right.addColorStop(1, 'rgba(6, 10, 28, 0)');
+  ctx.fillStyle = right;
+  ctx.fillRect(W - 42, 0, 42, H);
   ctx.restore();
 }
 
@@ -923,7 +1067,16 @@ function drawVignette(){
 function render(dt){
   if(state==='intro')drawIntroAvatar(dt);
   ctx.setTransform(K,0,0,K,0,0);ctx.save();
-  drawHighStreet();drawPavements();drawRoad();drawStreetLight();
+  drawHighStreet();drawPavements();drawRoad();
+  if (NIGHT_MODE) {
+    ctx.save();
+    ctx.globalAlpha = nightMix;
+    drawNightAmbient();
+    drawNightRoadLight();
+    drawNightShopWindows();
+    ctx.restore();
+  }
+  drawStreetLight();
 
   if(state!=='menu'&&state!=='intro'){
     for(let i=objs.length-1;i>=0;i--)drawObj(objs[i]);
@@ -946,6 +1099,12 @@ function render(dt){
     }
   }
   ctx.restore();drawVignette();
+  if (NIGHT_MODE) {
+    ctx.save();
+    ctx.globalAlpha = nightMix;
+    drawNightVignette();
+    ctx.restore();
+  }
 
   if(state!=='menu'&&state!=='intro'){
     drawHud();drawCap();

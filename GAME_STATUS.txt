@@ -1,5 +1,5 @@
 GARY EATS — PICKUP NOTE
-Updated 2026-10-03. Live commit 70340079. Page versions: game-data.js?v=30, game.js?v=87.
+Updated 2026-10-03. Live commit 70340079. Page versions: game-data.js?v=30, game.js?v=88.
 Repo: tryingafewnewthings/gary-runner. Live page is index.html on GitHub Pages.
 
 If this note disagrees with the repo, the repo wins.
@@ -8,7 +8,7 @@ Read in this order:
 1. PROJECT_STATE.md — where to pick up, what works, what is next.
 2. STYLE.txt — art lock. Every new picture is checked against it before it is used.
 3. index.html, game-data.js, game.js — the live game. Do not restore a second page.
-4. STRETCHES in game-data.js — difficulty. The live street is the friendly gather. The next biome is night, and it gets harder there, not by a faster scroll.
+4. STRETCHES in game-data.js — difficulty. The street starts in daylight and fades to night after 28 seconds. Night is light only. It does not speed the scroll, and a harder night stretch pool is not wired yet.
 
 Finish bar. This project needs to end as a professionally made game: tight feel, one coherent art set, no leftover experiments, and a run a stranger can play on a phone without a guide. Prototype shortcuts are not the finish.
 
