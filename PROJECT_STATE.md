@@ -1,6 +1,6 @@
 # PROJECT_STATE: Gary Eats!
 
-Source of truth for handoff. If a chat disagrees with the repo, the repo wins. This file describes `main` as of 2026-10-03, commit `70340079` ("Start the theme audibly and load the new script."). Live page: `index.html`, GitHub Pages. Script cache busters: `game-data.js?v=30`, `game.js?v=88`.
+Source of truth for handoff. If a chat disagrees with the repo, the repo wins. This file describes `main` as of 2026-10-06. Live page: `index.html`, GitHub Pages. Script cache busters: `game-data.js?v=31`, `game.js?v=90`.
 
 `GAME_STATUS.txt` is a short pointer only. It no longer embeds scripts. `STYLE.txt` is the art lock.
 
@@ -17,7 +17,7 @@ Start here. Do not rebuild the runner.
 3. Change lists in `game-data.js`. Change rules and drawing in `game.js`. Keep one page.
 4. Next art job, before a biome: floor and props must sit in the same world. The bench can still read as pinned to the wall. Bin, postbox, and bench are nearer a model than the shops. Tree is flatter. Mushroom and fork are softer than the shops. Props belong between Gary and the shops, closer to the shop.
 5. Next mechanic, after that art pass: a roast the player can refuse. The current roast between mushrooms is a toll, not a dare. Then one-tap restart, only if a run still starts.
-6. The live street starts in daylight. After 28 seconds of a run it fades into night on the same shops, road, and props. Night is a light pass in `game.js`, not a new picture. Gary and the plates stay bright. A harder night stretch pool is still not wired, and the speed cap stays 300.
+6. The live street starts in daylight. Night begins when the first shop plan in `STREET` has scrolled past, then fades in over 6 seconds on the same shops, road, and props. Night is a light pass in `game.js`, not a new picture. Gary and the plates stay bright. A harder night stretch pool is still not wired, and the speed cap stays 300.
 
 The person directing the game is not a coder. Explain changes in plain language. The player is on an iPhone.
 
@@ -63,7 +63,7 @@ The gap is also capped. Rows start 1.1 seconds apart. From 250 points they ease 
 
 Biome 1 is the current scene. It is the friendly, gather-yourself stretch: daylight, this high street, the early patterns, room to learn the lanes. Do not make this street hostile.
 
-Biome 2 is the night version of this same street. It is wired. After 28 seconds of play (`NIGHT_AFTER`) the street fades to night over 6 seconds. Same camera, same Gary, same plate size, same shop pictures. The night look is a cool blue shade over the street, a slightly cooler road with the lane paint redrawn on top, warm light in the existing shop windows, and a small lamp glow. Gary, food, and hazards are drawn after that shade, so they stay bright. The HUD is drawn after the edge vignette.
+Biome 2 is the night version of this same street. It is wired. `NIGHT_MODE` is the switch. Left on, a run stays in daylight until the first `STREET` plan has passed (`STREET.length * 360`), then fades to night over 6 seconds. Same camera, same Gary, same plate size, same shop pictures. The night look is a cool blue shade over the street, a slightly cooler road with the lane paint redrawn on top, warm light in the existing shop windows, and a small lamp glow. Window positions come from `shopWindowRect`, the same panes the keepers use. Gary, food, and hazards are drawn after that shade, so they stay bright. The HUD is drawn after the edge vignette. Set `NIGHT_PREVIEW` to see night from the first frame. Set `NIGHT_MODE` to false to keep daylight.
 
 Night does not change speed, gaps, collision, or which `STRETCHES` are used. A harder night stretch pool is still not wired. Do not raise the speed cap to make night feel harder.
 

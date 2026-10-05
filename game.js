@@ -38,11 +38,13 @@ let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, ro
 let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0, laneSquash = 0;
 let lastLanes = ['none', 'none', 'none'];
 let playTime = 0, nightMix = 0;
-// Night biome. Stays off on the menu. A run turns it on after NIGHT_AFTER seconds.
-// Set NIGHT_AFTER to 0 to preview night from the first frame of play.
-let NIGHT_MODE = false;
-const NIGHT_AFTER = 28;
+// Night biome. NIGHT_MODE is the switch: false stays daylight, true is the night street.
+// It stays off on the menu. A run fades into night once the first shop plan has passed.
+// Set NIGHT_PREVIEW to true to see night from the first frame of play.
+const NIGHT_MODE = true;
+const NIGHT_PREVIEW = false;
 const NIGHT_FADE = 6;
+let nightOn = false;
 
 let audioCtx, analyser, dataArray;
 
@@ -513,7 +515,7 @@ function triggerGrin() {
 }
 function reset() {
   score=0;tierMax=0;lastTierIndex=0;lane=target=1;scrollY=0;distance=0;acc=0;gap=LEARN_GAP;
-  playTime=0;nightMix=0;NIGHT_MODE=false;
+  playTime=0;nightMix=0;nightOn=false;
   objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;roadQueue=[];nearCd=0;lastHit=null;shownSpeed=200;flash=0;
   review=0;reviewMul=1;reviewGap=0;hitStop=0;laneSquash=0;
   lastLanes=['none','none','none'];
@@ -726,16 +728,27 @@ function isTalkingAudio(){
 }
 
 function syncNight(dt) {
-  if (state === 'menu' || state === 'intro') {
+  if (!NIGHT_MODE || state === 'menu' || state === 'intro') {
     playTime = 0;
     nightMix = 0;
-    NIGHT_MODE = false;
+    nightOn = false;
     return;
   }
   if (state === 'play') playTime += dt;
-  const u = (playTime - NIGHT_AFTER) / NIGHT_FADE;
-  nightMix = u <= 0 ? 0 : (u >= 1 ? 1 : u);
-  NIGHT_MODE = nightMix > 0.001;
+  if (NIGHT_PREVIEW) {
+    nightMix = 1;
+    nightOn = true;
+    return;
+  }
+  // The first street plan is one pass of STREET. Night starts as that plan ends.
+  const firstStretch = STREET.length * STREET_SEGMENT_H;
+  if (distance < firstStretch) {
+    nightMix = 0;
+    nightOn = false;
+    return;
+  }
+  if (state === 'play') nightMix = Math.min(1, nightMix + dt / NIGHT_FADE);
+  nightOn = nightMix > 0.001;
 }
 
 function update(dt){
@@ -829,40 +842,69 @@ const nightLamp = bakeGlow(64, [
   [0.4, 'rgba(255, 176, 70, 0.30)'],
   [1, 'rgba(255, 160, 50, 0)']
 ]);
+const nightRoadPool = bakeGlow(140, [
+  [0, 'rgba(255, 186, 96, 0.55)'],
+  [1, 'rgba(255, 170, 70, 0)']
+]);
+function bakeEdge() {
+  const s = document.createElement('canvas');
+  s.width = 36;
+  s.height = 8;
+  const g = s.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 36, 0);
+  grad.addColorStop(0, 'rgba(6, 10, 28, 0.34)');
+  grad.addColorStop(1, 'rgba(6, 10, 28, 0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 36, 8);
+  return s;
+}
+const nightEdge = bakeEdge();
+const nightWindowFill = bakeGlow(80, [
+  [0, 'rgba(255, 246, 220, 0.92)'],
+  [0.34, 'rgba(255, 188, 72, 0.62)'],
+  [0.78, 'rgba(255, 168, 52, 0.16)'],
+  [1, 'rgba(255, 160, 40, 0)']
+]);
 
 function shopIsLit(seed) {
   return ((seed * 17 + 3) % 8) !== 0;
 }
 
 function drawNightAmbient() {
-  ctx.fillStyle = 'rgba(12, 20, 48, 0.34)';
+  ctx.save();
+  ctx.globalAlpha = nightMix;
+  ctx.fillStyle = 'rgba(12, 20, 48, 0.38)';
   ctx.fillRect(0, 0, W, H);
+  ctx.restore();
 }
 
 function drawNightRoadLight() {
-  ctx.fillStyle = 'rgba(14, 24, 52, 0.30)';
+  ctx.save();
+  ctx.globalAlpha = nightMix;
+  ctx.fillStyle = 'rgba(16, 28, 58, 0.20)';
   ctx.fillRect(ROAD_LEFT, 0, ROAD_WIDTH, H);
   paintLaneMarkings('#fffef8');
+  ctx.restore();
 }
 
 function paintWindowLight(keeperIndex, x, y, w, h, seed) {
   const win = shopWindowRect(keeperIndex, x, y, w, h);
   if (win.y > H || win.y + win.h < 0) return;
-  const flick = 0.94 + 0.06 * Math.sin(clock * 2.15 + seed);
+  const flick = 0.96 + 0.04 * Math.sin(clock * 1.7 + seed);
   const cx = win.x + win.w * 0.5;
   const cy = win.y + win.h * 0.46;
 
   ctx.save();
-  ctx.globalAlpha = nightMix * 0.22 * flick;
-  ctx.drawImage(nightGlow, cx - win.w * 1.08, cy - win.h * 0.92, win.w * 2.16, win.h * 1.85);
+  ctx.globalAlpha = nightMix * 0.26 * flick;
+  ctx.drawImage(nightGlow, cx - win.w * 1.15, cy - win.h * 1.05, win.w * 2.3, win.h * 2.1);
   ctx.restore();
 
   ctx.save();
   ctx.beginPath();
   ctx.rect(win.x + 1, win.y + 1, Math.max(1, win.w - 2), Math.max(1, win.h - 2));
   ctx.clip();
-  ctx.globalAlpha = nightMix * 0.30 * flick;
-  ctx.drawImage(nightGlow, cx - win.w * 0.68, cy - win.h * 0.72, win.w * 1.36, win.h * 1.45);
+  ctx.globalAlpha = nightMix * 0.40 * flick;
+  ctx.drawImage(nightWindowFill, cx - win.w * 0.62, cy - win.h * 0.68, win.w * 1.24, win.h * 1.36);
   ctx.restore();
 }
 
@@ -999,30 +1041,25 @@ function drawCap(){
 }
 
 function drawStreetLight(){
-  if (lampHeads.length && NIGHT_MODE) {
+  if (lampHeads.length && nightOn) {
     ctx.save();
-    ctx.globalAlpha = 0.45 * nightMix;
+    ctx.globalAlpha = 0.42 * nightMix;
     for (let i = 0; i < lampHeads.length; i += 2) {
       const hx = lampHeads[i], hy = lampHeads[i + 1];
-      ctx.drawImage(nightLamp, hx - 26, hy - 20, 52, 40);
+      ctx.drawImage(nightLamp, hx - 28, hy - 22, 56, 44);
     }
     ctx.restore();
   }
   if (lampGlows.length) {
-    const flick=.92+Math.sin(clock*7)*.04+Math.sin(clock*3.1)*.03;
-    const pool = (NIGHT_MODE ? 0.05 + 0.11 * nightMix : 0.05) * flick;
+    const flick = 0.94 + Math.sin(clock * 3.1) * 0.04;
+    const pool = nightOn ? (0.10 + 0.08 * nightMix) * flick : 0.05 * flick;
     ctx.save();
-    ctx.globalCompositeOperation='lighter';
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = pool;
     ctx.beginPath();
     ctx.rect(ROAD_LEFT, 0, ROAD_WIDTH, H);
     ctx.clip();
-    for (const cy of lampGlows) {
-      const grad=ctx.createRadialGradient(W/2,cy,0,W/2,cy,70);
-      grad.addColorStop(0,'rgba(255,180,90,'+pool+')');
-      grad.addColorStop(1,'rgba(255,180,90,0)');
-      ctx.fillStyle=grad;
-      ctx.fillRect(ROAD_LEFT, cy-40, ROAD_WIDTH, 80);
-    }
+    for (const cy of lampGlows) ctx.drawImage(nightRoadPool, ROAD_LEFT - 10, cy - 46, ROAD_WIDTH + 20, 92);
     ctx.restore();
   }
   lampGlows.length = 0;
@@ -1031,16 +1068,11 @@ function drawStreetLight(){
 
 function drawNightVignette() {
   ctx.save();
-  const left = ctx.createLinearGradient(0, 0, 42, 0);
-  left.addColorStop(0, 'rgba(6, 10, 28, 0.42)');
-  left.addColorStop(1, 'rgba(6, 10, 28, 0)');
-  ctx.fillStyle = left;
-  ctx.fillRect(0, 0, 42, H);
-  const right = ctx.createLinearGradient(W, 0, W - 42, 0);
-  right.addColorStop(0, 'rgba(6, 10, 28, 0.42)');
-  right.addColorStop(1, 'rgba(6, 10, 28, 0)');
-  ctx.fillStyle = right;
-  ctx.fillRect(W - 42, 0, 42, H);
+  ctx.globalAlpha = nightMix * 0.9;
+  ctx.drawImage(nightEdge, 0, 0, 36, H);
+  ctx.translate(W, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(nightEdge, 0, 0, 36, H);
   ctx.restore();
 }
 
@@ -1068,13 +1100,10 @@ function render(dt){
   if(state==='intro')drawIntroAvatar(dt);
   ctx.setTransform(K,0,0,K,0,0);ctx.save();
   drawHighStreet();drawPavements();drawRoad();
-  if (NIGHT_MODE) {
-    ctx.save();
-    ctx.globalAlpha = nightMix;
+  if (nightOn) {
     drawNightAmbient();
     drawNightRoadLight();
     drawNightShopWindows();
-    ctx.restore();
   }
   drawStreetLight();
 
@@ -1099,12 +1128,7 @@ function render(dt){
     }
   }
   ctx.restore();drawVignette();
-  if (NIGHT_MODE) {
-    ctx.save();
-    ctx.globalAlpha = nightMix;
-    drawNightVignette();
-    ctx.restore();
-  }
+  if (nightOn) drawNightVignette();
 
   if(state!=='menu'&&state!=='intro'){
     drawHud();drawCap();
