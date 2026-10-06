@@ -104,7 +104,7 @@ imgGaryIntro.src = 'gary_intro_sheet.PNG?v=1';
 const GARY_INTRO_COLS = 4;
 const GARY_INTRO_ROWS = 3;
 const GARY_INTRO_FRAME_W = 384;
-const GARY_INTRO_FRAME_H = 341.333333;
+const GARY_INTRO_FRAME_H = 341;
 const GARY_INTRO_FRAME_TIME = 0.95;
 
 let garyIntroFrame = 0;
@@ -1123,8 +1123,6 @@ function drawIntroAvatar(dt){
   introCtx.fill();
 
   introAnimTimer += dt;
-  garyIntroFrameTimer += dt;
-
   garyIntroFrameTimer += dt;
 
 if(garyIntroFrame < 7 && garyIntroFrameTimer >= GARY_INTRO_FRAME_TIME){
