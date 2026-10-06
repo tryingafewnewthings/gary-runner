@@ -96,10 +96,10 @@ imgGaryIntro.onload = () => {
 };
 
 imgGaryIntro.onerror = () => {
-  loadErrorLog.push('gary_intro_sheet.png not found');
+  loadErrorLog.push('gary_intro_sheet.PNG not found');
 };
 
-imgGaryIntro.src = 'gary_intro_sheet.png?v=1';
+imgGaryIntro.src = 'gary_intro_sheet.PNG?v=1';
 
 const GARY_INTRO_COLS = 4;
 const GARY_INTRO_ROWS = 2;
