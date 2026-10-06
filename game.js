@@ -105,7 +105,7 @@ const GARY_INTRO_COLS = 4;
 const GARY_INTRO_ROWS = 2;
 const GARY_INTRO_FRAME_W = 384;
 const GARY_INTRO_FRAME_H = 512;
-const GARY_INTRO_FRAME_TIME = 0.95;
+const GARY_INTRO_FRAME_TIME = 0.7;
 
 let garyIntroFrame = 0;
 let garyIntroFrameTimer = 0;
