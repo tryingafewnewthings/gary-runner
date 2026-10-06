@@ -105,7 +105,7 @@ const GARY_INTRO_COLS = 4;
 const GARY_INTRO_ROWS = 2;
 const GARY_INTRO_FRAME_W = 384;
 const GARY_INTRO_FRAME_H = 512;
-const GARY_INTRO_FRAME_TIME = 0.18;
+const GARY_INTRO_FRAME_TIME = 0.20;
 
 let garyIntroFrame = 0;
 let garyIntroFrameTimer = 0;
@@ -1125,10 +1125,12 @@ function drawIntroAvatar(dt){
   introAnimTimer += dt;
   garyIntroFrameTimer += dt;
 
-  if(garyIntroFrameTimer >= GARY_INTRO_FRAME_TIME){
+  garyIntroFrameTimer += dt;
+
+if(garyIntroFrame < 7 && garyIntroFrameTimer >= GARY_INTRO_FRAME_TIME){
     garyIntroFrameTimer -= GARY_INTRO_FRAME_TIME;
-    garyIntroFrame = (garyIntroFrame + 1) % 8;
-  }
+    garyIntroFrame++;
+}
 
   const frame = getGaryIntroFrame();
 
