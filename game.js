@@ -87,14 +87,28 @@ const imgCheer = loadGary('gary_cheer.png?v=1');
 const imgCrash = loadGary('gary_crash.png?v=1');
 let runFrame = 0, runTimer = 0;
 
-const imgOpen = new Image();
-imgOpen.onload = () => { openLoaded = true; };
-imgOpen.onerror = () => { loadErrorLog.push('gary_open.png.PNG not found'); };
-imgOpen.src = 'gary_open.png.PNG';
-const imgClosed = new Image();
-imgClosed.onload = () => { closedLoaded = true; };
-imgClosed.onerror = () => { loadErrorLog.push('gary_closed.png.PNG not found'); };
-imgClosed.src = 'gary_closed.png.PNG';
+const imgGaryIntro = new Image();
+
+let garyIntroLoaded = false;
+
+imgGaryIntro.onload = () => {
+  garyIntroLoaded = true;
+};
+
+imgGaryIntro.onerror = () => {
+  loadErrorLog.push('gary_intro_sheet.png not found');
+};
+
+imgGaryIntro.src = 'gary_intro_sheet.png?v=1';
+
+const GARY_INTRO_COLS = 4;
+const GARY_INTRO_ROWS = 2;
+const GARY_INTRO_FRAME_W = 384;
+const GARY_INTRO_FRAME_H = 512;
+const GARY_INTRO_FRAME_TIME = 0.12;
+
+let garyIntroFrame = 0;
+let garyIntroFrameTimer = 0;
 
 /* -------------------------------------------------------------------------- */
 /* High-street sprite library                                                 */
@@ -782,10 +796,19 @@ function startGameplay(){
   $('introOverlay').classList.remove('show');garyAudio.pause();garyAudio.currentTime=0;reset();state='play';
   musicTo(MUSIC_VOL, 2);
 }
-function getActiveImage(isOpen){
-  if(isOpen&&openLoaded)return imgOpen;
-  if(!isOpen&&closedLoaded)return imgClosed;
-  return openLoaded?imgOpen:closedLoaded?imgClosed:null;
+function getGaryIntroFrame(){
+  if(!garyIntroLoaded || !imgGaryIntro.naturalWidth) return null;
+
+  const col = garyIntroFrame % GARY_INTRO_COLS;
+  const row = Math.floor(garyIntroFrame / GARY_INTRO_COLS);
+
+  return {
+    image: imgGaryIntro,
+    sx: col * GARY_INTRO_FRAME_W,
+    sy: row * GARY_INTRO_FRAME_H,
+    sw: GARY_INTRO_FRAME_W,
+    sh: GARY_INTRO_FRAME_H
+  };
 }
 function initAudio(){
   if(audioCtx)return;
@@ -1092,18 +1115,58 @@ function drawObj(o){
 }
 
 function drawIntroAvatar(dt){
-  introCtx.clearRect(0,0,180,180);introCtx.fillStyle='#111';
-  introCtx.beginPath();introCtx.arc(90,90,90,0,Math.PI*2);introCtx.fill();
-  introAnimTimer+=dt;
-  let isOpen=isTalkingAudio();
-  if(!garyAudio.paused)isOpen=Math.floor(introAnimTimer/.35)%2===1;
-  const img=getActiveImage(isOpen);
-  if(img){
-    const ar=img.naturalWidth/img.naturalHeight;let h=175,w=h*ar;
-    if(w>175){w=175;h=w/ar;}
-    introCtx.drawImage(img,90-w/2,90-h/2,w,h);
-  }else{introCtx.save();introCtx.translate(90,90);fbFace(introCtx,60);introCtx.restore();}
-  introCtx.lineWidth=6;introCtx.strokeStyle='#ffe600';introCtx.beginPath();introCtx.arc(90,90,86,0,Math.PI*2);introCtx.stroke();
+  introCtx.clearRect(0,0,180,180);
+
+  introCtx.fillStyle='#111';
+  introCtx.beginPath();
+  introCtx.arc(90,90,90,0,Math.PI*2);
+  introCtx.fill();
+
+  introAnimTimer += dt;
+  garyIntroFrameTimer += dt;
+
+  if(garyIntroFrameTimer >= GARY_INTRO_FRAME_TIME){
+    garyIntroFrameTimer -= GARY_INTRO_FRAME_TIME;
+    garyIntroFrame = (garyIntroFrame + 1) % 8;
+  }
+
+  const frame = getGaryIntroFrame();
+
+  if(frame){
+    const displaySize = 175;
+    const ar = frame.sw / frame.sh;
+
+    let w = displaySize * ar;
+    let h = displaySize;
+
+    if(w > displaySize){
+      w = displaySize;
+      h = w / ar;
+    }
+
+    introCtx.drawImage(
+      frame.image,
+      frame.sx,
+      frame.sy,
+      frame.sw,
+      frame.sh,
+      90 - w / 2,
+      90 - h / 2,
+      w,
+      h
+    );
+  }else{
+    introCtx.save();
+    introCtx.translate(90,90);
+    fbFace(introCtx,60);
+    introCtx.restore();
+  }
+
+  introCtx.lineWidth=6;
+  introCtx.strokeStyle='#ffe600';
+  introCtx.beginPath();
+  introCtx.arc(90,90,86,0,Math.PI*2);
+  introCtx.stroke();
 }
 
 function drawPlayer(dt){
