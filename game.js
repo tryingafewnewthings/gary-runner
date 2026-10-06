@@ -45,6 +45,18 @@ const NIGHT_PREVIEW = false;
 const NIGHT_FADE = 6;
 let nightOn = false;
 
+let performance = {
+  foodSpawned: 0,
+  foodEaten: 0,
+  hazardsPassed: 0,
+  collisions: 0,
+  laneChanges: 0,
+  nearMisses: 0,
+  distance: 0
+};
+
+let finalRating = 1;
+
 let audioCtx, analyser, dataArray;
 
 const MUSIC_VOL = 0.2;        // normal level during play (0 to 1). Keep it low: sound effects are coming.
@@ -311,20 +323,26 @@ function drawKeeper(index, x, y, w, h, phaseSeed) {
   ctx.rect(wx, wy, ww, wh);
   ctx.clip();
   const sheen = ctx.createLinearGradient(wx, wy, wx + ww * 0.65, wy + wh);
-  sheen.addColorStop(0, 'rgba(255,255,255,0.12)');
+  sheen.addColorStop(0, 'rgba(255,255,255,0.055)');
   sheen.addColorStop(0.38, 'rgba(255,255,255,0)');
-  sheen.addColorStop(1, 'rgba(8,16,28,0.08)');
+  sheen.addColorStop(1, 'rgba(8,16,28,0.045)');
   ctx.fillStyle = sheen;
   ctx.fillRect(wx, wy, ww, wh);
   ctx.restore();
 }
 
-function drawStreetBuilding(buildingIndex, x, y, w, h, phaseSeed) {
+function drawStreetBuilding(buildingIndex, x, y, w, h, phaseSeed, seed) {
   if (buildingIndex < 0) return;
   const b = BUILDINGS[buildingIndex];
   if (!streetLoaded || !b) return;
 
   ctx.drawImage(imgStreet, b.x, b.y, b.w, b.h, x, y, w, h);
+  if (nightOn) {
+    ctx.save();
+    ctx.globalAlpha = nightMix;
+    paintWindowLight(b.keeper, x, y, w, h, seed || 0);
+    ctx.restore();
+  }
   drawKeeper(b.keeper, x, y, w, h, phaseSeed);
 }
 
@@ -518,11 +536,24 @@ function reset() {
   objs=[];fx=[];cap=null;mile=0;crashT=0;grinTimer=0;stars=[];nextEvent=0;nextRow=0;roadQueue=[];nearCd=0;lastHit=null;shownSpeed=200;flash=0;
   review=0;reviewMul=1;reviewGap=0;hitStop=0;laneSquash=0;
   lastLanes=['none','none','none'];
+  performance = {
+    foodSpawned: 0,
+    foodEaten: 0,
+    hazardsPassed: 0,
+    collisions: 0,
+    laneChanges: 0,
+    nearMisses: 0,
+    distance: 0
+  };
+  finalRating = 1;
 }
 function move(d) {
   if(state!=='play') return;
   const next=Math.max(0,Math.min(2,target+d));
-  if(next!==target) laneSquash=0.09;
+  if(next!==target) {
+    laneSquash=0.09;
+    performance.laneChanges++;
+  }
   target=next;
 }
 
@@ -616,6 +647,7 @@ function spawnRow() {
     const item = { t: kind, l: laneIndex, y: -60, id: uid++ };
     if (row.dare && kind === 'roast') item.dare = 1;
     objs.push(item);
+    if (isFood(kind)) performance.foodSpawned++;
   });
   lastLanes = row.lanes.slice();
   if (!roadQueue.length) roadQueue = nextStretch();
@@ -628,6 +660,7 @@ function collect(o) {
   reviewMul = review >= 5 ? 3 : review >= 3 ? 2 : 1;
   const pts = FOODS[o.t] * reviewMul;
   score += pts;
+  performance.foodEaten++;
   const col = (TIERS[tierOf(score)] || TIERS[0]).c;
   fx.push({x:lx(o.l),y:o.y,t:0,life:1.1,txt:'+'+pts,col:col,pop:1});
   let grin = o.t === 'roast' || review === 3 || review === 6;
@@ -649,14 +682,100 @@ function checkEvents() {
     if (ev.grin) triggerGrin();
   }
 }
-function crash(hitType){crashT=0;lastHit=hitType;cap=null;state='crash_'+hitType;}
+function crash(hitType){
+  performance.collisions++;
+  crashT=0;lastHit=hitType;cap=null;state='crash_'+hitType;
+}
+function calculatePerformanceRating() {
+  const survivalScore =
+    Math.min(performance.distance / 1800, 1);
+
+  const foodScore =
+    performance.foodSpawned > 0
+      ? Math.min(
+          performance.foodEaten / performance.foodSpawned,
+          1
+        )
+      : 0;
+
+  const hazardAttempts =
+    performance.hazardsPassed +
+    performance.collisions;
+
+  const avoidanceScore =
+    hazardAttempts > 0
+      ? performance.hazardsPassed / hazardAttempts
+      : 1;
+
+  const nearMissScore =
+    Math.min(performance.nearMisses / 8, 1);
+
+  const movementPenalty =
+    Math.min(
+      Math.max(performance.laneChanges - 20, 0) / 40,
+      1
+    );
+
+  let rating =
+      survivalScore * 3.0
+    + foodScore * 2.5
+    + avoidanceScore * 2.5
+    + nearMissScore * 2.0
+    - movementPenalty * 0.5;
+
+  rating = Math.max(1, Math.min(10, rating));
+
+  return Math.round(rating);
+}
+function animateGameOverGary() {
+  const canvas = document.getElementById("overAvatar");
+  if (!canvas) return;
+  const ctxOver = canvas.getContext("2d");
+  let frame = 0;
+  let lastTime = window.performance.now();
+
+  function draw(time) {
+    const over = document.getElementById("over");
+    if (!document.getElementById("overAvatar") || !over || !over.classList.contains("show")) return;
+
+    const dt = time - lastTime;
+    lastTime = time;
+
+    if (dt > 0) {
+      frame += dt / 1000;
+    }
+
+    ctxOver.clearRect(0, 0, canvas.width, canvas.height);
+
+    const img = imgRun[Math.floor(frame * 6) % imgRun.length];
+
+    if (img && img.complete && img.naturalWidth > 0) {
+      const size = 120;
+      ctxOver.drawImage(
+        img,
+        (canvas.width - size) / 2,
+        (canvas.height - size) / 2,
+        size,
+        size
+      );
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+}
 function endGame(){
   state='over';cap=null;
   if(score>best){best=score;try{localStorage.setItem('garyBest',best);}catch(e){}}
   try{
+    finalRating = calculatePerformanceRating();
+    const fRating = document.getElementById("fRating");
+    if (fRating) fRating.textContent = `${finalRating}/10`;
     $('fScore').textContent='Score: '+score;
     const T=TIERS[tierMax]||TIERS[TIERS.length-1];
     $('fTier').textContent='Tier: '+T.n;$('fTier').style.color=T.c;$('over').classList.add('show');
+    animateGameOverGary();
   }catch(e){}
 }
 function startGameplay(){
@@ -778,6 +897,7 @@ function update(dt){
   }
 
   distance+=speed*dt; scrollY=distance;
+  performance.distance = distance;
   acc+=dt;
   let spawned = 0;
   while (acc >= gap && spawned < 3) { acc -= gap; spawnRow(); spawned++; }
@@ -793,6 +913,7 @@ function update(dt){
       score+=10;
       fx.push({x:lx(1),y:PLAYER_Y-28,t:0,life:1.1,txt:'+10',col:'#ffe600'});
       cap={s:LINES.close,t:0};
+      performance.nearMisses++;
     }else if(!o.near&&(o.t==='m'||o.t==='fork')&&Math.abs(o.y-PLAYER_Y)<26&&Math.abs(lane-o.l)>0.55&&Math.abs(lane-o.l)<1.05){
       o.near=1;
       if(nearCd<=0){
@@ -801,7 +922,13 @@ function update(dt){
       }
     }
   }
-  objs=objs.filter(o=>!o.d&&o.y<H+60);
+  objs=objs.filter(o=>{
+    if (!o.cleared && !o.d && (o.t==='m' || o.t==='fork') && o.y>PLAYER_Y+36) {
+      o.cleared = 1;
+      performance.hazardsPassed++;
+    }
+    return !o.d && o.y<H+60;
+  });
 }
 
 function drawRoad(){
@@ -888,37 +1015,44 @@ function drawNightRoadLight() {
 
 function paintWindowLight(keeperIndex, x, y, w, h, seed) {
   const win = shopWindowRect(keeperIndex, x, y, w, h);
-  if (win.y > H || win.y + win.h < 0) return;
-  const flick = 0.96 + 0.04 * Math.sin(clock * 1.7 + seed);
-  const cx = win.x + win.w * 0.5;
-  const cy = win.y + win.h * 0.46;
+
+  if (win.y > H || win.y + win.h < 0) {
+    return;
+  }
+
+  const flick = 0.97 + 0.03 * Math.sin(clock * 1.7 + seed);
 
   ctx.save();
-  ctx.globalAlpha = nightMix * 0.26 * flick;
-  ctx.drawImage(nightGlow, cx - win.w * 1.15, cy - win.h * 1.05, win.w * 2.3, win.h * 2.1);
-  ctx.restore();
 
-  ctx.save();
   ctx.beginPath();
-  ctx.rect(win.x + 1, win.y + 1, Math.max(1, win.w - 2), Math.max(1, win.h - 2));
+  ctx.rect(win.x, win.y, win.w, win.h);
   ctx.clip();
-  ctx.globalAlpha = nightMix * 0.40 * flick;
-  ctx.drawImage(nightWindowFill, cx - win.w * 0.62, cy - win.h * 0.68, win.w * 1.24, win.h * 1.36);
+
+  const glow = ctx.createRadialGradient(
+    win.x + win.w * 0.52,
+    win.y + win.h * 0.58,
+    2,
+    win.x + win.w * 0.52,
+    win.y + win.h * 0.58,
+    Math.max(win.w, win.h) * 0.65
+  );
+
+  glow.addColorStop(0, `rgba(255, 204, 112, ${0.20 * flick})`);
+  glow.addColorStop(0.55, `rgba(255, 178, 82, ${0.10 * flick})`);
+  glow.addColorStop(1, "rgba(255, 150, 60, 0)");
+
+  ctx.fillStyle = glow;
+  ctx.fillRect(win.x - 4, win.y - 4, win.w + 8, win.h + 8);
+
+  ctx.fillStyle = `rgba(255, 184, 92, ${0.055 * flick})`;
+  ctx.fillRect(win.x, win.y, win.w, win.h);
+
   ctx.restore();
 }
 
 function drawNightShopWindows() {
-  forEachStreetFront((plan, index, y) => {
-    const left = shopByName(plan.left);
-    const right = shopByName(plan.right);
-    if (left >= 0 && shopIsLit(index * 2)) {
-      paintWindowLight(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, index * 1.7);
-    }
-    if (right >= 0 && shopIsLit(index * 2 + 1)) {
-      const rw = W - ROAD_RIGHT - PAVEMENT_WIDTH;
-      paintWindowLight(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, rw, BUILDING_H, index * 1.7 + 2.2);
-    }
-  });
+  // Window light is painted inside drawStreetBuilding, before the keeper,
+  // so this later pass does not wash the shopkeeper back out.
 }
 
 function drawObj(o){
@@ -1186,7 +1320,7 @@ function resize(){
   ctx.imageSmoothingQuality='high';
 }
 
-let last=performance.now();
+let last=window.performance.now();
 function loop(ts){
   const dt=Math.max(0,Math.min(.05,(ts-last)/1000));last=ts;
   update(dt);render(dt);requestAnimationFrame(loop);

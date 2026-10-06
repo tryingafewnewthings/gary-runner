@@ -44,6 +44,25 @@
       border: 4px solid #ffe600; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
     }
     #introAvatar { width: 180px; height: 180px; margin-bottom: 24px; border-radius: 50%; }
+    #fRatingLabel {
+      margin: 0 0 4px;
+      color: #cfd6e0;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    #fRating {
+      font-size: 3rem;
+      line-height: 1;
+      font-weight: 900;
+      color: #ffe600;
+      margin: 0 0 14px;
+      letter-spacing: -2px;
+    }
+    #overAvatar {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -65,7 +84,10 @@
     </div>
 
     <div id="over" class="overlay">
-      <h1>Proper Ruined!</h1>
+      <canvas id="overAvatar" width="180" height="180"></canvas>
+      <h1>PROPER RUINED!</h1>
+      <p id="fRatingLabel">Marks I'm gonna give it?</p>
+      <div id="fRating">1/10</div>
       <p id="fScore">Score: 0</p>
       <p id="fTier">Tier: Absolute Rubbish</p>
       <button id="againBtn">Try Again</button>
@@ -73,6 +95,6 @@
   </div>
 
 <script src="game-data.js?v=31"></script>
-<script src="game.js?v=90"></script>
+<script src="game.js?v=91"></script>
 </body>
 </html>
