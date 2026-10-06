@@ -102,9 +102,9 @@ imgGaryIntro.onerror = () => {
 imgGaryIntro.src = 'gary_intro_sheet.PNG?v=1';
 
 const GARY_INTRO_COLS = 4;
-const GARY_INTRO_ROWS = 3;
+const GARY_INTRO_ROWS = 2;
 const GARY_INTRO_FRAME_W = 384;
-const GARY_INTRO_FRAME_H = 341;
+const GARY_INTRO_FRAME_H = 512;
 const GARY_INTRO_FRAME_TIME = 0.95;
 
 let garyIntroFrame = 0;
@@ -804,10 +804,10 @@ function getGaryIntroFrame(){
 
   return {
     image: imgGaryIntro,
-    sx: col * GARY_INTRO_FRAME_W,
-    sy: row * GARY_INTRO_FRAME_H,
-    sw: GARY_INTRO_FRAME_W,
-    sh: GARY_INTRO_FRAME_H
+    sx: col * 384,
+    sy: row * 512,
+    sw: 384,
+    sh: 512
   };
 }
 function initAudio(){
