@@ -82,7 +82,7 @@ function loadGary(file) {
   img.src = file;
   return img;
 }
-const imgWalkSheet = loadGary('gary_walk_sheet.png?v=1');
+const imgWalkSheet = loadGary('gary_walk_sheet.PNG?v=1');
 
 const WALK_FRAMES = 6;
 const WALK_FRAME_TIME = 0.11;
