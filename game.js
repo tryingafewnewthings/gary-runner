@@ -82,7 +82,15 @@ function loadGary(file) {
   img.src = file;
   return img;
 }
-const imgRun = [loadGary('gary_run1.png?v=5'), loadGary('gary_run2.png?v=5')];
+const imgWalkSheet = loadGary('gary_walk_sheet.png?v=1');
+
+const WALK_FRAMES = 6;
+const WALK_FRAME_TIME = 0.11;
+
+const imgRun = [
+  loadGary('gary_run1.png?v=5'),
+  loadGary('gary_run2.png?v=5')
+];
 const imgCheer = loadGary('gary_cheer.png?v=1');
 const imgCrash = loadGary('gary_crash.png?v=1');
 let runFrame = 0, runTimer = 0;
@@ -1187,17 +1195,47 @@ function drawPlayer(dt){
   if(isCrashing && imgCrash.ready) imgToDraw=imgCrash;
   else if(grinTimer>0 && imgCheer.ready) imgToDraw=imgCheer;
   else {
-    runTimer+=dt;
-    if(runTimer>0.22){runTimer=0;runFrame=runFrame===0?1:0;}
-    imgToDraw=imgRun[runFrame].ready?imgRun[runFrame]:(imgRun[0].ready?imgRun[0]:null);
+  runTimer += dt;
+
+  while (runTimer >= WALK_FRAME_TIME) {
+    runTimer -= WALK_FRAME_TIME;
+    runFrame = (runFrame + 1) % WALK_FRAMES;
   }
+
+  imgToDraw = imgWalkSheet.ready ? imgWalkSheet : null;
+}
   const h=142;
   const step = runFrame===1 && !isCrashing && grinTimer<=0 ? -3 : 0;
-  if(imgToDraw){
-    const ar=imgToDraw.naturalWidth/imgToDraw.naturalHeight;
-    const w=h*ar;
-    ctx.drawImage(imgToDraw,-w/2,-h+6+step,w,h);
-  }else fbFace(ctx,36*S);
+  if (imgToDraw) {
+  if (imgToDraw === imgWalkSheet) {
+
+    const frameW = imgWalkSheet.naturalWidth / WALK_FRAMES;
+    const frameH = imgWalkSheet.naturalHeight;
+
+    const ar = frameW / frameH;
+    const w = h * ar;
+
+    ctx.drawImage(
+      imgWalkSheet,
+      runFrame * frameW,
+      0,
+      frameW,
+      frameH,
+      -w / 2,
+      -h + 6,
+      w,
+      h
+    );
+
+  } else {
+    const ar = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
+    const w = h * ar;
+
+    ctx.drawImage(imgToDraw, -w / 2, -h + 6 + step, w, h);
+  }
+} else {
+  fbFace(ctx, 36 * S);
+}
   ctx.restore();
 
   for(const s of stars){
