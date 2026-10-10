@@ -4,8 +4,8 @@
    * Runtime foundation for the 2026-10-10 developer handoff.
    * PROJECT_STATE.md owns priorities; STYLE.txt owns visual approval.
    * All authored geometry, atlas crops and item definitions live in game-data.js.
-   * DEVELOPMENT_PLAN is a specification only: storm, dialogue and lantern are
-   * not active yet. Implement the controller described there in focused steps.
+   * DEVELOPMENT_PLAN is a specification only: dialogue and the lantern are
+   * not active yet. Heavy rain is live. It builds after a settled night.
    *
    * Reading map: setup -> assets -> street rendering -> procedural item art ->
    * run lifecycle -> safe row spawning -> collection/rating -> audio -> update ->
@@ -56,6 +56,17 @@
   const NIGHT_PREVIEW = false;
   const NIGHT_FADE = 6;
   let nightOn = false;
+  // Rain is presentation. It does not touch speed, spawns, or collision.
+  // ?rain=1 ramps the storm as soon as play starts, for a visual check.
+  const RAIN_PREVIEW = /(?:\?|&)rain=1(?:&|$)/.test(location.search);
+  const STREAK_COUNT = 78;
+  const SPLASH_COUNT = 34;
+  let nightHeld = 0, rainMix = 0, rainSaid = false;
+  let rainGain = null;
+  const streaks = [];
+  const splashes = [];
+  for (let i = 0; i < STREAK_COUNT; i++) streaks.push(makeStreak(false));
+  for (let i = 0; i < SPLASH_COUNT; i++) splashes.push(makeSplash(true));
 
   let performance = {
     foodSpawned: 0,
@@ -555,8 +566,9 @@
     score = tierMax = lastTierIndex = scrollY = distance = acc = 0;
     lane = target = 1;
     gap = LEARN_GAP;
-    playTime = nightMix = 0;
+    playTime = nightMix = nightHeld = rainMix = 0;
     nightOn = false;
+    rainSaid = false;
     objs = [];
     fx = [];
     stars = [];
@@ -856,6 +868,45 @@
       musicSource.connect(musicGain);
       musicGain.connect(audioCtx.destination);
     } catch (e) { musicGain = null; }
+    ensureRainBed();
+  }
+  function ensureRainBed() {
+    if (!audioCtx || rainGain) return;
+    try {
+      const rate = audioCtx.sampleRate;
+      const seconds = 2;
+      const buffer = audioCtx.createBuffer(1, rate * seconds, rate);
+      const data = buffer.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < data.length; i++) {
+        const white = Math.random() * 2 - 1;
+        last = last * 0.86 + white * 0.14;
+        data[i] = last;
+      }
+      const high = audioCtx.createBiquadFilter();
+      high.type = 'highpass';
+      high.frequency.value = 220;
+      const low = audioCtx.createBiquadFilter();
+      low.type = 'lowpass';
+      low.frequency.value = 1400;
+      rainGain = audioCtx.createGain();
+      rainGain.gain.value = 0;
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(high);
+      high.connect(low);
+      low.connect(rainGain);
+      rainGain.connect(audioCtx.destination);
+      source.start();
+    } catch (e) {
+      rainGain = null;
+    }
+  }
+  function setRainVolume(level, dt) {
+    if (!rainGain) return;
+    const current = rainGain.gain.value;
+    rainGain.gain.value = current + (level - current) * Math.min(1, dt * 2.2);
   }
   function musicTo(level, secs) {
     if (!musicGain) { music.volume = level; return; }
@@ -887,6 +938,7 @@
     last = window.performance.now();
     if (document.hidden) {
       music.pause();
+      if (rainGain) rainGain.gain.value = 0;
       if (state === 'intro') garyAudio.pause();
     } else if (state === 'intro') {
       const voice = garyAudio.play();
@@ -939,16 +991,21 @@
     }
     if (state.startsWith('crash')) {
       crashT += dt;
+      updateRain(dt, false);
       if (crashT > 0.55) endGame();
       return;
     }
 
     // Future encounter/cutscene controller dispatch belongs BEFORE this guard.
     // All current gameplay clocks and movement are owned by play state.
-    if (state !== 'play') return;
+    if (state !== 'play') {
+      setRainVolume(0, dt);
+      return;
+    }
 
     clock += dt;
     syncNight(dt);
+    updateRain(dt, true);
     lane += (target - lane) * Math.min(1, dt / 0.16);
     laneSquash = Math.max(0, laneSquash - dt);
     grinTimer = Math.max(0, grinTimer - dt);
@@ -1415,6 +1472,176 @@
     ctx.fillStyle=b;ctx.fillRect(0,H-130,W,130);
   }
 
+  function makeStreak(fromTop) {
+    return {
+      x: Math.random() * (W + 36) - 12,
+      y: fromTop ? -24 - Math.random() * 90 : Math.random() * H,
+      len: 7 + Math.random() * 13,
+      speed: 620 + Math.random() * 480,
+      drift: 22 + Math.random() * 26,
+      a: 0.15 + Math.random() * 0.24,
+      w: Math.random() < 0.82 ? 1 : 1.3,
+      far: Math.random() < 0.42
+    };
+  }
+
+  function recycleStreak(s) {
+    s.x = Math.random() * (W + 56) - 24;
+    s.y = -18 - Math.random() * 80;
+    s.len = (s.far ? 6 : 9) + Math.random() * (s.far ? 8 : 12);
+    s.speed = (s.far ? 480 : 700) + Math.random() * 360;
+    s.drift = 18 + Math.random() * 30;
+    s.a = (s.far ? 0.1 : 0.16) + Math.random() * 0.18;
+  }
+
+  function parkSplash(s, dormant) {
+    const band = Math.random();
+    if (band < 0.74) s.x = ROAD_LEFT + 8 + Math.random() * (ROAD_WIDTH - 16);
+    else if (band < 0.87) s.x = Math.max(2, ROAD_LEFT - PAVEMENT_WIDTH) + Math.random() * PAVEMENT_WIDTH;
+    else s.x = ROAD_RIGHT + 2 + Math.random() * Math.max(6, W - ROAD_RIGHT - 4);
+    s.y0 = dormant ? Math.random() * H : -8 - Math.random() * 48;
+    s.born = scrollY;
+    s.y = s.y0;
+    s.rx = 2.1 + Math.random() * 2.5;
+    s.ry = 0.62 + Math.random() * 0.45;
+    s.max = 0.18 + Math.random() * 0.16;
+    s.life = dormant ? 0 : s.max;
+    s.a = 0.55 + Math.random() * 0.45;
+    s.wait = dormant ? 0.12 + Math.random() * 1.3 : 0;
+  }
+
+  function makeSplash(dormant) {
+    const s = { x: 0, y0: 0, born: 0, y: 0, rx: 2, ry: 0.8, max: 0.24, life: 0, a: 0.8, wait: 0.4 };
+    parkSplash(s, dormant);
+    return s;
+  }
+
+  function updateRain(dt, advancing) {
+    if (state === 'menu' || state === 'intro' || state === 'over') {
+      nightHeld = 0;
+      rainMix = 0;
+      rainSaid = false;
+      setRainVolume(0, dt);
+      return;
+    }
+    if (advancing) {
+      if (RAIN_PREVIEW) {
+        rainMix = Math.min(1, rainMix + dt / 1.4);
+      } else if (nightMix >= 0.98) {
+        nightHeld += dt;
+        const goal = nightHeld <= WEATHER.breatheSeconds
+          ? 0
+          : Math.min(1, (nightHeld - WEATHER.breatheSeconds) / WEATHER.rampSeconds);
+        rainMix += (goal - rainMix) * Math.min(1, dt * 0.85);
+      }
+      if (!rainSaid && rainMix > 0.55) {
+        rainSaid = true;
+        cap = { s: WEATHER.line, t: 0 };
+      }
+    }
+    if (rainMix < 0.012) {
+      setRainVolume(0, dt);
+      return;
+    }
+    const pace = 0.55 + rainMix * 0.7;
+    for (let i = 0; i < STREAK_COUNT; i++) {
+      const s = streaks[i];
+      s.y += s.speed * pace * dt;
+      s.x += s.drift * pace * dt;
+      if (s.y > H + 8 || s.x > W + 30) recycleStreak(s);
+    }
+    const scrollDelta = advancing ? shownSpeed * dt : 0;
+    for (let i = 0; i < SPLASH_COUNT; i++) {
+      const s = splashes[i];
+      s.y += scrollDelta;
+      if (s.wait > 0) {
+        s.wait -= dt * (0.35 + rainMix);
+        if (s.wait <= 0) parkSplash(s, false);
+        continue;
+      }
+      s.life -= dt;
+      if (s.life <= 0 || s.y > H + 10) {
+        s.life = 0;
+        s.wait = (0.04 + Math.random() * 0.55) / Math.max(0.35, rainMix);
+      }
+    }
+    setRainVolume((state === 'play' || state.startsWith('crash')) ? rainMix * 0.11 : 0, dt);
+  }
+
+  function drawStormShade() {
+    if (rainMix < 0.02) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(3, 6, 14, ' + (0.42 * rainMix) + ')';
+    ctx.fillRect(0, 0, ROAD_LEFT, H);
+    ctx.fillRect(ROAD_RIGHT, 0, W - ROAD_RIGHT, H);
+    ctx.fillStyle = 'rgba(7, 12, 24, ' + (0.16 * rainMix) + ')';
+    ctx.fillRect(ROAD_LEFT, 0, ROAD_WIDTH, H);
+    ctx.restore();
+    ctx.save();
+    ctx.globalAlpha = 0.35 + 0.5 * (1 - rainMix * 0.35);
+    paintLaneMarkings('#e7eef8');
+    ctx.restore();
+  }
+
+  function drawStormWindowLift() {
+    if (!streetLoaded || !nightOn || rainMix < 0.12) return;
+    ctx.save();
+    ctx.globalAlpha = 0.5 * rainMix;
+    forEachStreetFront((plan, index, y) => {
+      stampBakedWindow(plan.left, 0, y, BUILDING_WIDTH, BUILDING_H, index);
+      stampBakedWindow(
+        plan.right, ROAD_RIGHT + PAVEMENT_WIDTH, y,
+        W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, index + 3
+      );
+    });
+    ctx.restore();
+  }
+
+  function stampBakedWindow(name, x, y, w, h) {
+    const idx = shopByName(name);
+    if (idx < 0) return;
+    const keeper = BUILDINGS[idx].keeper;
+    const win = shopWindowRect(keeper, x, y, w, h);
+    if (win.y > H || win.y + win.h < 0) return;
+    const size = Math.max(win.w, win.h) * 1.45;
+    ctx.drawImage(nightGlow, win.x + win.w * 0.5 - size * 0.5, win.y + win.h * 0.42 - size * 0.5, size, size);
+  }
+
+  function drawRainSplashes() {
+    if (rainMix < 0.02) return;
+    ctx.save();
+    ctx.fillStyle = '#d7e6f6';
+    for (let i = 0; i < SPLASH_COUNT; i++) {
+      const s = splashes[i];
+      if (s.life <= 0 || s.wait > 0) continue;
+      const k = 1 - s.life / s.max;
+      ctx.globalAlpha = Math.sin(Math.min(1, Math.max(0, k)) * Math.PI) * 0.4 * rainMix * s.a;
+      ctx.beginPath();
+      ctx.ellipse(s.x, s.y, s.rx * (0.55 + k), s.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawRainStreaks() {
+    if (rainMix < 0.02) return;
+    const count = Math.max(10, Math.floor(STREAK_COUNT * (0.22 + 0.78 * rainMix)));
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (let i = 0; i < count; i++) {
+      const s = streaks[i];
+      const lean = s.drift * (s.len / s.speed);
+      ctx.globalAlpha = s.a * (0.28 + 0.72 * rainMix);
+      ctx.strokeStyle = s.far ? '#a9bdd2' : '#e8f2fb';
+      ctx.lineWidth = s.w;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x + lean, s.y + s.len);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function render(dt){
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
@@ -1424,7 +1651,10 @@
       drawNightRoadLight();
       drawNightShopWindows();
     }
+    drawStormShade();
+    drawStormWindowLift();
     drawStreetLight();
+    drawRainSplashes();
 
     if(state!=='menu'&&state!=='intro'){
       for(let i=objs.length-1;i>=0;i--)drawObj(objs[i]);
@@ -1446,6 +1676,7 @@
         txt('Proper. x'+reviewMul, lx(lane), PLAYER_Y+22, 11, (TIERS[tierOf(score)]||TIERS[0]).c, 'center');
       }
     }
+    drawRainStreaks();
     ctx.restore();drawVignette();
     if (nightOn) drawNightVignette();
 

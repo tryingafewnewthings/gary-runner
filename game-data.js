@@ -187,6 +187,15 @@ const STRETCHES = {
 
 
 
+// Active weather. Rain is presentation only: it does not change speed, gaps, or collision.
+// It builds after night has been full for breatheSeconds, then reaches heavy over rampSeconds.
+// ?rain=1 on the page starts the storm as soon as the run begins, for a visual check.
+const WEATHER = {
+  breatheSeconds: 8,
+  rampSeconds: 7,
+  line: "It's coming down proper now."
+};
+
 // 5. DEVELOPMENT SPECIFICATION — never read by the current game loop.
 // null means deliberately unresolved or asset not delivered; it is not a file path.
 const DEVELOPMENT_PLAN = {

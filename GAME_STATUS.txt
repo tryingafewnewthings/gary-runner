@@ -23,9 +23,12 @@ resets animation state and corrects near-miss/refusal accounting. Stores the ful
 encounter, dialogue and lantern specification in DEVELOPMENT_PLAN.
 
 WHAT IS STILL TO BUILD
-Storm/weather rendering, encounter controller, dialogue interface, inventory,
-lantern activation, biome progression beyond the existing night tint, and new art.
-The specification does not make these features active in the current runner.
+Encounter controller, dialogue interface, inventory, lantern activation,
+biome progression beyond the existing night tint, and new art.
+Heavy rain is now in the runner: after night has settled it builds, darkens
+the street, and keeps the lanes readable. Splashes scroll with the stones.
+Falling streaks sit in front of Gary. Speed, gaps, and collision are unchanged.
+The later encounter (empty shops, the stranger, the lantern) is still planned.
 
 INSTALLATION
 These are full replacement files for the existing repository, not a standalone game.
