@@ -85,7 +85,7 @@ function loadGary(file) {
 const imgWalkSheet = loadGary('gary_walk_sheet.PNG?v=1');
 
 const WALK_FRAMES = 6;
-const WALK_FRAME_TIME = 0.11;
+const WALK_FRAME_TIME = 0.16;
 
 const imgRun = [
   loadGary('gary_run1.png?v=5'),
