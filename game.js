@@ -309,7 +309,7 @@ let shutterMix = 0;
     for(const b of BUILDINGS){const d=defs[b.name];if(!d)continue;
       if(!['offsetX','offsetY','scale','idleAmount','cheerAmount'].every(k=>Number.isFinite(d[k])))continue;
       if(Math.abs(d.offsetX)>89||Math.abs(d.offsetY)>236||d.scale<0.25||d.scale>2.5||d.idleAmount<0||d.idleAmount>3||d.cheerAmount<0||d.cheerAmount>3)continue;
-      shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount};
+      shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount,clip:rectIsValid(d.clip)?{...d.clip}:null};
     }
   }
   function drawKeeper(index, x, y, w, h, phaseSeed) {
@@ -345,9 +345,11 @@ let shutterMix = 0;
     const drop = wh * (defaultKeeperDrop[index] || 0) + spec.offsetY;
     const baseY = wy + wh - 1 + bob + drop;
 
+    // Visible window clip from Visual Studio v1.5 (position remains independent).
+    const visible = spec.clip ? {x:x+spec.clip.x,y:y+spec.clip.y,w:spec.clip.w,h:spec.clip.h} : win;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(wx + 1, wy + 1, Math.max(1, ww - 2), Math.max(1, wh - 2));
+    ctx.rect(visible.x + 1, visible.y + 1, Math.max(1, visible.w - 2), Math.max(1, visible.h - 2));
     ctx.clip();
 
     ctx.translate(baseX, baseY);
