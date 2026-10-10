@@ -1535,16 +1535,21 @@ let shutterMix = 0;
           : Math.min(1, (nightHeld - WEATHER.breatheSeconds) / WEATHER.rampSeconds);
         rainMix += (goal - rainMix) * Math.min(1, dt * 0.85);
       }
-      if (!rainSaid && rainMix > 0.55) {
+            if (!rainSaid && rainMix > 0.55) {
         rainSaid = true;
         cap = { s: WEATHER.line, t: 0 };
       }
-      if (advancing && rainMix >= 0.8) {
-  shutterMix = Math.min(1, shutterMix + dt / 6);
-}
+    }
+
+    // Activate shop closures once the storm intensifies
+    if (advancing && rainMix >= 0.8) {
+      shutterMix = Math.min(1, shutterMix + dt / 6);
+    }
+
     if (rainMix < 0.012) {
       setRainVolume(0, dt);
       return;
+    }
     }
     const pace = 0.55 + rainMix * 0.7;
     for (let i = 0; i < STREAK_COUNT; i++) {
