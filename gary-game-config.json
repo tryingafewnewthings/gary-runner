@@ -97,5 +97,49 @@
       "duration": 1
     }
   },
-  "visualObjects": []
+  "visualObjects": [],
+  "shopKeepers": {
+    "Fish & Chips": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "scale": 1,
+      "idleAmount": 1,
+      "cheerAmount": 1
+    },
+    "Peri Peri Chicken": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "scale": 1,
+      "idleAmount": 1,
+      "cheerAmount": 1
+    },
+    "Bakery": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "scale": 1,
+      "idleAmount": 1,
+      "cheerAmount": 1
+    },
+    "The Red Lion": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "scale": 1,
+      "idleAmount": 1,
+      "cheerAmount": 1
+    },
+    "Butchers": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "scale": 1,
+      "idleAmount": 1,
+      "cheerAmount": 1
+    },
+    "Mallace Cafe": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "scale": 1,
+      "idleAmount": 1,
+      "cheerAmount": 1
+    }
+  }
 }
