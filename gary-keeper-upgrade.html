@@ -1,0 +1,72 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gary Eats! Shopkeeper Upgrade</title><style>body{font:15px system-ui;background:#101724;color:#f0f5fa;max-width:680px;margin:auto;padding:20px;line-height:1.5}input,button{font:inherit;padding:12px;border-radius:8px;border:1px solid #53627a;background:#233148;color:white;max-width:100%}input{width:100%;box-sizing:border-box}button{background:#176e58;margin:10px 0}pre{white-space:pre-wrap;background:#202f43;padding:14px;border-radius:8px}small{color:#aabbd0}</style><h2>Shopkeeper Editor — one-time upgrade</h2><p>This installs keeper position/scale/animation controls in the existing studio and connects them to the game. It does not touch the shutter geometry or gameplay patterns.</p><label>GitHub fine-grained token (repository Contents: Read/write)<input id="token" type="password" autocomplete="off" placeholder="Paste token here"></label><button id="go">Prepare and install upgrade</button><p><small>Run only at tryingafewnewthings.github.io/gary-runner/. The token stays in memory; it is not saved in the repository.</small></p><pre id="log">Ready.</pre><script>
+const $=id=>document.getElementById(id),REPO='tryingafewnewthings/gary-runner',API='https://api.github.com/repos/'+REPO;
+function log(s){$('log').textContent+='\n'+s}
+function assert(b,msg){if(!b)throw Error(msg)}
+function replaceOnce(s,a,b){assert(s.includes(a),'Expected code missing: '+a.slice(0,85));assert(s.indexOf(a)===s.lastIndexOf(a),'Code pattern repeated: '+a.slice(0,50));return s.replace(a,b)}
+function encode(s){return btoa(unescape(encodeURIComponent(s)))}
+async function request(path,opt={}){let r=await fetch(API+path,{...opt,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+$('token').value.trim(),'X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})}});let d=await r.json();if(!r.ok)throw Error(`${r.status}: ${d.message||'GitHub request failed'}`);return d}
+async function fetchFile(name){const r=await fetch('./'+name+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('Unable to load '+name);return r.text()}
+function upgradeGame(g){
+ assert(g.includes('function drawKeeper(index, x, y, w, h, phaseSeed)'),'Current keeper renderer changed; installation stopped');
+ assert(g.includes('const shopClosureSpecs = Object.create(null);'),'The shared configuration bridge is missing');
+ assert(!g.includes('const shopKeeperSpecs = Object.create(null);'),'Shopkeeper upgrade already installed');
+ g=replaceOnce(g,'  function drawKeeper(index, x, y, w, h, phaseSeed) {',`  // Studio-controlled keeper position and movement. All units are local shop pixels.
+  const shopKeeperSpecs = Object.create(null);
+  const defaultKeeperSize = [1,1,1,1.55,1,1];
+  const defaultKeeperDrop = [0.16,0.16,0,0.22,0,0.16];
+  BUILDINGS.forEach((b,i)=>{shopKeeperSpecs[b.name]={offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};});
+  function applyPublishedKeepers(config){
+    const defs=config?.shopKeepers;
+    if(!defs||typeof defs!=='object')return;
+    for(const b of BUILDINGS){const d=defs[b.name];if(!d)continue;
+      if(!['offsetX','offsetY','scale','idleAmount','cheerAmount'].every(k=>Number.isFinite(d[k])))continue;
+      if(Math.abs(d.offsetX)>89||Math.abs(d.offsetY)>236||d.scale<0.25||d.scale>2.5||d.idleAmount<0||d.idleAmount>3||d.cheerAmount<0||d.cheerAmount>3)continue;
+      shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount};
+    }
+  }
+  function drawKeeper(index, x, y, w, h, phaseSeed) {`);
+ g=replaceOnce(g,'    const phase = clock * 2.1 + phaseSeed;',`    const spec = shopKeeperSpecs[BUILDINGS[index]?.name] || {offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};
+    const phase = clock * 2.1 + phaseSeed;`);
+ g=replaceOnce(g,'    const cheer = near ? Math.max(0, Math.sin(clock * 10)) : 0;',`    const cheer = (near ? Math.max(0, Math.sin(clock * 10)) : 0) * spec.cheerAmount;`);
+ g=replaceOnce(g,'    const bob = Math.sin(phase) * 0.7 - cheer * 5;',`    const bob = Math.sin(phase) * 0.7 * spec.idleAmount - cheer * 5;`);
+ g=replaceOnce(g,'    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 + cheer * 0.06;',`    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 * spec.idleAmount + cheer * 0.06;`);
+ g=replaceOnce(g,'    const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6;',`    const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6 * spec.idleAmount;`);
+ g=replaceOnce(g,'    const size = [1, 1, 1, 1.55, 1, 1][index] || 1;',`    const size = (defaultKeeperSize[index] || 1) * spec.scale;`);
+ g=replaceOnce(g,'    const baseX = wx + ww * 0.5 + shift;',`    const baseX = wx + ww * 0.5 + shift + spec.offsetX;`);
+ g=replaceOnce(g,'    const drop = [0, 1, 5].includes(index) ? wh * 0.16 : index === 3 ? wh * 0.22 : 0;',`    const drop = wh * (defaultKeeperDrop[index] || 0) + spec.offsetY;`);
+ g=replaceOnce(g,`      for (const building of BUILDINGS) {
+        const s = config.shopClosures?.[building.name];`,`      applyPublishedKeepers(config);
+      for (const building of BUILDINGS) {
+        const s = config.shopClosures?.[building.name];`);
+ return g;
+}
+function upgradeStudio(s){
+ assert(s.includes('function buildGameConfig(){'),'Missing studio builder');
+ assert(!s.includes('keeperCalibrationPanel'),'Studio already upgraded');
+ s=replaceOnce(s,'<button id="publishConfig" class="primary">',`<button id="keepersTab">Shopkeepers</button><button id="publishConfig" class="primary">`);
+ s=replaceOnce(s,'<main class="shell">',`<section id="keeperCalibrationPanel" style="display:none;background:#1a2535;border-bottom:1px solid #34465f;padding:14px"><h2>Shopkeeper calibration</h2><p style="color:#aabbd0">Select a shop, then drag the keeper inside its window preview. The sprite crop is loaded directly from the existing atlas.</p><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start"><div><select id="keeperShop"></select><br><canvas id="keeperCanvas" width="356" height="944" style="width:178px;max-width:100%;touch-action:none;background:#273548;border:1px solid #53627a;margin-top:8px"></canvas></div><div style="flex:1;min-width:190px"><label>Horizontal offset <input id="keeperX" type="number" step="0.5"></label><label>Vertical offset <input id="keeperY" type="number" step="0.5"></label><label>Scale multiplier <input id="keeperScale" type="number" step="0.05" min="0.25" max="2.5"></label><label>Idle animation <input id="keeperIdle" type="range" min="0" max="3" step="0.1"></label><label>Cheer animation <input id="keeperCheer" type="range" min="0" max="3" step="0.1"></label><div><button id="keeperReset">Reset shopkeeper</button><button id="keeperClose">Done</button></div><small>The preview preserves the current window clipping and atlas crop. Publishing uses the existing GitHub connection.</small></div></div></section><main class="shell">`);
+ s=replaceOnce(s,'function buildGameConfig(){',`function buildKeeperSettings(){let out={};for(let o of shopObjects()){let k=o.keeperSettings||{offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};out[o.name]={...k}}return out}
+function buildGameConfig(){`);
+ s=replaceOnce(s,"shopClosures:closures,visualObjects:[]","shopClosures:closures,shopKeepers:buildKeeperSettings(),visualObjects:[]");
+ s=replaceOnce(s,'const next={...remote,shopClosures:{...(remote.shopClosures||{}),...buildGameConfig().shopClosures}};',`const next={...remote,shopClosures:{...(remote.shopClosures||{}),...buildGameConfig().shopClosures},shopKeepers:{...(remote.shopKeepers||{}),...buildKeeperSettings()}};`);
+ s=replaceOnce(s,'// GitHub publisher — token is held only in JS memory',`// Shopkeeper editor: self-contained overlay, no additional image files.
+const keeperCrop=[[53,1455,383,444],[534,1455,378,444],[1045,1455,333,444],[1479,1455,412,444],[1971,1455,411,444],[2501,1455,326,444]];
+const keeperPane=[[.06,.560,.56,.280],[.06,.558,.55,.282],[.07,.558,.54,.282],[.12,.628,.52,.248],[.08,.575,.52,.255],[.06,.560,.55,.280]];
+const keeperSizes=[1,1,1,1.55,1,1],keeperDrops=[.16,.16,0,.22,0,.16];
+const keeperCanvas=$('keeperCanvas'),keeperCtx=keeperCanvas.getContext('2d');
+function keeperObj(){return shopObjects().find(o=>o.id===$('keeperShop').value)||shopObjects()[0]}
+function keeperValues(){const o=keeperObj();if(!o)return null;if(!o.keeperSettings)o.keeperSettings={offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};return o.keeperSettings}
+function keeperDraw(){const o=keeperObj();if(!o)return;const i=shopObjects().findIndex(q=>q.id===o.id),k=keeperValues();const ctx=keeperCtx;ctx.clearRect(0,0,356,944);const a=asset(o.asset),im=imageFor(o.asset);if(im?.naturalWidth&&a?.crop){const r=a.crop;ctx.drawImage(im,r.x,r.y,r.w,r.h,0,0,356,944)}
+ const p=keeperPane[i],wx=p[0]*356,wy=p[1]*944,ww=p[2]*356,wh=p[3]*944;ctx.save();ctx.beginPath();ctx.rect(wx+4,wy+4,ww-8,wh-8);ctx.clip();if(im?.naturalWidth){let src=keeperCrop[i],hh=wh*.96*keeperSizes[i]*k.scale,hw=hh*src[2]/src[3],maxw=ww*.86*keeperSizes[i]*k.scale;if(hw>maxw){hw=maxw;hh=hw*src[3]/src[2]};let bx=wx+ww/2+k.offsetX*4,by=wy+wh-4+wh*keeperDrops[i]+k.offsetY*4;ctx.drawImage(im,...src,bx-hw/2,by-hh,hw,hh)}ctx.restore();ctx.strokeStyle='#42e8b4';ctx.lineWidth=3;ctx.strokeRect(wx,wy,ww,wh)}
+function keeperRefresh(){let k=keeperValues();if(!k)return;for(const [id,prop] of [['keeperX','offsetX'],['keeperY','offsetY'],['keeperScale','scale'],['keeperIdle','idleAmount'],['keeperCheer','cheerAmount']])$(id).value=k[prop];keeperDraw()}
+$('keepersTab').onclick=()=>{$('keeperCalibrationPanel').style.display='block';let sel=$('keeperShop');sel.textContent='';shopObjects().forEach(o=>sel.add(new Option(o.name,o.id)));keeperRefresh();$('keeperCalibrationPanel').scrollIntoView({behavior:'smooth'})};
+$('keeperClose').onclick=()=>{$('keeperCalibrationPanel').style.display='none'};
+$('keeperShop').onchange=keeperRefresh;
+for(const [id,prop] of [['keeperX','offsetX'],['keeperY','offsetY'],['keeperScale','scale'],['keeperIdle','idleAmount'],['keeperCheer','cheerAmount']])$(id).addEventListener('input',e=>{let k=keeperValues(),v=Number(e.target.value);if(!Number.isFinite(v))return;k[prop]=prop==='scale'?Math.max(.25,Math.min(2.5,v)):prop.endsWith('Amount')?Math.max(0,Math.min(3,v)):Math.max(-89,Math.min(89,v));scheduleSave();keeperDraw()});
+$('keeperReset').onclick=()=>{keeperObj().keeperSettings={offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};scheduleSave();keeperRefresh()};
+let keeperDrag=null;keeperCanvas.addEventListener('pointerdown',e=>{keeperDrag={x:e.clientX,y:e.clientY,k:{...keeperValues()}};keeperCanvas.setPointerCapture(e.pointerId)});keeperCanvas.addEventListener('pointermove',e=>{if(!keeperDrag)return;let k=keeperValues(),r=keeperCanvas.getBoundingClientRect();k.offsetX=Math.max(-89,Math.min(89,keeperDrag.k.offsetX+(e.clientX-keeperDrag.x)*89/r.width));k.offsetY=Math.max(-89,Math.min(89,keeperDrag.k.offsetY+(e.clientY-keeperDrag.y)*236/r.height));$('keeperX').value=k.offsetX.toFixed(2);$('keeperY').value=k.offsetY.toFixed(2);keeperDraw()});keeperCanvas.addEventListener('pointerup',()=>{keeperDrag=null;scheduleSave()});keeperCanvas.addEventListener('pointercancel',()=>keeperDrag=null);
+// GitHub publisher — token is held only in JS memory`);
+ return s;
+}
+$('go').onclick=async()=>{try{$('go').disabled=true;$('log').textContent='Checking official host…';assert(location.origin==='https://tryingafewnewthings.github.io'&&location.pathname.startsWith('/gary-runner/'),'Open the installer on the official GitHub Pages site');assert($('token').value.trim(),'Enter your GitHub token');let [game,studio,config]=await Promise.all(['game.js','gary-visual-studio-v1.2.html','gary-game-config.json'].map(fetchFile));let updatedGame=upgradeGame(game),updatedStudio=upgradeStudio(studio);new Function(updatedGame);let scripts=[...updatedStudio.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];for(const m of scripts){if(!m[1].trim().startsWith('{'))new Function(m[1])}log('JavaScript syntax checks passed.');let c=JSON.parse(config);assert(c.schema==='gary-eats-game-config-v1','Unexpected configuration schema');let defaults=Object.fromEntries(['Fish & Chips','Peri Peri Chicken','Bakery','The Red Lion','Butchers','Mallace Cafe'].map(name=>[name,{offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1}]));c.shopKeepers={...defaults,...c.shopKeepers};let files=[['game.js',updatedGame],['gary-visual-studio-v1.3.html',updatedStudio],['gary-game-config.json',JSON.stringify(c,null,2)+'\n']];log('Ready: game.js, studio v1.3, config JSON.');if(!confirm('Commit these three files to the live repository? Git history will retain the previous versions.'))return;for(const [path,content] of files){const current=await request('/contents/'+path).catch(e=>{if(String(e).includes('404'))return null;throw e});let body={message:'Add shopkeeper calibration: '+path,content:encode(content),branch:'main'};if(current?.sha)body.sha=current.sha;await request('/contents/'+path,{method:'PUT',body:JSON.stringify(body)});log('Published '+path)}log('COMPLETE. Open gary-visual-studio-v1.3.html and select Shopkeepers.');$('token').value='';}catch(e){log('STOPPED: '+e.message)}finally{$('go').disabled=false}};
+</script></html>
