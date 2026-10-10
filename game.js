@@ -298,6 +298,20 @@ let shutterMix = 0;
     };
   }
 
+  // Studio-controlled keeper position and movement. All units are local shop pixels.
+  const shopKeeperSpecs = Object.create(null);
+  const defaultKeeperSize = [1,1,1,1.55,1,1];
+  const defaultKeeperDrop = [0.16,0.16,0,0.22,0,0.16];
+  BUILDINGS.forEach((b,i)=>{shopKeeperSpecs[b.name]={offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};});
+  function applyPublishedKeepers(config){
+    const defs=config?.shopKeepers;
+    if(!defs||typeof defs!=='object')return;
+    for(const b of BUILDINGS){const d=defs[b.name];if(!d)continue;
+      if(!['offsetX','offsetY','scale','idleAmount','cheerAmount'].every(k=>Number.isFinite(d[k])))continue;
+      if(Math.abs(d.offsetX)>89||Math.abs(d.offsetY)>236||d.scale<0.25||d.scale>2.5||d.idleAmount<0||d.idleAmount>3||d.cheerAmount<0||d.cheerAmount>3)continue;
+      shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount};
+    }
+  }
   function drawKeeper(index, x, y, w, h, phaseSeed) {
     const keeper = KEEPERS[index];
     if (!streetLoaded || !keeper) return;
@@ -307,17 +321,18 @@ let shutterMix = 0;
     const win = shopWindowRect(index, x, y, w, h);
     const wx = win.x, wy = win.y, ww = win.w, wh = win.h;
 
+    const spec = shopKeeperSpecs[BUILDINGS[index]?.name] || {offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};
     const phase = clock * 2.1 + phaseSeed;
     const ahead = PLAYER_Y - (y + h * 0.72);
     const near = ahead > -40 && ahead < 150;
-    const cheer = near ? Math.max(0, Math.sin(clock * 10)) : 0;
-    const bob = Math.sin(phase) * 0.7 - cheer * 5;
-    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 + cheer * 0.06;
-    const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6;
+    const cheer = (near ? Math.max(0, Math.sin(clock * 10)) : 0) * spec.cheerAmount;
+    const bob = Math.sin(phase) * 0.7 * spec.idleAmount - cheer * 5;
+    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 * spec.idleAmount + cheer * 0.06;
+    const shift = Math.sin(clock * 0.75 + phaseSeed * 1.7) * 0.6 * spec.idleAmount;
 
     // Other windows are large, so the keeper fills them. The pub glass is smaller,
     // so match the other keepers' size and let the frame crop him.
-    const size = [1, 1, 1, 1.55, 1, 1][index] || 1;
+    const size = (defaultKeeperSize[index] || 1) * spec.scale;
     const fitH = wh * 0.96 * size;
     const fitW = ww * 0.86 * size;
     let keeperH = fitH;
@@ -326,8 +341,8 @@ let shutterMix = 0;
       keeperW = fitW;
       keeperH = keeperW * (keeper.h / keeper.w);
     }
-    const baseX = wx + ww * 0.5 + shift;
-    const drop = [0, 1, 5].includes(index) ? wh * 0.16 : index === 3 ? wh * 0.22 : 0;
+    const baseX = wx + ww * 0.5 + shift + spec.offsetX;
+    const drop = wh * (defaultKeeperDrop[index] || 0) + spec.offsetY;
     const baseY = wy + wh - 1 + bob + drop;
 
     ctx.save();
@@ -1719,6 +1734,7 @@ function updateRain(dt, advancing) {
           || config.world?.width !== W || config.world?.height !== H) {
         throw new Error('Incompatible Visual Studio configuration');
       }
+      applyPublishedKeepers(config);
       for (const building of BUILDINGS) {
         const s = config.shopClosures?.[building.name];
         if (!rectIsValid(s?.shutter)) continue;
