@@ -130,23 +130,8 @@ let garyIntroFrameTimer = 0;
   Source sheet: 2912 x 2688.
   Buildings occupy the top row, keepers the middle row, street props the bottom.
 */
-const BUILDINGS = [
-  { name: 'Fish & Chips',       x: 12,   y: 57, w: 484, h: 1287, keeper: 0 },
-  { name: 'Peri Peri Chicken',  x: 527,  y: 57, w: 443, h: 1287, keeper: 1 },
-  { name: 'Bakery',             x: 999,  y: 57, w: 442, h: 1287, keeper: 2 },
-  { name: 'The Red Lion',       x: 1467, y: 57, w: 442, h: 1287, keeper: 3 },
-  { name: 'Butchers',           x: 1940, y: 57, w: 446, h: 1287, keeper: 4 },
-  { name: 'Mallace Cafe',       x: 2422, y: 57, w: 476, h: 1287, keeper: 5 }
-];
 
-const KEEPERS = [
-  { x: 53,   y: 1455, w: 383, h: 444 },
-  { x: 534,  y: 1455, w: 378, h: 444 },
-  { x: 1045, y: 1455, w: 333, h: 444 },
-  { x: 1479, y: 1455, w: 412, h: 444 },
-  { x: 1971, y: 1455, w: 411, h: 444 },
-  { x: 2501, y: 1455, w: 326, h: 444 }
-];
+
 
 
 const imgStreet = new Image();
@@ -154,16 +139,7 @@ imgStreet.onload = () => { streetLoaded = true; };
 imgStreet.onerror = () => { loadErrorLog.push('high_street_sprites.webp not found'); };
 imgStreet.src = 'high_street_sprites.webp?v=8';
 
-const COBBLE_KINDS = {
-  base: 'IMG_7141.webp?v=6',
-  weeds: 'IMG_7142.webp?v=6',
-  light: 'IMG_7143.webp?v=6',
-  sparse: 'IMG_7144.webp?v=6',
-  dense: 'IMG_7145.webp?v=6',
-  leaves: 'IMG_7146.webp?v=6',
-  grime: 'IMG_7147.webp?v=6',
-  cracked: 'IMG_7148.webp?v=6'
-};
+
 const cobbleImgs = {};
 Object.entries(COBBLE_KINDS).forEach(([kind, file]) => {
   const img = new Image();
