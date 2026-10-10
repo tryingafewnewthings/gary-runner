@@ -1517,64 +1517,93 @@ let shutterMix = 0;
     return s;
   }
 
-  function updateRain(dt, advancing) {
-    if (state === 'menu' || state === 'intro' || state === 'over') {
-      nightHeld = 0;
-      rainMix = 0;
-      rainSaid = false;
-      setRainVolume(0, dt);
-      return;
-    }
-    if (advancing) {
-      if (RAIN_PREVIEW) {
-        rainMix = Math.min(1, rainMix + dt / 1.4);
-      } else if (nightMix >= 0.98) {
-        nightHeld += dt;
-        const goal = nightHeld <= WEATHER.breatheSeconds
-          ? 0
-          : Math.min(1, (nightHeld - WEATHER.breatheSeconds) / WEATHER.rampSeconds);
-        rainMix += (goal - rainMix) * Math.min(1, dt * 0.85);
-      }
-            if (!rainSaid && rainMix > 0.55) {
-        rainSaid = true;
-        cap = { s: WEATHER.line, t: 0 };
-      }
-    }
-
-    // Activate shop closures once the storm intensifies
-    if (advancing && rainMix >= 0.8) {
-      shutterMix = Math.min(1, shutterMix + dt / 6);
-    }
-
-    if (rainMix < 0.012) {
-      setRainVolume(0, dt);
-      return;
-    }
-    }
-    const pace = 0.55 + rainMix * 0.7;
-    for (let i = 0; i < STREAK_COUNT; i++) {
-      const s = streaks[i];
-      s.y += s.speed * pace * dt;
-      s.x += s.drift * pace * dt;
-      if (s.y > H + 8 || s.x > W + 30) recycleStreak(s);
-    }
-    const scrollDelta = advancing ? shownSpeed * dt : 0;
-    for (let i = 0; i < SPLASH_COUNT; i++) {
-      const s = splashes[i];
-      s.y += scrollDelta;
-      if (s.wait > 0) {
-        s.wait -= dt * (0.35 + rainMix);
-        if (s.wait <= 0) parkSplash(s, false);
-        continue;
-      }
-      s.life -= dt;
-      if (s.life <= 0 || s.y > H + 10) {
-        s.life = 0;
-        s.wait = (0.04 + Math.random() * 0.55) / Math.max(0.35, rainMix);
-      }
-    }
-    setRainVolume((state === 'play' || state.startsWith('crash')) ? rainMix * 0.11 : 0, dt);
+  
+function updateRain(dt, advancing) {
+  if (state === 'menu' || state === 'intro' || state === 'over') {
+    nightHeld = 0;
+    rainMix = 0;
+    rainSaid = false;
+    setRainVolume(0, dt);
+    return;
   }
+
+  if (advancing) {
+    if (RAIN_PREVIEW) {
+      rainMix = Math.min(1, rainMix + dt / 1.4);
+    } else if (nightMix >= 0.98) {
+      nightHeld += dt;
+
+      const goal = nightHeld <= WEATHER.breatheSeconds
+        ? 0
+        : Math.min(
+            1,
+            (nightHeld - WEATHER.breatheSeconds) / WEATHER.rampSeconds
+          );
+
+      rainMix += (goal - rainMix) * Math.min(1, dt * 0.85);
+    }
+
+    if (!rainSaid && rainMix > 0.55) {
+      rainSaid = true;
+      cap = { s: WEATHER.line, t: 0 };
+    }
+  }
+
+  // Activate shop closures once the storm intensifies.
+  if (advancing && rainMix >= 0.8) {
+    shutterMix = Math.min(1, shutterMix + dt / 6);
+  }
+
+  if (rainMix < 0.012) {
+    setRainVolume(0, dt);
+    return;
+  }
+
+  const pace = 0.55 + rainMix * 0.7;
+
+  for (let i = 0; i < STREAK_COUNT; i++) {
+    const s = streaks[i];
+    s.y += s.speed * pace * dt;
+    s.x += s.drift * pace * dt;
+
+    if (s.y > H + 8 || s.x > W + 30) {
+      recycleStreak(s);
+    }
+  }
+
+  const scrollDelta = advancing ? shownSpeed * dt : 0;
+
+  for (let i = 0; i < SPLASH_COUNT; i++) {
+    const s = splashes[i];
+    s.y += scrollDelta;
+
+    if (s.wait > 0) {
+      s.wait -= dt * (0.35 + rainMix);
+
+      if (s.wait <= 0) {
+        parkSplash(s, false);
+      }
+
+      continue;
+    }
+
+    s.life -= dt;
+
+    if (s.life <= 0 || s.y > H + 10) {
+      s.life = 0;
+      s.wait = (0.04 + Math.random() * 0.55) /
+        Math.max(0.35, rainMix);
+    }
+  }
+
+  setRainVolume(
+    (state === 'play' || state.startsWith('crash'))
+      ? rainMix * 0.11
+      : 0,
+    dt
+  );
+}
+
 
   function drawStormShade() {
     if (rainMix < 0.02) return;
