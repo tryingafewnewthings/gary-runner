@@ -1,0 +1,77 @@
+GARY EATS! — ASSET REVIEW PROMPT
+Updated: 2026-10-10
+Use this prompt to REVIEW supplied assets and renders. It is not a request to redesign them.
+
+INPUTS
+Read STYLE.txt and the active contracts in game-data.js first. Supply the current
+ASSET_GRID.png and ASSET_GRID.json when available, plus actual day/night gameplay
+captures and the new assets being considered. For the storm/encounter, supply a
+candidate composite or mark those checks UNVERIFIED.
+
+SNAPSHOT WARNING
+The existing grid describes the older gary_run1/gary_run2 pictures; the running game
+now uses gary_walk_sheet.PNG. Do not approve the new animation from the old grid.
+The historical grid scale is 2 sheet pixels per design-canvas unit. Verify each
+asset's metadata before assuming a future grid uses that scale.
+Use live definitions when old grid metadata disagrees. Report the discrepancy.
+
+REVIEW IN THIS ORDER
+1. Identity: exact requested business/character; Gary's face, clothing and mic.
+2. Camera: fixed front-facing shop elevation, small roof/top visible, parallel lanes;
+   no vanishing point, isometric turn or depth-based shrinking.
+3. Scale: 360 x 640 world; Gary 142 tall; shops 89 x 236; lanes 50 wide.
+   Use ITEMS.displaySize and DETAILS caps for the other assets.
+4. Ground contact: stable bottom anchors, correctly placed contact shadows; props
+   must sit on the stones, not float or resemble stickers pinned to a wall.
+5. Source geometry: atlas crops/cell bounds; no clipping, overlaps or per-frame trim.
+   Check the six-frame walk and eight-frame 4 x 2 intro separately.
+6. Windows: compare every shop to its own SHOP_PANES rectangle. Verify keeper baseline,
+   clipping and light alignment. Do not enforce a generic shared window rectangle.
+7. Material/style: painted British cartoon; Gary most realistic, shops flatter, props
+   between them but closer to shops. Check outline thickness at actual display size.
+8. Alpha: real transparency; no black/white fringe or baked checkerboard. An opaque
+   grid cannot prove source alpha; inspect the source or mark UNVERIFIED.
+9. Lighting: daylight upper-left; night cool with restrained amber local light.
+   Keepers and signs remain legible. Rain/glow must not wash out food or hazards.
+10. Gameplay: identify the safe lane immediately at phone size in each lighting state.
+    Collision extent matches what the player can reasonably read from the sprite.
+11. Animation: play a full loop. Inspect baseline/torso drift, limb direction, identity,
+    scale and border bleeding. A still image is not an animation approval.
+12. UI/cutscene: speaker identity, small text legibility, visible skip/advance, adequate
+    contrast, and a distinct lantern control which cannot also trigger a lane change.
+
+SPECIAL ASSETS
+- Stranger world sprite and portrait must be the same person and costume.
+- Lantern body and glow are separable. The icon reads without the tiny OPEN lettering.
+- Splashes are small flattened ground marks; they cannot look like pickups.
+- Two-lane roadblock spans two adjacent 50-unit lanes, with one readable free lane.
+  Its occupied lanes/collision rules require implementation; width alone proves nothing.
+- Forest scenery can be larger than the current small street tree. Keep the road clear.
+- Kebab and fish are currently code-drawn. Review their rendered appearance; recommend
+  a drawing change if needed, not regeneration of a file that does not exist.
+
+OUTPUT FORMAT
+Produce one row per asset or rendered component:
+id | actual file or code source | status PASS/FAIL/UNVERIFIED |
+observed evidence | exact correction | checks needed after correction
+
+List blocking issues first: wrong identity/camera, clipping, invalid geometry,
+misaligned windows, unreadable hazards, broken alpha or animation drift.
+Then list polish issues. Distinguish a bad source image from bad renderer metadata
+or bad compositing. Do not request regeneration when a verified placement correction
+is sufficient. Do not hide a missing source behind a confident visual judgement.
+
+ACCEPTANCE
+A matching style alone is insufficient. Approve only after camera, measured geometry,
+alpha, motion and in-world readability pass. Never invent filenames, frame sizes or
+coordinates. If required evidence is absent, state precisely what remains UNVERIFIED.
+
+PROMPT FOR AN INDIVIDUAL REPLACEMENT (fill all fields before use)
+Use the attached approved in-game crop as the camera, scale and style reference.
+Create only [exact asset/business/character], with [specific intended change].
+Keep [source canvas/cell size], [ground anchor], [display size], [window rectangle,
+if applicable] and all protected details unchanged. Match the existing painted British
+cartoon outline, material and upper-left daylight. Preserve the character's identity.
+Deliver genuine transparency with no scene, road, background or baked ground shadow.
+For animation: [columns x rows], [frame order], constant scale/anchor, no cell overlap.
+Measure and review the result before replacing an asset; the prompt is not validation.
