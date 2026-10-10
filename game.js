@@ -59,9 +59,10 @@
   // Rain is presentation. It does not touch speed, spawns, or collision.
   // ?rain=1 ramps the storm as soon as play starts, for a visual check.
   const RAIN_PREVIEW = /(?:\?|&)rain=1(?:&|$)/.test(location.search);
-  const STREAK_COUNT = 78;
+  const STREAK_COUNT = 126;
   const SPLASH_COUNT = 34;
   let nightHeld = 0, rainMix = 0, rainSaid = false;
+let shutterMix = 0;
   let rainGain = null;
   const streaks = [];
   const splashes = [];
@@ -566,7 +567,7 @@
     score = tierMax = lastTierIndex = scrollY = distance = acc = 0;
     lane = target = 1;
     gap = LEARN_GAP;
-    playTime = nightMix = nightHeld = rainMix = 0;
+    playTime = nightMix = nightHeld = rainMix = shutterMix = 0;
     nightOn = false;
     rainSaid = false;
     objs = [];
@@ -1538,7 +1539,9 @@
         rainSaid = true;
         cap = { s: WEATHER.line, t: 0 };
       }
-    }
+      if (advancing && rainMix >= 0.8) {
+  shutterMix = Math.min(1, shutterMix + dt / 6);
+}
     if (rainMix < 0.012) {
       setRainVolume(0, dt);
       return;
@@ -1625,7 +1628,13 @@
 
   function drawRainStreaks() {
     if (rainMix < 0.02) return;
-    const count = Math.max(10, Math.floor(STREAK_COUNT * (0.22 + 0.78 * rainMix)));
+    const count = Math.min(
+  STREAK_COUNT,
+  Math.max(10, Math.floor(
+    78 * (0.22 + 0.78 * rainMix) +
+    48 * shutterMix
+  ))
+);
     ctx.save();
     ctx.lineCap = 'round';
     for (let i = 0; i < count; i++) {
@@ -1642,6 +1651,113 @@
     ctx.restore();
   }
 
+function drawShopShutters() {
+  if (shutterMix <= 0.01 || !streetLoaded) return;
+
+  forEachStreetFront((plan, index, y) => {
+    const shops = [
+      { name: plan.left, x: 0, side: 0 },
+      {
+        name: plan.right,
+        x: ROAD_RIGHT + PAVEMENT_WIDTH,
+        side: 1
+      }
+    ];
+
+    for (const shop of shops) {
+      const buildingIndex = shopByName(shop.name);
+      if (buildingIndex < 0) continue;
+
+      const building = BUILDINGS[buildingIndex];
+      const window = shopWindowRect(
+        building.keeper,
+        shop.x,
+        y,
+        BUILDING_WIDTH,
+        BUILDING_H
+      );
+
+      // The shop closes as it approaches Gary.
+      const approach = (
+        y + BUILDING_H - (PLAYER_Y - 150)
+      ) / 110;
+
+      const progress = Math.max(
+        0,
+        Math.min(1, approach)
+      );
+
+      if (progress <= 0) continue;
+
+      const closure = progress * progress *
+        (3 - 2 * progress);
+
+      const shutterHeight = window.h * closure;
+
+      ctx.save();
+
+      ctx.beginPath();
+      ctx.rect(
+        window.x,
+        window.y,
+        window.w,
+        window.h
+      );
+      ctx.clip();
+
+      // Dark metal shutter backing
+      ctx.fillStyle = '#353b42';
+      ctx.fillRect(
+        window.x,
+        window.y,
+        window.w,
+        shutterHeight
+      );
+
+      // Horizontal corrugated shutter slats
+      ctx.strokeStyle = '#69727c';
+      ctx.lineWidth = 1.2;
+
+      for (
+        let sy = window.y + 3;
+        sy < window.y + shutterHeight;
+        sy += 5
+      ) {
+        ctx.beginPath();
+        ctx.moveTo(window.x, sy);
+        ctx.lineTo(window.x + window.w, sy);
+        ctx.stroke();
+      }
+
+      // Leading metal edge
+      ctx.fillStyle = '#9099a3';
+      ctx.fillRect(
+        window.x,
+        window.y + shutterHeight - 3,
+        window.w,
+        3
+      );
+
+      // Exterior side tracks
+      ctx.fillStyle = '#22282e';
+      ctx.fillRect(
+        window.x,
+        window.y,
+        2,
+        shutterHeight
+      );
+      ctx.fillRect(
+        window.x + window.w - 2,
+        window.y,
+        2,
+        shutterHeight
+      );
+
+      ctx.restore();
+    }
+  });
+}
+
   function render(dt){
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
@@ -1651,10 +1767,10 @@
       drawNightRoadLight();
       drawNightShopWindows();
     }
-    drawStormShade();
     drawStormWindowLift();
-    drawStreetLight();
-    drawRainSplashes();
+drawStreetLight();
+drawShopShutters();
+drawRainSplashes();
 
     if(state!=='menu'&&state!=='intro'){
       for(let i=objs.length-1;i>=0;i--)drawObj(objs[i]);
