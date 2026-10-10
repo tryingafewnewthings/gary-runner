@@ -1,0 +1,41 @@
+GARY EATS! — DEVELOPER START HERE
+Handoff date: 2026-10-10
+Repository: tryingafewnewthings/gary-runner
+
+READ IN THIS ORDER
+1. PROJECT_STATE.md — verified baseline, changes in this delivery, implementation order and release checks.
+2. STYLE.txt — camera, geometry, sprite and lighting contracts.
+3. ASSET_GRID_PROMPT.txt — visual review process and rejection criteria.
+4. game-data.js — active definitions first; DEVELOPMENT_PLAN at the end is planned content only.
+5. game.js — working runtime foundation and controller integration points.
+
+THE NEXT EXPERIENCE
+After a sustained nighttime run, heavy rain builds. The street becomes very dark,
+shops disappear, and Gary slows down. A shadowy former chip-shop owner approaches
+on the pavement. Gameplay pauses for their first text encounter. He gives Gary
+The Last Orders Lantern, which later reveals hidden bonus-food trails.
+Chapter 5 leads into wilderness, trees and eyes beyond the road.
+
+WHAT THIS DELIVERY DOES
+Updates all six handoff files. Centralises the active world, sprite, shop and item
+definitions. Makes intro/walk timing state-owned, guards repeat intro callbacks,
+resets animation state and corrects near-miss/refusal accounting. Stores the full
+encounter, dialogue and lantern specification in DEVELOPMENT_PLAN.
+
+WHAT IS STILL TO BUILD
+Storm/weather rendering, encounter controller, dialogue interface, inventory,
+lantern activation, biome progression beyond the existing night tint, and new art.
+The specification does not make these features active in the current runner.
+
+INSTALLATION
+These are full replacement files for the existing repository, not a standalone game.
+Keep the existing index.html and assets. Replace game.js and game-data.js together.
+In index.html change game-data.js?v=31 to game-data.js?v=32 and game.js?v=93 to
+game.js?v=94 (or newer unused versions if the repository has advanced).
+Read PROJECT_STATE.md before integrating with changes made after this handoff.
+
+FIRST DEVELOPER TASK
+Run the supplied baseline on iPhone, verify the lifecycle changes, and record a
+day/night visual reference. Then follow the staged implementation in PROJECT_STATE.md.
+The goal is a rich, coherent adventure with excellent moment-to-moment play.
+Do not mark a planned feature complete until it works and passes its acceptance checks.
