@@ -1737,6 +1737,13 @@ function updateRain(dt, advancing) {
         throw new Error('Incompatible Visual Studio configuration');
       }
       applyPublishedKeepers(config);
+      // Studio window panes: one shared source for keeper anchoring and lighting.
+      if (config.shopWindowPanes && typeof config.shopWindowPanes === 'object') {
+        BUILDINGS.forEach((building, i) => {
+          const p = config.shopWindowPanes[building.name];
+          if (rectIsValid(p)) SHOP_PANES[i] = { x:p.x/BUILDING_WIDTH, y:p.y/BUILDING_H, w:p.w/BUILDING_WIDTH, h:p.h/BUILDING_H };
+        });
+      }
       for (const building of BUILDINGS) {
         const s = config.shopClosures?.[building.name];
         if (!rectIsValid(s?.shutter)) continue;
