@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://api.github.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Gary Eats! Keeper Editor v1.5 Installer</title>
+<style>
+:root{color-scheme:dark}body{margin:0 auto;max-width:610px;padding:20px;font:16px system-ui,-apple-system,sans-serif;color:#eff6ff;background:#101724;line-height:1.5}h1{font-size:24px;line-height:1.2}p,small{color:#bacbdf}label{display:block;margin-top:16px;font-weight:600}input{display:block;width:100%;box-sizing:border-box;padding:13px;border:1px solid #66809d;border-radius:10px;background:#25344c;color:white;margin:8px 0}button{width:100%;padding:15px;border:0;border-radius:10px;background:#246e5b;color:white;font:600 16px system-ui;cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;word-break:break-word;padding:14px;background:#1b2a3f;border:1px solid #425a75;border-radius:10px;min-height:75px}a{color:#7cdaec}ul{padding-left:21px}li{margin-bottom:7px}
+</style>
+</head>
+<body>
+<h1>Gary Eats! — Keeper Editor v1.5</h1>
+<p>Fixes the old green clipping rectangle, allows unrestricted shopkeeper editing, adds direct touch resizing, and connects editable glass-visibility regions to the existing game engine.</p>
+<ul>
+<li>Installs a new <b>Visual Studio v1.5</b> without replacing v1.4.</li>
+<li>Extends <b>game.js</b> to read the editable shopkeeper clip rectangle and updates the game script version so browsers load it.</li>
+<li>Keeps shutter calibration, game progression, and the existing game configuration intact.</li>
+</ul>
+<label for="token">GitHub fine-grained token</label>
+<input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Paste token privately">
+<button id="install" type="button">Prepare and install v1.5</button>
+<pre id="status" role="status">Ready to install. No changes have been made.</pre>
+<small>This installer is intended for the official Gary Eats! GitHub Pages site. Your token is not saved and is cleared when the operation completes. Installation requires Contents: Read and write for <code>tryingafewnewthings/gary-runner</code>.</small>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const REPO='tryingafewnewthings/gary-runner';
+const API='https://api.github.com/repos/'+REPO;
+let stage='Ready';
+function status(message){stage=message;$('status').textContent=message}
+function decode64(s){const bytes=Uint8Array.from(atob(s.replace(/\s/g,'')),c=>c.charCodeAt(0));return new TextDecoder().decode(bytes)}
+function encode64(s){const bytes=new TextEncoder().encode(s);let out='';for(let n=0;n<bytes.length;n+=8192){out+=String.fromCharCode(...bytes.subarray(n,n+8192))}return btoa(out)}
+async function request(path,token,options={}){
+ const response=await fetch(API+'/'+path,{...options,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})}});
+ const body=await response.text();let data;try{data=JSON.parse(body)}catch(e){throw Error('Unexpected GitHub response (HTTP '+response.status+')')}
+ if(!response.ok){const err=Error((data.message||'GitHub request failed')+' (HTTP '+response.status+')');err.httpStatus=response.status;throw err}
+ return data;
+}
+async function fetchFile(path,token,optional=false){
+ try{const data=await request('contents/'+path,token);return {text:decode64(data.content),sha:data.sha}}
+ catch(e){if(optional&&e.httpStatus===404)return null;throw e}
+}
+function mustReplace(source,before,after,label){
+ if(source.indexOf(before)<0)throw Error('Source changed: '+label+' was not found. Nothing published.');
+ if(source.indexOf(before)!==source.lastIndexOf(before))throw Error('Source changed: '+label+' is ambiguous. Nothing published.');
+ return source.replace(before,after);
+}
+const EDITOR_CODE=String.raw`
+// v1.5 keeper editor — sprite placement and visibility mask are independent.
+let keeperPreviewPlaying=false,keeperPreviewTime=0,keeperPreviewLast=0,keeperPreviewRAF=0;
+let keeperSpriteBounds=null,keeperDrag=null;
+const keeperPointers=new Map();
+function keeperClip(){
+ const o=keeperObj(),k=keeperValues();
+ if(!k.clip){const v=o.regions?.shutter||{x:7,y:153,w:50,h:55};k.clip={x:v.x,y:v.y,w:v.w,h:v.h}}
+ return k.clip;
+}
+function keeperDimensions(){
+ const o=keeperObj();if(!o)return null;
+ const i=shopObjects().findIndex(q=>q.id===o.id),k=keeperValues();
+ const p=keeperPane[i],ox=p[0]*356,oy=p[1]*944,ow=p[2]*356,oh=p[3]*944;
+ const src=keeperCrop[i];
+ let h=oh*.96*keeperSizes[i]*k.scale,w=h*src[2]/src[3],maxW=ow*.86*keeperSizes[i]*k.scale;
+ if(w>maxW){w=maxW;h=w*src[3]/src[2]}
+ const phase=keeperPreviewTime*2.1+i*1.67;
+ const approaching=Number($('keeperApproach').value)/100;
+ const cheer=Math.max(0,Math.sin(keeperPreviewTime*10))*approaching*k.cheerAmount;
+ const bob=(Math.sin(phase)*.7*k.idleAmount-cheer*5)*4;
+ const breathe=1+Math.sin(phase*.9+.8)*.012*k.idleAmount+cheer*.06;
+ const shift=Math.sin(keeperPreviewTime*.75+i*1.67)*.6*k.idleAmount*4;
+ return {i,k,src,w,h,centerX:ox+ow/2+k.offsetX*4+shift,bottomY:oy+oh-4+oh*keeperDrops[i]+k.offsetY*4+bob,breathe};
+}
+function keeperDraw(){
+ const o=keeperObj();if(!o)return;
+ const ctx=keeperCtx,a=asset(o.asset),im=imageFor(o.asset),d=keeperDimensions(),clip=keeperClip();
+ ctx.clearRect(0,0,356,944);
+ if(im?.naturalWidth&&a?.crop){const r=a.crop;ctx.drawImage(im,r.x,r.y,r.w,r.h,0,0,356,944)}
+ const mask={x:clip.x*4,y:clip.y*4,w:clip.w*4,h:clip.h*4};
+ if(!$('keeperShowUnclipped').checked){ctx.save();ctx.beginPath();ctx.rect(mask.x+4,mask.y+4,Math.max(1,mask.w-8),Math.max(1,mask.h-8));ctx.clip()}
+ if(im?.naturalWidth){ctx.save();ctx.translate(d.centerX,d.bottomY);ctx.scale(1,d.breathe);ctx.drawImage(im,...d.src,-d.w/2,-d.h,d.w,d.h);ctx.restore()}
+ if(!$('keeperShowUnclipped').checked)ctx.restore();
+ keeperSpriteBounds={x:d.centerX-d.w/2,y:d.bottomY-d.h*d.breathe,w:d.w,h:d.h*d.breathe};
+ if($('keeperShowGuide').checked){
+  ctx.save();ctx.strokeStyle='#42e8b4';ctx.lineWidth=3;ctx.strokeRect(mask.x,mask.y,mask.w,mask.h);
+  ctx.fillStyle='rgba(66,232,180,.95)';ctx.font='bold 16px system-ui';ctx.fillText('VISIBLE WINDOW',mask.x+2,Math.max(18,mask.y-7));
+  if($('keeperEditTarget').value==='clip'){
+   ctx.fillStyle='#42e8b4';ctx.fillRect(mask.x+mask.w-13,mask.y+mask.h-13,26,26);
+  }
+  ctx.restore();
+ }
+ if($('keeperShowUnclipped').checked&&$('keeperEditTarget').value==='keeper'){
+  const b=keeperSpriteBounds;ctx.save();ctx.setLineDash([7,6]);ctx.strokeStyle='#ffe18a';ctx.lineWidth=2;ctx.strokeRect(b.x,b.y,b.w,b.h);ctx.setLineDash([]);
+  ctx.fillStyle='#ffe18a';ctx.beginPath();ctx.arc(b.x+b.w,b.y+b.h,16,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#182235';ctx.font='bold 15px system-ui';ctx.textAlign='center';ctx.fillText('↘',b.x+b.w,b.y+b.h+5);ctx.textAlign='left';ctx.restore();
+ }
+ const approach=Number($('keeperApproach').value);
+ $('keeperApproachValue').textContent=approach>0?'Gary approaching: '+approach+'%':'Gary is distant';
+ $('keeperScaleLabel').textContent=Math.round(d.k.scale*100)+'%';
+}
+function keeperPreviewFrame(ts){
+ if(!keeperPreviewPlaying)return;
+ if(keeperPreviewLast)keeperPreviewTime+=Math.min(.06,(ts-keeperPreviewLast)/1000);
+ keeperPreviewLast=ts;keeperDraw();keeperPreviewRAF=requestAnimationFrame(keeperPreviewFrame);
+}
+function keeperTogglePlayback(){
+ keeperPreviewPlaying=!keeperPreviewPlaying;keeperPreviewLast=0;
+ $('keeperAnimationPlay').textContent=keeperPreviewPlaying?'❚❚ Pause animation':'▶ Play animation';
+ if(keeperPreviewPlaying)keeperPreviewRAF=requestAnimationFrame(keeperPreviewFrame);
+ else cancelAnimationFrame(keeperPreviewRAF);
+ keeperDraw();
+}
+function keeperRefresh(){
+ const k=keeperValues();if(!k)return;keeperClip();
+ for(const [id,prop] of [['keeperX','offsetX'],['keeperY','offsetY'],['keeperScale','scale'],['keeperIdle','idleAmount'],['keeperCheer','cheerAmount']])$(id).value=k[prop];
+ $('keeperScaleRange').value=k.scale;keeperDraw();
+}
+function keeperCommit(){scheduleSave();keeperRefresh()}
+function keeperSetScale(value){const k=keeperValues();k.scale=Math.min(2.5,Math.max(.25,Math.round(value*20)/20));keeperCommit()}
+$('keepersTab').onclick=()=>{
+ $('keeperCalibrationPanel').style.display='block';
+ const sel=$('keeperShop');sel.textContent='';shopObjects().forEach(o=>sel.add(new Option(o.name,o.id)));
+ keeperRefresh();$('keeperCalibrationPanel').scrollIntoView({behavior:'smooth'});
+};
+$('keeperClose').onclick=()=>{$('keeperCalibrationPanel').style.display='none';keeperPreviewPlaying=false;cancelAnimationFrame(keeperPreviewRAF);$('keeperAnimationPlay').textContent='▶ Play animation'};
+$('keeperShop').onchange=keeperRefresh;
+$('keeperAnimationPlay').onclick=keeperTogglePlayback;
+$('keeperShowUnclipped').onchange=keeperDraw;
+$('keeperShowGuide').onchange=keeperDraw;
+$('keeperApproach').oninput=keeperDraw;
+$('keeperEditTarget').onchange=()=>{if($('keeperEditTarget').value==='clip'){$('keeperShowUnclipped').checked=true;$('keeperShowGuide').checked=true}keeperDraw()};
+$('keeperScaleRange').oninput=e=>keeperSetScale(Number(e.target.value));
+$('keeperScaleDown').onclick=()=>keeperSetScale(keeperValues().scale-.1);
+$('keeperScaleUp').onclick=()=>keeperSetScale(keeperValues().scale+.1);
+for(const [id,prop] of [['keeperX','offsetX'],['keeperY','offsetY'],['keeperScale','scale'],['keeperIdle','idleAmount'],['keeperCheer','cheerAmount']]){
+ $(id).addEventListener('input',e=>{
+  const k=keeperValues(),v=Number(e.target.value);if(!Number.isFinite(v))return;
+  k[prop]=prop==='scale'?Math.max(.25,Math.min(2.5,v)):prop.endsWith('Amount')?Math.max(0,Math.min(3,v)):prop==='offsetY'?Math.max(-236,Math.min(236,v)):Math.max(-89,Math.min(89,v));
+  scheduleSave();$('keeperScaleRange').value=k.scale;keeperDraw();
+ });
+}
+$('keeperReset').onclick=()=>{
+ const o=keeperObj(),r=o.regions?.shutter||{x:7,y:153,w:50,h:55};
+ o.keeperSettings={offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1,clip:{x:r.x,y:r.y,w:r.w,h:r.h}};
+ keeperCommit();
+};
+function keeperPoint(e){const r=keeperCanvas.getBoundingClientRect();return{x:(e.clientX-r.left)*356/r.width,y:(e.clientY-r.top)*944/r.height}}
+function keeperDist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+keeperCanvas.addEventListener('pointerdown',e=>{
+ e.preventDefault();keeperCanvas.setPointerCapture(e.pointerId);const p=keeperPoint(e);keeperPointers.set(e.pointerId,p);
+ const k=keeperValues(),target=$('keeperEditTarget').value;
+ if(keeperPointers.size===2&&target==='keeper'){
+  const v=[...keeperPointers.values()];keeperDrag={kind:'pinch',startDistance:keeperDist(v[0],v[1]),scale:k.scale};return;
+ }
+ if(target==='clip'){
+  const c=keeperClip(),b={x:c.x*4,y:c.y*4,w:c.w*4,h:c.h*4};
+  keeperDrag={kind:Math.abs(p.x-b.x-b.w)<32&&Math.abs(p.y-b.y-b.h)<32?'clip-resize':'clip-move',start:p,clip:{...c}};
+ } else {
+  const b=keeperSpriteBounds||{x:0,y:0,w:0,h:0};
+  const resize=$('keeperShowUnclipped').checked&&keeperDist(p,{x:b.x+b.w,y:b.y+b.h})<35;
+  keeperDrag={kind:resize?'keeper-resize':'keeper-move',start:p,x:k.offsetX,y:k.offsetY,scale:k.scale,baseWidth:Math.max(20,b.w)};
+ }
+});
+keeperCanvas.addEventListener('pointermove',e=>{
+ if(!keeperPointers.has(e.pointerId))return;
+ e.preventDefault();const p=keeperPoint(e);keeperPointers.set(e.pointerId,p);
+ const d=keeperDrag,k=keeperValues();if(!d)return;
+ if(keeperPointers.size>=2&&$('keeperEditTarget').value==='keeper'){
+  const v=[...keeperPointers.values()];
+  if(d.kind!=='pinch'){keeperDrag={kind:'pinch',startDistance:keeperDist(v[0],v[1]),scale:k.scale};return}
+  keeperSetScale(d.scale*keeperDist(v[0],v[1])/Math.max(12,d.startDistance));return;
+ }
+ if(d.kind==='pinch')return;
+ const dx=(p.x-d.start.x)/4,dy=(p.y-d.start.y)/4;
+ if(d.kind==='keeper-resize'){keeperSetScale(d.scale*(1+(p.x-d.start.x)/Math.max(24,d.baseWidth)));return}
+ if(d.kind==='keeper-move'){
+  k.offsetX=Math.max(-89,Math.min(89,d.x+dx));k.offsetY=Math.max(-236,Math.min(236,d.y+dy));
+  $('keeperX').value=k.offsetX.toFixed(2);$('keeperY').value=k.offsetY.toFixed(2);keeperDraw();return;
+ }
+ const c=keeperClip();
+ if(d.kind==='clip-move'){
+  c.x=Math.max(0,Math.min(89-d.clip.w,d.clip.x+dx));c.y=Math.max(0,Math.min(236-d.clip.h,d.clip.y+dy));
+ } else if(d.kind==='clip-resize'){
+  c.w=Math.max(5,Math.min(89-c.x,d.clip.w+dx));c.h=Math.max(5,Math.min(236-c.y,d.clip.h+dy));
+ }
+ keeperDraw();
+});
+function keeperPointerEnd(e){keeperPointers.delete(e.pointerId);if(!keeperPointers.size){keeperDrag=null;scheduleSave()}else if(keeperDrag?.kind==='pinch')keeperDrag=null}
+keeperCanvas.addEventListener('pointerup',keeperPointerEnd);
+keeperCanvas.addEventListener('pointercancel',keeperPointerEnd);
+`;
+function patchStudio(source){
+ if(source.includes('v1.5 keeper editor'))throw Error('Source already upgraded; expected a fresh v1.4 file.');
+ source=mustReplace(source,'<title>Gary Eats! Visual Development Studio v1.4</title>','<title>Gary Eats! Visual Development Studio v1.5</title>','studio version');
+ source=mustReplace(source,'<canvas id="keeperCanvas" width="356" height="944" style="width:178px;max-width:100%;touch-action:none;background:#273548;border:1px solid #53627a;margin-top:8px"></canvas>',
+ '<canvas id="keeperCanvas" width="356" height="944" style="width:300px;max-width:100%;touch-action:none;background:#273548;border:1px solid #53627a;border-radius:6px;margin-top:8px"></canvas>','keeper canvas');
+ source=mustReplace(source,'<label>Scale multiplier <input id="keeperScale" type="number" step="0.05" min="0.25" max="2.5"></label>',
+ '<label>Size: <strong id="keeperScaleLabel">100%</strong> <input id="keeperScaleRange" type="range" min="0.25" max="2.5" step="0.05" value="1" style="width:100%"></label><div style="display:flex;gap:8px"><button id="keeperScaleDown" type="button" style="flex:1">− Smaller</button><button id="keeperScaleUp" type="button" style="flex:1">+ Bigger</button></div><label>Exact size multiplier <input id="keeperScale" type="number" step="0.05" min="0.25" max="2.5"></label>',
+ 'size controls');
+ source=mustReplace(source,'<label><input type="checkbox" id="keeperShowUnclipped"> Show full sprite (unclipped editing)</label>',
+ '<label><input type="checkbox" id="keeperShowUnclipped" checked> Show entire character while editing</label>','full sprite control');
+ source=mustReplace(source,'<label><input type="checkbox" id="keeperShowGuide" checked> Show green guide</label>',
+ '<label>Edit <select id="keeperEditTarget"><option value="keeper">Shopkeeper — drag or resize</option><option value="clip">Green window boundary — drag or resize</option></select></label><label><input type="checkbox" id="keeperShowGuide" checked> Show green visibility boundary</label>','window mask editor');
+ source=mustReplace(source,'The preview preserves the current window clipping and atlas crop. Publishing uses the existing GitHub connection.',
+ 'The green outline is the visible window mask. In full-sprite mode, the yellow dashed outline and ↘ handle resize the character. Use the Edit menu to move or resize the green mask separately. Untick Show entire character for game-clipped preview. Publish changes using the existing GitHub connection.',
+ 'calibration help');
+ const start=source.indexOf('let keeperPreviewPlaying=false');
+ const end=source.indexOf('// GitHub publisher —',start);
+ if(start<0||end<0||end-start>11000)throw Error('Keeper rendering block changed. Nothing published.');
+ source=source.slice(0,start)+EDITOR_CODE+'\n'+source.slice(end);
+ const oldFn="function buildKeeperSettings(){let out={};for(let o of shopObjects()){let k=o.keeperSettings||{offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};out[o.name]={...k}}return out}";
+ const newFn="function buildKeeperSettings(){let out={};for(let o of shopObjects()){let k=o.keeperSettings||{offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};let c=k.clip||o.regions?.shutter;out[o.name]={...k,clip:c?{x:c.x,y:c.y,w:c.w,h:c.h}:null}}return out}";
+ source=mustReplace(source,oldFn,newFn,'published shopkeeper settings');
+ if(!source.includes('keeperScaleRange')||!source.includes('keeperEditTarget')||!source.includes('shopKeepers:buildKeeperSettings()'))throw Error('Upgraded studio failed structural validation.');
+ return source;
+}
+function patchGame(source){
+ if(source.includes('Visible window clip from Visual Studio v1.5'))throw Error('Game already contains v1.5 clipping. Nothing published.');
+ const needle="shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount};";
+ source=mustReplace(source,needle,
+ "shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount,clip:rectIsValid(d.clip)?{...d.clip}:null};",
+ 'game shopkeeper configuration');
+ const start=source.indexOf('function drawKeeper(index, x, y, w, h, phaseSeed)');
+ const end=source.indexOf('function drawStreetBuilding(',start);
+ if(start<0||end<0||end-start>4200)throw Error('Keeper rendering function changed. Nothing published.');
+ let block=source.slice(start,end);
+ const original="    ctx.save();\n    ctx.beginPath();\n    ctx.rect(wx + 1, wy + 1, Math.max(1, ww - 2), Math.max(1, wh - 2));\n    ctx.clip();";
+ const replacement="    // Visible window clip from Visual Studio v1.5 (position remains independent).\n    const visible = spec.clip ? {x:x+spec.clip.x,y:y+spec.clip.y,w:spec.clip.w,h:spec.clip.h} : win;\n    ctx.save();\n    ctx.beginPath();\n    ctx.rect(visible.x + 1, visible.y + 1, Math.max(1, visible.w - 2), Math.max(1, visible.h - 2));\n    ctx.clip();";
+ block=mustReplace(block,original,replacement,'game clipping region');
+ source=source.slice(0,start)+block+source.slice(end);
+ if(!source.includes('Visible window clip from Visual Studio v1.5')||!source.includes('shopClosureSpecs'))throw Error('Game structural check failed.');
+ return source;
+}
+$('install').onclick=async()=>{
+ const btn=$('install'),token=$('token').value.trim();btn.disabled=true;
+ let changed=[];
+ try{
+  if(location.origin!=='https://tryingafewnewthings.github.io'||!location.pathname.startsWith('/gary-runner/'))throw Error('Open this file from the official Gary Eats! GitHub Pages domain.');
+  if(!token)throw Error('Enter your GitHub token first.');
+  status('Reading Visual Studio v1.4 from GitHub…');
+  const studio=await fetchFile('gary-visual-studio-v1.4.html',token);
+  status('Reading the existing game.js…');
+  const game=await fetchFile('game.js',token);
+  status('Reading index.html for cache versioning…');
+  const indexFile=await fetchFile('index.html',token);
+  status('Checking whether Visual Studio v1.5 already exists…');
+  const existing=await fetchFile('gary-visual-studio-v1.5.html',token,true);
+  status('Preparing both changes and validating source markers…');
+  const newStudio=patchStudio(studio.text),newGame=patchGame(game.text);
+  const versionMatch=indexFile.text.match(/src="game\.js\?v=(\d+)"/);
+  if(!versionMatch)throw Error('Game script version marker not found in index.html. Nothing published.');
+  const newIndex=indexFile.text.replace(versionMatch[0],'src="game.js?v='+String(Number(versionMatch[1])+1)+'"');
+  if(newStudio.length<studio.text.length||newGame.length<game.text.length)throw Error('Unexpected output size. No changes published.');
+  if(!confirm('Update game.js, refresh index.html caching, and create Visual Studio v1.5 on GitHub? Your existing v1.4 and game configuration will be preserved.')){status('Cancelled. No changes made.');return}
+  status('1/3: Publishing optional keeper clip support to game.js…');
+  const gameCommit=await request('contents/game.js',token,{method:'PUT',body:JSON.stringify({message:'Support adjustable shopkeeper window visibility in Gary Eats',content:encode64(newGame),sha:game.sha,branch:'main'})});
+  changed.push('game.js ('+gameCommit.commit.sha.slice(0,7)+')');
+  status('2/3: Updating game script cache version…');
+  const indexCommit=await request('contents/index.html',token,{method:'PUT',body:JSON.stringify({message:'Refresh game.js cache for keeper window calibration',content:encode64(newIndex),sha:indexFile.sha,branch:'main'})});
+  changed.push('index.html ('+indexCommit.commit.sha.slice(0,7)+')');
+  status('3/3: Publishing Visual Studio v1.5…');
+  const payload={message:'Add full-sprite keeper editing, resize, and adjustable window mask',content:encode64(newStudio),branch:'main'};
+  if(existing)payload.sha=existing.sha;
+  const studioCommit=await request('contents/gary-visual-studio-v1.5.html',token,{method:'PUT',body:JSON.stringify(payload)});
+  changed.push('gary-visual-studio-v1.5.html ('+studioCommit.commit.sha.slice(0,7)+')');
+  status('Installed. All three commits completed.\n\nOpen https://tryingafewnewthings.github.io/gary-runner/gary-visual-studio-v1.5.html after Pages deploys.\n\nChoose Shopkeepers, adjust or resize the character, then Publish to the game.');
+ }catch(e){status('Stopped at: '+stage+'\n'+(e.name||'Error')+': '+(e.message||String(e))+'\n'+(changed.length?'Already changed: '+changed.join(', '):'No files published in this attempt.'))}
+ finally{btn.disabled=false;$('token').value=''}
+};
+</script>
+</body>
+</html>
