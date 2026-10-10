@@ -570,6 +570,7 @@ let shutterMix = 0;
     playTime = nightMix = nightHeld = rainMix = shutterMix = 0;
     nightOn = false;
     rainSaid = false;
+    shopClosureStarted.clear();
     objs = [];
     fx = [];
     stars = [];
@@ -1038,6 +1039,7 @@ let shutterMix = 0;
 
     distance += speed * dt;
     scrollY = distance;
+    updateShopClosures();
     performance.distance = distance;
     acc += dt;
     let spawned = 0;
@@ -1685,112 +1687,130 @@ function updateRain(dt, advancing) {
     ctx.restore();
   }
 
-function drawShopShutters() {
-  if (shutterMix <= 0.01 || !streetLoaded) return;
+  // Gary Eats! Visual Studio bridge. Published data is optional.
+  const shopClosureSpecs = Object.create(null);
+  const shopClosureStarted = new Map();
+  const RECT_FIELDS = ['x', 'y', 'w', 'h'];
+  const rectIsValid = r => r && RECT_FIELDS.every(k => Number.isFinite(r[k]))
+    && r.x >= 0 && r.y >= 0 && r.w > 0 && r.h > 0
+    && r.x + r.w <= BUILDING_WIDTH + 0.01
+    && r.y + r.h <= BUILDING_H + 0.01;
 
-  forEachStreetFront((plan, index, y) => {
-    const shops = [
-      { name: plan.left, x: 0, side: 0 },
-      {
-        name: plan.right,
-        x: ROAD_RIGHT + PAVEMENT_WIDTH,
-        side: 1
-      }
-    ];
-
-    for (const shop of shops) {
-      const buildingIndex = shopByName(shop.name);
-      if (buildingIndex < 0) continue;
-
-      const building = BUILDINGS[buildingIndex];
-      const window = shopWindowRect(
-        building.keeper,
-        shop.x,
-        y,
-        BUILDING_WIDTH,
-        BUILDING_H
-      );
-
-      // The shop closes as it approaches Gary.
-      const approach = (
-        y + BUILDING_H - (PLAYER_Y - 150)
-      ) / 110;
-
-      const progress = Math.max(
-        0,
-        Math.min(1, approach)
-      );
-
-      if (progress <= 0) continue;
-
-      const closure = progress * progress *
-        (3 - 2 * progress);
-
-      const shutterHeight = window.h * closure;
-
-      ctx.save();
-
-      ctx.beginPath();
-      ctx.rect(
-        window.x,
-        window.y,
-        window.w,
-        window.h
-      );
-      ctx.clip();
-
-      // Dark metal shutter backing
-      ctx.fillStyle = '#353b42';
-      ctx.fillRect(
-        window.x,
-        window.y,
-        window.w,
-        shutterHeight
-      );
-
-      // Horizontal corrugated shutter slats
-      ctx.strokeStyle = '#69727c';
-      ctx.lineWidth = 1.2;
-
-      for (
-        let sy = window.y + 3;
-        sy < window.y + shutterHeight;
-        sy += 5
-      ) {
-        ctx.beginPath();
-        ctx.moveTo(window.x, sy);
-        ctx.lineTo(window.x + window.w, sy);
-        ctx.stroke();
-      }
-
-      // Leading metal edge
-      ctx.fillStyle = '#9099a3';
-      ctx.fillRect(
-        window.x,
-        window.y + shutterHeight - 3,
-        window.w,
-        3
-      );
-
-      // Exterior side tracks
-      ctx.fillStyle = '#22282e';
-      ctx.fillRect(
-        window.x,
-        window.y,
-        2,
-        shutterHeight
-      );
-      ctx.fillRect(
-        window.x + window.w - 2,
-        window.y,
-        2,
-        shutterHeight
-      );
-
-      ctx.restore();
-    }
+  // Safe fallback: if the studio JSON fails, the existing game still starts.
+  BUILDINGS.forEach((building, i) => {
+    const p = SHOP_PANES[i];
+    shopClosureSpecs[building.name] = {
+      shutter: {
+        x: p.x * BUILDING_WIDTH, y: p.y * BUILDING_H,
+        w: p.w * BUILDING_WIDTH, h: p.h * BUILDING_H
+      },
+      doorLight: null,
+      duration: 1
+    };
   });
-}
+
+  fetch('gary-game-config.json', { cache: 'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('Studio configuration unavailable');
+      return response.json();
+    })
+    .then(config => {
+      if (config.schema !== 'gary-eats-game-config-v1'
+          || config.world?.width !== W || config.world?.height !== H) {
+        throw new Error('Incompatible Visual Studio configuration');
+      }
+      for (const building of BUILDINGS) {
+        const s = config.shopClosures?.[building.name];
+        if (!rectIsValid(s?.shutter)) continue;
+        shopClosureSpecs[building.name] = {
+          shutter: s.shutter,
+          doorLight: rectIsValid(s.doorLight) ? s.doorLight : null,
+          duration: Number.isFinite(s.duration)
+            ? Math.max(0.35, Math.min(3.5, s.duration)) : 1
+        };
+      }
+    })
+    .catch(error => console.warn('Visual Studio settings:', error.message));
+
+  function updateShopClosures() {
+    // Presentation only. Never affect hazard, food, or lane logic.
+    if (shutterMix < 0.95 || !streetLoaded) return;
+
+    function startIfApproaching(name, segment, side, shopY) {
+      const spec = shopClosureSpecs[name];
+      if (!spec) return;
+      const id = segment + ':' + side;
+      if (shopClosureStarted.has(id)) return;
+      const windowBottom = shopY + spec.shutter.y + spec.shutter.h;
+      if (windowBottom >= PLAYER_Y - 230 && windowBottom <= PLAYER_Y + 60) {
+        shopClosureStarted.set(id, clock);
+      }
+    }
+
+    forEachStreetFront((plan, segment, y) => {
+      startIfApproaching(plan.left, segment, 'L', y);
+      startIfApproaching(plan.right, segment, 'R', y);
+    });
+
+    // Retain only nearby instances; the STREET plan may repeat forever.
+    const oldestVisible = Math.floor((distance + 56) / STREET_SEGMENT_H) - 2;
+    for (const id of shopClosureStarted.keys()) {
+      if (Number(id.split(':')[0]) < oldestVisible) shopClosureStarted.delete(id);
+    }
+  }
+
+  function drawShopShutters() {
+    if (!shopClosureStarted.size || !streetLoaded) return;
+
+    function drawOne(name, segment, side, y) {
+      const spec = shopClosureSpecs[name];
+      const start = shopClosureStarted.get(segment + ':' + side);
+      if (!spec || start === undefined) return;
+
+      const t = Math.min(1, Math.max(0, (clock - start) / spec.duration));
+      const eased = t * t * (3 - 2 * t);
+      const s = spec.shutter;
+      const bx = side === 'L' ? 0 : ROAD_RIGHT + PAVEMENT_WIDTH;
+      const x = bx + s.x, top = y + s.y, h = s.h * eased;
+      if (h > 0.2) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, top, s.w, s.h);
+        ctx.clip();
+        ctx.fillStyle = '#353b42';
+        ctx.fillRect(x, top, s.w, h);
+        ctx.strokeStyle = '#79838e';
+        ctx.lineWidth = 1;
+        for (let sy = top + 4; sy < top + h; sy += 5) {
+          ctx.beginPath();
+          ctx.moveTo(x + 1, sy);
+          ctx.lineTo(x + s.w - 1, sy);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#a1aab3';
+        ctx.fillRect(x, top + h - 2.5, s.w, 2.5);
+        ctx.fillStyle = '#242930';
+        ctx.fillRect(x, top, 1.6, h);
+        ctx.fillRect(x + s.w - 1.6, top, 1.6, h);
+        ctx.restore();
+      }
+
+      if (spec.doorLight && t > 0.7) {
+        const d = spec.doorLight;
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, (t - 0.7) / 0.3) * 0.94;
+        ctx.fillStyle = '#081019';
+        ctx.fillRect(bx + d.x, y + d.y, d.w, d.h);
+        ctx.restore();
+      }
+    }
+
+    forEachStreetFront((plan, segment, y) => {
+      drawOne(plan.left, segment, 'L', y);
+      drawOne(plan.right, segment, 'R', y);
+    });
+  }
+
 
   function render(dt){
     if(state==='intro')drawIntroAvatar();
