@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <title>Gary Eats! — Window Lighting Layer Fix</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#101724;color:#eff5fd;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.5}
+    main{max-width:650px;margin:auto;padding:30px 18px 70px}h1{font-size:26px;letter-spacing:-.5px;line-height:1.2;margin:0 0 9px}h2{font-size:17px;margin:20px 0 8px}
+    p{color:#b9c9dd;margin:8px 0 16px}.pill{display:inline-flex;border:1px solid #3c5568;background:#1b2c3b;border-radius:100px;font-size:12px;font-weight:600;color:#9fddc8;padding:5px 10px;margin-bottom:18px}
+    .panel{border:1px solid #314a5d;border-radius:15px;padding:17px;margin:17px 0;background:#192739}.steps{margin:7px 0 0;padding-left:19px;color:#c8d5e5}.steps li{margin:8px 0}
+    label{font-weight:600;display:block;margin:16px 0 7px}input{width:100%;border:1px solid #4d6981;border-radius:10px;padding:13px;background:#102034;color:#fff;font:inherit}
+    button{border:1px solid #69bea2;background:#196b56;color:#fff;font-size:16px;font-weight:700;cursor:pointer;padding:14px 17px;border-radius:11px;width:100%;margin-top:15px;touch-action:manipulation}button:disabled{opacity:.56}
+    .status{border:1px solid #38556b;background:#121e2e;border-radius:10px;padding:14px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:76px;color:#b9cce0}
+    .note{color:#97a9bc;font-size:13px}a{color:#a6d7ff}strong{color:white}
+  </style>
+</head>
+<body>
+<main>
+  <span class="pill">One-time engine correction</span>
+  <h1>Window glow behind shopkeepers</h1>
+  <p>This updates the actual game so the storm window-glow pass renders <strong>behind</strong> shopkeeper sprites, rather than washing them out. It preserves your current blue/green boxes, shutters, animation settings and game logic.</p>
+  <section class="panel">
+    <h2>What this will change</h2>
+    <ol class="steps">
+      <li>Move shopkeeper drawing to a dedicated foreground pass, after window lighting.</li>
+      <li>Refresh the <code>game.js</code> version in <code>index.html</code> so Safari receives the update.</li>
+      <li>Publish both files in <strong>one atomic GitHub commit</strong>; if the source differs from the version we inspected, stop without publishing.</li>
+    </ol>
+  </section>
+  <section class="panel">
+    <label for="token">GitHub personal access token</label>
+    <input id="token" type="password" placeholder="Paste your existing GitHub token" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button id="apply" type="button">Apply lighting layer fix</button>
+    <h2>Installation status</h2>
+    <div class="status" id="status" role="status" aria-live="polite">Ready. No changes have been made.</div>
+    <p class="note">Only works when opened from the Gary Eats! GitHub Pages website. The token is held in memory for this operation, sent only to GitHub's API, and is not saved to the repository or browser storage. Never share your token in chat.</p>
+  </section>
+  <p class="note">If installed successfully, open <a href="https://tryingafewnewthings.github.io/gary-runner/?rain=1">Gary Eats! rain preview</a> after GitHub Pages deploys to check that keepers stay visible during the storm.</p>
+</main>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  const API = 'https://api.github.com/repos/tryingafewnewthings/gary-runner';
+  const EXPECTED_ORIGIN = 'https://tryingafewnewthings.github.io';
+  const EXPECTED_PREFIX = '/gary-runner/';
+  const ORIGINAL_BUILD = '    drawKeeper(b.keeper, x, y, w, h, phaseSeed);\n  }\n\n  function cobbleFor(kind) {';
+  const REPLACEMENT_BUILD = `    // Shopkeepers are drawn after the lighting passes, so light stays behind them.
+  }
+
+  function drawKeepersAboveWindowLighting() {
+    if (!streetLoaded) return;
+    forEachStreetFront((plan, segment, y) => {
+      const left = shopByName(plan.left);
+      if (left >= 0) drawKeeper(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, false);
+      const right = shopByName(plan.right);
+      if (right >= 0) drawKeeper(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true);
+    });
+  }
+
+  function cobbleFor(kind) {`;
+  const ORIGINAL_RENDER = '    drawStormWindowLift();\ndrawStreetLight();\ndrawShopShutters();';
+  const REPLACEMENT_RENDER = '    drawStormWindowLift();\n    drawStreetLight();\n    drawKeepersAboveWindowLighting();\n    drawShopShutters();';
+  const matches = (s, needle) => s.split(needle).length - 1;
+  const status = text => {$('status').textContent = text};
+  function prepare(game, index) {
+    if (game.includes('function drawKeepersAboveWindowLighting()')) {
+      return {alreadyInstalled:true};
+    }
+    if (matches(game, ORIGINAL_BUILD)!==1 || matches(game, ORIGINAL_RENDER)!==1) {
+      throw Error('The current game.js structure has changed. Nothing was published. Ask for an updated fix.');
+    }
+    const versions = [...index.matchAll(/src="game\.js\?v=(\d+)"/g)];
+    if (versions.length!==1) throw Error('index.html does not have exactly one game.js version tag. Nothing was published.');
+    const updatedGame = game.replace(ORIGINAL_BUILD,REPLACEMENT_BUILD).replace(ORIGINAL_RENDER,REPLACEMENT_RENDER);
+    const updatedIndex = index.replace(versions[0][0], 'src="game.js?v='+String(Number(versions[0][1])+1)+'"');
+    if (!updatedGame.includes('function drawKeepersAboveWindowLighting()') || !updatedGame.includes('    drawKeepersAboveWindowLighting();')) throw Error('Updated game validation failed.');
+    if (!updatedIndex.includes('src="game.js?v=')) throw Error('Updated index validation failed.');
+    return {updatedGame,updatedIndex,version:Number(versions[0][1])+1};
+  }
+  async function request(path, token, options={}) {
+    const res = await fetch(API+path, {
+      ...options,
+      headers:{'Accept':'application/vnd.github+json',
+               'Authorization':'Bearer '+token,
+               'X-GitHub-Api-Version':'2022-11-28',
+               ...(options.body?{'Content-Type':'application/json'}:{})}
+    });
+    let data;
+    try {data=await res.json()} catch {throw Error('GitHub sent an unreadable response (HTTP '+res.status+').')}
+    if (!res.ok) throw Error((data.message||'GitHub API request failed')+' (HTTP '+res.status+').');
+    return data;
+  }
+  function decode(content) {
+    if (typeof content!=='string') throw Error('GitHub returned an invalid file payload.');
+    return new TextDecoder().decode(Uint8Array.from(atob(content.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+  }
+  $('apply').addEventListener('click',async()=>{
+    const btn=$('apply');btn.disabled=true;
+    const token=$('token').value.trim();
+    let phase='Starting';
+    try {
+      if (location.origin !== EXPECTED_ORIGIN || !location.pathname.startsWith(EXPECTED_PREFIX)) {
+        throw Error('Open this page from the official Gary Eats! GitHub Pages site.');
+      }
+      if (!token) throw Error('Paste your GitHub personal access token.');
+      phase='Reading live repository';status(phase+'…');
+      const branch=await request('/git/ref/heads/main',token);
+      const head=branch.object?.sha;
+      if (!/^[a-f0-9]{40}$/.test(head||'')) throw Error('Could not identify the current main branch.');
+      const [game,index,headCommit]=await Promise.all([
+        request('/contents/game.js?ref='+head,token),
+        request('/contents/index.html?ref='+head,token),
+        request('/git/commits/'+head,token)
+      ]);
+      phase='Checking render order';status(phase+'…');
+      const prepared=prepare(decode(game.content),decode(index.content));
+      if (prepared.alreadyInstalled) {
+        status('This lighting-order fix is already present. No changes needed.');
+        return;
+      }
+      if (!confirm('Apply lighting fix to the live game? Both files will update together in one GitHub commit. The old version can be restored through Git history.')) {
+        status('Cancelled. No changes made.');return;
+      }
+      const treeSha=headCommit.tree?.sha;
+      if (!/^[a-f0-9]{40}$/.test(treeSha||''))throw Error('Unable to verify the repository tree.');
+      phase='Preparing one atomic GitHub commit';status(phase+'…');
+      const newTree=await request('/git/trees',token,{method:'POST',body:JSON.stringify({base_tree:treeSha,tree:[
+        {path:'game.js',mode:'100644',type:'blob',content:prepared.updatedGame},
+        {path:'index.html',mode:'100644',type:'blob',content:prepared.updatedIndex}
+      ]})});
+      const commit=await request('/git/commits',token,{method:'POST',body:JSON.stringify({message:'Draw Gary Eats shopkeepers above all window lighting',tree:newTree.sha,parents:[head]})});
+      phase='Publishing updated game';status(phase+'…');
+      await request('/git/refs/heads/main',token,{method:'PATCH',body:JSON.stringify({sha:commit.sha,force:false})});
+      status('Installed successfully! Commit '+commit.sha.slice(0,8)+'\nUpdated game.js and index.html together.\nGame script version: '+prepared.version+'\n\nWait for GitHub Pages to deploy, then refresh the game to test the storm.');
+    } catch (e) {
+      const hint=e instanceof TypeError?' Safari may have blocked a network request. Open in Safari without content blockers and try again.':'';
+      status('Stopped at: '+phase+'\n'+(e?.message||String(e))+hint+'\n\nIf an error occurred before publishing, your live game was not changed.');
+    } finally {btn.disabled=false;$('token').value=''}
+  });
+})();
+</script>
+</body>
+</html>
