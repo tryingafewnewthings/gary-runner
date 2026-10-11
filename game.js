@@ -390,7 +390,17 @@ let shutterMix = 0;
       paintWindowLight(b.keeper, x, y, w, h, seed || 0);
       ctx.restore();
     }
-    drawKeeper(b.keeper, x, y, w, h, phaseSeed);
+    // Shopkeepers are drawn after the lighting passes, so light stays behind them.
+  }
+
+  function drawKeepersAboveWindowLighting() {
+    if (!streetLoaded) return;
+    forEachStreetFront((plan, segment, y) => {
+      const left = shopByName(plan.left);
+      if (left >= 0) drawKeeper(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, false);
+      const right = shopByName(plan.right);
+      if (right >= 0) drawKeeper(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true);
+    });
   }
 
   function cobbleFor(kind) {
@@ -1847,8 +1857,9 @@ function updateRain(dt, advancing) {
       drawNightShopWindows();
     }
     drawStormWindowLift();
-drawStreetLight();
-drawShopShutters();
+    drawStreetLight();
+    drawKeepersAboveWindowLighting();
+    drawShopShutters();
 drawRainSplashes();
 
     if(state!=='menu'&&state!=='intro'){
