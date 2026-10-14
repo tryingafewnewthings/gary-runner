@@ -12,18 +12,19 @@
 </style>
 </head>
 <body>
-<header class="head"><div class="app"><div class="brand"><span class="brandmark">GE!</span><div><h1>Gary Eats! Studio <small style="font-size:11px">3.0</small></h1><div class="headsub">Visual calibration · connected to live game data</div></div></div><div class="headright"><span class="pill"><span class="dot" id="liveDot"></span><span id="liveState">Loading project…</span></span><a href="./" target="_blank" rel="noopener">Play game ↗</a></div></div></header>
+<header class="head"><div class="app"><div class="brand"><span class="brandmark">GE!</span><div><h1>Gary Eats! Studio <small style="font-size:11px">3.1</small></h1><div class="headsub">Visual calibration · connected to live game data</div></div></div><div class="headright"><span class="pill"><span class="dot" id="liveDot"></span><span id="liveState">Loading project…</span></span><a href="./" target="_blank" rel="noopener">Play game ↗</a></div></div></header>
 <main class="app" id="main">
-<section class="panel panelInner"><div class="topActions"><h2>What would you like to edit?</h2><button type="button" class="ghost" id="reload" title="Reload published game settings">↻ Refresh</button></div><div class="selectors"><label class="field"><span>Shop</span><select id="shop" aria-label="Selected shop"></select></label><label class="field"><span>Preview lighting</span><select id="environment"><option value="day">Daylight</option><option value="night">Night</option><option value="storm">Heavy rain</option></select></label></div><label class="field mobileWorkflow"><span>Edit one feature at a time</span><select id="mobileTool"><option value="keeper">Shopkeeper — position & animation</option><option value="clip">Green — keeper visibility mask</option><option value="pane">Blue — window lighting & anchor</option><option value="shutter">Amber — shop shutter</option><option value="door">Door light</option><option value="assets">Inspect live game assets</option><option value="game">Playtest actual game</option></select></label><div class="toolnav" id="tools" role="group" aria-label="Editing workflow"><button type="button" class="selected" data-tool="keeper">Shopkeeper</button><button type="button" data-tool="clip">Green · Visibility</button><button type="button" data-tool="pane">Blue · Window</button><button type="button" data-tool="shutter">Amber · Shutter</button><button type="button" data-tool="door">Door light</button><button type="button" data-tool="assets">Assets</button><button type="button" data-tool="game">Playtest</button></div></section>
-<div class="workspace" id="editWorkspace"><section class="panel previewPanel"><div class="previewHead"><h2 id="previewTitle">Shop preview</h2><span class="badge" id="previewBadge">89 × 236 game units</span></div><div class="previewHost"><canvas id="preview" width="356" height="944" aria-label="Shop visual editor; drag or resize selected object"></canvas></div><div class="previewControls"><label class="check"><input type="checkbox" id="showGuides" checked> Show editing guide</label><label class="check"><input type="checkbox" id="fullSprite"> Show complete keeper</label><div class="row" style="flex:0 0 auto"><button type="button" class="ghost" id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel" class="tiny muted">100%</span><button type="button" class="ghost" id="zoomIn" aria-label="Zoom in">+</button></div></div><div class="status numbers" id="positionReadout">Character position: —</div><p class="helper" id="canvasHint">Drag the character to reposition it. Drag the gold handle to resize.</p><details class="helpdetails" style="width:100%"><summary>What do the coloured regions do?</summary><p><span class="guide"><i class="swatch"></i> Green</span> masks which parts of the keeper sprite are visible. <span class="guide"><i class="swatch blue"></i> Blue</span> is the window's reference for keeper placement, glass sheen and night lighting. <span class="guide"><i class="swatch amber"></i> Amber</span> covers the shutter. <span class="guide"><i class="swatch red"></i> Red</span> covers the door's darkening region. The boxes do not alter the shop artwork or obstacle collisions.</p></details></section>
-<section class="panel inspector"><div class="inspector-head"><h2 id="inspectorTitle">Shopkeeper</h2><button type="button" class="subtle" id="revert" title="Restore selected setting to last published values">Reset to published</button></div><p class="explainer" id="inspectorHelp"></p><div class="controlGroup" id="keeperControls"><div class="fields"><label class="field"><span>Left / right (px)</span><input type="number" step="0.25" id="offsetX"></label><label class="field"><span>Up / down (px)</span><input type="number" step="0.25" id="offsetY"></label></div><label class="field"><span>Character size: <strong id="sizeValue">1.00×</strong></span><input type="range" id="scale" min="0.25" max="2.5" step="0.01"></label><div class="row"><button type="button" id="smaller">− Smaller</button><button type="button" id="larger">+ Larger</button></div><label class="field"><span>Idle movement: <strong id="idleValue">1.0×</strong></span><input type="range" id="idleAmount" min="0" max="3" step="0.05"></label><label class="field"><span>Cheer movement: <strong id="cheerValue">1.0×</strong></span><input type="range" id="cheerAmount" min="0" max="3" step="0.05"></label><div class="row"><button type="button" class="primary" id="playMotion">▶ Preview animation</button><label class="check"><input type="checkbox" id="garyNear"> Gary approaching</label></div><small>Uses the same sizing and sine-motion formulas as the runner, with a simplified approach preview.</small></div>
-<div class="controlGroup hidden" id="rectControls"><div class="fields"><label class="field"><span>X</span><input type="number" id="rectX" step="0.25"></label><label class="field"><span>Y</span><input type="number" id="rectY" step="0.25"></label><label class="field"><span>Width</span><input type="number" id="rectW" step="0.25" min="1"></label><label class="field"><span>Height</span><input type="number" id="rectH" step="0.25" min="1"></label></div><label class="check hidden" id="lockRow"><input type="checkbox" id="lockKeeper" checked> Keep shopkeeper visually fixed when changing this box</label><div class="row hidden" id="clipCopyRow"><button type="button" id="copyWindow">Match blue window region</button></div><div class="row hidden" id="paneCopyRow"><button type="button" id="copyMask">Match green visibility region</button></div><div class="controlGroup hidden" id="shutterExtra"><label class="field"><span>Shutter closing duration (seconds)</span><input type="number" id="duration" min="0.35" max="3.5" step="0.05"></label><label class="field"><span>Closing preview: <strong id="shutterValue">0%</strong></span><input type="range" id="shutterProgress" min="0" max="100" value="0"></label></div></div>
-<div class="divider"></div><p class="status" id="sourceNote"></p><div class="status" id="hint"></div></section></div>
+<section class="panel panelInner"><div class="topActions"><h2>What would you like to edit?</h2><button type="button" class="ghost" id="reload" title="Reload published game settings">↻ Refresh</button></div><div class="selectors"><label class="field"><span>Shop</span><select id="shop" aria-label="Selected shop"></select></label><label class="field"><span>Preview lighting</span><select id="environment"><option value="day">Daylight</option><option value="night">Night</option><option value="storm">Heavy rain</option></select></label></div><label class="field mobileWorkflow"><span>Edit one feature at a time</span><select id="mobileTool"><option value="keeper">Shopkeeper — position & animation</option><option value="clip">Green — keeper visibility mask</option><option value="anchor">Gold — keeper anchor</option><option value="pane">Blue — window lighting only</option><option value="shutter">Amber — shop shutter</option><option value="door">Door light</option><option value="assets">Inspect live game assets</option><option value="game">Playtest actual game</option></select></label><div class="toolnav" id="tools" role="group" aria-label="Editing workflow"><button type="button" class="selected" data-tool="keeper">Shopkeeper</button><button type="button" data-tool="clip">Green · Visibility</button><button type="button" data-tool="anchor">Gold · Anchor</button><button type="button" data-tool="pane">Blue · Lighting</button><button type="button" data-tool="shutter">Amber · Shutter</button><button type="button" data-tool="door">Door light</button><button type="button" data-tool="assets">Assets</button><button type="button" data-tool="game">Playtest</button></div></section>
+<div class="workspace" id="editWorkspace"><section class="panel previewPanel"><div class="previewHead"><h2 id="previewTitle">Shop preview</h2><span class="badge" id="previewBadge">89 × 236 game units</span></div><div class="previewHost"><canvas id="preview" width="356" height="944" aria-label="Shop visual editor; drag or resize selected object"></canvas></div><div class="previewControls"><label class="check"><input type="checkbox" id="showGuides" checked> Show editing guide</label><label class="check"><input type="checkbox" id="fullSprite"> Show complete keeper</label><div class="row" style="flex:0 0 auto"><button type="button" class="ghost" id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel" class="tiny muted">100%</span><button type="button" class="ghost" id="zoomIn" aria-label="Zoom in">+</button></div></div><div class="status numbers" id="positionReadout">Character position: —</div><p class="helper" id="canvasHint">Drag the character to reposition it. Drag the gold handle to resize.</p><details class="helpdetails" style="width:100%"><summary>What do the coloured regions do?</summary><p><span class="guide"><i class="swatch"></i> Green</span> masks which parts of the keeper sprite are visible. <span class="guide"><i class="swatch blue"></i> Blue</span> controls the window light and glass sheen only. <span class="guide"><i class="swatch" style="background:#f7d16b"></i> Gold</span> is the keeper's independent anchor and base size. <span class="guide"><i class="swatch amber"></i> Amber</span> covers the shutter. <span class="guide"><i class="swatch red"></i> Red</span> covers the door's darkening region. The boxes do not alter the shop artwork or obstacle collisions.</p></details></section>
+<section class="panel inspector"><div class="inspector-head"><h2 id="inspectorTitle">Shopkeeper</h2><button type="button" class="subtle" id="revert" title="Restore selected setting to last published values">Reset to published</button></div><p class="explainer" id="inspectorHelp"></p><div class="controlGroup" id="keeperControls"><div class="fields"><label class="field"><span>Left / right (px)</span><input type="number" step="0.25" id="offsetX"></label><label class="field"><span>Up / down (px)</span><input type="number" step="0.25" id="offsetY"></label></div><label class="field"><span>Character size: <strong id="sizeValue">1.00×</strong></span><input type="range" id="scale" min="0.25" max="2.5" step="0.01"></label><div class="row"><button type="button" id="smaller">− Smaller</button><button type="button" id="larger">+ Larger</button></div><label class="field"><span>Idle movement: <strong id="idleValue">1.0×</strong></span><input type="range" id="idleAmount" min="0" max="3" step="0.05"></label><label class="field"><span>Cheer movement: <strong id="cheerValue">1.0×</strong></span><input type="range" id="cheerAmount" min="0" max="3" step="0.05"></label><div class="row"><button type="button" class="primary" id="playMotion">▶ Preview animation</button><label class="check"><input type="checkbox" id="garyNear"> Gary approaching</label></div><small>Keeper movement is independent of the blue lighting rectangle. The gold anchor controls its base size and placement.</small></div>
+<div class="controlGroup hidden" id="rectControls"><div class="fields"><label class="field"><span>X</span><input type="number" id="rectX" step="0.25"></label><label class="field"><span>Y</span><input type="number" id="rectY" step="0.25"></label><label class="field"><span>Width</span><input type="number" id="rectW" step="0.25" min="1"></label><label class="field"><span>Height</span><input type="number" id="rectH" step="0.25" min="1"></label></div><div class="row hidden" id="clipCopyRow"><button type="button" id="copyWindow">Match blue window region</button></div><div class="row hidden" id="paneCopyRow"><button type="button" id="copyMask">Match green visibility region</button></div><div class="controlGroup hidden" id="shutterExtra"><label class="field"><span>Shutter closing duration (seconds)</span><input type="number" id="duration" min="0.35" max="3.5" step="0.05"></label><label class="field"><span>Closing preview: <strong id="shutterValue">0%</strong></span><input type="range" id="shutterProgress" min="0" max="100" value="0"></label></div></div>
+<div class="divider"></div><p class="status" id="sourceNote"></p><div class="row hidden" id="anchorSetup"><button type="button" class="primary" id="openAnchorSetup">Enable independent keeper anchors · once</button></div><div class="status" id="hint"></div></section></div>
 <section class="panel panelInner hidden" id="assetsWorkspace"><div class="topActions"><h2>Current game assets</h2><span class="badge">Read-only · source-defined</span></div><p class="helper" style="margin-bottom:12px">Loaded from the active <code>game-data.js</code>, not a sample library. Sprite replacements and atlas cropping need separate engine support.</p><label class="field"><span>Filter</span><select id="assetFilter"><option value="all">All active assets</option><option value="shops">Shops and keepers</option><option value="props">Street props</option><option value="items">Foods and hazards</option><option value="ground">Cobblestones</option><option value="gary">Gary's animations</option></select></label><div id="assetList" class="assetlist" style="margin-top:12px"></div></section>
 <section class="panel panelInner hidden" id="gameWorkspace"><div class="topActions"><h2>Actual game — playtest</h2><a href="./?rain=1" target="_blank" rel="noopener">Open full-screen ↗</a></div><p class="helper" style="margin-bottom:12px">This is the deployed game, not a simulated scene. Publish settings first, then reload this preview to test them.</p><div class="row" style="margin-bottom:10px"><button type="button" id="reloadPlaytest">↻ Reload game</button></div><iframe id="playFrame" title="Playable Gary Eats! runner" loading="lazy" src="about:blank"></iframe></section>
 </main>
 <div class="bottomBar"><div class="bottomInner"><span class="pill" id="draftState">Loading…</span><div class="actions"><button type="button" class="subtle" id="undo" title="Undo last edit">↶ Undo</button><button type="button" class="subtle" id="redo" title="Redo last edit">↷ Redo</button><button type="button" class="primary" id="openPublish" disabled>Publish changes</button></div></div></div>
 <dialog id="publishDialog" aria-labelledby="publishTitle"><div class="modal"><div class="modalhead"><h2 id="publishTitle">Publish to Gary Eats!</h2><button type="button" class="ghost" id="closePublish" aria-label="Close publishing window">✕</button></div><p class="helper">Your changes stay local until you publish. Only edited settings are committed to <code>gary-game-config.json</code>; game logic and image files are untouched.</p><div class="changes" id="changeSummary">No changes selected.</div><label class="field"><span>GitHub access token (this session only)</span><input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label><small>Kept only in this tab's memory. Never stored in draft files or localStorage.</small><div class="row"><button type="button" id="exportBackup">Download draft backup</button><button type="button" class="primary" id="doPublish">Confirm & publish</button></div><div class="modalStatus" id="publishMessage" role="status">Ready when you are.</div></div></dialog>
+<dialog id="anchorDialog" aria-labelledby="anchorTitle"><div class="modal"><div class="modalhead"><h2 id="anchorTitle">Separate keeper anchors from lighting</h2><button type="button" class="ghost" id="closeAnchorSetup">✕</button></div><p class="helper">One-time installation: captures the current position and size of all six shopkeepers, then updates the game engine, browser cache version and configuration in <strong>one atomic GitHub commit</strong>. Shutters and unrelated gameplay remain unchanged. The new gold anchor does not move when you change the blue light.</p><p class="helper">Publish or export any unfinished draft first. GitHub history allows rollback.</p><label class="field"><span>GitHub access token (this session only)</span><input id="anchorToken" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label><div class="row"><button type="button" class="primary" id="installAnchors">Install independent anchor bridge</button></div><div class="modalStatus" id="anchorStatus" role="status">No changes yet.</div></div></dialog>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -37,26 +38,31 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const round=n=>Math.round(n*1000)/1000;
 const equal=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
+const validAnchor=r=>r&&['x','y','w','h'].every(k=>Number.isFinite(r[k]))&&r.x>=-89&&r.x<=178&&r.y>=-236&&r.y<=472&&r.w>0&&r.w<=178&&r.h>0&&r.h<=472;
+const clampAnchor=r=>({x:round(clamp(Number(r.x)||0,-89,178)),y:round(clamp(Number(r.y)||0,-236,472)),w:round(clamp(Number(r.w)||1,1,178)),h:round(clamp(Number(r.h)||1,1,472))});
 const validRect=r=>r&&['x','y','w','h'].every(k=>Number.isFinite(r[k]))&&r.x>=0&&r.y>=0&&r.w>0&&r.h>0&&r.x+r.w<=89.01&&r.y+r.h<=236.01;
 function fitRect(r){const w=clamp(Number(r.w)||1,1,89),h=clamp(Number(r.h)||1,1,236);return{x:round(clamp(Number(r.x)||0,0,89-w)),y:round(clamp(Number(r.y)||0,0,236-h)),w:round(w),h:round(h)}}
 let source=null,engine='',loaded=null,draft=null,atlas=null,tool='keeper',selected=0;
-let keeperBridge=false,windowBridge=false,shutterBridge=false,playing=false,clock=0,lastTick=0,frame=0,shutterPct=0;
+let keeperBridge=false,windowBridge=false,shutterBridge=false,anchorBridge=false,initialAnchors={},playing=false,clock=0,lastTick=0,frame=0,shutterPct=0;
 let conflictBase=null,stateHistory=[],historyIndex=-1,dirty=[],drag=null,activePointers=new Map(),pinch=null,zoom=1,changeTimer=0,working=false,accessToken='';
 const message=(s,error=false)=>{$('hint').textContent=s;$('hint').className='status'+(error?' bad':'')};
 const pubMessage=(s,kind='')=>{$('publishMessage').textContent=s;$('publishMessage').className='modalStatus '+kind};
 const name=()=>NAMES[selected];
 const initialPane=(i=selected)=>{const p=source.panes[i];return{x:round(p.x*89),y:round(p.y*236),w:round(p.w*89),h:round(p.h*236)}};
 const pane=(i=selected)=>draft.shopWindowPanes?.[NAMES[i]]||initialPane(i);
+function deriveLegacyAnchor(i,config){const pn=config.shopWindowPanes?.[NAMES[i]]||initialPane(i),src=source.keepers[i],scale=BASE_SIZES[i];const fitH=pn.h*.96*scale,fitW=pn.w*.86*scale;let h=fitH,w=h*src.w/src.h;if(w>fitW){w=fitW;h=w*src.h/src.w;}return{x:round(pn.x+pn.w*.5-w*.5),y:round(pn.y+pn.h-1+pn.h*BASE_DROPS[i]-h),w:round(w),h:round(h)};}
+const anchor=(i=selected)=>draft.shopKeeperAnchors?.[NAMES[i]]||initialAnchors[NAMES[i]];
 const kset=(i=selected)=>draft.shopKeepers[NAMES[i]];
 const mask=(i=selected)=>kset(i).clip||pane(i);
 const closure=(i=selected)=>draft.shopClosures[NAMES[i]];
-const selectRect=()=>tool==='clip'?mask():tool==='pane'?pane():tool==='shutter'?closure().shutter:tool==='door'?closure().doorLight:null;
+const selectRect=()=>tool==='anchor'?anchor():tool==='clip'?mask():tool==='pane'?pane():tool==='shutter'?closure().shutter:tool==='door'?closure().doorLight:null;
 function normalKeeper(k){return {...DEFAULT_KEEPER,...(k||{})}}
 function effectiveKeeper(k){const {clip,...rest}=normalKeeper(k);return rest}
 function changeList(){const out=[];for(const n of NAMES){
  if(!equal(effectiveKeeper(draft.shopKeepers[n]),effectiveKeeper(loaded.shopKeepers?.[n])))out.push('keeper:'+n);
  if(!equal(draft.shopKeepers[n]?.clip,loaded.shopKeepers?.[n]?.clip))out.push('clip:'+n);
  if(!equal(draft.shopWindowPanes?.[n],loaded.shopWindowPanes?.[n]))out.push('pane:'+n);
+ if(!equal(draft.shopKeeperAnchors?.[n],loaded.shopKeeperAnchors?.[n]))out.push('anchor:'+n);
  if(!equal(draft.shopClosures[n],loaded.shopClosures?.[n]))out.push('closure:'+n);
  }return out;}
 function autoSave(){try{if(dirty.length)localStorage.setItem(DRAFT_KEY,JSON.stringify({base:loaded,draft,at:Date.now()}));else localStorage.removeItem(DRAFT_KEY);}catch(e){message('Local draft storage is unavailable. Export a draft backup before closing Safari.',true)}}
@@ -66,22 +72,18 @@ function snapshot(){const s=JSON.stringify(draft);if(stateHistory[historyIndex]=
 function applyChange(){snapshot();refreshInputs();draw();}
 function undoRedo(direction){const next=historyIndex+direction;if(next<0||next>=stateHistory.length)return;historyIndex=next;draft=JSON.parse(stateHistory[next]);updateSaveState();refreshInputs();draw();}
 $('undo').onclick=()=>undoRedo(-1);$('redo').onclick=()=>undoRedo(1);
-function keeperPosition(i=selected,time=clock){const k=kset(i),p=pane(i),src=source.keepers[i];const seed=i*2.1+.4,phase=time*2.1+seed;
+function keeperPosition(i=selected,time=clock){const k=kset(i),a=anchor(i);if(!a)return{x:0,y:0,w:1,h:1,breathe:1};const seed=i*2.1+.4,phase=time*2.1+seed;
  const cheer=$('garyNear').checked?Math.max(0,Math.sin(time*10))*k.cheerAmount:0;
- const bob=Math.sin(phase)*.7*k.idleAmount-cheer*5;
- const breathe=1+Math.sin(phase*.9+.8)*.012*k.idleAmount+cheer*.06;
+ const bob=Math.sin(phase)*.7*k.idleAmount-cheer*5, breathe=1+Math.sin(phase*.9+.8)*.012*k.idleAmount+cheer*.06;
  const shift=Math.sin(time*.75+seed*1.7)*.6*k.idleAmount;
- const scale=BASE_SIZES[i]*k.scale,fitH=p.h*.96*scale,fitW=p.w*.86*scale;
- let h=fitH,w=h*src.w/src.h;if(w>fitW){w=fitW;h=w*src.h/src.w}
- return{x:p.x+p.w*.5+shift+k.offsetX,y:p.y+p.h-1+bob+p.h*BASE_DROPS[i]+k.offsetY,w,h,breathe};}
+ return{x:a.x+a.w*.5+shift+k.offsetX,y:a.y+a.h+bob+k.offsetY,w:a.w*k.scale,h:a.h*k.scale,breathe};}
 function frozenPosition(i=selected){return keeperPosition(i,0)}
-function keepStationary(oldPane,nextPane,before){const i=selected,oldFit=Math.min(oldPane.h*.96,oldPane.w*.86*source.keepers[i].h/source.keepers[i].w),newFit=Math.min(nextPane.h*.96,nextPane.w*.86*source.keepers[i].h/source.keepers[i].w);const k=clone(before);
- k.offsetX=round(clamp(before.offsetX+(oldPane.x+oldPane.w*.5)-(nextPane.x+nextPane.w*.5),-89,89));
- k.offsetY=round(clamp(before.offsetY+(oldPane.y+oldPane.h*(1+BASE_DROPS[i]))-(nextPane.y+nextPane.h*(1+BASE_DROPS[i])),-236,236));
- k.scale=round(clamp(before.scale*oldFit/Math.max(.001,newFit),.25,2.5));draft.shopKeepers[name()]={...k,clip:before.clip};}
-function changeRegion(rect,oldPane=null,oldKeeper=null){const r=fitRect(rect),n=name();if(tool==='clip')draft.shopKeepers[n]={...kset(),clip:r};else if(tool==='pane'){
- if($('lockKeeper').checked)keepStationary(oldPane||pane(),r,oldKeeper||kset());draft.shopWindowPanes[n]=r;
- }else if(tool==='shutter')closure().shutter=r;else if(tool==='door')closure().doorLight=r;}
+function changeRegion(rect){const n=name();if(tool==='anchor'){
+ draft.shopKeeperAnchors||={};draft.shopKeeperAnchors[n]=clampAnchor(rect);
+ }else if(tool==='clip'){draft.shopKeepers[n]={...kset(),clip:fitRect(rect)};
+ }else if(tool==='pane'){draft.shopWindowPanes[n]=fitRect(rect);
+ }else if(tool==='shutter'){closure().shutter=fitRect(rect);
+ }else if(tool==='door'){closure().doorLight=fitRect(rect);}}
 function sourceRegistry(){const B=BUILDINGS,K=KEEPERS,P=SHOP_PANES;
  if(!Array.isArray(B)||B.length!==6||!Array.isArray(K)||K.length!==6||!Array.isArray(P)||P.length!==6||B.some((x,i)=>x.name!==NAMES[i]))throw Error('Shop geometry has changed in game-data.js; editor stopped to avoid corrupting it.');
  source={buildings:clone(B),keepers:clone(K),panes:clone(P),atlas:clone(STREET_ATLAS),details:clone(DETAILS),items:clone(ITEMS),ground:clone(COBBLE_KINDS),gary:clone(GARY_SPRITES)};
@@ -91,11 +93,11 @@ async function initialise(){try{
  await loadGameData();sourceRegistry();const [engineRes,configRes]=await Promise.all([fetch('./game.js?studio='+Date.now(),{cache:'no-store'}),fetch('./gary-game-config.json?studio='+Date.now(),{cache:'no-store'})]);
  if(!engineRes.ok||!configRes.ok)throw Error('Could not read live game code or configuration.');engine=await engineRes.text();loaded=await configRes.json();
  if(loaded.schema!=='gary-eats-game-config-v1'||loaded.world?.width!==360||loaded.world?.height!==640)throw Error('Unexpected published config version or canvas dimensions.');
- keeperBridge=engine.includes('applyPublishedKeepers(config)')&&engine.includes('spec.clip');windowBridge=engine.includes('config.shopWindowPanes')&&engine.includes('SHOP_PANES[i]');shutterBridge=engine.includes('shopClosureSpecs')&&engine.includes('config.shopClosures');
- draft=clone(loaded);conflictBase=clone(loaded);draft.shopKeepers||={};draft.shopClosures||={};draft.shopWindowPanes||={};
+ keeperBridge=engine.includes('applyPublishedKeepers(config)')&&engine.includes('spec.clip');anchorBridge=engine.includes('shopKeeperAnchors')&&engine.includes('config.shopKeeperAnchors');windowBridge=engine.includes('config.shopWindowPanes')&&engine.includes('SHOP_PANES[i]');shutterBridge=engine.includes('shopClosureSpecs')&&engine.includes('config.shopClosures');
+ draft=clone(loaded);conflictBase=clone(loaded);draft.shopKeepers||={};draft.shopClosures||={};draft.shopWindowPanes||={};draft.shopKeeperAnchors||={};initialAnchors=Object.fromEntries(NAMES.map((n,i)=>[n,loaded.shopKeeperAnchors?.[n]||deriveLegacyAnchor(i,loaded)]));
  for(let i=0;i<6;i++){const n=NAMES[i];draft.shopKeepers[n]=normalKeeper(draft.shopKeepers[n]);draft.shopClosures[n]||={shutter:initialPane(i),doorLight:null,duration:1};}
  try{const entry=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');if(entry?.draft?.schema===loaded.schema&&entry?.draft?.world?.width===360&&entry?.draft?.world?.height===640&&entry?.base){
- const savedDiff=!equal(entry.draft,entry.base);if(savedDiff&&confirm('You have an unpublished draft saved on this iPhone. Restore your edits?')){conflictBase=clone(entry.base);for(const n of NAMES){if(entry.draft.shopKeepers?.[n])draft.shopKeepers[n]=normalKeeper(entry.draft.shopKeepers[n]);if(entry.draft.shopClosures?.[n])draft.shopClosures[n]=clone(entry.draft.shopClosures[n]);if(entry.draft.shopWindowPanes?.[n])draft.shopWindowPanes[n]=clone(entry.draft.shopWindowPanes[n]);else delete draft.shopWindowPanes[n]}
+ const savedDiff=!equal(entry.draft,entry.base);if(savedDiff&&confirm('You have an unpublished draft saved on this iPhone. Restore your edits?')){conflictBase=clone(entry.base);for(const n of NAMES){if(entry.draft.shopKeepers?.[n])draft.shopKeepers[n]=normalKeeper(entry.draft.shopKeepers[n]);if(entry.draft.shopClosures?.[n])draft.shopClosures[n]=clone(entry.draft.shopClosures[n]);if(entry.draft.shopWindowPanes?.[n])draft.shopWindowPanes[n]=clone(entry.draft.shopWindowPanes[n]);else delete draft.shopWindowPanes[n];if(entry.draft.shopKeeperAnchors?.[n])draft.shopKeeperAnchors[n]=clone(entry.draft.shopKeeperAnchors[n]);else delete draft.shopKeeperAnchors[n]}
  if(!equal(entry.base,loaded))message('Restored draft. Published game settings have changed since it was created; publishing will check for conflicts.',true);}
  else if(!savedDiff)localStorage.removeItem(DRAFT_KEY);
  }}catch(e){message('Could not restore local draft. Published settings loaded.',true)}
@@ -103,26 +105,26 @@ async function initialise(){try{
  $('shop').textContent='';for(const n of NAMES)$('shop').add(new Option(n,n));$('shop').value=name();
  stateHistory=[JSON.stringify(draft)];historyIndex=0;
  $('liveDot').classList.add('ok');$('liveState').textContent='Live source connected';
- $('hint').textContent=`Game code and published calibration loaded. Keeper ${keeperBridge?'ready':'not connected'} · Window ${windowBridge?'ready':'not connected'} · Shutter ${shutterBridge?'ready':'not connected'}.`;
+ $('hint').textContent=`Game code and published calibration loaded. Keeper ${keeperBridge?'ready':'not connected'} · Anchor ${anchorBridge?'independent':'needs one-time upgrade'} · Window ${windowBridge?'ready':'not connected'} · Shutter ${shutterBridge?'ready':'not connected'}.`;
  updateSaveState();setTool('keeper');
  }catch(e){$('liveState').textContent='Loading failed';message(e.message,true);$('openPublish').disabled=true;}}
 function setTool(next){if(!source||!draft)return;tool=next;$('mobileTool').value=next;stopMotion();shutterPct=0;$('shutterProgress').value='0';$('shutterValue').textContent='0%';
  document.querySelectorAll('#tools button').forEach(b=>{b.classList.toggle('selected',b.dataset.tool===tool);b.setAttribute('aria-pressed',String(b.dataset.tool===tool))});
  $('editWorkspace').classList.toggle('hidden',next==='assets'||next==='game');$('assetsWorkspace').classList.toggle('hidden',next!=='assets');$('gameWorkspace').classList.toggle('hidden',next!=='game');
- $('keeperControls').classList.toggle('hidden',next!=='keeper');$('rectControls').classList.toggle('hidden',!['clip','pane','shutter','door'].includes(next));$('lockRow').classList.toggle('hidden',next!=='pane');$('clipCopyRow').classList.toggle('hidden',next!=='clip');$('paneCopyRow').classList.toggle('hidden',next!=='pane');$('shutterExtra').classList.toggle('hidden',next!=='shutter');
+ $('keeperControls').classList.toggle('hidden',next!=='keeper');$('rectControls').classList.toggle('hidden',!['anchor','clip','pane','shutter','door'].includes(next));$('anchorSetup').classList.toggle('hidden',anchorBridge); $('clipCopyRow').classList.toggle('hidden',next!=='clip');$('paneCopyRow').classList.toggle('hidden',next!=='pane');$('shutterExtra').classList.toggle('hidden',next!=='shutter');
  $('revert').classList.toggle('hidden',next==='assets'||next==='game');
- const titles={keeper:'Shopkeeper position & animation',clip:'Green — keeper visibility',pane:'Blue — window & lighting',shutter:'Amber — shutter',door:'Door window light',assets:'Game asset registry',game:'Playtest'};
+ const titles={keeper:'Shopkeeper position & animation',anchor:'Gold — keeper anchor',clip:'Green — keeper visibility',pane:'Blue — window lighting only',shutter:'Amber — shutter',door:'Door window light',assets:'Game asset registry',game:'Playtest'};
  $('inspectorTitle').textContent=titles[next];$('previewTitle').textContent=titles[next];
- const detail={keeper:'Move and resize the character without changing the window or shutter. The actual game always clips it to the green region.',clip:'Green is a visibility mask: only the keeper sprite is drawn inside it. It does not move the character, light the window or affect collisions.',pane:'Blue defines the window used for keeper fitting/anchoring, glass sheen and interior night light. Keep “visually fixed” enabled to compensate the keeper when moving this region.',shutter:'Amber defines the shop-window shutter. It starts fully open for a clear view of the keeper. Drag the slider to see it close.',door:'Red is the separate rectangle that darkens the glazed door as the shop shuts. It is unrelated to the keeper mask.'};
+ const detail={keeper:'Move and resize the character without changing the window or shutter. The actual game always clips it to the green region.',clip:'Green is a visibility mask: only the keeper sprite is drawn inside it. It does not move the character, light the window or affect collisions.',anchor:'Gold is the keeper sprite’s own independent base position and size. Moving it never changes window lighting, the green mask or the shutter.',pane:'Blue is the window lighting and glass sheen area only. The keeper uses a separate gold anchor; moving this blue region cannot reposition the character.',shutter:'Amber defines the shop-window shutter. It starts fully open for a clear view of the keeper. Drag the slider to see it close.',door:'Red is the separate rectangle that darkens the glazed door as the shop shuts. It is unrelated to the keeper mask.'};
  if(detail[next])$('inspectorHelp').textContent=detail[next];
- $('canvasHint').textContent=next==='keeper'?'Drag to move the keeper. Drag the gold corner to resize; two-finger pinch also works.':next==='clip'||next==='pane'||next==='shutter'||next==='door'?'Drag inside the highlighted rectangle to move it; drag its bottom-right handle to resize.':'Preview from the current game source.';
+ $('canvasHint').textContent=next==='keeper'?'Drag to move the keeper. Drag the gold corner to resize; two-finger pinch also works.':next==='anchor'||next==='clip'||next==='pane'||next==='shutter'||next==='door'?'Drag inside the highlighted rectangle to move it; drag its bottom-right handle to resize.':'Preview from the current game source.';
  if(next==='assets')renderAssets();if(next==='game'&&$('playFrame').src.endsWith('about:blank'))loadPlaytest();
  refreshInputs();draw();}
 function refreshInputs(){if(!draft||!source)return;const k=kset();for(const field of ['offsetX','offsetY','scale','idleAmount','cheerAmount'])$(field).value=k[field];
  $('sizeValue').textContent=Number(k.scale).toFixed(2)+'×';$('idleValue').textContent=Number(k.idleAmount).toFixed(1)+'×';$('cheerValue').textContent=Number(k.cheerAmount).toFixed(1)+'×';
  const r=selectRect();if(r){for(const [id,v] of [['rectX','x'],['rectY','y'],['rectW','w'],['rectH','h']])$(id).value=round(r[v]);}
  $('duration').value=closure().duration||1;
- $('sourceNote').textContent=tool==='pane'?`Reference: ${draft.shopWindowPanes?.[name()]?'published override / local draft':'game-data.js SHOP_PANES'} · Bridge: ${windowBridge?'ready':'not installed'}`:tool==='clip'?`Current mask: ${k.clip?'custom green region':'fallback to blue window'} · Keeper bridge: ${keeperBridge?'ready':'not installed'}`:tool==='keeper'?`Sprite crop: high_street_sprites.webp · Keeper bridge: ${keeperBridge?'ready':'not installed'}`:tool==='shutter'||tool==='door'?`Shutter settings from gary-game-config.json · Bridge: ${shutterBridge?'ready':'not installed'}`:'';
+ $('sourceNote').textContent=tool==='anchor'?`Keeper base rectangle · Bridge: ${anchorBridge?'independent and active':'one-time upgrade needed'}`:tool==='pane'?`Lighting region: ${draft.shopWindowPanes?.[name()]?'published override / local draft':'game-data.js SHOP_PANES'} · Bridge: ${windowBridge?'ready':'not installed'}`:tool==='clip'?`Current mask: ${k.clip?'custom green region':'fallback to blue window'} · Keeper bridge: ${keeperBridge?'ready':'not installed'}`:tool==='keeper'?`Sprite crop: high_street_sprites.webp · Keeper bridge: ${keeperBridge?'ready':'not installed'}`:tool==='shutter'||tool==='door'?`Shutter settings from gary-game-config.json · Bridge: ${shutterBridge?'ready':'not installed'}`:'';
  const p=frozenPosition();$('positionReadout').textContent=`Keeper centre X ${round(p.x)} · baseline Y ${round(p.y)} · sprite ${round(p.w)} × ${round(p.h)} px`;
 }
 function outline(ctx,r,col,strong=true){if(!r)return;ctx.save();ctx.strokeStyle=col;ctx.lineWidth=strong?.72:.25;ctx.setLineDash(strong?[]:[1.1,1.3]);ctx.strokeRect(r.x+.2,r.y+.2,r.w-.4,r.h-.4);if(strong){ctx.fillStyle=col;ctx.fillRect(r.x+r.w-2.3,r.y+r.h-2.3,4.7,4.7)}ctx.restore()}
@@ -136,6 +138,7 @@ function draw(){if(!source||!draft)return;const ctx=$('preview').getContext('2d'
  if($('showGuides').checked){
  if(tool==='keeper'){const pos=keeperPosition(),x=pos.x-pos.w/2,y=pos.y-pos.h;ctx.strokeStyle='#ffe0a1';ctx.lineWidth=.45;ctx.strokeRect(x,y,pos.w,pos.h);ctx.fillStyle='#ffe0a1';ctx.fillRect(x+pos.w-2,y+pos.h-2,4.5,4.5);outline(ctx,mask(),'#72dfb7',false)}
  if(tool==='clip')outline(ctx,mask(),'#72dfb7');
+ if(tool==='anchor')outline(ctx,anchor(),'#f7d16b');
  if(tool==='pane')outline(ctx,pane(),'#75c7fa');
  if(tool==='shutter')outline(ctx,closure().shutter,'#ffca80');
  if(tool==='door'&&closure().doorLight)outline(ctx,closure().doorLight,'#fa9d9d');
@@ -159,6 +162,7 @@ $('environment').onchange=draw;$('showGuides').onchange=draw;$('fullSprite').onc
 document.querySelectorAll('#tools button').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));$('mobileTool').onchange=()=>setTool($('mobileTool').value);
 $('revert').onclick=()=>{if(!confirm('Reset only '+name()+' — '+$('inspectorTitle').textContent+' to the last published setting?'))return;const n=name();if(tool==='keeper'){draft.shopKeepers[n]={...normalKeeper(loaded.shopKeepers?.[n]),clip:kset().clip}}
  if(tool==='clip'){if(loaded.shopKeepers?.[n]?.clip)draft.shopKeepers[n].clip=clone(loaded.shopKeepers[n].clip);else delete draft.shopKeepers[n].clip}
+ else if(tool==='anchor'){if(loaded.shopKeeperAnchors?.[n])draft.shopKeeperAnchors[n]=clone(loaded.shopKeeperAnchors[n]);else delete draft.shopKeeperAnchors[n]}
  if(tool==='pane'){if(loaded.shopWindowPanes?.[n])draft.shopWindowPanes[n]=clone(loaded.shopWindowPanes[n]);else delete draft.shopWindowPanes[n]}
  if(tool==='shutter')draft.shopClosures[n].shutter=clone(loaded.shopClosures[n].shutter);
  if(tool==='door')draft.shopClosures[n].doorLight=clone(loaded.shopClosures[n].doorLight);
@@ -166,7 +170,7 @@ $('revert').onclick=()=>{if(!confirm('Reset only '+name()+' — '+$('inspectorTi
 $('zoomOut').onclick=()=>{zoom=clamp(zoom-.15,.65,1.55);setZoom()};$('zoomIn').onclick=()=>{zoom=clamp(zoom+.15,.65,1.55);setZoom()};
 function setZoom(){$('preview').style.width=(260*zoom)+'px';$('zoomLabel').textContent=Math.round(zoom*100)+'%'}
 const canvas=$('preview');function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*89,y:(e.clientY-r.top)/r.height*236}}
-function pointerStart(e){if(!draft||!['keeper','clip','pane','shutter','door'].includes(tool))return;activePointers.set(e.pointerId,point(e));const p=point(e);
+function pointerStart(e){if(!draft||!['keeper','anchor','clip','pane','shutter','door'].includes(tool))return;activePointers.set(e.pointerId,point(e));const p=point(e);
  if(activePointers.size===2&&tool==='keeper'){const ps=[...activePointers.values()];pinch={distance:Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y),scale:kset().scale};drag=null;return}
  if(activePointers.size>1)return;
  if(tool==='door'&&!closure().doorLight){closure().doorLight={x:66,y:161,w:14,h:40};applyChange()}
@@ -175,13 +179,13 @@ function pointerStart(e){if(!draft||!['keeper','clip','pane','shutter','door'].i
  const nearHandle=Math.abs(p.x-(box.x+box.w))<5&&Math.abs(p.y-(box.y+box.h))<6;
  const inside=p.x>=box.x-2&&p.x<=box.x+box.w+2&&p.y>=box.y-2&&p.y<=box.y+box.h+2;
  if(!nearHandle&&!inside)return;
- drag={p,tool,mode:nearHandle?'resize':'move',start:tool==='keeper'?clone(kset()):clone(box),basePane:tool==='pane'?clone(pane()):null,baseKeeper:tool==='pane'?clone(kset()):null};
+ drag={p,tool,mode:nearHandle?'resize':'move',start:tool==='keeper'?clone(kset()):clone(box)};
  try{canvas.setPointerCapture(e.pointerId)}catch{} }
 function pointerMove(e){if(!activePointers.has(e.pointerId))return;const p=point(e);activePointers.set(e.pointerId,p);
  if(pinch&&tool==='keeper'&&activePointers.size===2){const v=[...activePointers.values()],d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y);if(pinch.distance>0)kset().scale=round(clamp(pinch.scale*d/pinch.distance,.25,2.5));refreshInputs();draw();return}
  if(!drag)return;const dx=p.x-drag.p.x,dy=p.y-drag.p.y;
  if(drag.tool==='keeper'){if(drag.mode==='resize'){const anchor=keeperPosition();const span=anchor.h||1;kset().scale=round(clamp(drag.start.scale*(1+dy/span),.25,2.5))}else{kset().offsetX=round(clamp(drag.start.offsetX+dx,-89,89));kset().offsetY=round(clamp(drag.start.offsetY+dy,-236,236))}}
- else{const next={...drag.start};if(drag.mode==='resize'){next.w+=dx;next.h+=dy}else{next.x+=dx;next.y+=dy}changeRegion(next,drag.basePane,drag.baseKeeper)}
+ else{const next={...drag.start};if(drag.mode==='resize'){next.w+=dx;next.h+=dy}else{next.x+=dx;next.y+=dy}changeRegion(next)}
  refreshInputs();draw();}
 function pointerEnd(e){activePointers.delete(e.pointerId);if(pinch){if(activePointers.size<2){pinch=null;snapshot();}return}if(drag){drag=null;snapshot();refreshInputs();draw()}}
 canvas.addEventListener('pointerdown',pointerStart);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerEnd);canvas.addEventListener('pointercancel',pointerEnd);canvas.addEventListener('lostpointercapture',pointerEnd);
@@ -201,13 +205,13 @@ $('exportBackup').onclick=()=>draft&&exportFile('gary-eats-studio-draft.json',JS
 function encode(s){const bytes=new TextEncoder().encode(s);let r='';for(let i=0;i<bytes.length;i+=8192)r+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(r)}
 function decode(s){const b=atob(s.replace(/\s/g,''));return new TextDecoder().decode(Uint8Array.from(b,c=>c.charCodeAt(0)))}
 async function gh(path,options={}){if(!accessToken)throw Error('Enter a GitHub token to publish.');if(location.origin!=='https://tryingafewnewthings.github.io'||!location.pathname.startsWith('/gary-runner/'))throw Error('Open the studio from the official GitHub Pages URL before publishing.');let response;try{response=await fetch(API+path,{...options,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+accessToken,'X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})}})}catch(e){throw Error('Cannot reach GitHub: '+e.message)}let body;try{body=await response.json()}catch{throw Error('Unreadable GitHub response (HTTP '+response.status+')')}if(!response.ok)throw Error((body.message||'GitHub error')+' (HTTP '+response.status+')');return body}
-function validate(){if(draft.schema!=='gary-eats-game-config-v1'||draft.world?.width!==360||draft.world?.height!==640)throw Error('Configuration schema is not compatible with the game.');for(const n of NAMES){const k=draft.shopKeepers[n],c=draft.shopClosures[n];if(!['offsetX','offsetY','scale','idleAmount','cheerAmount'].every(p=>Number.isFinite(k[p])))throw Error(n+' has invalid keeper values');if(Math.abs(k.offsetX)>89||Math.abs(k.offsetY)>236||k.scale<.25||k.scale>2.5||k.idleAmount<0||k.idleAmount>3||k.cheerAmount<0||k.cheerAmount>3)throw Error(n+' keeper values exceed engine limits');if(k.clip&&!validRect(k.clip))throw Error(n+' green region is invalid');if(draft.shopWindowPanes[n]&&!validRect(draft.shopWindowPanes[n]))throw Error(n+' blue region is invalid');if(!validRect(c?.shutter)||c.doorLight&&!validRect(c.doorLight)||!Number.isFinite(c.duration)||c.duration<.35||c.duration>3.5)throw Error(n+' shutter/door region is invalid')}}
-function summarizeChanges(){const labels={keeper:'Shopkeeper',clip:'Green visibility',pane:'Blue window',closure:'Shutter / door'};return dirty.map(k=>{const [part,...rest]=k.split(':');return labels[part]+' — '+rest.join(':')})}
+function validate(){if(draft.schema!=='gary-eats-game-config-v1'||draft.world?.width!==360||draft.world?.height!==640)throw Error('Configuration schema is not compatible with the game.');for(const n of NAMES){const k=draft.shopKeepers[n],c=draft.shopClosures[n];if(!['offsetX','offsetY','scale','idleAmount','cheerAmount'].every(p=>Number.isFinite(k[p])))throw Error(n+' has invalid keeper values');if(Math.abs(k.offsetX)>89||Math.abs(k.offsetY)>236||k.scale<.25||k.scale>2.5||k.idleAmount<0||k.idleAmount>3||k.cheerAmount<0||k.cheerAmount>3)throw Error(n+' keeper values exceed engine limits');if(k.clip&&!validRect(k.clip))throw Error(n+' green region is invalid');if(draft.shopWindowPanes[n]&&!validRect(draft.shopWindowPanes[n]))throw Error(n+' blue region is invalid');if(draft.shopKeeperAnchors[n]&&!validAnchor(draft.shopKeeperAnchors[n]))throw Error(n+' gold anchor is invalid');if(!validRect(c?.shutter)||c.doorLight&&!validRect(c.doorLight)||!Number.isFinite(c.duration)||c.duration<.35||c.duration>3.5)throw Error(n+' shutter/door region is invalid')}}
+function summarizeChanges(){const labels={keeper:'Shopkeeper',anchor:'Gold keeper anchor',clip:'Green visibility',pane:'Blue window lighting',closure:'Shutter / door'};return dirty.map(k=>{const [part,...rest]=k.split(':');return labels[part]+' — '+rest.join(':')})}
 $('openPublish').onclick=()=>{if(!draft)return;const list=$('changeSummary');list.textContent='';for(const x of summarizeChanges()){const div=document.createElement('div');div.textContent='• '+x;list.append(div)}pubMessage('Ready to publish '+dirty.length+' edited setting'+(dirty.length===1?'':'s')+'.');$('publishDialog').showModal()};
 $('closePublish').onclick=()=>$('publishDialog').close();
 $('publishDialog').addEventListener('close',()=>{$('token').value='';accessToken=''}) ;
 $('doPublish').onclick=async()=>{if(working)return;working=true;$('doPublish').disabled=true;try{
- validate();if(dirty.some(d=>d.startsWith('pane:'))&&!windowBridge)throw Error('The game does not yet support editable blue windows. Install the window bridge before publishing these settings.');if(dirty.some(d=>d.startsWith('keeper:')||d.startsWith('clip:'))&&!keeperBridge)throw Error('The game does not support published shopkeeper settings.');if(dirty.some(d=>d.startsWith('closure:'))&&!shutterBridge)throw Error('The game does not support published shutters.');
+ validate();if(dirty.some(d=>d.startsWith('anchor:')||d.startsWith('pane:')||d.startsWith('keeper:'))&&!anchorBridge)throw Error('Install independent keeper anchors first using the gold upgrade button. Changes were not published.');if(dirty.some(d=>d.startsWith('pane:'))&&!windowBridge)throw Error('The game does not yet support editable blue windows. Install the window bridge before publishing these settings.');if(dirty.some(d=>d.startsWith('keeper:')||d.startsWith('clip:'))&&!keeperBridge)throw Error('The game does not support published shopkeeper settings.');if(dirty.some(d=>d.startsWith('closure:'))&&!shutterBridge)throw Error('The game does not support published shutters.');
  accessToken=$('token').value.trim();if(!accessToken)throw Error('Paste your GitHub fine-grained token.');
  pubMessage('Checking live settings and your access…');const fresh=await gh('/contents/gary-game-config.json'),latest=JSON.parse(decode(fresh.content));
  if(latest.schema!==loaded.schema||latest.world?.width!==360||latest.world?.height!==640)throw Error('Live game config format has changed. No edits published.');
@@ -215,19 +219,110 @@ $('doPublish').onclick=async()=>{if(working)return;working=true;$('doPublish').d
  for(const key of dirty){const [group,...rest]=key.split(':'),n=rest.join(':');let original,current;
  if(group==='keeper'){original=effectiveKeeper(conflictBase.shopKeepers?.[n]);current=effectiveKeeper(latest.shopKeepers?.[n])}
  else if(group==='clip'){original=conflictBase.shopKeepers?.[n]?.clip;current=latest.shopKeepers?.[n]?.clip}
+ else if(group==='anchor'){original=conflictBase.shopKeeperAnchors?.[n];current=latest.shopKeeperAnchors?.[n]}
  else if(group==='pane'){original=conflictBase.shopWindowPanes?.[n];current=latest.shopWindowPanes?.[n]}
  else{original=conflictBase.shopClosures?.[n];current=latest.shopClosures?.[n]}
  if(!equal(original,current))throw Error('Published settings for '+n+' changed since this editor opened. Refresh and review before publishing; no files were overwritten.');
  }
- const next=clone(latest);next.shopKeepers||={};next.shopWindowPanes||={};next.shopClosures||={};
+ const next=clone(latest);next.shopKeepers||={};next.shopWindowPanes||={};next.shopKeeperAnchors||={};next.shopClosures||={};
  for(const key of dirty){const [group,...rest]=key.split(':'),n=rest.join(':');if(group==='keeper')next.shopKeepers[n]={...normalKeeper(next.shopKeepers[n]),...effectiveKeeper(draft.shopKeepers[n])};
  else if(group==='clip'){next.shopKeepers[n]=normalKeeper(next.shopKeepers[n]);if(draft.shopKeepers[n].clip)next.shopKeepers[n].clip=clone(draft.shopKeepers[n].clip);else delete next.shopKeepers[n].clip}
+ else if(group==='anchor'){if(draft.shopKeeperAnchors[n])next.shopKeeperAnchors[n]=clone(draft.shopKeeperAnchors[n]);else delete next.shopKeeperAnchors[n]}
  else if(group==='pane'){if(draft.shopWindowPanes[n])next.shopWindowPanes[n]=clone(draft.shopWindowPanes[n]);else delete next.shopWindowPanes[n]}
  else next.shopClosures[n]=clone(draft.shopClosures[n])}
  if(!confirm('Publish '+dirty.length+' calibration change(s) to the live Gary Eats! game?')){pubMessage('Publishing cancelled. Your draft is still saved locally.');return}
  pubMessage('Committing approved settings to GitHub…');const body=encode(JSON.stringify(next,null,2)+'\n');const result=await gh('/contents/gary-game-config.json',{method:'PUT',body:JSON.stringify({message:'Gary Eats Studio: publish visual calibration',content:body,sha:fresh.sha,branch:'main'})});
  loaded=clone(next);conflictBase=clone(next);draft=clone(next);stateHistory=[JSON.stringify(draft)];historyIndex=0;updateSaveState();autoSave();refreshInputs();draw();pubMessage('Published successfully — commit '+result.commit.sha.slice(0,8)+'. Reload the game after GitHub Pages deploys.','good');
  }catch(e){pubMessage('Publishing stopped: '+e.message,'bad')}finally{working=false;$('doPublish').disabled=false;$('token').value='';accessToken=''}};
+// One-time independent-anchor migration. This installer never uses eval/new Function.
+const setupStatus=(m,error=false)=>{$('anchorStatus').textContent=m;$('anchorStatus').className='modalStatus '+(error?'bad':'')};
+$('openAnchorSetup').onclick=()=>{$('anchorDialog').showModal();setupStatus('No changes yet. Your published coordinates will be preserved.')};
+$('closeAnchorSetup').onclick=()=>$('anchorDialog').close();
+$('anchorDialog').addEventListener('close',()=>{$('anchorToken').value='';accessToken=''});
+function upgradeKeeperGameJS(code){
+ const marker='  const shopKeeperSpecs = Object.create(null);';
+ if(code.includes('shopKeeperAnchors')||code.split(marker).length!==2)throw Error('Game engine version has changed or is already upgraded; no changes applied.');
+ code=code.replace(marker,marker+`\n  // Published keeper placements are independent from light and glass rectangles.\n  const shopKeeperAnchors = Object.create(null);`);
+ const old=`    const size = (defaultKeeperSize[index] || 1) * spec.scale;
+    const fitH = wh * 0.96 * size;
+    const fitW = ww * 0.86 * size;
+    let keeperH = fitH;
+    let keeperW = keeperH * (keeper.w / keeper.h);
+    if (keeperW > fitW) {
+      keeperW = fitW;
+      keeperH = keeperW * (keeper.h / keeper.w);
+    }
+    const baseX = wx + ww * 0.5 + shift + spec.offsetX;
+    const drop = wh * (defaultKeeperDrop[index] || 0) + spec.offsetY;
+    const baseY = wy + wh - 1 + bob + drop;`;
+ const replacement=`    const independent = shopKeeperAnchors[BUILDINGS[index]?.name];
+    let keeperW, keeperH, baseX, baseY;
+    if (independent) {
+      keeperW = independent.w * spec.scale;
+      keeperH = independent.h * spec.scale;
+      baseX = x + independent.x + independent.w * 0.5 + shift + spec.offsetX;
+      baseY = y + independent.y + independent.h + bob + spec.offsetY;
+    } else {
+      // Legacy fallback for unloaded or missing configuration.
+      const size = (defaultKeeperSize[index] || 1) * spec.scale;
+      const fitH = wh * 0.96 * size;
+      const fitW = ww * 0.86 * size;
+      keeperH = fitH;
+      keeperW = keeperH * (keeper.w / keeper.h);
+      if (keeperW > fitW) { keeperW = fitW; keeperH = keeperW * (keeper.h / keeper.w); }
+      baseX = wx + ww * 0.5 + shift + spec.offsetX;
+      const drop = wh * (defaultKeeperDrop[index] || 0) + spec.offsetY;
+      baseY = wy + wh - 1 + bob + drop;
+    }`;
+ if(code.split(old).length!==2)throw Error('Keeper rendering code has changed; no files published.');
+ code=code.replace(old,replacement);
+ const load='      applyPublishedKeepers(config);';
+ const injection=`      applyPublishedKeepers(config);
+      if (config.shopKeeperAnchors && typeof config.shopKeeperAnchors === 'object') {
+        BUILDINGS.forEach(building => {
+          const a = config.shopKeeperAnchors[building.name];
+          if (a && ['x','y','w','h'].every(k => Number.isFinite(a[k])) &&
+              a.x >= -89 && a.x <= 178 && a.y >= -236 && a.y <= 472 &&
+              a.w > 0 && a.w <= 178 && a.h > 0 && a.h <= 472) {
+            shopKeeperAnchors[building.name] = { x:a.x, y:a.y, w:a.w, h:a.h };
+          }
+        });
+      }`;
+ if(code.split(load).length!==2)throw Error('Config loading code has changed; no files published.');
+ return code.replace(load,injection);
+}
+async function atomicUpgradeAnchors(token){
+ if(dirty.length)throw Error('There are unpublished edits. Publish or export your draft before installing the engine migration.');
+ accessToken=token;
+ setupStatus('Reading latest game engine, site entry point and published shop configuration…');
+ const files=await Promise.all(['game.js','index.html','gary-game-config.json'].map(async path=>({path,...await gh('/contents/'+path)})));
+ const get=path=>files.find(f=>f.path===path);
+ const js=decode(get('game.js').content),html=decode(get('index.html').content),cfg=JSON.parse(decode(get('gary-game-config.json').content));
+ if(cfg.schema!=='gary-eats-game-config-v1'||cfg.world?.width!==360||cfg.world?.height!==640)throw Error('Unexpected game config; no changes published.');
+ if(cfg.shopKeeperAnchors)throw Error('Keeper anchors already published. Reload this studio; no changes made.');
+ const newJS=upgradeKeeperGameJS(js),tags=[...html.matchAll(/src="game\.js\?v=(\d+)"/g)];
+ if(tags.length!==1)throw Error('Could not locate single game.js version marker; no files published.');
+ const newHTML=html.replace(tags[0][0],'src="game.js?v='+(Number(tags[0][1])+1)+'"');
+ const newCFG=clone(cfg);newCFG.shopKeeperAnchors={};
+ for(let i=0;i<NAMES.length;i++)newCFG.shopKeeperAnchors[NAMES[i]]=deriveLegacyAnchor(i,cfg);
+ if(!confirm('Install independent keeper anchors for all six shops in one GitHub commit? Current visible positions and sizes are retained; shutters and gameplay rules are unchanged.'))return;
+ setupStatus('Preparing verified GitHub commit (three files, all-or-nothing)…');
+ const ref=await gh('/git/ref/heads/main');const sha=ref.object?.sha;
+ if(!sha)throw Error('Could not identify current main branch. No changes made.');
+ const commit=await gh('/git/commits/'+sha);
+ const baseTree=await gh('/git/trees/'+commit.tree.sha);
+ for(const file of files){const entry=baseTree.tree?.find(t=>t.path===file.path);if(!entry||entry.sha!==file.sha)throw Error('Repository changed during preparation. Reload and retry; no changes published.');}
+ const changes=[{path:'game.js',text:newJS},{path:'index.html',text:newHTML},{path:'gary-game-config.json',text:JSON.stringify(newCFG,null,2)+'\n'}];
+ const blobs=await Promise.all(changes.map(async f=>({path:f.path,...await gh('/git/blobs',{method:'POST',body:JSON.stringify({content:f.text,encoding:'utf-8'})})})));
+ const tree=await gh('/git/trees',{method:'POST',body:JSON.stringify({base_tree:commit.tree.sha,tree:blobs.map(b=>({path:b.path,mode:'100644',type:'blob',sha:b.sha}))})});
+ const next=await gh('/git/commits',{method:'POST',body:JSON.stringify({message:'Decouple Gary Eats shopkeeper anchors from window lighting',tree:tree.sha,parents:[sha]})});
+ const result=await gh('/git/refs/heads/main',{method:'PATCH',body:JSON.stringify({sha:next.sha,force:false})});
+ if(result.object?.sha!==next.sha)throw Error('GitHub did not confirm the new commit. Check repository history.');
+ setupStatus('Installed successfully at commit '+next.sha.slice(0,8)+'. Reload the studio after GitHub Pages deploys.','good');
+ anchorBridge=true;loaded=clone(newCFG);conflictBase=clone(newCFG);draft=clone(newCFG);initialAnchors=clone(newCFG.shopKeeperAnchors);stateHistory=[JSON.stringify(draft)];historyIndex=0;updateSaveState();refreshInputs();draw();$('anchorSetup').classList.add('hidden');
+}
+$('installAnchors').onclick=async()=>{if(working)return;working=true;$('installAnchors').disabled=true;try{const token=$('anchorToken').value.trim();if(!token)throw Error('Paste your GitHub token.');await atomicUpgradeAnchors(token)}catch(e){setupStatus('Stopped without publishing: '+e.message,true)}finally{working=false;$('installAnchors').disabled=false;$('anchorToken').value='';accessToken=''}};
+
 addEventListener('beforeunload',()=>{if(draft)autoSave()});
 initialise();
 </script>
