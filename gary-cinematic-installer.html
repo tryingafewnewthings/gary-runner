@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Gary Eats! · Cinematic Entrance Workshop</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#eef3fa;background:#0d1522}*{box-sizing:border-box}body{margin:0}main{max-width:640px;margin:auto;padding:26px 18px 72px}h1{font-size:1.7rem;color:#ffe550;margin:0 0 12px}h2{font-size:1.08rem;color:#f9fafa;margin:25px 0 10px}p,li{color:#bed0e0;line-height:1.55}code{font-family:ui-monospace,monospace;color:#ffdb80}.panel{padding:18px;border:1px solid #40536e;border-radius:15px;background:#172538;margin:16px 0}.summary{background:#122e29;border-color:#356858}.small{font-size:13px;color:#a7bdd2}button{border:0;border-radius:11px;background:#ffe34c;color:#161c22;font-weight:800;padding:14px;font-size:16px;min-height:50px;cursor:pointer;width:100%;margin:7px 0}button.secondary{background:#263c54;color:#e3f1fb;border:1px solid #59718b}button.danger{background:#503237;color:#fff1f1;border:1px solid #a36f70}button:disabled{opacity:.47;cursor:default}input{display:block;width:100%;padding:14px;background:#0e1724;border:1px solid #73859d;color:white;border-radius:10px;font-size:16px;margin:9px 0 18px}a{color:#ffe768}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101b2b;border:1px solid #38506a;border-radius:12px;padding:15px;min-height:130px;line-height:1.52;color:#e1e9f2}.row{display:flex;gap:12px;flex-wrap:wrap}.badge{display:inline-block;padding:5px 10px;border-radius:99px;background:#303d52;font-size:12px;color:#def1ff}
+</style></head><body><main>
+<h1>Gary's Cinematic Entrance</h1>
+<p>Safe preview and publisher for the four-frame leap-and-turn sprite sheet. <b>The working <code>game.js</code> is never overwritten.</b> First stage a complete playable preview; promote it to the main menu only after testing on your iPhone.</p>
+<div class="panel summary"><b>Before starting</b><p>Upload the transparent <code>gary_transition_sheet.png</code> to the root of your Gary Eats! GitHub repository, alongside this installer. The 1536 × 512 PNG provided with this download is already cleaned of its white background.</p><button id="check" class="secondary" type="button">1. Verify sprite sheet</button><div class="small" id="assetState">Not checked</div></div>
+<div class="panel"><h2>Stage 1 — Build a separate playable preview</h2><p>The preview contains the complete existing game, food catalogue and shop settings. It adds a temporary cinematic entrance without changing the live game.</p><label for="token">Existing GitHub fine-grained access token</label><input id="token" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false"><button id="stage" type="button">2. Create playable test</button><button id="view" class="secondary" type="button">3. Open test game</button><p class="small">Test Play Game, Skip, Gary's landing, lane movement, collisions and Try Again. If anything looks wrong, leave the live version unchanged.</p></div>
+<div class="panel"><h2>Stage 2 — Activate only after testing</h2><p>This changes <code>index.html</code> to load the tested engine instead of the original one. Your original <code>game.js</code> is preserved, and this page can reverse the change.</p><button id="live" type="button">4. Make tested intro live</button><button id="revert" class="danger" type="button">Restore original live engine</button></div>
+<h2>Installation status</h2><pre id="status" role="status" aria-live="polite">No files changed. First verify your image.</pre>
+<p class="small">Every write is checked against the latest GitHub file SHA and performed with a non-empty content guard. This installer does not save your token. Github Pages may take a minute or two to deploy changes.</p>
+<p><a href="./">Open live Gary Eats!</a> · <a href="./gary-intro-test.html">Open test game</a> · <a href="https://github.com/tryingafewnewthings/gary-runner/commits/main">GitHub history</a></p>
+</main>
+<script id="bridgeSource" type="text/plain">/* Gary Eats! — Cinematic Intro Bridge v1
+ * Optional module: if the 4-frame asset fails to load, the normal game is unaffected.
+ * Must be loaded BEFORE game.js. No input, collision, scoring, spawning or settings edits.
+ */
+(function () {
+  'use strict';
+
+  const DURATION = 1.22;
+  const SHEET_COLUMNS = 4;
+  const CELL_W = 384, CELL_H = 512;
+  const image = new Image();
+  let ready = false;
+  image.onload = function () {
+    ready = image.naturalWidth === SHEET_COLUMNS * CELL_W && image.naturalHeight === CELL_H;
+    if (!ready) console.warn('Gary intro sheet must be 1536 x 512. Falling back to normal start.');
+  };
+  image.onerror = function () { ready = false; console.warn('Gary transition art unavailable; normal start will be used.'); };
+  image.src = './gary_transition_sheet.png?v=1';
+
+  let running = false, elapsed = 0, options = null;
+  const clamp01 = x => Math.max(0, Math.min(1, x));
+  const smooth = t => { t = clamp01(t); return t * t * (3 - 2 * t); };
+  const mix = (a, b, p) => a + (b - a) * p;
+
+  function begin(settings) {
+    if (!ready || !settings || !settings.canvas || !settings.avatar || !settings.walkSheet || !settings.walkSheet.ready || !settings.introFrame) return false;
+    const cr = settings.canvas.getBoundingClientRect();
+    const ar = settings.avatar.getBoundingClientRect();
+    if (cr.width < 1 || cr.height < 1 || ar.width < 1) return false;
+    const x = (ar.left + ar.width / 2 - cr.left) / cr.width * settings.width;
+    const y = (ar.top + ar.height / 2 - cr.top) / cr.height * settings.height;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+    options = Object.assign({}, settings, {startX:x, startY:y,
+      radius:Math.min(ar.width/cr.width*settings.width, ar.height/cr.height*settings.height)/2});
+    elapsed = 0;
+    running = true;
+    return true;
+  }
+
+  function update(dt) {
+    if (!running) return true;
+    elapsed = Math.min(DURATION, elapsed + Math.max(0, Math.min(0.05, Number(dt) || 0)));
+    if (elapsed >= DURATION) { running = false; return true; }
+    return false;
+  }
+
+  function draw(ctx) {
+    if (!options || !running) return;
+    const o = options;
+    const u = clamp01(elapsed / DURATION);
+    const travel = smooth(u);
+    const landingY = o.playerY - o.playerHeight / 2 + o.footOffset;
+    const x = mix(o.startX, o.targetX, travel);
+    const cy = mix(o.startY, landingY, travel) - 24 * Math.sin(Math.PI * u);
+    const spriteH = mix(Math.max(210, o.radius * 3.0), o.playerHeight, travel);
+    const frame = Math.min(3, Math.max(0, Math.floor(clamp01((u - 0.16) / 0.69) * 4)));
+
+    ctx.save();
+    // A dark portrait-space veil dissolves as the scrolling high street is revealed.
+    const darkness = 0.87 * Math.pow(1 - smooth(u / 0.64), 1.4);
+    if (darkness > 0.001) {
+      ctx.fillStyle = 'rgba(9,12,20,' + darkness + ')';
+      ctx.fillRect(0, 0, o.width, o.height);
+    }
+
+    // Preserve the actual last talking pose and its circular frame at the instant
+    // speech ends. The new full-body sheet emerges as this portrait dissolves.
+    const portraitOpacity = 1 - smooth((u - 0.04) / 0.22);
+    if (portraitOpacity > 0.001 && o.introFrame) {
+      const f = o.introFrame;
+      const scale = mix(1, 0.88, smooth(u / 0.25));
+      const rad = o.radius * scale;
+      ctx.save();
+      ctx.globalAlpha = portraitOpacity;
+      ctx.fillStyle = '#111111';
+      ctx.beginPath(); ctx.arc(o.startX, o.startY, rad, 0, Math.PI * 2); ctx.fill();
+      ctx.clip();
+      const h = rad * 1.94;
+      const w = h * f.sw / f.sh;
+      ctx.drawImage(f.image, f.sx, f.sy, f.sw, f.sh, o.startX-w/2, o.startY-h/2, w, h);
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha = portraitOpacity;
+      ctx.strokeStyle = '#ffe600';ctx.lineWidth = 3 * scale;
+      ctx.beginPath();ctx.arc(o.startX,o.startY,rad-2,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+    }
+
+    // Crossfade full-body takeoff into rear-facing gameplay character.
+    const entranceOpacity = smooth((u - 0.12) / 0.16);
+    const walkMix = smooth((u - 0.82) / 0.17);
+    if (entranceOpacity > 0.001 && walkMix < 0.999) {
+      const w = spriteH * CELL_W / CELL_H;
+      ctx.save();
+      ctx.globalAlpha = entranceOpacity * (1 - walkMix);
+      ctx.drawImage(image, frame * CELL_W, 0, CELL_W, CELL_H, x - w / 2, cy - spriteH / 2, w, spriteH);
+      ctx.restore();
+    }
+    if (walkMix > 0.001 && o.walkSheet && o.walkSheet.ready) {
+      const fw = o.walkSheet.naturalWidth / o.walkColumns;
+      const fh = o.walkSheet.naturalHeight;
+      const w = o.playerHeight * fw / fh;
+      ctx.save();ctx.globalAlpha = walkMix;
+      // The exact game frame, with exactly the same foot anchor as drawPlayer().
+      ctx.drawImage(o.walkSheet, 0, 0, fw, fh,
+        o.targetX - w / 2, o.playerY - o.playerHeight + o.footOffset, w, o.playerHeight);
+      ctx.restore();
+    }
+    // Subtle ellipse under the feet. No gameplay objects start moving yet.
+    if (u > 0.79) {
+      const p = smooth((u - 0.79) / 0.21);
+      ctx.save();
+      ctx.globalAlpha = Math.sin(Math.PI * p) * 0.48;
+      ctx.strokeStyle = '#ffe600';ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.ellipse(o.targetX,o.playerY + 8,8+p*17,2.5+p*5,0,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function cancel() { running = false; elapsed = 0; options = null; }
+  window.GaryIntroTransition = Object.freeze({begin, update, draw, cancel,
+    get ready() { return ready; }, get active() { return running; }});
+})();
+</script>
+<script>
+'use strict';
+const REPO='tryingafewnewthings/gary-runner';
+const $=id=>document.getElementById(id);
+const BRIDGE=$('bridgeSource').textContent.trimEnd()+'\n';
+let assetsVerified=false,busy=false;
+const status=(s)=>{$('status').textContent=s};
+const say=(s)=>{$('status').textContent+='\n'+s};
+const once=(text,needle,label)=>{let n=text.split(needle).length-1;if(n!==1)throw Error(label+' has '+n+' matches (expected exactly one). Nothing was published.');};
+const encode=(str)=>{const b=new TextEncoder().encode(str);let tmp='';for(let i=0;i<b.length;i+=4096)tmp+=String.fromCharCode(...b.subarray(i,i+4096));return btoa(tmp)};
+const decode=(b64)=>{const b=atob(b64.replace(/\s/g,''));return new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(b,c=>c.charCodeAt(0)))};
+const gate=()=>{if(location.origin!=='https://tryingafewnewthings.github.io'||!location.pathname.startsWith('/gary-runner/'))throw Error('Open this installer through the official Gary Eats! GitHub Pages URL.');if(!/^github_pat_|^ghp_/.test($('token').value.trim()))throw Error('Enter your existing GitHub token.');};
+async function api(route, options={}, optional=false){
+  const resp=await fetch('https://api.github.com/repos/'+REPO+route,{...options,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+$('token').value.trim(),'X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})}});
+  if(resp.status===404&&optional)return null;
+  const data=await resp.json().catch(()=>({}));
+  if(!resp.ok)throw Error((data.message||'GitHub rejected request')+' (HTTP '+resp.status+')'+(data.errors?.length?' — '+data.errors.map(e=>e.message||e.code).join('; '):''));
+  return data;
+}
+const read=(path,optional=false)=>api('/contents/'+path+'?ref=main',{},optional);
+async function put(path,body,message){
+  if(typeof body!=='string'||body.length<100)throw Error('REFUSED to publish empty or unexpectedly short '+path);
+  const before=await read(path,true);
+  if(before&&decode(before.content)===body){say(path+': already up to date');return}
+  const payload={message,branch:'main',content:encode(body)};
+  if(before)payload.sha=before.sha;
+  await api('/contents/'+path,{method:'PUT',body:JSON.stringify(payload)});
+  say(path+': published safely ('+body.length.toLocaleString()+' characters)');
+}
+const introStart=`  function startGameplay(){
+    if (state !== 'intro') return;
+    introAttempt++;
+    clearTimeout(introFallbackTimer);
+    introFallbackTimer = null;
+    garyAudio.onended = null;
+    $('introOverlay').classList.remove('show');
+    garyAudio.pause();
+    garyAudio.currentTime = 0;
+    reset();
+    state = 'play';
+    musicTo(MUSIC_VOL, 2);
+  }`;
+const newStart=`  function startGameplay(){
+    if (state !== 'intro') return;
+    introAttempt++;
+    clearTimeout(introFallbackTimer);
+    introFallbackTimer = null;
+    garyAudio.onended = null;
+    const finalTalkingFrame = getGaryIntroFrame();
+    garyAudio.pause();
+    garyAudio.currentTime = 0;
+    reset();
+    const entrance = window.GaryIntroTransition;
+    const animated = !!(entrance && entrance.begin({
+      canvas: cv, avatar: $('introAvatar'), width: W, height: H,
+      startFrame: garyIntroFrame, introFrame: finalTalkingFrame,
+      playerY: PLAYER_Y, playerHeight: WORLD.playerHeight,
+      footOffset: WORLD.playerFootOffset, targetX: lx(1),
+      walkSheet: imgWalkSheet, walkColumns: WALK_FRAMES
+    }));
+    $('introOverlay').classList.remove('show');
+    $('introOverlay').style.visibility = 'hidden';
+    state = animated ? 'intro_transition' : 'play';
+    if (!animated) musicTo(MUSIC_VOL, 2);
+  }`;
+function patchEngine(g){
+  if(typeof g!=='string'||g.length<65000||!g.trimEnd().endsWith('})();'))throw Error('The current game engine failed the 65 KB integrity check. No files changed.');
+  if(!g.includes('window.GaryFoodCatalogue?.discover(o.t)')||!g.includes('shopKeeperAnchors'))throw Error('Active food/keeper features differ from the expected working version; refusing to patch.');
+  if(g.includes("state = 'intro_transition'"))throw Error('An intro transition already exists in this engine. Refusing to patch twice.');
+  once(g,introStart,'Intro state completion');
+  g=g.replace(introStart,newStart);
+  const update=`    if (state === 'intro') {
+      updateIntroAnimation(dt);
+      return;
+    }`;
+  once(g,update,'Intro update');
+  g=g.replace(update,update+`
+    if (state === 'intro_transition') {
+      if (!window.GaryIntroTransition || window.GaryIntroTransition.update(dt)) {
+        state = 'play'; musicTo(MUSIC_VOL, 2);
+      }
+      return;
+    }`);
+  const render=`    if(state!=='menu'&&state!=='intro'){
+      for(let i=objs.length-1;i>=0;i--)drawObj(objs[i]);
+      drawPlayer();`;
+  once(g,render,'Player rendering');
+  g=g.replace(render,`    if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
+    if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
+      for(let i=objs.length-1;i>=0;i--)drawObj(objs[i]);
+      drawPlayer();`);
+  const hud=`    if(state!=='menu'&&state!=='intro'){
+      drawHud();drawCap();`;
+  once(g,hud,'HUD rendering');
+  g=g.replace(hud,`    if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
+      drawHud();drawCap();`);
+  const reset=`  function reset() {
+    if (gameOverFrameRequest !== null)`;
+  once(g,reset,'Reset safety');
+  g=g.replace(reset,`  function reset() {
+    window.GaryIntroTransition?.cancel();
+    if (gameOverFrameRequest !== null)`);
+  const introShow="    $('introOverlay').classList.add('show');";
+  once(g,introShow,'Intro reopening');
+  g=g.replace(introShow,"    $('introOverlay').style.visibility = 'visible';\n"+introShow);
+  if(g.length<67000||g.length>90000||!g.includes('state = animated ?'))throw Error('Patched engine integrity check failed. No files changed.');
+  return g;
+}
+const liveScript=(s)=>{let m=[...s.matchAll(/<script src="game\.js\?v=(\d+)"\s*><\/script>/g)];if(m.length!==1)throw Error('Expected exactly one original game.js script in index.html.');return m[0][0]};
+function makePreview(html){const old=liveScript(html);return html.replace(old,`<script src="gary-intro-transition.js?v=1"><\/script>\n<script src="game-intro-test.js?v=1"><\/script>`)}
+function makeLive(html){const old=liveScript(html);const original=old.match(/src="([^"]+)"/)[1];return html.replace(old,`<!-- GaryIntroOriginal=${original} -->\n<script src="gary-intro-transition.js?v=1"><\/script>\n<script src="game-intro-test.js?v=1"><\/script>`)}
+function rollback(html){const pat=/<!-- GaryIntroOriginal=(game\.js\?v=\d+) -->\s*<script src="gary-intro-transition\.js\?v=1"><\/script>\s*<script src="game-intro-test\.js\?v=1"><\/script>/;if(!pat.test(html))throw Error('Live game is not using this workshop or was manually edited. No automatic rollback to prevent overwriting other changes.');return html.replace(pat,(_,old)=>'<script src="'+old+'"><\/script>')}
+const validatePNG=()=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{if(img.naturalWidth!==1536||img.naturalHeight!==512){reject(Error('Expected 1536 × 512 PNG; got '+img.naturalWidth+' × '+img.naturalHeight));return}let cv=document.createElement('canvas');cv.width=cv.height=1;let ctx=cv.getContext('2d');ctx.drawImage(img,0,0,1,1,0,0,1,1);const alpha=ctx.getImageData(0,0,1,1).data[3];if(alpha!==0){reject(Error('Sprite image must have transparent corners. Use the supplied transparent PNG, not the white-background JPEG.'));return}resolve()};img.onerror=()=>reject(Error('gary_transition_sheet.png could not be loaded from your GitHub Pages site. Upload the PNG first.'));img.src='./gary_transition_sheet.png?check='+Date.now()});
+$('check').onclick=async()=>{assetsVerified=false;try{status('Checking actual published PNG…');await validatePNG();assetsVerified=true;$('assetState').textContent='READY: 4 frames, 1536 × 512, transparent';say('Sprite sheet validated. Stage the test game next.')}catch(e){$('assetState').textContent='Not ready';say('Asset error: '+e.message)}};
+async function exclusive(fn){if(busy)return;busy=true;for(const b of [$('stage'),$('live'),$('revert')])b.disabled=true;try{gate();await fn()}catch(e){say('STOPPED: '+e.message+'\nNo further files will be changed. See messages above for any completed steps.')}finally{busy=false;for(const b of [$('stage'),$('live'),$('revert')])b.disabled=false}}
+$('stage').onclick=()=>exclusive(async()=>{
+  status('STAGING ONLY. Live game will not be changed.');
+  await validatePNG();assetsVerified=true;
+  const [game,index]=await Promise.all([read('game.js'),read('index.html')]);
+  const source=decode(game.content), html=decode(index.content);
+  const patched=patchEngine(source), preview=makePreview(html);
+  if(BRIDGE.length<4000||!BRIDGE.includes('window.GaryIntroTransition = Object.freeze'))throw Error('Bridge JS missing or corrupted.');
+  if(patched.length<=source.length+300||preview.length<4000)throw Error('Staged files failed preflight.');
+  if(!confirm('Create three separate TEST files? The live game will remain unchanged.'))return;
+  await put('gary-intro-transition.js',BRIDGE,'Add optional cinematic intro rendering module');
+  await put('game-intro-test.js',patched,'Stage cinematic intro version of Gary Eats game');
+  await put('gary-intro-test.html',preview,'Create separate full-game test page for cinematic intro');
+  say('STAGED. Wait for GitHub Pages to deploy, then open the Test Game and play through the complete start before activating.');
+});
+$('view').onclick=()=>{location.href='./gary-intro-test.html?preview='+Date.now()};
+$('live').onclick=()=>exclusive(async()=>{
+  status('Checking staged files and live game…');
+  await validatePNG();
+  const [test,bridge,preview,index]=await Promise.all([read('game-intro-test.js',true),read('gary-intro-transition.js',true),read('gary-intro-test.html',true),read('index.html')]);
+  if(!test||!bridge||!preview)throw Error('Test build incomplete. Stage it first.');
+  const engine=decode(test.content),module=decode(bridge.content),html=decode(index.content);
+  if(engine.length<67000||!engine.includes("state = animated ? 'intro_transition' : 'play'")||!module.includes('GaryIntroTransition = Object.freeze'))throw Error('Test build failed content checks.');
+  const next=makeLive(html);
+  if(!confirm('Have you tested the complete intro and game on your iPhone? This will update index.html ONLY; your working game.js stays untouched.'))return;
+  await put('index.html',next,'Activate tested cinematic Gary entrance (original engine preserved)');
+  say('LIVE ENABLED. Reopen the main game after GitHub Pages deploys. If something is wrong, use Restore original live engine here.');
+});
+$('revert').onclick=()=>exclusive(async()=>{
+  status('Preparing safe original-engine rollback…');
+  const index=await read('index.html');const html=decode(index.content);const original=rollback(html);
+  if(!confirm('Switch the main game back to its untouched original game.js? This will not delete the test files.'))return;
+  await put('index.html',original,'Restore original Gary Eats game from cinematic trial');
+  say('Original game restored. Reopen main game after GitHub Pages deploys.');
+});
+</script></body></html>
