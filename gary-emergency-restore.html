@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Gary Eats! — Emergency Restore</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#eaf1f8;background:#101722}*{box-sizing:border-box}body{margin:0}main{max-width:580px;margin:auto;padding:28px 18px 55px}h1{font-size:1.65rem;line-height:1.17;margin:0 0 12px;color:#ffea63}h2{font-size:1.06rem;margin:24px 0 8px}p,li{line-height:1.55;color:#b7c7d6}strong{color:#eef4fa}.panel{padding:18px;border:1px solid #405268;border-radius:14px;background:#192637;margin:20px 0}.safe{color:#9fe6bd;font-size:.9rem}input,button{width:100%;border-radius:12px;min-height:50px;font-size:16px}input{border:1px solid #708298;background:#101b29;color:#fff;padding:12px;margin-top:8px}button{background:#ffe34a;color:#18222d;border:0;font-weight:800;margin-top:15px;padding:13px 18px}button:disabled{opacity:.45}pre{padding:16px;white-space:pre-wrap;overflow-wrap:anywhere;background:#0e1926;color:#d8e7f4;border:1px solid #344559;border-radius:12px;line-height:1.45;min-height:82px}a{color:#fce56e}.small{font-size:.87rem;color:#a8bcd1}
+</style>
+</head>
+<body><main>
+<h1>Gary Eats! — Emergency Game Restore</h1>
+<p>This tool restores the exact working game engine from GitHub history, <strong>before the broken intro installer emptied game.js</strong>. It does not change the studio, shop calibration, food catalogue or game data.</p>
+<div class="panel"><strong>Verified recovery source</strong><p>Commit <code>2df104355584</code> · 1,986 lines · approximately 70 KB · includes the Food Catalogue and independent shopkeeper anchors.</p><p class="safe">The restore is blocked unless the backup passes content, size and integrity checks, and the current engine is still empty.</p></div>
+<label for="token"><strong>Your existing GitHub access token</strong></label>
+<input type="password" id="token" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+<button id="restore" type="button">Restore working game.js</button>
+<pre id="status" role="status" aria-live="polite">Ready. No files have been changed.</pre>
+<p class="small">The token stays in this browser page; this tool doesn't save it. The restore writes one GitHub commit for game.js. A second, optional commit only changes the script cache version in index.html, so Safari loads the repaired engine.</p>
+<p><a href="./?restored=1">Open Gary Eats!</a> · <a href="https://github.com/tryingafewnewthings/gary-runner/commits/main/game.js">See game.js history</a></p>
+</main>
+<script>
+'use strict';
+const REPO='tryingafewnewthings/gary-runner';
+const COMMIT='2df1043555840798e60ddc0108fa229f8133ca8d';
+const EXPECTED_BLOB='fd8f453d92ea800ef010c03e49cad8eb4ec290ea';
+const EMPTY_BLOB='e69de29bb2d1d6434b8b29ae775ad8c2e48c5391';
+const btn=document.getElementById('restore'),output=document.getElementById('status');
+let busy=false;
+function show(message){output.textContent=message}
+function decodeBase64(base64){
+  const binary=atob(base64.replace(/\s/g,''));
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+}
+function encodeBase64(s){
+  const bytes=new TextEncoder().encode(s);
+  let binary='';
+  for(let i=0;i<bytes.length;i+=4096)binary+=String.fromCharCode(...bytes.subarray(i,i+4096));
+  return btoa(binary);
+}
+async function github(route,options={}){
+  const token=document.getElementById('token').value.trim();
+  if(!token)throw Error('Enter your GitHub token first.');
+  const url='https://api.github.com/repos/'+REPO+route;
+  const res=await fetch(url,{
+    ...options,
+    headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,
+      'X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})}
+  });
+  const body=await res.json().catch(()=>({}));
+  if(!res.ok){
+    const details=Array.isArray(body.errors)?body.errors.map(e=>e.message||e.code).join('; '):'';
+    throw Error((body.message||'GitHub request failed')+' (HTTP '+res.status+')'+(details?' — '+details:''));
+  }
+  return body;
+}
+function validateBackup(file){
+  if(file.sha!==EXPECTED_BLOB||file.encoding!=='base64'||typeof file.content!=='string')
+    throw Error('Backup failed SHA/format validation. Nothing was changed.');
+  const text=decodeBase64(file.content);
+  const mustInclude=[
+    "(() => {", 'function startGameplay()', 'function collect(o)',
+    'function drawPlayer()', 'function render(dt)', 'window.GaryFoodCatalogue?.discover(o.t)',
+    'shopKeeperAnchors', 'requestAnimationFrame(loop)'
+  ];
+  if(text.length<68000||text.length>80000||!text.trimEnd().endsWith('})();')||mustInclude.some(s=>!text.includes(s)))
+    throw Error('Recovered game did not pass source integrity checks. Nothing was changed.');
+  return text;
+}
+btn.onclick=async()=>{
+  if(busy)return;
+  busy=true;btn.disabled=true;
+  let restored=false;
+  try{
+    if(location.origin!=='https://tryingafewnewthings.github.io'||!location.pathname.startsWith('/gary-runner/'))
+      throw Error('Open this file through the official Gary Eats! GitHub Pages link after uploading it to your repository.');
+    show('1/4 Checking current game and historical backup…');
+    const [current,backup]=await Promise.all([
+      github('/contents/game.js?ref=main'),
+      github('/contents/game.js?ref='+COMMIT)
+    ]);
+    validateBackup(backup);
+    if(current.sha===EXPECTED_BLOB){show('The original game engine is already restored. No write needed.');return;}
+    if(current.sha!==EMPTY_BLOB||decodeBase64(current.content||'').length!==0)
+      throw Error('Current game.js is no longer empty. Stopped to avoid overwriting newer work.');
+    show('2/4 Recovery verified. Waiting for your confirmation…');
+    if(!confirm('Restore the exact working game.js from before the broken intro installer? This replaces ONLY the empty game.js file.')){
+      show('Cancelled. No files changed.');return;
+    }
+    show('3/4 Restoring 1,986-line game engine to GitHub…');
+    const result=await github('/contents/game.js',{
+      method:'PUT',body:JSON.stringify({branch:'main',sha:current.sha,
+        message:'Emergency restore working game engine after failed intro installer',
+        content:backup.content.replace(/\s/g,'')})
+    });
+    if(result.content?.sha!==EXPECTED_BLOB)throw Error('The restore response did not match the expected historical blob. Check GitHub before retrying.');
+    restored=true;
+    show('Game engine RESTORED successfully. Refreshing game script version…');
+    try{
+      const index=await github('/contents/index.html?ref=main');
+      const html=decodeBase64(index.content);
+      const found=[...html.matchAll(/src="game\.js\?v=(\d+)"/g)];
+      if(found.length!==1)throw Error('Game version tag not unique. You can still play once browser cache refreshes.');
+      const existing=Number(found[0][1]);
+      if(existing!==101){show('Game engine RESTORED. Current script version is '+existing+'; index.html was left unchanged. Wait for deployment and reload.');return;}
+      const updated=html.replace(found[0][0],'src="game.js?v=102"');
+      const updatedResult=await github('/contents/index.html',{
+        method:'PUT',body:JSON.stringify({branch:'main',sha:index.sha,
+          message:'Refresh browser cache for restored Gary Eats engine',
+          content:encodeBase64(updated)})
+      });
+      if(!updatedResult.commit?.sha)throw Error('No GitHub commit confirmation for index.html');
+      show('RECOVERY COMPLETE. game.js restored from the verified previous commit and index.html updated to game.js?v=102. Wait for GitHub Pages to deploy, then open Gary Eats! in a new tab. The seamless intro is NOT installed.');
+    }catch(err){
+      show('IMPORTANT: game.js HAS BEEN RESTORED. The optional browser cache update failed: '+err.message+'\n\nDo not rerun the restore. Open the game after GitHub Pages updates, or report this message.');
+    }
+  }catch(err){
+    show('Restore stopped: '+err.message+'\n\n'+(restored?'The game engine was restored; do NOT repeat the restore.':'No game files were changed.'));
+  }finally{busy=false;btn.disabled=false;}
+};
+</script>
+</body>
+</html>
