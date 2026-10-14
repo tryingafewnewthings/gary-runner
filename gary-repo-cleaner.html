@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1420">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://api.github.com; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<title>Gary Eats! · Safe Repository Cleanup</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1420;--panel:#162232;--panel2:#1b2b3f;--line:#34475c;--ink:#edf3fa;--muted:#aebdd0;--gold:#ffe15b;--green:#78dfb1;--red:#ff9d92;--focus:#8ee6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:740px;margin:0 auto;padding:22px 16px max(55px,env(safe-area-inset-bottom))}h1{font-size:27px;line-height:1.15;letter-spacing:-.03em;margin:9px 0 6px}h2{font-size:18px;margin:0}p{margin:6px 0 12px;color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--green);font-weight:800;text-transform:uppercase}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.between{justify-content:space-between}.pill{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted)}.gold{color:var(--gold)}.green{color:var(--green)}.muted{color:var(--muted)}.small{font-size:13px}.stat{font-size:32px;font-weight:850;line-height:1.2}button{border:0;border-radius:11px;padding:13px 17px;font-size:15px;font-weight:750;background:var(--gold);color:#18202d;min-height:46px;cursor:pointer}button.secondary{color:var(--ink);border:1px solid var(--line);background:var(--panel2)}button:disabled{cursor:default;opacity:.5}button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}button.full{width:100%}
+input[type=password],input[type=text]{width:100%;margin-top:7px;background:#101b2b;border:1px solid #60748b;border-radius:10px;padding:14px;color:var(--ink);font-size:16px}label.title{font-weight:700;color:var(--ink);display:block}.files{display:grid;gap:9px;margin-top:12px}.file{display:flex;gap:11px;align-items:flex-start;padding:12px;background:#102032;border:1px solid var(--line);border-radius:11px;overflow-wrap:anywhere}.file input{width:21px;height:21px;flex:none;accent-color:#e8ce4c;margin:1px 0}.file strong{display:block;font-size:13px}.file small{display:block;color:var(--muted)}.tag{font-size:11px;color:var(--green);font-weight:750;white-space:nowrap}.tag.blocked{color:var(--red)}.bar{height:8px;background:#26394e;border-radius:50px;overflow:hidden;margin:14px 0 4px}.bar > div{background:var(--green);height:100%;width:0;transition:width .16s}pre{color:#d9e7f2;background:#0a1220;padding:14px;border-radius:12px;border:1px solid #314054;white-space:pre-wrap;overflow-wrap:anywhere;min-height:85px;font-size:13px;margin:14px 0 0}.explain{border-left:3px solid var(--gold);padding-left:12px;margin:14px 0}.checkrow{display:flex;align-items:flex-start;gap:10px;margin:12px 0;color:var(--muted);font-size:13px}.checkrow input{width:18px;height:18px;flex:none;accent-color:var(--gold)}.hidden{display:none!important}hr{border:0;border-top:1px solid var(--line);margin:16px 0}code{font-size:12px;color:#fff0a0}footer{color:var(--muted);font-size:12px;margin-top:18px}a{color:var(--gold)}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Gary Eats! · Repository maintenance</div>
+<h1>Safe Repository Cleanup</h1>
+<p>Remove known obsolete development pages without touching your game, current studio, cinematic test, food catalogue or artwork.</p>
+<div class="panel">
+  <div class="row between"><h2>1. Audit before deleting</h2><span class="pill">Main branch only</span></div>
+  <p>This tool has an exact allowlist of <strong>18 legacy HTML files</strong>. It doesn't guess which images, scripts or documentation are disposable.</p>
+  <button id="scan" class="secondary full" type="button">Scan my repository</button>
+  <div id="scanResults" class="hidden">
+    <div class="row between" style="margin-top:18px"><div><div class="stat" id="foundCount">—</div><div class="muted small">eligible obsolete files</div></div><div><div class="stat" id="protectedCount">—</div><div class="muted small">other files kept</div></div></div>
+    <div class="explain small">Protected game and editor files are checked again against references before deletion. Anything referenced by current game code is automatically blocked.</div>
+    <div class="row between"><h2>Review files</h2><button id="toggleAll" class="secondary" type="button">Deselect all</button></div>
+    <div id="files" class="files"></div>
+  </div>
+</div>
+<div class="panel">
+ <h2>2. Authorise and confirm</h2>
+ <p>A GitHub fine-grained token with <strong>Contents: Read and write</strong> permission is required for this repository. Your token is used in this browser tab only and is never saved or sent anywhere except GitHub.</p>
+ <label class="title" for="token">GitHub token</label>
+ <input id="token" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="github_pat_…">
+ <label class="checkrow"><input id="selfDelete" type="checkbox" checked><span>Also remove <strong>gary-repo-cleaner.html</strong> after successful cleanup, so this temporary installer does not clutter the repository. It only deletes itself if every selected file was removed.</span></label>
+ <label class="title" for="confirmText">Type <code>DELETE</code> to enable cleanup</label>
+ <input id="confirmText" type="text" placeholder="DELETE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+ <p id="selectedInfo" class="small">Scan the repository to choose files.</p>
+ <button id="delete" type="button" class="full" disabled>Delete selected obsolete files</button>
+ <p class="small">The cleaner deletes one file at a time, verifying its current GitHub SHA. GitHub records each deletion as a recoverable commit. If interrupted, rerun the cleaner to remove the remaining files.</p>
+</div>
+<div class="panel">
+  <div class="row between"><h2>Progress & results</h2><span class="pill" id="progressLabel">Not started</span></div>
+  <div class="bar"><div id="progressFill"></div></div>
+  <pre id="status" role="status" aria-live="polite">Nothing has been deleted. Start with “Scan my repository”.</pre>
+</div>
+<footer>Safety rules: exact file allowlist · main branch only · no wildcard matching · fails closed on missing required core files or changed SHAs · no game code edits · no third-party services.</footer>
+</main>
+<script>
+'use strict';
+(() => {
+  const REPO='tryingafewnewthings/gary-runner';
+  const SELF='gary-repo-cleaner.html';
+  const $=id=>document.getElementById(id);
+  const GROUPS=[
+    {label:'Old editor versions',why:'Superseded by gary-studio.html',files:[
+      'gary-visual-studio.html','gary-visual-studio-v1.1.html','gary-visual-studio-v1.2.html',
+      'gary-visual-studio-v1.3.html','gary-visual-studio-v1.4.html','gary-visual-studio-v1.5.html',
+      'gary-shop-calibrator.html','gary-studio-bridge-installer.html'
+    ]},
+    {label:'Superseded keeper tools',why:'Their functionality is now in the current studio',files:[
+      'gary-keeper-controls-v1.5-installer.html','gary-keeper-preview-diagnostic.html',
+      'gary-keeper-preview-upgrade.html','gary-keeper-preview-upgrade-safari.html',
+      'gary-keeper-preview-upgrade-safari-fixed.html','gary-keeper-upgrade.html'
+    ]},
+    {label:'Completed or retired one-time installers',why:'Already installed or replaced; the older intro installers should not be used',files:[
+      'gary-fix-window-lighting.html','gary-food-catalogue-installer.html',
+      'gary-intro-transition-installer.html','gary-intro-transition-installer-fixed.html'
+    ]}
+  ];
+  const ALLOWED=new Map(GROUPS.flatMap(g=>g.files.map(name=>[name,{name,group:g.label,why:g.why}])));
+  if(ALLOWED.size!==18)throw Error('Safety allowlist is inconsistent.');
+  const REQUIRED=['index.html','game.js','game-data.js','gary-studio.html','gary-game-config.json'];
+  const REFERENCES=['index.html','game.js','game-data.js','food-catalogue.js','gary-studio.html',
+    'gary-intro-test.html','game-intro-test.js','gary-intro-transition.js',
+    'PROJECT_STATE.md','GAME_STATUS.txt','STYLE.txt','ASSET_GRID_PROMPT.txt','ASSET_GRID.json'];
+  const decode=s=>{
+    const binary=atob(s.replace(/\s/g,''));
+    return new TextDecoder().decode(Uint8Array.from(binary,c=>c.charCodeAt(0)));
+  };
+  let scanned=false,busy=false,entries=new Map(),selected=new Set(),allFiles=new Map(),currentRefs=new Map();
+  const show=msg=>{$('status').textContent=msg};
+  const log=msg=>{$('status').textContent+='\n'+msg};
+  const onlyOfficial=()=>{
+    if(location.origin!=='https://tryingafewnewthings.github.io'||
+        !location.pathname.startsWith('/gary-runner/'))
+      throw Error('Open this page through the official Gary Eats! GitHub Pages URL, not as a local file or another website.');
+  };
+  async function api(path,init={}){
+    const token=$('token').value.trim();
+    const headers={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+    if(token)headers.Authorization='Bearer '+token;
+    let resp;
+    try{resp=await fetch('https://api.github.com/repos/'+REPO+path,{...init,headers:{...headers,...(init.headers||{})},cache:'no-store'});}
+    catch(e){throw Error('GitHub connection failed: '+e.message)}
+    const data=await resp.json().catch(()=>null);
+    if(!resp.ok){const reasons=Array.isArray(data?.errors)?data.errors.map(x=>x.message||x.code).join('; '):'';
+      throw Error((data?.message||'GitHub error')+' (HTTP '+resp.status+')'+(reasons?' — '+reasons:''));}
+    return data;
+  }
+  const pathForFile=f=>'/contents/'+encodeURIComponent(f)+'?ref=main';
+  async function readFile(f){
+    const info=await api(pathForFile(f));
+    if(!info?.sha||typeof info.content!=='string')throw Error('Missing GitHub content/SHA for '+f);
+    return {sha:info.sha,content:decode(info.content)};
+  }
+  function updateButtons(){
+    const count=[...selected].filter(x=>entries.has(x)&&!entries.get(x).blocked).length;
+    $('selectedInfo').textContent=count+' obsolete file'+(count===1?'':'s')+' selected for deletion.';
+    $('delete').disabled=busy||!scanned||count<1||$('confirmText').value.trim()!=='DELETE'||!$('token').value.trim();
+    $('scan').disabled=busy;
+    $('toggleAll').disabled=busy||!scanned;
+    $('selfDelete').disabled=busy;
+    document.querySelectorAll('#files input').forEach(x=>x.disabled=busy||entries.get(x.value)?.blocked);
+  }
+  function drawList(){
+    const container=$('files');container.replaceChildren();
+    for(const group of GROUPS){
+      const groupItems=group.files.filter(name=>entries.has(name));if(!groupItems.length)continue;
+      const heading=document.createElement('h3');heading.textContent=group.label;heading.style.cssText='font-size:14px;margin:12px 0 0;color:#cadbec';container.append(heading);
+      for(const name of groupItems){
+        const item=entries.get(name);
+        const row=document.createElement('label');row.className='file';
+        const check=document.createElement('input');check.type='checkbox';check.value=name;check.checked=selected.has(name);check.disabled=item.blocked;
+        check.onchange=()=>{if(check.checked)selected.add(name);else selected.delete(name);updateButtons()};
+        const detail=document.createElement('div');detail.style.flex='1';
+        const title=document.createElement('strong');title.textContent=name;detail.append(title);
+        const desc=document.createElement('small');desc.textContent=item.blocked?'Protected: referenced by '+item.references.join(', '):item.why;detail.append(desc);
+        const info=document.createElement('small');info.textContent=(item.size/1024).toFixed(1)+' KB';detail.append(info);
+        const flag=document.createElement('span');flag.className='tag'+(item.blocked?' blocked':'');flag.textContent=item.blocked?'KEEP':'DELETE';
+        row.append(check,detail,flag);container.append(row);
+      }
+    }
+    $('scanResults').classList.remove('hidden');
+    $('foundCount').textContent=[...entries.values()].filter(x=>!x.blocked).length;
+    $('protectedCount').textContent=allFiles.size-[...entries.values()].filter(x=>!x.blocked).length;
+    $('toggleAll').textContent=selected.size?'Deselect all':'Select all';
+    updateButtons();
+  }
+  async function audit(){
+    onlyOfficial();scanned=false;entries.clear();selected.clear();currentRefs.clear();allFiles.clear();
+    show('Reading live main-branch file tree…');
+    const tree=await api('/git/trees/main?recursive=1');
+    if(tree.truncated||!Array.isArray(tree.tree))throw Error('GitHub returned a truncated or invalid file tree. Nothing will be deleted.');
+    for(const f of tree.tree){if(f.type==='blob')allFiles.set(f.path,f);}
+    for(const core of REQUIRED){if(!allFiles.has(core))throw Error('Missing required live file '+core+'. Cleanup refused.');}
+    for(const [name,entry] of ALLOWED){if(allFiles.has(name))entries.set(name,{...entry,size:allFiles.get(name).size,sha:allFiles.get(name).sha,blocked:false,references:[]});}
+    show('Checking '+REFERENCES.length+' live code and documentation files for references…');
+    const refs=REFERENCES.filter(f=>allFiles.has(f));
+    for(const f of refs){
+      const info=await readFile(f);currentRefs.set(f,{content:info.content,sha:info.sha});
+      for(const [name,item] of entries){if(info.content.includes(name)){item.blocked=true;item.references.push(f);}}
+    }
+    for(const [name,item] of entries){if(!item.blocked)selected.add(name)}
+    scanned=true;drawList();
+    const count=selected.size;
+    show('AUDIT COMPLETE\n'+count+' obsolete files can be removed.\n'+(entries.size-count)+' candidate(s) referenced by retained files and therefore blocked.\n'+(allFiles.size-count)+' other repository files will remain.\nReview the list, enter your GitHub token and type DELETE to confirm.');
+  }
+  async function remove(name,expectedSha){
+    if(name!==SELF&&!ALLOWED.has(name))throw Error('Safety stop: '+name+' is not on the exact deletion allowlist.');
+    const latest=await api(pathForFile(name));
+    if(latest.sha!==expectedSha)throw Error('Safety stop: '+name+' changed since the scan. Rescan before deleting.');
+    return api('/contents/'+encodeURIComponent(name),{
+      method:'DELETE',
+      body:JSON.stringify({message:'chore: remove obsolete Gary Eats development page '+name,sha:latest.sha,branch:'main'})
+    });
+  }
+  const progress=(n,max)=>{$('progressLabel').textContent=n+' / '+max;$('progressFill').style.width=(max?100*n/max:0)+'%'};
+  $('scan').onclick=async()=>{if(busy)return;busy=true;updateButtons();try{await audit()}catch(e){scanned=false;show('AUDIT FAILED — no files deleted.\n'+e.message)}finally{busy=false;updateButtons()}};
+  $('toggleAll').onclick=()=>{if(busy||!scanned)return;const eligible=[...entries.values()].filter(x=>!x.blocked).map(x=>x.name);
+    if(selected.size)selected.clear();else eligible.forEach(x=>selected.add(x));drawList()};
+  $('token').oninput=updateButtons;$('confirmText').oninput=updateButtons;
+  $('delete').onclick=async()=>{
+    if(busy||!scanned)return;
+    busy=true;updateButtons();
+    let removed=0;
+    try{
+      onlyOfficial();
+      if($('confirmText').value.trim()!=='DELETE')throw Error('Type DELETE to confirm.');
+      if(!$('token').value.trim())throw Error('Enter your GitHub token.');
+      const targets=[...selected].filter(name=>entries.has(name)&&!entries.get(name).blocked);
+      if(!targets.length)throw Error('No eligible files selected.');
+      const total=targets.length+($('selfDelete').checked&&allFiles.has(SELF)?1:0);
+      if(!confirm('Delete '+targets.length+' explicitly selected obsolete HTML files from '+REPO+'?'+($('selfDelete').checked?' The cleanup tool will also remove itself after success.':'')+'\n\nGitHub will record recoverable commits. Your game and studio are NOT selected.')){
+        show('Cancelled. Nothing deleted.');return;
+      }
+      show('Checking for changes since your audit…');
+      const currentTree=await api('/git/trees/main?recursive=1');
+      if(currentTree.truncated||!Array.isArray(currentTree.tree))throw Error('GitHub tree validation failed; nothing deleted.');
+      const currentFiles=new Map(currentTree.tree.filter(f=>f.type==='blob').map(f=>[f.path,f]));
+      for(const f of REQUIRED)if(!currentFiles.has(f))throw Error('Required game file missing: '+f+'. Rescan.');
+      for(const [f,snapshot] of currentRefs){
+        if(currentFiles.get(f)?.sha!==snapshot.sha)throw Error('Protected file '+f+' changed since scan. Rescan to verify references before deleting.');
+      }
+      for(const name of targets)if(currentFiles.get(name)?.sha!==entries.get(name).sha)throw Error('Candidate '+name+' changed since scan. Rescan before deleting.');
+      show('DELETE STARTED\nDeleting selected obsolete pages one at a time. Keep this Safari tab open.');progress(0,total);
+      for(const name of targets){
+        const item=entries.get(name);
+        if(!item||item.blocked)throw Error('Safety check failed for '+name);
+        // Each file is verified against the SHA captured during the audit, before deletion.
+        await remove(name,item.sha);
+        removed++;selected.delete(name);entries.delete(name);allFiles.delete(name);
+        log('Removed '+removed+'/'+total+': '+name);progress(removed,total);
+      }
+      if($('selfDelete').checked&&allFiles.has(SELF)){
+        log('Removing this temporary cleanup tool…');
+        await remove(SELF,allFiles.get(SELF).sha);
+        removed++;allFiles.delete(SELF);progress(removed,total);
+        log('Removed the cleanup installer itself.');
+      }
+      $('token').value='';$('confirmText').value='';
+      scanned=false;drawList();
+      log('\nCLEANUP COMPLETE. '+removed+' file(s) removed. Your game, studio, cinematic preview, assets and docs were not changed.');
+      $('progressLabel').textContent='Complete';
+    }catch(e){
+      log('\nSTOPPED after '+removed+' deletion(s): '+e.message+'\nDo not guess or force it. Rescan before retrying; already-deleted files will be skipped.');
+      scanned=false;
+    }finally{busy=false;updateButtons()}
+  };
+  progress(0,0);
+})();
+</script>
+</body>
+</html>
