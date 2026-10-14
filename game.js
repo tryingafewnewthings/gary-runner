@@ -743,6 +743,7 @@ let shutterMix = 0;
   /* layout:end */
   function collect(o) {
     if (!isFood(o.t)) return;
+    window.GaryFoodCatalogue?.discover(o.t);
     review = Math.min(9, review + 1);
     reviewGap = 1.5;
     reviewMul = review >= 5 ? 3 : review >= 3 ? 2 : 1;
