@@ -300,6 +300,8 @@ let shutterMix = 0;
 
   // Studio-controlled keeper position and movement. All units are local shop pixels.
   const shopKeeperSpecs = Object.create(null);
+  // Published keeper placements are independent from light and glass rectangles.
+  const shopKeeperAnchors = Object.create(null);
   const defaultKeeperSize = [1,1,1,1.55,1,1];
   const defaultKeeperDrop = [0.16,0.16,0,0.22,0,0.16];
   BUILDINGS.forEach((b,i)=>{shopKeeperSpecs[b.name]={offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};});
@@ -332,18 +334,25 @@ let shutterMix = 0;
 
     // Other windows are large, so the keeper fills them. The pub glass is smaller,
     // so match the other keepers' size and let the frame crop him.
-    const size = (defaultKeeperSize[index] || 1) * spec.scale;
-    const fitH = wh * 0.96 * size;
-    const fitW = ww * 0.86 * size;
-    let keeperH = fitH;
-    let keeperW = keeperH * (keeper.w / keeper.h);
-    if (keeperW > fitW) {
-      keeperW = fitW;
-      keeperH = keeperW * (keeper.h / keeper.w);
+    const independent = shopKeeperAnchors[BUILDINGS[index]?.name];
+    let keeperW, keeperH, baseX, baseY;
+    if (independent) {
+      keeperW = independent.w * spec.scale;
+      keeperH = independent.h * spec.scale;
+      baseX = x + independent.x + independent.w * 0.5 + shift + spec.offsetX;
+      baseY = y + independent.y + independent.h + bob + spec.offsetY;
+    } else {
+      // Legacy fallback for unloaded or missing configuration.
+      const size = (defaultKeeperSize[index] || 1) * spec.scale;
+      const fitH = wh * 0.96 * size;
+      const fitW = ww * 0.86 * size;
+      keeperH = fitH;
+      keeperW = keeperH * (keeper.w / keeper.h);
+      if (keeperW > fitW) { keeperW = fitW; keeperH = keeperW * (keeper.h / keeper.w); }
+      baseX = wx + ww * 0.5 + shift + spec.offsetX;
+      const drop = wh * (defaultKeeperDrop[index] || 0) + spec.offsetY;
+      baseY = wy + wh - 1 + bob + drop;
     }
-    const baseX = wx + ww * 0.5 + shift + spec.offsetX;
-    const drop = wh * (defaultKeeperDrop[index] || 0) + spec.offsetY;
-    const baseY = wy + wh - 1 + bob + drop;
 
     // Visible window clip from Visual Studio v1.5 (position remains independent).
     const visible = spec.clip ? {x:x+spec.clip.x,y:y+spec.clip.y,w:spec.clip.w,h:spec.clip.h} : win;
@@ -1747,6 +1756,16 @@ function updateRain(dt, advancing) {
         throw new Error('Incompatible Visual Studio configuration');
       }
       applyPublishedKeepers(config);
+      if (config.shopKeeperAnchors && typeof config.shopKeeperAnchors === 'object') {
+        BUILDINGS.forEach(building => {
+          const a = config.shopKeeperAnchors[building.name];
+          if (a && ['x','y','w','h'].every(k => Number.isFinite(a[k])) &&
+              a.x >= -89 && a.x <= 178 && a.y >= -236 && a.y <= 472 &&
+              a.w > 0 && a.w <= 178 && a.h > 0 && a.h <= 472) {
+            shopKeeperAnchors[building.name] = { x:a.x, y:a.y, w:a.w, h:a.h };
+          }
+        });
+      }
       // Studio window panes: one shared source for keeper anchoring and lighting.
       if (config.shopWindowPanes && typeof config.shopWindowPanes === 'object') {
         BUILDINGS.forEach((building, i) => {
