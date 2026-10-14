@@ -106,15 +106,6 @@
         o.targetX - w / 2, o.playerY - o.playerHeight + o.footOffset, w, o.playerHeight);
       ctx.restore();
     }
-    // Subtle ellipse under the feet. No gameplay objects start moving yet.
-    if (u > 0.79) {
-      const p = smooth((u - 0.79) / 0.21);
-      ctx.save();
-      ctx.globalAlpha = Math.sin(Math.PI * p) * 0.48;
-      ctx.strokeStyle = '#ffe600';ctx.lineWidth=1.6;
-      ctx.beginPath();ctx.ellipse(o.targetX,o.playerY + 8,8+p*17,2.5+p*5,0,0,Math.PI*2);ctx.stroke();
-      ctx.restore();
-    }
     ctx.restore();
   }
 
