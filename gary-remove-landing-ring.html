@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Gary Eats! — Remove landing ring</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;padding:24px 16px 70px;background:#111924;color:#f2f5f8;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.5}main{max-width:590px;margin:auto}h1{font-size:26px;margin:8px 0 10px}p{color:#b9c7d7}section{padding:20px;background:#1b293a;border:1px solid #34465b;border-radius:16px;margin-top:16px}label{display:block;font-weight:650;margin:12px 0 6px}input{display:block;width:100%;border:1px solid #74839a;background:#0e1725;color:white;border-radius:10px;font-size:16px;padding:14px}button{border:none;border-radius:11px;font-weight:800;background:#ffe600;color:#101923;padding:14px 16px;width:100%;font-size:16px;margin-top:17px}button:disabled{opacity:.45}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0e1725;padding:15px;border-radius:10px;min-height:90px;color:#d7e6f2}a{color:#ffe600}.small{font-size:13px;color:#aab9c9}
+</style></head><body><main>
+<h1>Gary Eats! — Remove yellow landing ring</h1>
+<p>Removes only the yellow ellipse drawn under Gary's feet at the end of the cinematic entrance. It does not change the sprite sheet, animation timing, original game engine, scoring, studio or shop settings.</p>
+<section><strong>Safety check</strong><p>This updates only the optional <code>gary-intro-transition.js</code> module and refreshes its reference in the separate test page. The main game isn't changed.</p>
+<label for="token">Your GitHub fine-grained token</label><input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+<button id="fix" type="button">Remove yellow ring from test animation</button><pre id="status" role="status">Ready. GitHub login is required only when you tap the button. Your token stays in this page.</pre>
+<p class="small"><a href="./gary-intro-test.html?v=ringfix2" target="_blank" rel="noopener">Open cinematic test game</a></p></section>
+</main><script>
+'use strict';
+const REPO='tryingafewnewthings/gary-runner';
+const $=id=>document.getElementById(id);
+const ring=[
+'    // Subtle ellipse under the feet. No gameplay objects start moving yet.',
+'    if (u > 0.79) {',
+'      const p = smooth((u - 0.79) / 0.21);',
+'      ctx.save();',
+'      ctx.globalAlpha = Math.sin(Math.PI * p) * 0.48;',
+"      ctx.strokeStyle = '#ffe600';ctx.lineWidth=1.6;",
+'      ctx.beginPath();ctx.ellipse(o.targetX,o.playerY + 8,8+p*17,2.5+p*5,0,0,Math.PI*2);ctx.stroke();',
+'      ctx.restore();',
+'    }',
+''];
+function decode(s){const bin=atob(s.replace(/\s/g,''));return new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(bin,c=>c.charCodeAt(0)))}
+function encode(s){const bytes=new TextEncoder().encode(s);let buf='';for(let i=0;i<bytes.length;i+=4096)buf+=String.fromCharCode(...bytes.subarray(i,i+4096));return btoa(buf)}
+async function api(route, init={}){
+ const token=$('token').value.trim();
+ if(!token)throw Error('Enter your existing GitHub token.');
+ const response=await fetch('https://api.github.com/repos/'+REPO+route,{...init,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28',...(init.headers||{})}});
+ const payload=await response.json().catch(()=>({}));
+ if(!response.ok)throw Error((payload.message||'GitHub request failed')+' (HTTP '+response.status+')'+(payload.errors?.length?' — '+payload.errors.map(e=>e.message||e.code).join('; '):''));
+ return payload;
+}
+async function get(path){const f=await api('/contents/'+path+'?ref=main');if(!f.sha||typeof f.content!=='string')throw Error('Unexpected repository response for '+path);return {sha:f.sha,source:decode(f.content)}}
+async function put(path, file, text, message){if(typeof text!=='string'||text.length<2000)throw Error('Refused unexpectedly short '+path);return api('/contents/'+path,{method:'PUT',body:JSON.stringify({message,branch:'main',sha:file.sha,content:encode(text)})})}
+function patchModule(s){
+ if(s.length<4800||s.length>7000||!s.includes('window.GaryIntroTransition = Object.freeze')||!s.trimEnd().endsWith('})();'))throw Error('Transition source does not match expected safe size and structure. Nothing changed.');
+ const needle=ring.join('\n');
+ if(!s.includes(needle)){
+   if(s.includes('ctx.ellipse(o.targetX,o.playerY + 8'))throw Error('Landing ring code changed. Stopped rather than guessing.');
+   return {text:s,needsUpdate:false};
+ }
+ if(s.split(needle).length!==2)throw Error('Unexpected repeated ring block. Nothing changed.');
+ const newText=s.replace(needle,'');
+ if(newText.length<4600||newText.includes('ctx.ellipse(o.targetX,o.playerY + 8')||!newText.includes('const walkMix = smooth((u - 0.82) / 0.17);')||!newText.includes('const DURATION = 1.22'))throw Error('Code validation failed. Nothing changed.');
+ return {text:newText,needsUpdate:true};
+}
+function patchPreview(s){
+ if(s.length<4000||!s.includes('gary-intro-test.html')&&!s.includes('game-intro-test.js?v=1'))throw Error('Preview page structure changed. Nothing changed.');
+ if(s.includes('src="gary-intro-transition.js?v=2"'))return {text:s,needsUpdate:false};
+ const needle='src="gary-intro-transition.js?v=1"';
+ if(s.split(needle).length!==2)throw Error('Expected one cinematic module reference in test page. Nothing changed.');
+ return {text:s.replace(needle,'src="gary-intro-transition.js?v=2"'),needsUpdate:true};
+}
+$('fix').onclick=async()=>{
+ const btn=$('fix'),out=$('status');btn.disabled=true;let published=false;
+ try{
+  if(location.origin!=='https://tryingafewnewthings.github.io'||!location.pathname.startsWith('/gary-runner/'))throw Error('Open this fix from the official Gary Eats! GitHub Pages URL.');
+  out.textContent='Reading current cinematic module and test page…';
+  const [script,page]=await Promise.all([get('gary-intro-transition.js'),get('gary-intro-test.html')]);
+  const code=patchModule(script.source),html=patchPreview(page.source);
+  if(!code.needsUpdate&&!html.needsUpdate){out.textContent='Already fixed. Open the cinematic test page again.';return}
+  if(!confirm('Remove only the yellow landing circle from Gary’s CINEMATIC TEST? This does not change the main game.')){out.textContent='Cancelled; no changes made.';return}
+  if(code.needsUpdate){out.textContent='Publishing corrected transition module (1 of 2)…';await put('gary-intro-transition.js',script,code.text,'Remove yellow landing ring from cinematic entrance');published=true}
+  if(html.needsUpdate){out.textContent='Refreshing test-page script version (2 of 2)…';await put('gary-intro-test.html',page,html.text,'Refresh cinematic module after removing yellow landing ring')}
+  out.textContent='SUCCESS. Yellow landing circle removed from cinematic test. Once GitHub Pages has updated, open the test game again. The original live game is unchanged.';
+ }catch(error){out.textContent='STOPPED: '+error.message+(published?'\nThe corrected module was committed, but the test-page update may not have completed. Do not click repeatedly.':'\nNo module update was published.')}finally{btn.disabled=false}
+};
+</script></body></html>
