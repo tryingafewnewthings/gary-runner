@@ -1,77 +1,113 @@
-GARY EATS! — ASSET REVIEW PROMPT
-Updated: 2026-10-10
-Use this prompt to REVIEW supplied assets and renders. It is not a request to redesign them.
+GARY EATS! — ASSET REVIEW / GENERATION ACCEPTANCE PROMPT
+Revision: 15 October 2026
+Purpose: examine actual assets AND their in-game rendering. Not permission to
+redesign or publish them automatically. Source of truth is game-data.js,
+gary-game-config.json, STYLE.txt and the actively loaded game engine.
 
-INPUTS
-Read STYLE.txt and the active contracts in game-data.js first. Supply the current
-ASSET_GRID.png and ASSET_GRID.json when available, plus actual day/night gameplay
-captures and the new assets being considered. For the storm/encounter, supply a
-candidate composite or mark those checks UNVERIFIED.
+SUPPLY TO THE REVIEWER
+- The approved gameplay screenshot at native 360x640 design scale, with current
+  daylight and night/rain references where the object will actually appear.
+- Current STYLE.txt, relevant game-data.js definitions, the current
+  gary-game-config.json shop entries and (if animated) real sprite-sheet PNG.
+- Source asset, requested change, exact source and destination dimensions,
+  collision/visibility/camera requirements, and current file/path.
+- ASSET_GRID.json/png may be added as historical references, but are NOT proof
+  of current sprite source or game layout. Disclose outdated metadata.
+- If evidence is missing, explicitly mark the assessment UNVERIFIED.
 
-SNAPSHOT WARNING
-The existing grid describes the older gary_run1/gary_run2 pictures; the running game
-now uses gary_walk_sheet.PNG. Do not approve the new animation from the old grid.
-The historical grid scale is 2 sheet pixels per design-canvas unit. Verify each
-asset's metadata before assuming a future grid uses that scale.
-Use live definitions when old grid metadata disagrees. Report the discrepancy.
+CURRENT DESIGN REFERENCE (DO NOT GUESS)
+- 360x640 design canvas; three lanes centred at x=130/180/230.
+- Gary reference y=540; normal visible height 142 (feet use +6 offset).
+- Each shop destination is 89x236; source atlas 2912x2688.
+- Cobblestones currently WORLD.cobbleCell=48 game units. The engine samples a
+  quadrant of each IMG_7141..7148.webp source for each displayed cell.
+- Walk is six horizontal frames in gary_walk_sheet.PNG.
+- Talking intro is 4x2, 384x512 cells in gary_intro_sheet.PNG.
+- New transition is 4x1, 384x512 cells, total 1536x512, in
+  gary_transition_sheet.png. The game moves/shrinks the art; sheet frame sizes
+  and character scale should NOT vary.
+- Published shop keeper GOLD anchors, GREEN clip masks, BLUE lighting panes,
+  and AMBER shutters are separately defined in gary-game-config.json. Do not
+  copy the deprecated SHOP_PANES fallback fractions over real calibrations.
 
-REVIEW IN THIS ORDER
-1. Identity: exact requested business/character; Gary's face, clothing and mic.
-2. Camera: fixed front-facing shop elevation, small roof/top visible, parallel lanes;
-   no vanishing point, isometric turn or depth-based shrinking.
-3. Scale: 360 x 640 world; Gary 142 tall; shops 89 x 236; lanes 50 wide.
-   Use ITEMS.displaySize and DETAILS caps for the other assets.
-4. Ground contact: stable bottom anchors, correctly placed contact shadows; props
-   must sit on the stones, not float or resemble stickers pinned to a wall.
-5. Source geometry: atlas crops/cell bounds; no clipping, overlaps or per-frame trim.
-   Check the six-frame walk and eight-frame 4 x 2 intro separately.
-6. Windows: compare every shop to its own SHOP_PANES rectangle. Verify keeper baseline,
-   clipping and light alignment. Do not enforce a generic shared window rectangle.
-7. Material/style: painted British cartoon; Gary most realistic, shops flatter, props
-   between them but closer to shops. Check outline thickness at actual display size.
-8. Alpha: real transparency; no black/white fringe or baked checkerboard. An opaque
-   grid cannot prove source alpha; inspect the source or mark UNVERIFIED.
-9. Lighting: daylight upper-left; night cool with restrained amber local light.
-   Keepers and signs remain legible. Rain/glow must not wash out food or hazards.
-10. Gameplay: identify the safe lane immediately at phone size in each lighting state.
-    Collision extent matches what the player can reasonably read from the sprite.
-11. Animation: play a full loop. Inspect baseline/torso drift, limb direction, identity,
-    scale and border bleeding. A still image is not an animation approval.
-12. UI/cutscene: speaker identity, small text legibility, visible skip/advance, adequate
-    contrast, and a distinct lantern control which cannot also trigger a lane change.
+REVIEW SEQUENCE (BLOCKING FAULTS FIRST)
+1. IDENTITY — Exact intended food/shop/character, spelling/signage, hairstyle,
+   facial structure, Gary outfit, microphone and visual continuity.
+2. CAMERA — Parallel lane/world angle, barely elevated near-front shop facade,
+   no isometric angle, dramatic perspective, foreshortened runners or random
+   object rotations. Use existing approved world crop, not a new camera guess.
+3. PIXEL GEOMETRY — Source bounds, destination scale, per-shop 89x236 footprint,
+   atlas crops, no cut-off shoes/heads, coherent prop size and collision clarity.
+4. GROUNDING — Contact shadows and bottom anchor. Avoid floating benches,
+   objects pinned to walls, sliding keepers or footprints moving with frame crop.
+5. SPRITE ALPHA — Real transparency and clean fringe on BLACK, WHITE and
+   MID-TONE backdrops. A JPEG image or white checkerboard is not alpha.
+6. ANIMATION — Inspect ALL frames, equal cell dimensions, untrimmed alignment,
+   full-motion playback, exact first-to-last transition, no flickering costumes.
+   Check the intro -> 4-frame cinematic -> first walking frame handoff. No
+   baked shrinking, camera motion, or blurred frame transitions.
+7. SHOPS — Compare actual published per-shop GOLD/BLUE/GREEN/AMBER rectangles
+   and their relative layers. GOLD reposition does not change BLUE lighting.
+   GREEN only clips the keeper. AMBER shutters go over the correctly lit keeper.
+8. COBBLES — Inspect each of eight variants, not merely one screenshot. Does
+   the stone edge align across all 4 source quadrants and across changing
+   material types? Does the floor remain one scrolling grid at 48-unit cells?
+   Small weeds, cracks or leaf shapes should be clear but not repeated visibly
+   in a distracting pattern. If testing 60 units, treat as a proposed preview.
+9. MATERIAL/LIGHT — Same painted British-cartoon material response. Day upper-
+   left light; cool nighttime treatment; warmly lit windows that do NOT wash
+   out the keeper. Check storm darkness, lamp halo, wet cobble reflections.
+10. GAMEPLAY — Hazards and pickups must remain distinguishable on iPhone in
+    daylight and rain. Verify collision appearance and safe-lane readability.
+    Props and effects do not block touch targets, dialogue or HUD.
+11. UI/FOOD — Verify Food Catalogue cards both undiscovered and unlocked;
+    imagery, names, rarity (if designed) and counts are readable. Recipe
+    combination/crafting art is FUTURE concept, not active system.
+12. STORY — Future stranger must have one identity across world/portrait,
+    grounded feet, limited face reveal, legible lantern silhouette; dialogue
+    fallback works even if optional art fails. Do not approve unimplemented
+    scenes as if demonstrated in the playable game.
 
-SPECIAL ASSETS
-- Stranger world sprite and portrait must be the same person and costume.
-- Lantern body and glow are separable. The icon reads without the tiny OPEN lettering.
-- Splashes are small flattened ground marks; they cannot look like pickups.
-- Two-lane roadblock spans two adjacent 50-unit lanes, with one readable free lane.
-  Its occupied lanes/collision rules require implementation; width alone proves nothing.
-- Forest scenery can be larger than the current small street tree. Keep the road clear.
-- Kebab and fish are currently code-drawn. Review their rendered appearance; recommend
-  a drawing change if needed, not regeneration of a file that does not exist.
+SPECIAL REJECTION CHECKS
+- A two-lane roadblock must actually span 2 adjacent 50-unit lanes and leave
+  one readable safe lane; collider/pattern changes are separately required.
+- Generic 'British shop' art is NOT a substitute for Fish & Chips, Bakery,
+  Peri Peri Chicken, Butchers, The Red Lion, or Mallace Cafe.
+- For modified shops, protect the live window/door/glass coordinates; when an
+  artist cannot retain them, stop for explicit re-calibration approval.
+- New cobble textures must use compatible quadrant edges at the authored
+  source size. Merely repeating an AI image does not make it seamless.
+- Rain splash loops should be small, ground-bound and non-hazard-looking.
+- Transition artwork should be judged playing, not by a static 4-up sheet.
+- Never infer that an asset file is live merely because it exists in GitHub.
+  Confirm actual game-data.js/index.html/module reference and on-phone render.
 
-OUTPUT FORMAT
-Produce one row per asset or rendered component:
-id | actual file or code source | status PASS/FAIL/UNVERIFIED |
-observed evidence | exact correction | checks needed after correction
+REPORT FORMAT
+Provide a table with the following columns:
+ID | actual repo source | exact display geometry | PASS/FAIL/UNVERIFIED |
+evidence observed | exact fault | smallest safe correction | next phone test
 
-List blocking issues first: wrong identity/camera, clipping, invalid geometry,
-misaligned windows, unreadable hazards, broken alpha or animation drift.
-Then list polish issues. Distinguish a bad source image from bad renderer metadata
-or bad compositing. Do not request regeneration when a verified placement correction
-is sufficient. Do not hide a missing source behind a confident visual judgement.
+Below the table, separate BLOCKING issues (wrong identity/camera, broken alpha,
+source-cell geometry, clipping, wrong gold/blue coupling, illegible hazards,
+missing asset/script) from POLISH issues (subtle texture, expression timing,
+slightly excessive saturation). State what was checked in code, visually,
+with animation playback, and on the live phone, respectively.
 
-ACCEPTANCE
-A matching style alone is insufficient. Approve only after camera, measured geometry,
-alpha, motion and in-world readability pass. Never invent filenames, frame sizes or
-coordinates. If required evidence is absent, state precisely what remains UNVERIFIED.
+REUSABLE IMAGE-GENERATION / EDITING PROMPT
+Use the provided current in-game asset and full relevant sprite sheet as
+PRIMARY references. Create/change ONLY: [exact asset, shop, person, pose or
+smallest requested region]. Preserve [camera angle, light direction, identity,
+clothes, sign text, outlines, material, body proportions, exact window/door
+coordinates, background transparency, destination size]. Deliver [PNG/WebP],
+[exact source dimensions], [columns x rows and order], and [actual alpha].
+For animation, maintain one untrimmed cell size and identical source scale;
+pose progression must connect to supplied starting and destination frames.
+Do not add scenery, decorations, shadows, text or extra frames unless requested.
+Do not alter other cells/regions. If the model cannot enforce protected pixel
+coordinates, state that a human image edit and alignment step is still needed.
 
-PROMPT FOR AN INDIVIDUAL REPLACEMENT (fill all fields before use)
-Use the attached approved in-game crop as the camera, scale and style reference.
-Create only [exact asset/business/character], with [specific intended change].
-Keep [source canvas/cell size], [ground anchor], [display size], [window rectangle,
-if applicable] and all protected details unchanged. Match the existing painted British
-cartoon outline, material and upper-left daylight. Preserve the character's identity.
-Deliver genuine transparency with no scene, road, background or baked ground shadow.
-For animation: [columns x rows], [frame order], constant scale/anchor, no cell overlap.
-Measure and review the result before replacing an asset; the prompt is not validation.
+ACCEPTANCE PRINCIPLE
+One correct-looking frame is not game-ready. Only approve after visual,
+geometry, transparency, runtime-scale, animation and mobile readability checks.
+A failed/unknown check is UNVERIFIED, not implied success. Changes to engine
+or live configuration require staging, regression tests and a rollback.
