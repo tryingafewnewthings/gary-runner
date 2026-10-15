@@ -135,8 +135,10 @@ let shutterMix = 0;
   const imgCheer = loadGary(GARY_SPRITES.cheer);
   const imgCrash = loadGary(GARY_SPRITES.crash);
 
-  // GarySmoothSidestepFourFramesV3 — only one rendered sprite at a time.
+  // GarySmoothSidestepFourFramesV4 — frame visibility independent from lane travel.
   const SIDE_FRAMES = 4, SIDE_W = 576, SIDE_H = 768;
+  const SIDE_ANIM_SECONDS = 0.44; // Visible for 110 ms per frame.
+  let sideAnimTime = SIDE_ANIM_SECONDS, sideAnimDir = 0;
   const imgSideLeft = new Image(), imgSideRight = new Image();
   const sideArt = { left: false, right: false, anchors: [[], []], walkFoot: 0.975 };
 
@@ -183,7 +185,7 @@ let shutterMix = 0;
       sideArt[key]=true;
     };
     img.onerror=()=>loadErrorLog.push(file+': missing; using walking animation');
-    img.src=file+'?v=3';
+    img.src=file+'?v=4';
   }
   prepareSideImage(imgSideLeft,'left','gary_sidestep_left.png');
   prepareSideImage(imgSideRight,'right','gary_sidestep_right.png');
@@ -756,6 +758,8 @@ let shutterMix = 0;
     lane = target = laneStart = 1;
     laneTime = laneDuration = LANE_CHANGE_SECONDS;
     laneLean = 0;
+    sideAnimTime = SIDE_ANIM_SECONDS;
+    sideAnimDir = 0;
     gap = LEARN_GAP;
     playTime = nightMix = nightHeld = rainMix = shutterMix = 0;
     nightOn = false;
@@ -791,6 +795,8 @@ let shutterMix = 0;
     laneStart = lane;
     target = next;
     laneTime = 0;
+    sideAnimDir = direction;
+    sideAnimTime = 0;
     laneDuration = Math.max(0.12, Math.min(0.40,
       LANE_CHANGE_SECONDS * Math.abs(target - laneStart)));
     grinTimer = 0; // A lane change immediately interrupts a cheer.
@@ -1236,6 +1242,10 @@ let shutterMix = 0;
     // Gentle damping also handles quick direction reversals.
     laneLean += (desiredLean - laneLean) * (1 - Math.exp(-dt / 0.075));
     if (!moving && Math.abs(laneLean) < 0.0001) laneLean = 0;
+    if (sideAnimTime < SIDE_ANIM_SECONDS) {
+      sideAnimTime = Math.min(SIDE_ANIM_SECONDS, sideAnimTime + dt);
+      if (sideAnimTime >= SIDE_ANIM_SECONDS) sideAnimDir = 0;
+    }
     grinTimer = Math.max(0, grinTimer - dt);
     updateWalkAnimation(dt);
 
@@ -1564,10 +1574,10 @@ let shutterMix = 0;
 
     ctx.save(); ctx.translate(px,py);
     const isCrashing=state.startsWith('crash');
-    const moving=state==='play' && laneTime<laneDuration;
-    const direction=Math.sign(target-laneStart);
+    const direction=sideAnimDir;
     const image=direction<0?imgSideLeft:direction>0?imgSideRight:null;
-    const pose=moving && image && image.ready;
+    const pose=state==='play' && !isCrashing &&
+      sideAnimTime<SIDE_ANIM_SECONDS && image && image.ready;
     // The sheet already includes its own lean. Avoid doubling it.
     if(!isCrashing) ctx.rotate(laneLean*(pose?0.25:1));
     const h=WORLD.playerHeight;
@@ -1577,7 +1587,7 @@ let shutterMix = 0;
       ctx.drawImage(single,-w/2,-h+WORLD.playerFootOffset,w,h);
     } else if(pose){
       // Four consecutive frames across the whole eased sidestep; no crossfaded ghosts.
-      const fraction=Math.min(0.999999,laneTime/laneDuration);
+      const fraction=Math.min(0.999999,sideAnimTime/SIDE_ANIM_SECONDS);
       const frame=Math.min(3,Math.floor(fraction*SIDE_FRAMES));
       const anchor=sideArt.anchors[direction<0?0:1][frame]||{torso:0.5,foot:0.96};
       const w=h*SIDE_W/SIDE_H;
