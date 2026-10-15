@@ -43,10 +43,15 @@
   let state = 'menu';
   let score = 0, best = 0, tierMax = 0;
   let lane = 1, target = 1;
+  // Predictable, eased lane changes leave collision checks on the actual lane.
+  const LANE_CHANGE_SECONDS = 0.24;
+  const MAX_LANE_LEAN = 0.045; // Approximately 2.6 degrees.
+  let laneStart = 1, laneTime = LANE_CHANGE_SECONDS;
+  let laneDuration = LANE_CHANGE_SECONDS, laneLean = 0;
   let scrollY = 0, distance = 0, acc = 0, gap = 1.1;
   let objs = [], fx = [], cap = null, mile = 0, crashT = 0, clock = 0, uid = 0;
   let grinTimer = 0, stars = [], lastTierIndex = 0, nextEvent = 0, nextRow = 0, roadQueue = [], nearCd = 0, lastHit = null, shownSpeed = 200, flash = 0;
-  let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0, laneSquash = 0;
+  let review = 0, reviewMul = 1, reviewGap = 0, hitStop = 0;
   let lastLanes = ['none', 'none', 'none'];
   let playTime = 0, nightMix = 0;
   // Night biome. NIGHT_MODE is the switch: false stays daylight, true is the night street.
@@ -130,24 +135,7 @@ let shutterMix = 0;
   const imgCheer = loadGary(GARY_SPRITES.cheer);
   const imgCrash = loadGary(GARY_SPRITES.crash);
 
-  // Gary Sidestep Patch v1 — optional art, independent from collision and input.
-  const SIDE_FRAMES = 4, SIDE_W = 576, SIDE_H = 768;
-  const SIDE_DURATION = 0.33;
-  // 'clean' uses continuous walking plus a visible eased lean. 'pose' tests
-  // one opaque mid-action sprite at a time, never alpha-blended layers.
-  const SIDE_MODE = new URLSearchParams(location.search).get('sidestep') === 'pose'
-    ? 'pose' : 'clean';
-  function loadSideArt(file) {
-    const img = new Image();
-    img.ready = false;
-    img.onload = () => { img.ready = img.naturalWidth === SIDE_FRAMES * SIDE_W && img.naturalHeight === SIDE_H; };
-    img.onerror = () => { img.ready = false; };
-    img.src = file;
-    return img;
-  }
-  const imgSideLeft = loadSideArt('gary_sidestep_left.png?v=1');
-  const imgSideRight = loadSideArt('gary_sidestep_right.png?v=1');
-  let sideDir = 0, sideTime = 0;
+  // Use the same uninterrupted walk sprites throughout a lane change.
   let runFrame = 0, runTimer = 0;
 
   const imgGaryIntro = new Image();
@@ -706,9 +694,10 @@ let shutterMix = 0;
     if (gameOverFrameRequest !== null) cancelAnimationFrame(gameOverFrameRequest);
     gameOverFrameRequest = null;
     runFrame = runTimer = garyIntroFrame = garyIntroFrameTimer = introAnimTimer = 0;
-    sideDir = 0; sideTime = 0;
     score = tierMax = lastTierIndex = scrollY = distance = acc = 0;
-    lane = target = 1;
+    lane = target = laneStart = 1;
+    laneTime = laneDuration = LANE_CHANGE_SECONDS;
+    laneLean = 0;
     gap = LEARN_GAP;
     playTime = nightMix = nightHeld = rainMix = shutterMix = 0;
     nightOn = false;
@@ -720,7 +709,7 @@ let shutterMix = 0;
     roadQueue = [];
     cap = lastHit = null;
     mile = crashT = grinTimer = nextEvent = nextRow = nearCd = flash = 0;
-    review = reviewGap = hitStop = laneSquash = clock = uid = 0;
+    review = reviewGap = hitStop = clock = uid = 0;
     reviewMul = 1;
     shownSpeed = 200;
     lastLanes = ['none', 'none', 'none'];
@@ -739,14 +728,15 @@ let shutterMix = 0;
   function move(direction) {
     if (state !== 'play') return;
     const next = Math.max(0, Math.min(WORLD.laneCount - 1, target + direction));
-    if (next !== target) {
-      laneSquash = 0.09;
-      sideDir = direction;
-      sideTime = 0;
-      grinTimer = 0; // A dodge immediately interrupts a cheer.
-      performance.laneChanges++;
-    }
+    if (next === target) return;
+    // Preserve the current visual position, including on a quick reversal.
+    laneStart = lane;
     target = next;
+    laneTime = 0;
+    laneDuration = Math.max(0.12, Math.min(0.40,
+      LANE_CHANGE_SECONDS * Math.abs(target - laneStart)));
+    grinTimer = 0; // A lane change immediately interrupts a cheer.
+    performance.laneChanges++;
   }
 
   /* layout:start
@@ -1171,12 +1161,23 @@ let shutterMix = 0;
     clock += dt;
     syncNight(dt);
     updateRain(dt, true);
-    lane += (target - lane) * Math.min(1, dt / 0.16);
-    laneSquash = Math.max(0, laneSquash - dt);
-    if (sideDir !== 0) {
-      sideTime = Math.min(SIDE_DURATION, sideTime + dt);
-      if (sideTime >= SIDE_DURATION) { sideDir = 0; sideTime = 0; }
+    // Smoothstep gives a predictable start and finish without position pops.
+    if (laneTime < laneDuration) {
+      laneTime = Math.min(laneDuration, laneTime + dt);
+      const t = laneTime / laneDuration;
+      const eased = t * t * (3 - 2 * t);
+      lane = laneStart + (target - laneStart) * eased;
+    } else {
+      lane = target;
     }
+    const moving = laneTime < laneDuration;
+    const phase = moving ? laneTime / laneDuration : 1;
+    const desiredLean = moving
+      ? Math.sign(target - laneStart) * MAX_LANE_LEAN * Math.sin(Math.PI * phase)
+      : 0;
+    // Gentle damping also handles quick direction reversals.
+    laneLean += (desiredLean - laneLean) * (1 - Math.exp(-dt / 0.075));
+    if (!moving && Math.abs(laneLean) < 0.0001) laneLean = 0;
     grinTimer = Math.max(0, grinTimer - dt);
     updateWalkAnimation(dt);
 
@@ -1439,7 +1440,7 @@ let shutterMix = 0;
   }
 
   function updateWalkAnimation(dt) {
-    if (grinTimer > 0 && imgCheer.ready && sideDir === 0) return;
+    if (grinTimer > 0 && imgCheer.ready) return;
     runTimer += dt;
     while (runTimer >= WALK_FRAME_TIME) {
       runTimer -= WALK_FRAME_TIME;
@@ -1496,69 +1497,43 @@ let shutterMix = 0;
   }
 
   function drawPlayer(){
-    const px=lx(lane),py=PLAYER_Y;
-    const planted = runFrame===0 || state.startsWith('crash');
-    const sx = px + (planted ? 0 : 3);
-    const shade = ctx.createRadialGradient(sx, py+6, 2, sx, py+6, planted ? 16 : 11);
-    shade.addColorStop(0, planted ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.16)');
+    const px = lx(lane), py = PLAYER_Y;
+    // Fixed shadow position eliminates alternating three-pixel horizontal shifts.
+    const shade = ctx.createRadialGradient(px, py + 6, 2, px, py + 6, 16);
+    shade.addColorStop(0, 'rgba(0,0,0,.24)');
     shade.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = shade;
     ctx.beginPath();
-    ctx.ellipse(sx, py+6, planted ? 16 : 11, planted ? 4 : 2.5, 0, 0, 7);
+    ctx.ellipse(px, py + 6, 16, 4, 0, 0, 7);
     ctx.fill();
-    ctx.save();ctx.translate(px,py);
-    if(laneSquash>0 && sideDir===0) ctx.scale(1+laneSquash*1.4, 1-laneSquash*0.8);
-    const isCrashing=state.startsWith('crash');
-    let imgToDraw=null;
-    if(isCrashing && imgCrash.ready) imgToDraw=imgCrash;
-    else if(sideDir !== 0 && imgWalkSheet.ready) imgToDraw=imgWalkSheet;
-    else if(grinTimer>0 && imgCheer.ready) imgToDraw=imgCheer;
-    else {
 
-    imgToDraw = imgWalkSheet.ready ? imgWalkSheet : null;
-  }
-    const h = WORLD.playerHeight;
-    const step = runFrame===1 && !isCrashing && grinTimer<=0 ? -3 : 0;
-    if (imgToDraw) {
-    if (imgToDraw === imgWalkSheet) {
+    ctx.save();
+    ctx.translate(px, py);
+    const isCrashing = state.startsWith('crash');
+    if (!isCrashing) ctx.rotate(laneLean);
 
-      const frameW = imgWalkSheet.naturalWidth / WALK_FRAMES;
-      const frameH = imgWalkSheet.naturalHeight;
-
-      const ar = frameW / frameH;
-      const w = h * ar;
-
-      const t = sideDir ? Math.min(1, sideTime / SIDE_DURATION) : 0;
-      const wave = Math.sin(Math.PI * t);
-      const sideArt = sideDir < 0 ? imgSideLeft : sideDir > 0 ? imgSideRight : null;
-      const pose = SIDE_MODE === 'pose' && sideDir !== 0 && sideArt && sideArt.ready
-        && t >= 0.20 && t <= 0.80;
-      if (sideDir !== 0) {
-        // The foot remains anchored at (0,0), while shoulders lean visibly.
-        // Lean rises and falls smoothly, including during rapid direction changes.
-        ctx.rotate(sideDir * (pose ? 0.025 : 0.13) * wave);
-      }
-      if (pose) {
-        // One completely opaque sprite, and never a second copy of Gary.
-        const sourceFrame = t < 0.50 ? 1 : 2;
-        const sw = h * SIDE_W / SIDE_H;
-        ctx.drawImage(sideArt, sourceFrame * SIDE_W, 0, SIDE_W, SIDE_H,
-          -sw/2, -h + WORLD.playerFootOffset, sw, h);
-      } else {
-        // Use the actual walking cycle during the rest of the sidestep.
-        ctx.drawImage(imgWalkSheet, runFrame * frameW, 0, frameW, frameH,
-          -w/2, -h + WORLD.playerFootOffset, w, h);
-      }
-
-    } else {
-      const ar = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
-      const w = h * ar;
-
-      ctx.drawImage(imgToDraw, -w / 2, -h + WORLD.playerFootOffset + step, w, h);
+    let sprite = null, frame = 0, frames = 1;
+    if (isCrashing && imgCrash.ready) {
+      sprite = imgCrash;
+    } else if (grinTimer > 0 && imgCheer.ready) {
+      sprite = imgCheer;
+    } else if (imgWalkSheet.ready) {
+      sprite = imgWalkSheet;
+      frame = runFrame;
+      frames = WALK_FRAMES;
     }
-  } else {
-    fbFace(ctx, 36 * S);
-  }
+
+    if (sprite) {
+      const frameW = sprite.naturalWidth / frames;
+      const frameH = sprite.naturalHeight;
+      const h = WORLD.playerHeight;
+      const w = h * frameW / frameH;
+      // Identical foot anchoring across walking and special animation frames.
+      ctx.drawImage(sprite, frame * frameW, 0, frameW, frameH,
+        -w / 2, -h + WORLD.playerFootOffset, w, h);
+    } else {
+      fbFace(ctx, 36 * S);
+    }
     ctx.restore();
 
     for(const s of stars){
