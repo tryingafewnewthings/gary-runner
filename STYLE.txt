@@ -1,126 +1,138 @@
-GARY EATS! — VISUAL AND ASSET CONTRACT
-Version: 2026-10-10
-Applies to gameplay, encounter art, weather, UI and every future biome.
-Numeric authoring source: WORLD, GARY_SPRITES, STREET_ATLAS, BUILDINGS, KEEPERS,
-SHOP_PANES, ITEMS and DETAILS in game-data.js. Do not maintain competing geometry.
+GARY EATS! — VISUAL, CAMERA AND ASSET CONTRACT
+Revision: 15 October 2026 | Applies to live game and planned chapters.
+Read PROJECT_STATE.md and the live game-data.js / gary-game-config.json first.
+This document is a visual contract, NOT a second source of numeric calibration.
 
-1. IDENTITY AND CAMERA
-Painted British cartoon, clean dark outlines, restrained texture and soft shading.
-Gary is the most realistic element. Preserve his face, hair, blue patterned knit
-jumper, blue quilted gilet, trousers, shoes and chest microphone with fuzzy windscreen.
-Shops are flatter painted sets. Props, food and hazards sit between those treatments,
-closer to the shops. Avoid photoreal props, flat UI icons in the world and pixel art.
+1. IDENTITY AND ART DIRECTION
+Painted British high-street cartoon; clean dark outlines, restrained texture,
+soft material shading and convincing but modest depth. Gary is the most
+recognisable, relatively detailed character: exact face/hair, blue quilted
+jacket/gilet, blue jumper, collar, trousers, shoes and chest microphone.
+Artwork must preserve character identity between close-up and tiny runner sizes.
+Do not switch into unrelated photorealism, anime proportions, pixel art,
+stock-game icons or dramatic isometric rendering. Keep expressive humour and
+warmth as the narrative environment becomes darker.
 
-The gameplay camera is fixed. Lanes are parallel flat bands, without a vanishing
-point or distance-based shrinking. Shops are front-facing elevations with a little
-roof/top visible. Match an approved in-game crop; do not invent a numeric camera
-angle, lens, horizon or isometric view. Props share the shop camera and ground plane.
-Gary walks away from the viewer with his head turned back toward the audience.
-Cutscene portraits may use different framing; the world camera stays fixed.
+2. CAMERA, WORLD AND SCALE
+The runner is a 360 x 640 design canvas; high-DPI phone backing pixels do not
+change authoring coordinates. Fixed camera, parallel horizontal lane positions;
+NO receding vanishing point, simulated lens or distance-based object shrinkage.
+Road x = 105..255, width 150. Three 50-unit lanes, centres 130 / 180 / 230.
+Gary's world reference is y = 540, visible sprite target height 142; feet are
+anchored using WORLD.playerFootOffset = 6.
+Shops are painted near-front elevations with only a little roof/top depth,
+long wall parallel to the road, facade oriented towards the road. Destination
+size 89 x 236: left shop at x=0, right shop at x=271. Adjacent pavement strips
+x=89..105 and 255..271. Street segment height 360; detail zone height 124.
+The source shop atlas is 2912 x 2688; respect individually authored source crops.
+Items use ITEMS.displaySize separately from ITEMS.collision. Present settings:
+kebab/fish 50, roast 46, mushroom 52, fork 44 design pixels.
+Props must share the shop-camera language, have plausible ground contact and
+stay legible at their authored DETAILS display caps. No floating benches,
+flat sticker-like trees or props that look attached to the building wall.
 
-2. DESIGN COORDINATES AND SCALE
-All geometry below uses the 360 x 640 design canvas, not device/backing pixels.
-High-DPI rendering scales the picture; it does not change game coordinates.
-Road: x=105 to x=255, width=150. Three 50-unit lanes; centres 130, 180 and 230.
-Gary: player reference y=540; rendered height=142; sprite bottom at y=546.
-The bottom-centre of each untrimmed frame is the current draw anchor.
-Shops: left x=0, right x=271; each destination box is 89 x 236.
-Pavement strips: x=89..105 and x=255..271. Segment height=360; detail zone=124.
-Cobbles: 48 x 48 cells using quadrants of the source textures.
-Items: kebab/fish 50 square; roast 46; fork 44; mushroom 52.
-These are display boxes, not the hitboxes. ITEMS.collision is independent.
-Current prop height caps: lamp 72, postbox 64, bin 52, bench 100, tree 78, board 58.
-Some front/back slots reduce available height. Validate the actual slot, not only a cap.
-Future forest trees may use a different background scale; they must not obscure lanes.
+3. COBBLE GROUND AND TILE SEAMS
+Current renderer uses WORLD.cobbleCell = 48 design units. drawCobbles() samples
+ONE QUADRANT of each corresponding WebP texture into each destination cell.
+This is not a 180/200-unit full-texture draw. All eight variants must share the
+same authored source size/quadrant layout, colour family, scale and edge language.
+Use one scrolling world-space grid for left and right; do not restart the pattern
+at shop or detail-zone boundaries. All cells must align without pixel gaps,
+white seams or a change in phase as the street moves.
+The 60-unit suggestion is a visual experiment, NOT published as of this review.
+A larger grid makes existing details appear larger but cannot guarantee
+seamlessness if textures do not tile at their quadrant edges. Inspect source
+art and gameplay captures before making a more intrusive change. Contrast,
+stone boundaries, weeds and cracks must be distinguishable on iPhone without
+turning every variant into a sharply contrasting patchwork.
 
-3. SHOP WINDOWS: PRESERVE EACH CALIBRATION
-SHOP_PANES fractions are relative to that shop's destination rectangle.
-Local pixel rectangles below are x, y, width, height within an 89 x 236 box:
-Fish & Chips:      5.340, 132.160, 49.840, 66.080
-Peri Peri Chicken: 5.340, 131.688, 48.950, 66.552
-Bakery:           6.230, 131.688, 48.060, 66.552
-The Red Lion:    10.680, 148.208, 46.280, 58.528
-Butchers:         7.120, 135.700, 46.280, 60.180
-Mallace Cafe:     5.340, 132.160, 48.950, 66.080
+4. SHOPKEEPERS, GLASS AND SHUTTERS — INDEPENDENT CONTROLS
+Each of the six shops has different, already-published rectangles and offsets.
+DO NOT replace those with one universal measurement or the original defaults.
+- GOLD: gary-game-config.json -> shopKeeperAnchors[shop]; independent keeper
+  base rectangle (x/y/w/h). Editing this MUST NOT move the blue glow region.
+- Keeper controls: shopKeepers[shop] offsets, scale, idle/cheer amounts.
+- GREEN: shopKeepers[shop].clip is the visibility window/mask, not an anchor.
+- BLUE: shopWindowPanes[shop] defines the illuminated glass and window sheen.
+  Editing BLUE MUST NOT resize or relocate the independently anchored keeper.
+- AMBER: shopClosures[shop].shutter and optional doorLight; independent closing
+  rectangles, duration and approach timing.
+All are local 89 x 236 design coordinates. game-data.js SHOP_PANES fractions
+are fallback geometry only; the published JSON supersedes them. Do not quote
+old calibration coordinates as the six shops' current exact positions.
+Glass art, keeper motion, night lighting and shutters must stay spatially
+consistent. Keepers draw ABOVE night-window/storm glow and BELOW foreground
+shutters; avoid a later glow pass that fades the keeper. Minimise sheen over
+the face. Baked keepers within source shop images are a separate art concern;
+do not mask a double-figure problem by moving the live character incorrectly.
+Shops: Fish & Chips, Peri Peri Chicken, Bakery, The Red Lion, Butchers,
+Mallace Cafe. Identity and readable signage are non-negotiable.
 
-shopWindowRect() must supply keeper clipping, glow and future spill placement.
-Do not substitute one common rectangle. A keeper remains seated against the same
-windowsill after a skin replacement. Preserve the current keeper size/drop offsets.
-Current atlas art includes baked figures; new shop art should have an empty window
-for the separate keeper. Removing baked figures is an art task, not a geometry fix.
-Keep business names and identities exact. Roof/chimney/material variations are welcome
-only within the approved footprint and window contract.
+5. ANIMATION, CELLS, ALPHA AND HANDOFFS
+World sprites require a real alpha channel (PNG/WebP); no JPEG backdrops,
+false checkerboards, stray light fringe, baked sky/road or per-frame trimming.
+All frames of one sprite share the same untrimmed cell dimensions, subject
+scale and alignment. Keep arms, shoes and microphone within safe borders.
+- Talking intro: gary_intro_sheet.PNG, 4 x 2 cells of 384 x 512, 1536 x 1024.
+- Running/walking: gary_walk_sheet.PNG, 6 equal horizontal frames, one row.
+  Frame width is source width / 6; keep one stable bottom-centre foot anchor.
+- Cinematic transformation: gary_transition_sheet.png, 4 x 1 cells of
+  384 x 512, overall 1536 x 512. It must link the last talking pose to the
+  first walking pose. JavaScript owns motion/scale/crossfade; do not bake
+  changing character scale or camera travel into these four image cells.
+- Shop sprite atlas: high_street_sprites.webp, 2912 x 2688; honour published
+  atlas source coordinates. Prop strips may use separate frame counts.
+- Other loop/one-off pictures: use current GARY_SPRITES definitions as source.
+Animation acceptance requires playback at in-game size: check for costume,
+proportion or head-direction pops; bouncing baselines; frame bleeding;
+wrong source slicing; and unnatural transitions. A still image is insufficient.
 
-4. FILES, CELLS AND ANCHORS
-Deliver world sprites as PNG or WebP with genuine alpha transparency. No white/black
-background, checkerboard painted into the image, fringe, outline halo or baked ground
-shadow. Preview backgrounds may be dark; runtime alpha must still be correct.
-The engine supplies ground shadows. Separate light/glow from an object's unlit body.
-Do not trim different animation frames independently; use a shared untrimmed cell.
-Keep feet, hips and body scale aligned, with safe padding inside every cell.
-No overlapping frames, clipped extremities or pose bleeding into neighbouring cells.
+6. LAYER ORDER AND WEATHER
+Day: soft light from upper left, restrained shadows, clear outlines.
+Night: cool environment shade plus warm amber window/lamp light. Essential
+food pickups and hazards always read clearly. Do not bake a night version of
+all source art; use code lighting and separate glow sprites/passes instead.
+Target compositing order:
+  world floor -> shops/props -> ambient/night treatment -> local glass and
+  window light/storm glow -> keepers (independently clipped) -> shutters and
+  appropriate foreground props -> gameplay actors/items -> restrained rain
+  streaks -> edge vignette -> HUD/dialogue.
+Actual implementation may split passes to keep the lighting behind keepers;
+review order in CURRENT active engine whenever it changes.
+Rain streaks are thin, reusable, bounded, and must not obscure lane reading.
+Cobble splashes are small flattened ground marks that scroll with the floor.
+Rain effects are cosmetic; never use rain opacity to conceal lethal hazards.
+UI/cutscenes remain above the weather. Avoid full-screen shake or flashes.
 
-Gary walk: 6 equal horizontal cells; frame width = image width / 6. Natural width
-must divide by 6 exactly. Preserve aspect, baseline and anchor across all six frames.
-Gary intro: 4 columns x 2 rows; 384 x 512 per cell; full image 1536 x 1024.
-Street atlas: 2912 x 2688; preserve BUILDINGS/KEEPERS source rectangles on replacement.
-DETAILS w/h is the aspect of ONE prop frame. A strip's full width is not frame width.
-Bench uses 3 horizontal frames. Props use bottom placement and code contact shadows.
-New standalone shop canvases should match 89:236, e.g. 356 x 944 at 4x. Atlas-slot
-replacements must instead respect that slot's existing source dimensions and mapping.
-Do not stretch a mismatched generation arbitrarily to make it fit.
+7. UI, FOOD DISCOVERY AND FUTURE USP
+Main menu must offer easy Play Game and Food Catalogue actions on a phone.
+Discovered-food art, labels and collection counts must be readable; unknown
+foods are deliberately locked without spoiling the identity. Persistent
+progress belongs to an explicit save policy (currently same-device localStorage).
+A future Review Effect or combination mechanic should use a consistent visual
+language with memorable character reactions; it must not be mistaken for a
+shipped cooking system or obscure lane inputs. Distinguish food from hazards
+by shape first, not only by hue. Keep touch targets large enough for iPhone.
 
-Each new asset needs: stable id, exact case-sensitive filename, source/cell size,
-frame count/order, design display size, anchor, ground line, layer, alpha status,
-and any window/collision metadata. Specify whether it is world art or UI art.
-AI prompts are design instructions, not proof of pixel accuracy. Measure the output.
+8. NARRATIVE ASSET RULES (PLANNED, NOT ACTIVE)
+The Last Orders stranger: elderly former chip-shop owner, raincoat, dry paper
+bag; quiet partly obscured face, coherent between world and portrait art.
+A fixed-camera sidewalk approach needs stable ground contact and separate
+portrait framing if text dialogue requires face detail. Lantern: battered
+warm-amber body and legible UI silhouette, light composited separately. The
+light may reveal optional bonus food, not remove hazards or make lanes readable.
+Wilderness must retain 3-lane geometry and clear safe space while familiar
+shops give way to vegetation and watchful eyes outside the road.
+All of these require dedicated implementations and asset review; they remain
+future concepts in DEVELOPMENT_PLAN.
 
-5. LIGHT, RAIN AND READABILITY
-Daylight is soft and from upper-left. Night uses cool ambient colour with warm amber
-windows/lamps. The storm may become very dark around the road, but active hazards,
-food silhouettes and the available lane must remain readable on the phone.
-Do not rely on the lantern for basic survival visibility.
-Never bake the night tint into every day asset: reuse skins and apply lighting in code.
-
-Current rendering shades the completed shops/keepers in a later ambient pass. Review
-that explicitly before changing the layer order. Future target order:
-ground -> world/environment -> ambient shade -> ground light/spill and splashes ->
-local window light/keepers -> gameplay items/actors -> restrained foreground rain ->
-edge vignette -> HUD/dialogue. Where a keeper is redrawn after ambient, avoid leaving
-an obvious duplicate below. Preserve clipping and deliberate glass sheen.
-Weather and light cannot cover the dialogue. Avoid flashes and screen shake.
-
-Rain can feel heavy through sound, streak density and dark scenery, without dense
-opaque strokes across the lanes. Use bounded reusable streaks and splash instances.
-Splashes are short, flattened ellipses on the ground. Anchor them in world space so
-they scroll with the stones; falling rain uses a separate presentation coordinate model.
-Approve the splash at actual size and opacity before multiplying it across the scene.
-
-6. THE LAST ORDERS ENCOUNTER
-The stranger is an elderly former chip-shop owner in a raincoat, carrying a paper
-takeaway bag that stays dry. Show a quiet human silhouette; keep his face partly hidden.
-Choose one sidewalk approach for the first version. Feet remain grounded. Do not apply
-fake perspective scaling as he approaches in this fixed-camera world.
-Use separate world/portrait art where necessary, with identical identity and costume.
-
-The Last Orders Lantern: battered body, faded OPEN glass, restrained amber light.
-The icon must read at small size without depending on the lettering. Colour and shape
-must distinguish lantern charges from ordinary food pickups and hazard warnings.
-Lantern light reveals optional bonus food; it does not erase hazards or guarantee safety.
-
-7. WILDERNESS AND EXPANSION
-Replace familiar scenery gradually: fewer signs and windows, more trees, vegetation
-and small eyes outside the road. Keep the road/lane contract unless a separately
-specified mechanic deliberately changes it. Eyes first suggest curiosity or hunger.
-Preserve humour, warmth and intrigue as the world becomes stranger.
-Each new biome needs its own light/colour reference, ground material and asset set,
-all checked against Gary at the same design scale. Do not treat new biome as new camera.
-
-8. VISUAL APPROVAL GATE
-Use ASSET_GRID_PROMPT.txt plus actual gameplay captures. Check on light and dark alpha
-backgrounds; compare daytime, night and storm composites at native play size.
-Check sprite animation in motion, source bounds, baseline drift, silhouette, text,
-window/keeper alignment, shadows and safe-lane contrast.
-Record PASS, FAIL or UNVERIFIED for each check. No image or tool can guarantee every
-future asset will fit; measured contracts and review gates are required every time.
-The old ASSET_GRID.json/png is a reference snapshot and must be refreshed after changes.
+9. ACCEPTANCE AND REGRESSION GATE
+Each new/modified asset: exact business/character; same camera; source size
+and per-frame bounding cells; true alpha; world display size; ground anchor;
+lighting; clip; contact; layer; safety; iPhone-scale readability. Record
+PASS / FAIL / UNVERIFIED. Compare on contrasting backgrounds and in DAY,
+NIGHT and HEAVY RAIN; check moving video/screenshots for frame continuity.
+Make only tested changes to live source. After new images/scripts, update the
+appropriate ?v= cache reference and retest Play/Skip/collection/restart.
+ASSET_GRID.json/png are historical review snapshots. The current repository
+and actual rendered game supersede them where they disagree.
