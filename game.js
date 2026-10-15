@@ -417,40 +417,126 @@ let shutterMix = 0;
     return img && img.ready ? img : (cobbleImgs.weeds && cobbleImgs.weeds.ready ? cobbleImgs.weeds : null);
   }
 
+  
   const COBBLE_CELL = WORLD.cobbleCell;
-  const COBBLE_MIX = [['base',0.50],['light',0.12],['sparse',0.08],['weeds',0.07],['dense',0.04],['leaves',0.08],['grime',0.05],['cracked',0.06]];
+
+  // Every 2x2 group uses one complete texture.
+  // At 60px per cell, each feature patch spans 120x120px.
+  const COBBLE_BASE_MIX = [
+    ['base', 0.72],
+    ['light', 0.16],
+    ['sparse', 0.08],
+    ['weeds', 0.04]
+  ];
+
+  // Distinctive features are grouped so they remain visible.
+  const COBBLE_FEATURE_MIX = [
+    ['leaves', 0.24],
+    ['cracked', 0.26],
+    ['grime', 0.20],
+    ['dense', 0.18],
+    ['weeds', 0.12]
+  ];
+
+  const COBBLE_FEATURE_CHANCE = 0.35;
+
   function cellHash(c, r) {
-    let h = Math.imul(c, 374761393) + Math.imul(r, 668265263) | 0;
+    let h = Math.imul(c, 374761393) +
+            Math.imul(r, 668265263) | 0;
+
     h = Math.imul(h ^ (h >>> 13), 1274126177);
+
     return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
   }
-  function mixKind(c, r) {
-    const t = cellHash(c, r);
-    let acc = 0;
-    for (const [k, p] of COBBLE_MIX) { acc += p; if (t < acc) return k; }
-    return 'base';
+
+  function weightedCobble(table, value) {
+    let total = 0;
+
+    for (const [kind, weight] of table) {
+      total += weight;
+      if (value < total) return kind;
+    }
+
+    return table[table.length - 1][0];
   }
+
+  function mixKind(c, r) {
+    // Select ONE texture for a complete 2x2 patch.
+    const blockC = Math.floor(c / 2);
+    const blockR = Math.floor(r / 2);
+
+    // Separate deterministic seeds prevent identical patterns
+    // for patch placement and texture selection.
+    const chance = cellHash(blockC + 173, blockR - 271);
+
+    if (chance < COBBLE_FEATURE_CHANCE) {
+      return weightedCobble(
+        COBBLE_FEATURE_MIX,
+        cellHash(blockC + 1009, blockR + 2047)
+      );
+    }
+
+    return weightedCobble(
+      COBBLE_BASE_MIX,
+      cellHash(blockC - 401, blockR + 613)
+    );
+  }
+
   function drawCobbles(x, y, w, h, kind) {
     const C = COBBLE_CELL;
+
+    // Preserve the original scrolling world alignment.
     const off = ((scrollY % C) + C) % C;
     const shift = Math.floor(scrollY / C);
+
     const j0 = Math.floor((y - off) / C);
     const c0 = Math.floor(x / C);
+
     ctx.save();
-    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+
     for (let j = j0; j * C + off < y + h; j++) {
       const ty = j * C + off;
       const r = j - shift;
+
       for (let c = c0; c * C < x + w; c++) {
-        const k = (!kind || kind === 'base') ? mixKind(c, r) : kind;
+
+        // 'base' means mixed pavement in the existing game.
+        // Named variants remain available for detail zones.
+        const k = (!kind || kind === 'base')
+          ? mixKind(c, r)
+          : kind;
+
         const img = cobbleFor(k);
-        if (!img) { ctx.fillStyle = '#6e7276'; ctx.fillRect(c * C, ty, C + 0.5, C + 0.5); continue; }
-        const hw = img.naturalWidth / 2, hh = img.naturalHeight / 2;
-        ctx.drawImage(img, (((c % 2) + 2) % 2) * hw, (((r % 2) + 2) % 2) * hh, hw, hh, c * C, ty, C + 0.5, C + 0.5);
+
+        if (!img) {
+          ctx.fillStyle = '#6e7276';
+          ctx.fillRect(c * C, ty, C + 0.5, C + 0.5);
+          continue;
+        }
+
+        // Assemble the four original image quadrants
+        // in the correct positions across a 2x2 patch.
+        const hw = img.naturalWidth / 2;
+        const hh = img.naturalHeight / 2;
+
+        const sourceX = (((c % 2) + 2) % 2) * hw;
+        const sourceY = (((r % 2) + 2) % 2) * hh;
+
+        ctx.drawImage(
+          img,
+          sourceX, sourceY, hw, hh,
+          c * C, ty, C + 0.5, C + 0.5
+        );
       }
     }
+
     ctx.restore();
   }
+
+
 
   function forEachStreetFront(cb) {
     const peek = 56;
