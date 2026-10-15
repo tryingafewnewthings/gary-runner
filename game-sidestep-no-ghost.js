@@ -135,8 +135,66 @@ let shutterMix = 0;
   const imgCheer = loadGary(GARY_SPRITES.cheer);
   const imgCrash = loadGary(GARY_SPRITES.crash);
 
-  // Use the same uninterrupted walk sprites throughout a lane change.
+  // GarySmoothSidestepFourFramesV3 — only one rendered sprite at a time.
+  const SIDE_FRAMES = 4, SIDE_W = 576, SIDE_H = 768;
+  const imgSideLeft = new Image(), imgSideRight = new Image();
+  const sideArt = { left: false, right: false, anchors: [[], []], walkFoot: 0.975 };
+
+  // Derive the torso centre and shoe baseline from actual transparency.
+  // Frames have different silhouettes; this prevents visible lateral/vertical popping.
+  function analyseGaryFrame(img, frameIndex, width, height) {
+    const probe = document.createElement('canvas');
+    probe.width = width; probe.height = height;
+    const pc = probe.getContext('2d', {willReadFrequently:true});
+    pc.clearRect(0,0,width,height);
+    pc.drawImage(img,frameIndex*width,0,width,height,0,0,width,height);
+    let pixels;
+    try { pixels = pc.getImageData(0,0,width,height).data; }
+    catch (_) { return {torso:0.5,foot:0.96}; }
+    // Opaque backgrounds are not valid transparent character sprites.
+    if (pixels[3] > 60 && pixels[(width-1)*4+3] > 60 &&
+        pixels[((height-1)*width)*4+3] > 60) {
+      return {torso:0.5,foot:0.96};
+    }
+    let xSum=0, count=0, foot=0;
+    for(let y=0;y<height;y+=3){
+      for(let x=0;x<width;x+=3){
+        const alpha=pixels[(y*width+x)*4+3];
+        if(alpha<100) continue;
+        if(y>foot) foot=y;
+        if(y>height*0.24 && y<height*0.55){xSum+=x;count++;}
+      }
+    }
+    return {torso:count?xSum/count/width:0.5,foot:foot?foot/height:0.96};
+  }
+
+  function prepareSideImage(img, key, file){
+    img.ready = false;
+    img.onload = () => {
+      if(img.naturalWidth!==SIDE_FRAMES*SIDE_W || img.naturalHeight!==SIDE_H){
+        loadErrorLog.push(file+': expected a 2304 x 768, four-frame sheet');
+        return;
+      }
+      const anchors=[];
+      for(let frame=0;frame<SIDE_FRAMES;frame++)
+        anchors.push(analyseGaryFrame(img,frame,SIDE_W,SIDE_H));
+      sideArt.anchors[key==='left'?0:1]=anchors;
+      img.ready=true;
+      sideArt[key]=true;
+    };
+    img.onerror=()=>loadErrorLog.push(file+': missing; using walking animation');
+    img.src=file+'?v=3';
+  }
+  prepareSideImage(imgSideLeft,'left','gary_sidestep_left.png');
+  prepareSideImage(imgSideRight,'right','gary_sidestep_right.png');
+  imgWalkSheet.addEventListener('load',()=>{
+    if(!imgWalkSheet.naturalWidth)return;
+    const width=Math.round(imgWalkSheet.naturalWidth/WALK_FRAMES);
+    const height=imgWalkSheet.naturalHeight;
+    sideArt.walkFoot=analyseGaryFrame(imgWalkSheet,0,width,height).foot;
+  });
   let runFrame = 0, runTimer = 0;
+
 
   const imgGaryIntro = new Image();
 
@@ -1498,41 +1556,43 @@ let shutterMix = 0;
 
   function drawPlayer(){
     const px = lx(lane), py = PLAYER_Y;
-    // Fixed shadow position eliminates alternating three-pixel horizontal shifts.
-    const shade = ctx.createRadialGradient(px, py + 6, 2, px, py + 6, 16);
-    shade.addColorStop(0, 'rgba(0,0,0,.24)');
-    shade.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = shade;
-    ctx.beginPath();
-    ctx.ellipse(px, py + 6, 16, 4, 0, 0, 7);
-    ctx.fill();
+    const shade = ctx.createRadialGradient(px,py+6,2,px,py+6,16);
+    shade.addColorStop(0,'rgba(0,0,0,.24)');
+    shade.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=shade;
+    ctx.beginPath(); ctx.ellipse(px,py+6,16,4,0,0,7); ctx.fill();
 
-    ctx.save();
-    ctx.translate(px, py);
-    const isCrashing = state.startsWith('crash');
-    if (!isCrashing) ctx.rotate(laneLean);
-
-    let sprite = null, frame = 0, frames = 1;
-    if (isCrashing && imgCrash.ready) {
-      sprite = imgCrash;
-    } else if (grinTimer > 0 && imgCheer.ready) {
-      sprite = imgCheer;
-    } else if (imgWalkSheet.ready) {
-      sprite = imgWalkSheet;
-      frame = runFrame;
-      frames = WALK_FRAMES;
-    }
-
-    if (sprite) {
-      const frameW = sprite.naturalWidth / frames;
-      const frameH = sprite.naturalHeight;
-      const h = WORLD.playerHeight;
-      const w = h * frameW / frameH;
-      // Identical foot anchoring across walking and special animation frames.
-      ctx.drawImage(sprite, frame * frameW, 0, frameW, frameH,
-        -w / 2, -h + WORLD.playerFootOffset, w, h);
+    ctx.save(); ctx.translate(px,py);
+    const isCrashing=state.startsWith('crash');
+    const moving=state==='play' && laneTime<laneDuration;
+    const direction=Math.sign(target-laneStart);
+    const image=direction<0?imgSideLeft:direction>0?imgSideRight:null;
+    const pose=moving && image && image.ready;
+    // The sheet already includes its own lean. Avoid doubling it.
+    if(!isCrashing) ctx.rotate(laneLean*(pose?0.25:1));
+    const h=WORLD.playerHeight;
+    if(isCrashing && imgCrash.ready || (!pose && grinTimer>0 && imgCheer.ready)){
+      const single=isCrashing?imgCrash:imgCheer;
+      const w=h*single.naturalWidth/single.naturalHeight;
+      ctx.drawImage(single,-w/2,-h+WORLD.playerFootOffset,w,h);
+    } else if(pose){
+      // Four consecutive frames across the whole eased sidestep; no crossfaded ghosts.
+      const fraction=Math.min(0.999999,laneTime/laneDuration);
+      const frame=Math.min(3,Math.floor(fraction*SIDE_FRAMES));
+      const anchor=sideArt.anchors[direction<0?0:1][frame]||{torso:0.5,foot:0.96};
+      const w=h*SIDE_W/SIDE_H;
+      // Align the shirt/torso centre and shoe baseline to the walking sprites.
+      const x=-w*anchor.torso;
+      const y=-h+WORLD.playerFootOffset+h*sideArt.walkFoot-h*anchor.foot;
+      ctx.drawImage(image,frame*SIDE_W,0,SIDE_W,SIDE_H,x,y,w,h);
+    } else if(imgWalkSheet.ready){
+      const frameW=imgWalkSheet.naturalWidth/WALK_FRAMES;
+      const frameH=imgWalkSheet.naturalHeight;
+      const w=h*frameW/frameH;
+      ctx.drawImage(imgWalkSheet,runFrame*frameW,0,frameW,frameH,
+        -w/2,-h+WORLD.playerFootOffset,w,h);
     } else {
-      fbFace(ctx, 36 * S);
+      fbFace(ctx,36*S);
     }
     ctx.restore();
 
