@@ -20,7 +20,7 @@ const WORLD = Object.freeze({
   playerFootOffset: 6,
   streetSegmentHeight: 360,
   buildingHeight: 236,
-  cobbleCell: 48
+  cobbleCell: 60
 });
 
 const GARY_SPRITES = {
