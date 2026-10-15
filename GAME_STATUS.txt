@@ -1,44 +1,75 @@
 GARY EATS! — DEVELOPER START HERE
-Handoff date: 2026-10-10
-Repository: tryingafewnewthings/gary-runner
+Status verified against main: 15 October 2026
+Repository: https://github.com/tryingafewnewthings/gary-runner
+Live game: https://tryingafewnewthings.github.io/gary-runner/
 
 READ IN THIS ORDER
-1. PROJECT_STATE.md — verified baseline, changes in this delivery, implementation order and release checks.
-2. STYLE.txt — camera, geometry, sprite and lighting contracts.
-3. ASSET_GRID_PROMPT.txt — visual review process and rejection criteria.
-4. game-data.js — active definitions first; DEVELOPMENT_PLAN at the end is planned content only.
-5. game.js — working runtime foundation and controller integration points.
+1. PROJECT_STATE.md — authoritative verified handoff, current script routing,
+   active versus planned features, next development work and release checks.
+2. STYLE.txt — camera, animation, visual layers, geometry, alpha and asset rules.
+3. ASSET_GRID_PROMPT.txt — visual/functional review and acceptance process.
+4. index.html — actual main-game entry and script order (do not guess).
+5. game-data.js — current WORLD, sprite/item/street definitions; its
+   DEVELOPMENT_PLAN is design specification, not executable content.
+6. gary-game-config.json — published shop calibration and keeper anchors.
+7. game-intro-test.js, gary-intro-transition.js, food-catalogue.js and game.js.
 
-THE NEXT EXPERIENCE
-After a sustained nighttime run, heavy rain builds. The street becomes very dark,
-shops disappear, and Gary slows down. A shadowy former chip-shop owner approaches
-on the pavement. Gameplay pauses for their first text encounter. He gives Gary
-The Last Orders Lantern, which later reveals hidden bonus-food trails.
-Chapter 5 leads into wilderness, trees and eyes beyond the road.
+CURRENTLY PLAYABLE
+- Three-lane 360x640 HTML5 Canvas high-street runner; score tiers and
+  performance-based 1–10 end-of-run rating.
+- Food: kebab, fish, roast. Hazards: fork, mushroom. Safe row patterns,
+  roast dare/refusal, near-miss scoring and locally stored best score.
+- Portrait talking intro, six-frame walking animation, music, cheer/crash art.
+- Cinematic 4-frame intro-to-walk transition ACTIVATED on the main page.
+  index.html currently loads game-intro-test.js as the active engine and
+  gary-intro-transition.js as its optional animation bridge.
+- Persistent Food Catalogue in main menu (discoveries saved on this device).
+- Day -> night visual fade, heavy rain and splashes, nighttime lit shops,
+  closing shutters, keeper motion and independent published anchors/windows.
+- Studio 3.1 is the current shop calibration editor: gary-studio.html.
 
-WHAT THIS DELIVERY DOES
-Updates all six handoff files. Centralises the active world, sprite, shop and item
-definitions. Makes intro/walk timing state-owned, guards repeat intro callbacks,
-resets animation state and corrects near-miss/refusal accounting. Stores the full
-encounter, dialogue and lantern specification in DEVELOPMENT_PLAN.
+IMPORTANT ARCHITECTURAL WARNING
+The file name game-intro-test.js is historical: it is CURRENTLY THE MAIN ENGINE
+because index.html loads it. Do not delete, rename or silently replace it.
+game.js is the retained working pre-cinematic engine for rollback.
+The main page has a GaryIntroOriginal comment identifying its rollback script.
+Do not load two engines simultaneously. Verify actual index.html every time.
 
-WHAT IS STILL TO BUILD
-Encounter controller, dialogue interface, inventory, lantern activation,
-biome progression beyond the existing night tint, and new art.
-Heavy rain is now in the runner: after night has settled it builds, darkens
-the street, and keeps the lanes readable. Splashes scroll with the stones.
-Falling streaks sit in front of Gary. Speed, gaps, and collision are unchanged.
-The later encounter (empty shops, the stranger, the lantern) is still planned.
+AUTHORITATIVE SETTINGS
+- Geometry and active items: game-data.js.
+- Studio-published calibration: gary-game-config.json.
+- Gold keeper anchors are INDEPENDENT of blue lighting panes; green masks
+  control keeper clipping; amber rectangles control shutters.
+- Cobble destination cell is CURRENTLY 48 game units (WORLD.cobbleCell).
+  A proposed 60-unit experiment has not been published as of this audit.
+- Actual image style and placement acceptance: STYLE.txt.
 
-INSTALLATION
-These are full replacement files for the existing repository, not a standalone game.
-Keep the existing index.html and assets. Replace game.js and game-data.js together.
-In index.html change game-data.js?v=31 to game-data.js?v=32 and game.js?v=93 to
-game.js?v=94 (or newer unused versions if the repository has advanced).
-Read PROJECT_STATE.md before integrating with changes made after this handoff.
+NOT YET PLAYABLE
+- The Last Orders stranger encounter and dialogue/cutscene state machine.
+- The Last Orders Lantern gameplay/inventory and wilderness biome.
+- Food combination/cooking mechanics or Gary Review Effect gameplay USP.
+- New catalogue foods beyond the three active ITEM definitions.
+- Dedicated normal-food/roast pickup sound effects.
+Do not describe the above as finished because they appear in DEVELOPMENT_PLAN,
+plans, proposed artwork, or past conversations.
 
-FIRST DEVELOPER TASK
-Run the supplied baseline on iPhone, verify the lifecycle changes, and record a
-day/night visual reference. Then follow the staged implementation in PROJECT_STATE.md.
-The goal is a rich, coherent adventure with excellent moment-to-moment play.
-Do not mark a planned feature complete until it works and passes its acceptance checks.
+NEXT TASKS
+1. Regression-test the active cinematic live on an iPhone; protect rollback.
+2. Polish Food Catalogue, discovery feedback and sound effects.
+3. Test cobble readability and seamless tiling in a SEPARATE game preview.
+4. Prototype one meaningful, compact food-review interaction as the USP.
+5. Only then build the storm-to-stranger encounter and wilderness roadmap.
+
+RELEASE RULES
+- Never patch main blindly. Validate all source text and file sizes; reject
+  empty engine files, incomplete script loading, missing assets and syntax errors.
+- For significant changes: stage -> test Play/Skip/transition/run/crash/restart
+  on iPhone -> promote -> test production -> retain an immediate rollback.
+- Do not overwrite the shop calibration JSON when editing engine/intro features.
+- Use accurate cache-version changes for modified scripts and images.
+- GitHub history is the recovery path; if an installer errors, inspect the
+  repository before retrying because some commits might have succeeded.
+- Report statuses honestly: CODE CHECKED, STAGED, PHONE-TESTED, LIVE-VERIFIED.
+
+All developer handoffs must explain exact changed files, what is deployed,
+what still needs testing, and how to revert without technical guesswork.
