@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — No-Ghost Sidestep Fix</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{background:#111722;color:#f3f5f7;font:15px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:0}main{max-width:650px;margin:auto;padding:24px 16px 60px}h1{font-size:23px;line-height:1.2}h2{font-size:18px;margin:0 0 10px}p{color:#c7cfda}section{border:1px solid #354359;border-radius:12px;background:#1b2534;padding:17px;margin:15px 0}button,a.action{display:block;width:100%;border:0;border-radius:9px;padding:13px 11px;margin:9px 0;font:700 15px -apple-system,BlinkMacSystemFont,sans-serif;text-align:center;text-decoration:none;color:#16191c;background:#ffe200;cursor:pointer}button.secondary,a.secondary{background:#3c4c62;color:#f4f6f8}button:disabled{opacity:.45}label{font-weight:650;display:block;margin:12px 0 5px}input{font-size:16px;width:100%;padding:12px;border:1px solid #71819b;border-radius:8px;background:#101827;color:white}pre{font:12px/1.55 ui-monospace,Menlo,monospace;background:#0b131f;border-radius:8px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:65px}code{color:#ffec94}small{color:#bbc6d6}a{color:#ffec94}
+</style></head><body><main>
+<h1>Gary Eats! — No-Ghost Sidestep Fix</h1>
+<p>Removes overlapping character images. Creates a separate playable build first. The live game is not altered until you approve it.</p>
+<section><h2>1. Verify</h2><button id="scan" class="secondary">Check live source and compatibility</button><small id="verified">Not checked</small></section>
+<section><h2>2. Publish isolated test</h2><label for="token">Your GitHub token (repository Contents: read/write)</label><input id="token" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="Token stays in this browser session">
+<button id="stage">Create no-ghost test build</button>
+<a class="action secondary" target="_blank" rel="noopener" href="./gary-sidestep-no-ghost-test.html?build=1">Test smooth animated running lean (default)</a>
+<a class="action secondary" target="_blank" rel="noopener" href="./gary-sidestep-no-ghost-test.html?sidestep=pose&amp;build=1">Compare fully opaque sidestep poses</a>
+<p>The default uses the continuously animated walk with a stronger, eased sideways body lean. The comparison uses exactly one fully opaque character pose per frame; it may have more noticeable pose changes. Neither mode draws ghost images.</p></section>
+<section><h2>3. Activate after testing</h2><label for="word">Type <code>LIVE</code> after approving the default test</label><input id="word" autocomplete="off" autocapitalize="characters" placeholder="LIVE">
+<button id="live">Make tested no-ghost animation live</button><button id="undo" class="secondary">Restore previous live animation</button><small>Only <code>index.html</code> changes during activation. Original engines and sprites remain available.</small></section>
+<section><h2>Results</h2><pre id="log" aria-live="polite">Ready.</pre></section>
+</main><script>
+'use strict';
+const OWNER='tryingafewnewthings/gary-runner';
+const ROOT='https://api.github.com/repos/'+OWNER;
+const SOURCE='game-sidestep-smooth.js';
+const SOURCE_SHA='d5cedc82f04ee57a1f272208d8f68d67e7066faf';
+const OLD_SCRIPT='game-sidestep-smooth.js?v=1';
+const NEW_ENGINE='game-sidestep-no-ghost.js';
+const NEW_SCRIPT=NEW_ENGINE+'?v=1';
+const TEST_SOURCE='gary-sidestep-smooth-test.html';
+const TEST_DEST='gary-sidestep-no-ghost-test.html';
+const MARKER='<!-- GarySidestepNoGhostPrevious='+OLD_SCRIPT+' -->';
+const $=id=>document.getElementById(id);
+const status=s=>{$('log').textContent=s};
+const add=s=>{$('log').textContent+='\n'+s};
+let busy=false;
+const encode=s=>{const bytes=new TextEncoder().encode(s);let out='';for(let i=0;i<bytes.length;i+=8192)out+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(out)};
+const decode=s=>new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(s.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+function assertOnce(s,needle,label){const count=s.split(needle).length-1;if(count!==1)throw Error(label+': '+count+' matches, expected 1. No files updated.');}
+function originCheck(){if(location.origin!=='https://tryingafewnewthings.github.io'||!location.pathname.startsWith('/gary-runner/'))throw Error('Open this page via the official Gary Eats! GitHub Pages website.');}
+function tokenCheck(){originCheck();if(!$('token').value.trim())throw Error('Enter your GitHub token.');}
+async function api(path,options={},optional=false){
+  const hdr={Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  if($('token').value.trim())hdr.Authorization='Bearer '+$('token').value.trim();
+  const r=await fetch(ROOT+path,{...options,headers:{...hdr,...options.headers},cache:'no-store'});
+  if(r.status===404&&optional)return null;
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw Error((d.message||'GitHub request failed')+' (HTTP '+r.status+')');
+  return d;
+}
+const read=(path,optional=false)=>api('/contents/'+encodeURIComponent(path)+'?ref=main',{},optional);
+async function put(path,source,message){
+  if(typeof source!=='string'||source.length<4200)throw Error('Refusing short or empty file '+path);
+  const current=await read(path,true);
+  if(current&&decode(current.content)===source){add(path+': already correct');return;}
+  const body={message,branch:'main',content:encode(source)};
+  if(current)body.sha=current.sha;
+  await api('/contents/'+encodeURIComponent(path),{method:'PUT',body:JSON.stringify(body)});
+  add(path+': published');
+}
+function patchEngine(s){
+  if(typeof s!=='string'||s.length<74000||s.length>86000||!s.trimEnd().endsWith('})();'))throw Error('Unexpected engine length or ending.');
+  if(!s.includes('const SIDE_MODE = new URLSearchParams')||!s.includes('grinTimer=0.45;')||!s.includes("state = animated ? 'intro_transition' : 'play'"))throw Error('Expected cinema and 0.45s cheer not found.');
+  const oldHead=`  const SIDE_DURATION = 0.36;
+  // Default avoids hard-cut frames. ?sidestep=expressive is an optional comparison.
+  const SIDE_MODE = new URLSearchParams(location.search).get('sidestep') === 'expressive'
+    ? 'expressive' : 'lean';
+  const sideSmooth = t => { t=Math.max(0,Math.min(1,t)); return t*t*(3-2*t); };`;
+  const newHead=`  const SIDE_DURATION = 0.33;
+  // 'clean' uses continuous walking plus a visible eased lean. 'pose' tests
+  // one opaque mid-action sprite at a time, never alpha-blended layers.
+  const SIDE_MODE = new URLSearchParams(location.search).get('sidestep') === 'pose'
+    ? 'pose' : 'clean';`;
+  assertOnce(s,oldHead,'Animation settings');
+  s=s.replace(oldHead,newHead);
+  const oldDraw=`      // Keep walking animation advancing uninterrupted while dodging.
+      const sideArt = sideDir < 0 ? imgSideLeft : sideDir > 0 ? imgSideRight : null;
+      const t = sideDir ? Math.min(1,sideTime/SIDE_DURATION) : 0;
+      const wave = Math.sin(Math.PI*t);
+      if (sideDir) {
+        // A subtle, continuous lean around the foot anchor (no jump in lane position).
+        ctx.rotate(sideDir*0.045*wave);
+      }
+      // Only opt-in expressive mode crossfades the two KEY poses.
+      // The default draws the normal walk once: no strobing or ghosted limbs.
+      const useSide = SIDE_MODE==='expressive' && sideDir && sideArt && sideArt.ready;
+      const opacity = useSide ? 0.72*sideSmooth(t/0.27)*sideSmooth((1-t)/0.30) : 0;
+      ctx.globalAlpha = 1-opacity;
+      ctx.drawImage(imgWalkSheet,runFrame*frameW,0,frameW,frameH,
+        -w/2,-h+WORLD.playerFootOffset,w,h);
+      if (opacity>0.001) {
+        const sw=h*SIDE_W/SIDE_H;
+        // No rapid four-frame cut: only the two readable action poses.
+        const blend=sideSmooth((t-0.46)/0.12);
+        if (blend<0.999) {
+          ctx.globalAlpha=opacity*(1-blend);
+          ctx.drawImage(sideArt,SIDE_W,0,SIDE_W,SIDE_H,
+            -sw/2,-h+WORLD.playerFootOffset,sw,h);
+        }
+        if (blend>0.001) {
+          ctx.globalAlpha=opacity*blend;
+          ctx.drawImage(sideArt,2*SIDE_W,0,SIDE_W,SIDE_H,
+            -sw/2,-h+WORLD.playerFootOffset,sw,h);
+        }
+      }
+      ctx.globalAlpha=1;`;
+  const newDraw=`      const t = sideDir ? Math.min(1, sideTime / SIDE_DURATION) : 0;
+      const wave = Math.sin(Math.PI * t);
+      const sideArt = sideDir < 0 ? imgSideLeft : sideDir > 0 ? imgSideRight : null;
+      const pose = SIDE_MODE === 'pose' && sideDir !== 0 && sideArt && sideArt.ready
+        && t >= 0.20 && t <= 0.80;
+      if (sideDir !== 0) {
+        // The foot remains anchored at (0,0), while shoulders lean visibly.
+        // Lean rises and falls smoothly, including during rapid direction changes.
+        ctx.rotate(sideDir * (pose ? 0.025 : 0.13) * wave);
+      }
+      if (pose) {
+        // One completely opaque sprite, and never a second copy of Gary.
+        const sourceFrame = t < 0.50 ? 1 : 2;
+        const sw = h * SIDE_W / SIDE_H;
+        ctx.drawImage(sideArt, sourceFrame * SIDE_W, 0, SIDE_W, SIDE_H,
+          -sw/2, -h + WORLD.playerFootOffset, sw, h);
+      } else {
+        // Use the actual walking cycle during the rest of the sidestep.
+        ctx.drawImage(imgWalkSheet, runFrame * frameW, 0, frameW, frameH,
+          -w/2, -h + WORLD.playerFootOffset, w, h);
+      }`;
+  assertOnce(s,oldDraw,'Ghosted animation drawing');
+  s=s.replace(oldDraw,newDraw);
+  if(s.includes("SIDE_MODE==='expressive'")||s.includes('sideAlpha')||s.length<73500||s.length>85000)throw Error('Unexpected patched engine; no upload.');
+  return s;
+}
+function makeTest(s){
+  const old='<script src="'+OLD_SCRIPT+'"><\/script>';
+  assertOnce(s,old,'Test HTML engine');
+  return s.replace(old,'<script src="'+NEW_SCRIPT+'"><\/script>');
+}
+function makeLive(s){
+  if(s.includes(MARKER))throw Error('No-ghost animation already active.');
+  const old='<script src="'+OLD_SCRIPT+'"><\/script>';
+  assertOnce(s,old,'Live HTML engine');
+  return s.replace(old,MARKER+'\n<script src="'+NEW_SCRIPT+'"><\/script>');
+}
+function makeRestore(s){
+  const active=MARKER+'\n<script src="'+NEW_SCRIPT+'"><\/script>';
+  assertOnce(s,active,'Active no-ghost engine marker');
+  return s.replace(active,'<script src="'+OLD_SCRIPT+'"><\/script>');
+}
+async function withLock(fn){if(busy)return;busy=true;for(const id of ['scan','stage','live','undo'])$(id).disabled=true;try{await fn()}catch(e){add('STOPPED: '+e.message)}finally{busy=false;for(const id of ['scan','stage','live','undo'])$(id).disabled=false}}
+$('scan').onclick=()=>withLock(async()=>{
+  status('Checking game source and HTML references…');originCheck();
+  const [src,live,test]=await Promise.all([read(SOURCE),read('index.html'),read(TEST_SOURCE)]);
+  if(src.sha!==SOURCE_SHA)throw Error('Live engine has changed since this fix was validated; request updated installer.');
+  patchEngine(decode(src.content));
+  makeTest(decode(test.content));
+  if(!decode(live.content).includes('<script src="'+OLD_SCRIPT+'"><\/script>')&&!decode(live.content).includes(MARKER))throw Error('Main game no longer loads the expected engine.');
+  $('verified').textContent='PASS — compatible source and stage references';
+  add('Verification passed. No files changed.');
+});
+$('stage').onclick=()=>withLock(async()=>{
+  status('Preparing independent no-ghost test…');tokenCheck();
+  const [src,test,main]=await Promise.all([read(SOURCE),read(TEST_SOURCE),read('index.html')]);
+  if(src.sha!==SOURCE_SHA)throw Error('Source SHA mismatch. No changes.');
+  const out=patchEngine(decode(src.content));const page=makeTest(decode(test.content));
+  if(page.length<4300)throw Error('Test HTML failed length check.');
+  if(!decode(main.content).includes('<script src="'+OLD_SCRIPT+'"><\/script>'))throw Error('Unexpected live version; test build refused.');
+  if(!confirm('Publish two TEST files? Live index.html remains unchanged.')){add('Cancelled');return;}
+  await put(NEW_ENGINE,out,'Stage no-ghost sidestep engine without changing live game');
+  await put(TEST_DEST,page,'Stage no-ghost sidestep gameplay page');
+  add('TEST PUBLISHED. Wait for GitHub Pages to deploy, then try both links.');
+});
+$('live').onclick=()=>withLock(async()=>{
+  status('Preparing safe live switch…');tokenCheck();
+  if($('word').value.trim().toUpperCase()!=='LIVE')throw Error('Type LIVE to authorise activation.');
+  const [source,engine,page,index]=await Promise.all([read(SOURCE),read(NEW_ENGINE,true),read(TEST_DEST,true),read('index.html')]);
+  if(source.sha!==SOURCE_SHA)throw Error('Source version changed. Refusing to activate a stale test build.');
+  if(!engine||!page)throw Error('Test files missing. Stage and test first.');
+  if(decode(engine.content)!==patchEngine(decode(source.content)))throw Error('Staged engine differs from the validated patch.');
+  if(decode(page.content)!==makeTest(decode((await read(TEST_SOURCE)).content)))throw Error('Staged test page differs from the validated source.');
+  const next=makeLive(decode(index.content));
+  if(!confirm('Have you tested the full intro, left/right dodges, pickups, crash and restart? Switch the live game to the no-ghost version?')){add('Cancelled');return;}
+  await put('index.html',next,'Activate tested opaque no-ghost sidestep animation');
+  add('LIVE UPDATED. Wait for deployment, then close and reopen your game tab.');
+});
+$('undo').onclick=()=>withLock(async()=>{
+  status('Preparing original live engine restoration…');tokenCheck();
+  const index=await read('index.html');const next=makeRestore(decode(index.content));
+  if(!confirm('Restore the previous smooth sidestep engine?')){add('Cancelled');return;}
+  await put('index.html',next,'Restore previous sidestep engine after no-ghost test');
+  add('RESTORED. Reload once GitHub Pages deploys.');
+});
+</script></body></html>
