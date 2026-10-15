@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gary Eats! — Cobblestone Grid Upgrade</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0d121e;color:#f3f6ff}
+*{box-sizing:border-box}body{margin:0;padding:24px 14px 60px}
+main{max-width:680px;margin:auto}h1{font-size:1.65rem;line-height:1.2;margin:0 0 12px}h2{font-size:1.12rem;margin:0 0 10px}
+p{color:#cbd3e2;margin:10px 0}.panel{border:1px solid #354258;border-radius:15px;background:#151e2e;padding:17px;margin:15px 0}
+code{font-size:.9rem;color:#ffdf85}strong{color:white}small{color:#adbdd6}
+input{display:block;width:100%;min-height:48px;margin:9px 0;border:1px solid #627087;border-radius:10px;padding:10px;background:#0c1320;color:white;font-size:16px}
+button{border:0;border-radius:11px;min-height:50px;padding:12px 15px;margin:6px 0;display:block;width:100%;font-size:15px;font-weight:750;color:#10141b;background:#ffe168}
+button.secondary{color:white;background:#3c587c}button.danger{color:#fff;background:#844755}button:disabled{background:#394456;color:#a9b4c4;opacity:.7}
+#details{margin:12px 0;padding-left:23px;color:#d6e0f1}#details li{margin:7px 0;overflow-wrap:anywhere}
+#log{white-space:pre-wrap;overflow-wrap:anywhere;min-height:120px;color:#dfe6f0;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:#080e18;padding:14px;border-radius:10px;border:1px solid #39465c}
+a{color:#e9d37b}.footnote{font-size:13px;color:#adbdd6}
+</style>
+</head>
+<body><main>
+<h1>Gary Eats! — Cobblestone Upgrade</h1>
+<p>Change the paving grid from <strong>48 × 48</strong> to <strong>60 × 60</strong> design pixels. The game keeps its existing tile images, shared scrolling grid, texture blending, shop positions and collision rules.</p>
+<div class="panel">
+<h2>1. Check your repository</h2>
+<button id="scan" class="secondary" type="button">Scan live code (no token needed)</button>
+<p id="summary" role="status">No scan performed yet.</p>
+<ul id="details"></ul>
+</div>
+<div class="panel">
+<h2>2. Publish a single safe commit</h2>
+<p>This updates <code>game-data.js</code>, <code>index.html</code> and <code>gary-intro-test.html</code> together, using GitHub's atomic commit API. <strong>No game engine is replaced.</strong></p>
+<label for="token">GitHub personal access token (Contents: read/write)</label>
+<input id="token" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste token on this device">
+<label for="confirmWord">To enable publishing, type <strong>TILES</strong></label>
+<input id="confirmWord" type="text" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="TILES">
+<button id="apply" type="button" disabled>Apply 60-pixel cobbles</button>
+<button id="rollback" class="danger" type="button" disabled>Restore 48-pixel cobbles (if eligible)</button>
+<p class="footnote">To publish, open this page from <code>tryingafewnewthings.github.io/gary-runner/</code>. Your token is used only in this browser session, and is never included in a GitHub commit or shared in a URL.</p>
+</div>
+<div class="panel"><h2>Progress and safety checks</h2><div id="log" aria-live="polite">Ready to scan.</div></div>
+<p class="footnote">Safety: the installer refuses unexpected source code, mismatched script versions, missing pages or concurrent commits. It never force-pushes. The previous revision remains in GitHub history. Test on iPhone before deleting this installer from the repository.</p>
+<script>
+'use strict';
+(function(){
+  const REPO='tryingafewnewthings/gary-runner';
+  const API='https://api.github.com/repos/'+REPO;
+  const PAGE_ORIGIN='https://tryingafewnewthings.github.io';
+  const PREFIX='/gary-runner/';
+  const FILES=['game-data.js','index.html','gary-intro-test.html'];
+  const APPLY_MESSAGE='Gary Eats: enlarge cobblestone grid from 48 to 60';
+  const ROLLBACK_MESSAGE='Gary Eats: restore cobblestone grid from 60 to 48';
+  const $=id=>document.getElementById(id);
+  const dec=new TextDecoder('utf-8',{fatal:true});
+  let busy=false,scanMode=null,rollbackEligible=false;
+  function say(message){$('log').textContent+='\n'+message;}
+  function logStart(message){$('log').textContent=message;}
+  function fail(message){throw new Error(message);}
+  function count(text,pattern){return [...text.matchAll(pattern)].length;}
+  function toUtf8(base64){
+    const binary=atob(base64.replace(/\s/g,''));
+    const bytes=Uint8Array.from(binary,char=>char.charCodeAt(0));
+    return dec.decode(bytes);
+  }
+  function authHeaders(){
+    const token=$('token').value.trim();
+    return token?{'Authorization':'Bearer '+token}:{};
+  }
+  async function api(route,options={},authenticated=false){
+    const headers={Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(authenticated?authHeaders():{}),...(options.headers||{})};
+    let response;
+    try{response=await fetch(API+route,{...options,headers,cache:'no-store'});}
+    catch(error){fail('Could not reach GitHub: '+error.message);}
+    let body;
+    try{body=await response.json();}catch{fail('GitHub returned an unreadable response (HTTP '+response.status+').');}
+    if(!response.ok)fail((body.message||'GitHub request failed')+' (HTTP '+response.status+').');
+    return body;
+  }
+  function codeContent(result,path){
+    if(result.type!=='file'||!result.content||result.encoding!=='base64')fail('Unexpected GitHub contents response for '+path+'.');
+    return toUtf8(result.content);
+  }
+  function dataSize(src){
+    const hits=[...src.matchAll(/\bcobbleCell\s*:\s*(48|60)\b/g)];
+    if(hits.length!==1)fail('Expected exactly one cobbleCell setting. Nothing was changed.');
+    return Number(hits[0][1]);
+  }
+  function dataPatch(src,from,to){
+    if(typeof src!=='string'||src.length<18000||src.length>50000||!src.includes('const WORLD = Object.freeze')||!src.includes('const COBBLE_KINDS = {')||!src.includes('const STRETCHES = {'))fail('Game data did not pass structural checks.');
+    if(dataSize(src)!==from)fail('Cobble size changed since the last scan.');
+    const patched=src.replace(/(\bcobbleCell\s*:\s*)(48|60)\b/,(_,part)=>part+to);
+    if(patched===src||dataSize(patched)!==to||Math.abs(patched.length-src.length)>2)fail('Cobble update failed the integrity check.');
+    return patched;
+  }
+  function scriptVersion(src,path){
+    if(typeof src!=='string'||src.length<3500||src.length>15000||!src.includes('<canvas id="c"')||!src.includes('gary-intro-transition.js')||!src.includes('game-intro-test.js'))fail(path+' did not pass the HTML structure checks.');
+    const matches=[...src.matchAll(/<script\s+src=["']game-data\.js\?v=(\d+)["']\s*><\/script>/g)];
+    if(matches.length!==1)fail(path+' must load game-data.js exactly once.');
+    const version=Number(matches[0][1]);
+    if(!Number.isSafeInteger(version)||version<1||version>=100000)fail(path+' uses an invalid script version.');
+    return version;
+  }
+  function htmlPatch(src,from,to,path){
+    if(scriptVersion(src,path)!==from)fail('Script version in '+path+' changed.');
+    const next=src.replace(/(<script\s+src=["']game-data\.js\?v=)(\d+)(["']\s*><\/script>)/,(_,prefix,_v,suffix)=>prefix+to+suffix);
+    if(next===src||scriptVersion(next,path)!==to)fail(path+' cache refresh failed.');
+    return next;
+  }
+  async function inspect(authenticated=false){
+    const ref=await api('/git/ref/heads/main',{},authenticated);
+    const head=ref.object?.sha;
+    if(!/^[0-9a-f]{40}$/.test(head||''))fail('GitHub branch head was invalid.');
+    const [commit,...files]=await Promise.all([
+      api('/git/commits/'+head,{},authenticated),
+      ...FILES.map(path=>api('/contents/'+path+'?ref='+head,{},authenticated))
+    ]);
+    const treeSha=commit.tree?.sha;
+    if(!/^[0-9a-f]{40}$/.test(treeSha||''))fail('GitHub tree was invalid.');
+    const content={};
+    FILES.forEach((p,i)=>content[p]=codeContent(files[i],p));
+    const size=dataSize(content['game-data.js']);
+    const a=scriptVersion(content['index.html'],'index.html');
+    const b=scriptVersion(content['gary-intro-test.html'],'gary-intro-test.html');
+    if(a!==b)fail('Live game and test page use different data versions ('+a+' and '+b+'). No changes made.');
+    const mode=size===48?'apply':'already';
+    const eligible=size===60&&commit.message===APPLY_MESSAGE;
+    return {head,treeSha,content,size,version:a,mode,eligible};
+  }
+  function render(snapshot){
+    scanMode=snapshot.mode;rollbackEligible=snapshot.eligible;
+    const next=snapshot.version+1;
+    $('summary').textContent=snapshot.size===48?'Ready: 48 → 60 pixels; cache version '+snapshot.version+' → '+next+'.':'Current cobbles: 60 × 60 pixels. Upgrade already applied.';
+    $('details').replaceChildren();
+    const facts=[
+      'game-data.js — '+(snapshot.size===48?'one cobbleCell value 48 → 60':'already set to 60'),
+      'index.html — current game data v'+snapshot.version+(snapshot.size===48?' → v'+next:''),
+      'gary-intro-test.html — test game data v'+snapshot.version+(snapshot.size===48?' → v'+next:''),
+      'game.js and game-intro-test.js — unchanged',
+      'Current GitHub commit: '+snapshot.head.slice(0,12)
+    ];
+    if(snapshot.eligible)facts.push('An immediate rollback can restore 48 pixels using a fresh cache version.');
+    for(const str of facts){const li=document.createElement('li');li.textContent=str;$('details').append(li);}
+    updateButtons();
+  }
+  function updateButtons(){
+    const approved=$('confirmWord').value.trim().toUpperCase()==='TILES'&&$('token').value.trim().length>10;
+    $('apply').disabled=busy||!approved||scanMode!=='apply';
+    $('rollback').disabled=busy||!approved||!rollbackEligible;
+    $('scan').disabled=busy;
+  }
+  async function run(task){
+    if(busy)return;busy=true;updateButtons();
+    try{await task();}catch(error){say('STOPPED: '+error.message+'\nNo active files were changed unless a successful commit is shown above.');}
+    finally{busy=false;updateButtons();}
+  }
+  function ensureHost(){
+    if(location.origin!==PAGE_ORIGIN||!location.pathname.startsWith(PREFIX))fail('Publishing requires the official GitHub Pages URL.');
+    if($('confirmWord').value.trim().toUpperCase()!=='TILES')fail('Type TILES before publishing.');
+    if($('token').value.trim().length<11)fail('Enter your GitHub token.');
+  }
+  async function commitFiles(snapshot,mode){
+    const from=mode==='apply'?48:60,to=mode==='apply'?60:48;
+    const nextVersion=snapshot.version+1;
+    const patched={
+      'game-data.js':dataPatch(snapshot.content['game-data.js'],from,to),
+      'index.html':htmlPatch(snapshot.content['index.html'],snapshot.version,nextVersion,'index.html'),
+      'gary-intro-test.html':htmlPatch(snapshot.content['gary-intro-test.html'],snapshot.version,nextVersion,'gary-intro-test.html')
+    };
+    if(!FILES.every(path=>patched[path]&&patched[path]!==snapshot.content[path]))fail('One or more updated files were missing.');
+    say('Preflight passed: 3 populated files, +1 data-cache version, 0 engine changes.');
+    const message=mode==='apply'?APPLY_MESSAGE:ROLLBACK_MESSAGE;
+    if(!confirm('Publish ONE atomic GitHub commit?\n\n'+from+' → '+to+' pixel cobbles.\nCache v'+snapshot.version+' → v'+nextVersion+' on both pages.\n\nNo game engine, assets, studio, audio or calibration data will be changed.')){say('Cancelled. No changes made.');return;}
+    say('Building the new GitHub tree…');
+    const tree=await api('/git/trees',{method:'POST',body:JSON.stringify({base_tree:snapshot.treeSha,tree:FILES.map(path=>({path,mode:'100644',type:'blob',content:patched[path]}))})},true);
+    if(!/^[0-9a-f]{40}$/.test(tree.sha||''))fail('GitHub did not confirm the new tree.');
+    const nextCommit=await api('/git/commits',{method:'POST',body:JSON.stringify({message,tree:tree.sha,parents:[snapshot.head]})},true);
+    if(!/^[0-9a-f]{40}$/.test(nextCommit.sha||''))fail('GitHub did not confirm the new commit.');
+    say('Commit prepared. Performing protected, non-force branch update…');
+    await api('/git/refs/heads/main',{method:'PATCH',body:JSON.stringify({sha:nextCommit.sha,force:false})},true);
+    say('SUCCESS: All three files committed together.');
+    say('New commit: '+nextCommit.sha.slice(0,12));
+    say('Wait for GitHub Pages to deploy, then open the live game in a fresh tab.');
+    say('Main game: https://tryingafewnewthings.github.io/gary-runner/?cobbles='+nextVersion);
+    say('Test game: https://tryingafewnewthings.github.io/gary-runner/gary-intro-test.html?cobbles='+nextVersion);
+    return true;
+  }
+  $('scan').addEventListener('click',()=>run(async()=>{
+    logStart('Reading current public repository at a pinned commit…');
+    const snapshot=await inspect(Boolean($('token').value.trim()));render(snapshot);
+    say('CHECK COMPLETE: no files changed.');
+  }));
+  $('apply').addEventListener('click',()=>run(async()=>{
+    ensureHost();logStart('Rechecking current GitHub head using your token…');
+    const snapshot=await inspect(true);
+    if(snapshot.mode!=='apply')fail('The cobbles are no longer at 48. Scan again.');
+    const ok=await commitFiles(snapshot,'apply');
+    if(ok){scanMode=null;rollbackEligible=false;$('summary').textContent='Published. Scan again after GitHub Pages has updated.';}
+  }));
+  $('rollback').addEventListener('click',()=>run(async()=>{
+    ensureHost();logStart('Checking rollback eligibility at the current GitHub head…');
+    const snapshot=await inspect(true);
+    if(!snapshot.eligible)fail('Rollback is only enabled while the 60-pixel installer commit remains the latest GitHub commit. No files changed.');
+    const ok=await commitFiles(snapshot,'rollback');
+    if(ok){scanMode=null;rollbackEligible=false;$('summary').textContent='Rollback published. Scan again after GitHub Pages has updated.';}
+  }));
+  $('token').addEventListener('input',updateButtons);
+  $('confirmWord').addEventListener('input',updateButtons);
+  updateButtons();
+})();
+</script>
+</main></body>
+</html>
