@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — Smooth Sidestep Studio</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#111722;color:#f5f6f8;font:15px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}
+main{max-width:700px;margin:auto;padding:22px 18px 60px}h1{font-size:24px;line-height:1.15}h2{font-size:18px;margin-bottom:8px}p,li{color:#bec7d3}section{border:1px solid #374356;background:#1b2636;padding:16px;border-radius:14px;margin:16px 0}code{color:#f5d87b}
+button,a.action{font:700 15px -apple-system,sans-serif;background:#ffe400;border:0;color:#141414;padding:13px 15px;border-radius:10px;display:block;width:100%;text-align:center;margin:8px 0;text-decoration:none;cursor:pointer}
+button.secondary,a.secondary{background:#344257;color:#f9f9f9}button:disabled{opacity:.4;cursor:default}input{width:100%;padding:12px;border-radius:8px;border:1px solid #778299;background:#0e1725;color:white;font-size:16px}label{display:block;margin:12px 0 4px;font-weight:650}
+pre{border-radius:9px;background:#0b121d;padding:12px;min-height:75px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+small{color:#bac4d1}a{color:#ffe400} .notice{padding:10px;border-left:3px solid #ffde33;background:#2e3241;color:#faf0cb}
+</style></head><body><main>
+<h1>Gary Eats! — Smoother sidestep</h1>
+<p>Repair the abrupt four-frame dodge in an isolated test. <strong>The current game is untouched until you approve the new build.</strong></p>
+<section><h2>What changes</h2><ul>
+<li><strong>Default: smooth running lean.</strong> Gary stays in his continuous six-frame walk cycle, with a small, eased directional lean. No rapid pose switching or double-vision.</li>
+<li><strong>Optional: soft character poses.</strong> Uses only the two middle frames of your left/right sheets, with gentle fades rather than four hard cuts. Compare with the default before choosing.</li>
+<li>Sidestep lasts 0.36 seconds. Controls and collision are unchanged. The celebration remains 0.45 seconds.</li></ul><p class="notice">The source art is not deleted or altered. The original working code, original cinematic intro and studio configuration remain intact.</p>
+<button id="scan" class="secondary">1. Check current game</button><small id="scanResult">Not checked</small></section>
+<section><h2>2. Publish a separate test</h2>
+<label for="token">GitHub token (contents: read/write)</label><input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Token stays in this page session">
+<button id="stage">Create smooth sidestep test</button>
+<a id="previewSoft" class="action secondary" href="./gary-sidestep-smooth-test.html?build=2" target="_blank" rel="noopener">Test smooth running lean (recommended)</a>
+<a id="previewExpressive" class="action secondary" href="./gary-sidestep-smooth-test.html?sidestep=expressive&build=2" target="_blank" rel="noopener">Compare soft sprite poses</a>
+<p>Test on your iPhone, particularly rapid left/right taps, food collection and restarting. If your game stays smoother with the first link, use that mode.</p></section>
+<section><h2>3. Activate only after testing</h2>
+<label for="word">Type <code>SMOOTH</code> to authorise the change</label><input id="word" autocomplete="off" autocapitalize="characters" placeholder="SMOOTH">
+<button id="live">Make smooth running lean live</button>
+<button id="undo" class="secondary">Restore current sidestep engine</button>
+<small>Activation changes only <code>index.html</code>. The current <code>game-sidestep-test.js</code> and all assets are preserved.</small></section>
+<section><h2>Results</h2><pre id="log" aria-live="polite">Ready. Start with Check current game.</pre></section>
+</main><script>
+'use strict';
+const OWNER='tryingafewnewthings/gary-runner';
+const BASE='https://api.github.com/repos/'+OWNER;
+const EXPECTED_SOURCE='b492c3fc2f1d3575c4b8dab37f2b0d8a8d4a068a';
+const EXPECTED_LIVE_SCRIPT='game-sidestep-test.js?v=1';
+const NEW_SCRIPT='game-sidestep-smooth.js?v=1';
+const TEST_PAGE='gary-sidestep-smooth-test.html';
+const STAGED_ENGINE='game-sidestep-smooth.js';
+const $=id=>document.getElementById(id);
+let busy=false,scanOk=false;
+const log=s=>{$('log').textContent+='\n'+s};
+const show=s=>{$('log').textContent=s};
+function gate(){
+ if(location.origin!=='https://tryingafewnewthings.github.io'||!location.pathname.startsWith('/gary-runner/'))throw Error('Open this installer from the official Gary Eats! GitHub Pages URL.');
+ if(!$('token').value.trim())throw Error('Enter your GitHub token.');
+}
+function toBase64(s){let bytes=new TextEncoder().encode(s), out='';for(let i=0;i<bytes.length;i+=8192)out+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(out)}
+function fromBase64(s){const binary=atob(s.replace(/\s/g,''));return new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(binary,c=>c.charCodeAt(0)))}
+async function api(path,options={},optional=false){
+ const h={Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+ const token=$('token').value.trim();if(token)h.Authorization='Bearer '+token;
+ const resp=await fetch(BASE+path,{...options,headers:{...h,...(options.headers||{})},cache:'no-store'});
+ if(resp.status===404&&optional)return null;
+ const data=await resp.json().catch(()=>({}));
+ if(!resp.ok)throw Error((data.message||'GitHub request failed')+' (HTTP '+resp.status+')');
+ return data;
+}
+const read=(name,optional=false)=>api('/contents/'+encodeURIComponent(name)+'?ref=main',{},optional);
+function exactlyOnce(str,old,label){let n=str.split(old).length-1;if(n!==1)throw Error(label+': expected exactly one match, found '+n+'. No game files changed.');}
+function patchEngine(src){
+ if(typeof src!=='string'||src.length<72000||!src.trimEnd().endsWith('})();'))throw Error('Engine has unexpected length or ending.');
+ if(!src.includes("state = animated ? 'intro_transition' : 'play'"))throw Error('Cinematic entrance is missing in the source.');
+ if(!src.includes('const SIDE_DURATION = 0.28;')||!src.includes('grinTimer=0.45;'))throw Error('Sidestep source is not the validated first version.');
+ function change(old,replacement,label){exactlyOnce(src,old,label);src=src.replace(old,replacement)}
+ change('const SIDE_DURATION = 0.28;',`const SIDE_DURATION = 0.36;
+  // Default avoids hard-cut frames. ?sidestep=expressive is an optional comparison.
+  const SIDE_MODE = new URLSearchParams(location.search).get('sidestep') === 'expressive'
+    ? 'expressive' : 'lean';
+  const sideSmooth = t => { t=Math.max(0,Math.min(1,t)); return t*t*(3-2*t); };`, 'Sidestep duration');
+ change('if(laneSquash>0) ctx.scale(1+laneSquash*1.4, 1-laneSquash*0.8);',
+        'if(laneSquash>0 && sideDir===0) ctx.scale(1+laneSquash*1.4, 1-laneSquash*0.8);','Remove abrupt body squash during sidestep');
+ const old=`      const sideArt = sideDir < 0 ? imgSideLeft : sideDir > 0 ? imgSideRight : null;
+      const t = sideDir !== 0 ? Math.min(1, sideTime / SIDE_DURATION) : 0;
+      const sideAlpha = sideArt && sideArt.ready
+        ? Math.max(0, Math.min(1, t / 0.13, (1 - t) / 0.15)) : 0;
+      if (sideAlpha < 1) {
+        ctx.globalAlpha = 1 - sideAlpha;
+        ctx.drawImage(imgWalkSheet, runFrame * frameW, 0, frameW, frameH,
+          -w / 2, -h + WORLD.playerFootOffset, w, h);
+      }
+      if (sideAlpha > 0) {
+        const sf = Math.min(3, Math.floor(t * SIDE_FRAMES));
+        const sw = h * SIDE_W / SIDE_H;
+        ctx.globalAlpha = sideAlpha;
+        ctx.drawImage(sideArt, sf * SIDE_W, 0, SIDE_W, SIDE_H,
+          -sw / 2, -h + WORLD.playerFootOffset, sw, h);
+      }
+      ctx.globalAlpha = 1;`;
+ const next=`      // Keep walking animation advancing uninterrupted while dodging.
+      const sideArt = sideDir < 0 ? imgSideLeft : sideDir > 0 ? imgSideRight : null;
+      const t = sideDir ? Math.min(1,sideTime/SIDE_DURATION) : 0;
+      const wave = Math.sin(Math.PI*t);
+      if (sideDir) {
+        // A subtle, continuous lean around the foot anchor (no jump in lane position).
+        ctx.rotate(sideDir*0.045*wave);
+      }
+      // Only opt-in expressive mode crossfades the two KEY poses.
+      // The default draws the normal walk once: no strobing or ghosted limbs.
+      const useSide = SIDE_MODE==='expressive' && sideDir && sideArt && sideArt.ready;
+      const opacity = useSide ? 0.72*sideSmooth(t/0.27)*sideSmooth((1-t)/0.30) : 0;
+      ctx.globalAlpha = 1-opacity;
+      ctx.drawImage(imgWalkSheet,runFrame*frameW,0,frameW,frameH,
+        -w/2,-h+WORLD.playerFootOffset,w,h);
+      if (opacity>0.001) {
+        const sw=h*SIDE_W/SIDE_H;
+        // No rapid four-frame cut: only the two readable action poses.
+        const blend=sideSmooth((t-0.46)/0.12);
+        if (blend<0.999) {
+          ctx.globalAlpha=opacity*(1-blend);
+          ctx.drawImage(sideArt,SIDE_W,0,SIDE_W,SIDE_H,
+            -sw/2,-h+WORLD.playerFootOffset,sw,h);
+        }
+        if (blend>0.001) {
+          ctx.globalAlpha=opacity*blend;
+          ctx.drawImage(sideArt,2*SIDE_W,0,SIDE_W,SIDE_H,
+            -sw/2,-h+WORLD.playerFootOffset,sw,h);
+        }
+      }
+      ctx.globalAlpha=1;`;
+ change(old,next,'Smooth walk/sprite rendering');
+ if(src.length<73000||src.length>85000||!src.includes('const SIDE_MODE ='))throw Error('Patched engine failed integrity checks.');
+ return src;
+}
+function makePreview(page){exactlyOnce(page,`<script src="${EXPECTED_LIVE_SCRIPT}"><\/script>`,'Preview original engine script');return page.replace(`<script src="${EXPECTED_LIVE_SCRIPT}"><\/script>`,`<script src="${NEW_SCRIPT}"><\/script>`)}
+function makeLive(html){
+ if(html.includes('GarySidestepSmoothPrevious='))throw Error('Smooth build is already live. Nothing changed.');
+ exactlyOnce(html,`<script src="${EXPECTED_LIVE_SCRIPT}"><\/script>`,'Live engine script');
+ return html.replace(`<script src="${EXPECTED_LIVE_SCRIPT}"><\/script>`,`<!-- GarySidestepSmoothPrevious=${EXPECTED_LIVE_SCRIPT} -->\n<script src="${NEW_SCRIPT}"><\/script>`);
+}
+function makeUndo(html){
+ const target=`<!-- GarySidestepSmoothPrevious=${EXPECTED_LIVE_SCRIPT} -->\n<script src="${NEW_SCRIPT}"><\/script>`;
+ exactlyOnce(html,target,'Smooth activation marker');
+ return html.replace(target,`<script src="${EXPECTED_LIVE_SCRIPT}"><\/script>`);
+}
+async function put(name,contents,message,allowReplace=false){
+ if(typeof contents!=='string'||contents.length<3000)throw Error('Refusing to publish short/empty '+name);
+ const prior=await read(name,true);
+ if(prior){if(fromBase64(prior.content)===contents){log(name+': already correct');return}
+   if(!allowReplace)throw Error(name+' already exists with different content. Refusing to overwrite.');}
+ const input={message,branch:'main',content:toBase64(contents)};
+ if(prior)input.sha=prior.sha;
+ await api('/contents/'+encodeURIComponent(name),{method:'PUT',body:JSON.stringify(input)});
+ log(name+': published ('+contents.length+' characters)');
+}
+async function operation(fn){
+ if(busy)return;busy=true;for(const id of ['scan','stage','live','undo'])$(id).disabled=true;
+ try{await fn()}catch(e){log('STOPPED: '+e.message)}finally{busy=false;for(const id of ['scan','stage','live','undo'])$(id).disabled=false}
+}
+$('scan').onclick=()=>operation(async()=>{
+ show('Reading current engine and main page…');
+ const [src,main,oldTest]=await Promise.all([read('game-sidestep-test.js'),read('index.html'),read('gary-sidestep-test.html')]);
+ if(src.sha!==EXPECTED_SOURCE)throw Error('Game source changed since the validated version. Please request an updated installer.');
+ const srcText=fromBase64(src.content),html=fromBase64(main.content),test=fromBase64(oldTest.content);
+ patchEngine(srcText);
+ if(!html.includes(`<script src="${EXPECTED_LIVE_SCRIPT}"><\/script>`)&&!html.includes(`<!-- GarySidestepSmoothPrevious=${EXPECTED_LIVE_SCRIPT} -->`))throw Error('Live game is no longer using the validated sidestep engine.');
+ makePreview(test);
+ scanOk=true;$('scanResult').textContent='Verified. Safe to stage a separate test.';
+ log('PASS: complete engine, cinematic intro, script references and patch anchors verified.');
+ log('The existing game has not been modified.');
+});
+$('stage').onclick=()=>operation(async()=>{
+ show('Creating a safe test, without modifying the live game…');gate();
+ const [src,main,test]=await Promise.all([read('game-sidestep-test.js'),read('index.html'),read('gary-sidestep-test.html')]);
+ if(src.sha!==EXPECTED_SOURCE)throw Error('Source engine SHA changed. Refusing to patch.');
+ const engine=patchEngine(fromBase64(src.content));
+ const preview=makePreview(fromBase64(test.content));
+ if(preview.length<4200)throw Error('Test page failed HTML length check');
+ const live=fromBase64(main.content);
+ if(!live.includes(EXPECTED_LIVE_SCRIPT)&&!live.includes('GarySidestepSmoothPrevious='))throw Error('Unknown live game version');
+ if(!confirm('Create two NEW test files? Your current live game will not change.')){log('Cancelled');return}
+ await put(STAGED_ENGINE,engine,'Stage smooth sidestep animation, preserve live engine');
+ await put(TEST_PAGE,preview,'Add separate smooth sidestep comparison page');
+ log('STAGED. Open both test links above after GitHub Pages deploys.');
+});
+$('live').onclick=()=>operation(async()=>{
+ show('Preparing to activate tested smooth running lean…');gate();
+ if($('word').value.trim().toUpperCase()!=='SMOOTH')throw Error('Type SMOOTH before publishing.');
+ const [engine,preview,main]=await Promise.all([read(STAGED_ENGINE,true),read(TEST_PAGE,true),read('index.html')]);
+ if(!engine||!preview||!fromBase64(engine.content).includes("SIDE_MODE = new URLSearchParams")||!fromBase64(preview.content).includes(NEW_SCRIPT))throw Error('Staged build is missing or incompatible. Stage and test it first.');
+ const before=fromBase64(main.content),after=makeLive(before);
+ if(!confirm('Did you test smooth running lean on your iPhone? Switch the live game to the staged engine? The current engine remains available for rollback.')){log('Cancelled');return}
+ await put('index.html',after,'Activate tested smooth sidestep engine',true);
+ log('ENABLED. Close your game tab and reopen after GitHub Pages deploys.');
+});
+$('undo').onclick=()=>operation(async()=>{
+ show('Preparing to restore the previous live sidestep engine…');gate();
+ const main=await read('index.html'),after=makeUndo(fromBase64(main.content));
+ if(!confirm('Revert to the previous sidestep engine?')){log('Cancelled');return}
+ await put('index.html',after,'Restore pre-smoothing sidestep engine',true);
+ log('RESTORED. Reload the main game after deployment.');
+});
+</script></body></html>
