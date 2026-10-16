@@ -905,8 +905,42 @@ let shutterMix = 0;
     gap = gapBefore(roadQueue[0], row);
   }
   /* layout:end */
+
+  // GARY_PICKUP_SFX_V1 — procedural sounds; no external audio files.
+  // Runs inside the game's existing, user-unlocked AudioContext.
+  function playPickupSfx(kind) {
+    if (!audioCtx || audioCtx.state !== 'running' || document.hidden) return;
+    try {
+      const roast = kind === 'roast';
+      const frequencies = roast ? [523.25, 659.25, 783.99, 1046.50] : [659.25, 880];
+      const spacing = roast ? 0.078 : 0.055;
+      const duration = roast ? 0.155 : 0.105;
+      const volume = roast ? 0.049 : 0.038;
+      const now = audioCtx.currentTime;
+      for (let i = 0; i < frequencies.length; i++) {
+        const at = now + i * spacing;
+        const oscillator = audioCtx.createOscillator();
+        const envelope = audioCtx.createGain();
+        oscillator.type = (roast || i > 0) ? 'sine' : 'triangle';
+        oscillator.frequency.setValueAtTime(frequencies[i], at);
+        envelope.gain.setValueAtTime(0.0001, at);
+        envelope.gain.exponentialRampToValueAtTime(volume, at + 0.011);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+        oscillator.connect(envelope);
+        envelope.connect(audioCtx.destination);
+        oscillator.start(at);
+        oscillator.stop(at + duration + 0.012);
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          envelope.disconnect();
+        };
+      }
+    } catch (_) { /* Sound is optional: never interrupt gameplay. */ }
+  }
+
   function collect(o) {
     if (!isFood(o.t)) return;
+    playPickupSfx(o.t);
     window.GaryFoodCatalogue?.discover(o.t);
     review = Math.min(9, review + 1);
     reviewGap = 1.5;
