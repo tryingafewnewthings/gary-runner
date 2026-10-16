@@ -1,0 +1,22 @@
+{
+  "previousCommit": "974de121f99875056e99a9b17d363473377292fa",
+  "installed": "GaryApprovedSidesteps20261016V1",
+  "files": [
+    {
+      "path": "game-sidestep-no-ghost.js",
+      "sha": "5917c78b149a871fb5bc322c21750652bbc20144"
+    },
+    {
+      "path": "index.html",
+      "sha": "81d68b337d8ce4c665264792275d8491332a2497"
+    },
+    {
+      "path": "gary_sidestep_left.png",
+      "sha": "0cc8cae437b42970119d3f945625dc047f00569b"
+    },
+    {
+      "path": "gary_sidestep_right.png",
+      "sha": "d6f8f58ccf8f8e0ebdcf72cf9b1a46daf15b956c"
+    }
+  ]
+}

@@ -136,11 +136,12 @@ let shutterMix = 0;
   const imgCrash = loadGary(GARY_SPRITES.crash);
 
   // GarySmoothSidestepFourFramesV4 — frame visibility independent from lane travel.
-  const SIDE_FRAMES = 4, SIDE_W = 576, SIDE_H = 768;
+  // GaryApprovedSidesteps20261016V1
+  const SIDE_FRAMES = 4, SIDE_W = 543, SIDE_H = 724;
   const SIDE_ANIM_SECONDS = 0.44; // Visible for 110 ms per frame.
   let sideAnimTime = SIDE_ANIM_SECONDS, sideAnimDir = 0;
   const imgSideLeft = new Image(), imgSideRight = new Image();
-  const sideArt = { left: false, right: false, anchors: [[], []], walkFoot: 0.975 };
+  const sideArt = { left: false, right: false, anchors: [[], []], walkFoot: 0.975, walkTop: 0.02 };
 
   // Derive the torso centre and shoe baseline from actual transparency.
   // Frames have different silhouettes; this prevents visible lateral/vertical popping.
@@ -158,23 +159,24 @@ let shutterMix = 0;
         pixels[((height-1)*width)*4+3] > 60) {
       return {torso:0.5,foot:0.96};
     }
-    let xSum=0, count=0, foot=0;
+    let xSum=0, count=0, foot=0, top=height;
     for(let y=0;y<height;y+=3){
       for(let x=0;x<width;x+=3){
         const alpha=pixels[(y*width+x)*4+3];
         if(alpha<100) continue;
         if(y>foot) foot=y;
+        if(y<top) top=y;
         if(y>height*0.24 && y<height*0.55){xSum+=x;count++;}
       }
     }
-    return {torso:count?xSum/count/width:0.5,foot:foot?foot/height:0.96};
+    return {torso:count?xSum/count/width:0.5,foot:foot?foot/height:0.96,top:top<height?top/height:0.02};
   }
 
   function prepareSideImage(img, key, file){
     img.ready = false;
     img.onload = () => {
       if(img.naturalWidth!==SIDE_FRAMES*SIDE_W || img.naturalHeight!==SIDE_H){
-        loadErrorLog.push(file+': expected a 2304 x 768, four-frame sheet');
+        loadErrorLog.push(file+': expected a 2172 x 724, four-frame sheet');
         return;
       }
       const anchors=[];
@@ -185,7 +187,7 @@ let shutterMix = 0;
       sideArt[key]=true;
     };
     img.onerror=()=>loadErrorLog.push(file+': missing; using walking animation');
-    img.src=file+'?v=4';
+    img.src=file+'?v=approved20261016';
   }
   prepareSideImage(imgSideLeft,'left','gary_sidestep_left.png');
   prepareSideImage(imgSideRight,'right','gary_sidestep_right.png');
@@ -193,7 +195,8 @@ let shutterMix = 0;
     if(!imgWalkSheet.naturalWidth)return;
     const width=Math.round(imgWalkSheet.naturalWidth/WALK_FRAMES);
     const height=imgWalkSheet.naturalHeight;
-    sideArt.walkFoot=analyseGaryFrame(imgWalkSheet,0,width,height).foot;
+    const walkMetrics=analyseGaryFrame(imgWalkSheet,0,width,height);
+    sideArt.walkFoot=walkMetrics.foot; sideArt.walkTop=walkMetrics.top||0.02;
   });
   let runFrame = 0, runTimer = 0;
 
@@ -1624,11 +1627,13 @@ let shutterMix = 0;
       const fraction=Math.min(0.999999,sideAnimTime/SIDE_ANIM_SECONDS);
       const frame=Math.min(3,Math.floor(fraction*SIDE_FRAMES));
       const anchor=sideArt.anchors[direction<0?0:1][frame]||{torso:0.5,foot:0.96};
-      const w=h*SIDE_W/SIDE_H;
+      const visible=Math.max(0.5,anchor.foot-(anchor.top||0.02));
+      const poseH=h*(sideArt.walkFoot-sideArt.walkTop)/visible;
+      const w=poseH*SIDE_W/SIDE_H;
       // Align the shirt/torso centre and shoe baseline to the walking sprites.
       const x=-w*anchor.torso;
-      const y=-h+WORLD.playerFootOffset+h*sideArt.walkFoot-h*anchor.foot;
-      ctx.drawImage(image,frame*SIDE_W,0,SIDE_W,SIDE_H,x,y,w,h);
+      const y=-h+WORLD.playerFootOffset+h*sideArt.walkFoot-poseH*anchor.foot;
+      ctx.drawImage(image,frame*SIDE_W,0,SIDE_W,SIDE_H,x,y,w,poseH);
     } else if(imgWalkSheet.ready){
       const frameW=imgWalkSheet.naturalWidth/WALK_FRAMES;
       const frameH=imgWalkSheet.naturalHeight;
