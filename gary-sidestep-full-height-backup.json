@@ -1,0 +1,17 @@
+{
+  "previousCommit": "5daf7301363a2ea8968b5161eefa1477fbdf5e7a",
+  "installed": "GarySidestepVisibleHeight20261016V3",
+  "oldSeconds": 0.44,
+  "newSeconds": 0.32,
+  "calibration": "full_visible_height_per_sheet",
+  "files": [
+    {
+      "path": "game-sidestep-no-ghost.js",
+      "sha": "57451cca4180812735b0b7f5843218fcd0aeb56f"
+    },
+    {
+      "path": "index.html",
+      "sha": "68a958f430d7c3154b46fa1095ec5bc54b534b8d"
+    }
+  ]
+}

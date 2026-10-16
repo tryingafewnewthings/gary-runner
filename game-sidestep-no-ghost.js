@@ -138,7 +138,8 @@ let shutterMix = 0;
   // GarySmoothSidestepFourFramesV4 — frame visibility independent from lane travel.
   // GaryApprovedSidesteps20261016V1
   const SIDE_FRAMES = 4, SIDE_W = 543, SIDE_H = 724;
-  const SIDE_ANIM_SECONDS = 0.44; // Visible for 110 ms per frame.
+  // GarySidestepVisibleHeight20261016V3
+  const SIDE_ANIM_SECONDS = 0.32; // Four frames, 80 ms each; lane travel is independent.
   let sideAnimTime = SIDE_ANIM_SECONDS, sideAnimDir = 0;
   const imgSideLeft = new Image(), imgSideRight = new Image();
   const sideArt = { left: false, right: false, anchors: [[], []], walkFoot: 0.975, walkTop: 0.02 };
@@ -1627,8 +1628,10 @@ let shutterMix = 0;
       const fraction=Math.min(0.999999,sideAnimTime/SIDE_ANIM_SECONDS);
       const frame=Math.min(3,Math.floor(fraction*SIDE_FRAMES));
       const anchor=sideArt.anchors[direction<0?0:1][frame]||{torso:0.5,foot:0.96};
-      const visible=Math.max(0.5,anchor.foot-(anchor.top||0.02));
-      const poseH=h*(sideArt.walkFoot-sideArt.walkTop)/visible;
+      // Match the walking sprite's full hair-to-shoe height, excluding padding.
+      // One scale for the whole direction preserves frame-to-frame body proportions.
+      const sheetVisible=Math.max(0.5,...sideArt.anchors[direction<0?0:1].map(a=>a.foot-(a.top??0.02)));
+      const poseH=h*(sideArt.walkFoot-sideArt.walkTop)/sheetVisible;
       const w=poseH*SIDE_W/SIDE_H;
       // Align the shirt/torso centre and shoe baseline to the walking sprites.
       const x=-w*anchor.torso;
