@@ -1,24 +1,34 @@
-# Gary Eats! — Forgotten Road Ground Evolution V1
+# Gary Eats! — Forgotten Road Ground Evolution V2
 
-## Status
-Installer-only until installed through `gary-road-transition-installer.html`. Installation adds `gary-road-evolution.js`, hooks the live `game-runtime.js` renderer, and loads the module from `index.html`. No collision, speed, spawn or three-lane geometry changes.
+## Shipped by this upgrade
+This version retains the original cobble master `IMG_7141.webp` and the complete existing cobble variant set, with their original quadrant assembly and 60-design-pixel render cells. All new decay is transparent PNG artwork layered on top of the existing pavement and road; no cobblestones are enlarged or regenerated. The existing 360×640 canvas, three-lane 150px road, movement, collision and pickup systems remain unchanged.
 
-## Design geometry
-Portrait design canvas 360×640. Road from x=105 to x=255 (150px wide, 3 lanes × 50px). Pavement strips 16px. Shop display footprint 89×236px. Repeating original cobble quadrants occupy 60×60 design-pixel cells. Overlay stage art is built in 60×60 offscreen canvases and cached after first visible use.
+Assets (512×512 PNG with actual alpha):
+- `art/forgotten-road/decay-light.png`
+- `art/forgotten-road/decay-medium.png`
+- `art/forgotten-road/decay-heavy.png`
+- `art/forgotten-road/decay-kerb.png`
 
-## Six visual stages
-0. Original high street: preserve approved textures.
-1. Wet & neglected: subtle stains and puddle flecks.
-2. Cracks appear: thin fractures, sparse moss.
-3. Broken surface: missing mortar, chipped tarmac, exposed earth.
-4. Overgrown: darker soil, weeds, leaf litter, moss creeping inward.
-5. Wilderness road: roots, low vegetation, mud and old stone; running lanes remain readable.
+`gary-road-evolution.js` V2 world-anchors their occurrence to deterministic positions and clips them in the outer-cobble passes and one final pavement-plus-road pass after the live pavement renderer; the same decal straddles the kerb, avoiding an abrupt stop or double opacity at the pavement boundary. On the left roadside, the kerb growth artwork is mirrored. The centre lane stays comparatively clear. No per-frame sprite creation or randomness is used.
 
-## Trigger and transition
-After the hooded-reader mystery system begins clearing the street, record a one-time `start` depth slightly ahead of the current world position. Blend adjacent stage overlays over 3,000 design world-distance units using a smoothstep progression. Texture variations use deterministic world-cell hashes; no frame-dependent randomness and no allocations during gameplay after initial caching. Existing original cobbles and tarmac stay underneath, so the first implementation is a non-destructive overlay system. No new large texture downloads.
+## Encounter-driven timing
+The active runtime calls `GaryRoadEvolution.trigger(view.distance, mystery.footAt(view.distance))` when the hooded-reader mystery signals that the street has begun clearing. The second argument is required: it pins the transition to the bench's actual world-coordinate entry, not an arbitrary timer.
 
-## Preview / QA
-After installing, append `?roadstage=0` through `?roadstage=5` to the game URL to force any visual stage. `?roadpreview=1` accelerates the beginning only after the street event has triggered. Check legibility of lane markings, shop collisions, mobile Safari frame rate, no visible cell pops as the ground scrolls, reset on retry, and clarity in heavy rain. The stage-5 overlay is a prototype requiring further art direction before declaring a complete forest biome.
+A gentle amount of light moss first appears about 1,400 design-world pixels before the bench reaches the top of the screen. Medium moss develops through the shuttered, increasingly empty street. Dense/heavy moss is withheld until the final short approach to the hooded reader, and becomes fully established around and after the encounter. This progression is spatial, so objects never jump between states as they scroll.
 
-## Production intent
-This environmental deterioration belongs to the Forgotten Road transition before wilderness and the unrevealed Victorian time-travel reveal. Do not introduce Victorian/Roman artwork in this first ground pass. Keep seamless narrative and art coherence with STYLE.txt and PROJECT_STATE.md. Visual progression is cosmetic; gameplay stays accessible and deterministic.
+## Bench calibration
+The original newspaper `bench.png` prop is rendered with `DETAILS` height cap = 100 design pixels. The mysterious `gary-mysterious-bench.png` eight-frame sheet now uses `GaryStreetMystery.SPEC.height = 100` (down from 128) without changing its source 384×512 frame dimensions, individual foot anchors, eight-frame animation or last-two-frame idle loop. Its screen-scale is now compatible with the original bench asset.
+
+## Debug & QA
+Live URL: https://tryingafewnewthings.github.io/gary-runner/
+- `?roadstage=0` — original clean surface.
+- `?roadstage=1` — scattered light moss.
+- `?roadstage=2` — growing light/medium.
+- `?roadstage=3` — established medium and kerb growth.
+- `?roadstage=4` — late medium, just before heavy.
+- `?roadstage=5` — full post-encounter overgrowth for inspection.
+
+QA on an actual phone in day/night/rain: look for true PNG transparency, no white halos, small underlying cobbles unchanged, no repeating-square seams, left/right kerb growth, centre-lane readability, no texture popping when the street scrolls, bench matching normal seat scale, and no lost collision responsiveness. The six forced stages are illustrative art checks and must not be interpreted as separate playable biomes. Unlock logic, forest scenery and new historical-food systems are outside this upgrade.
+
+## Rollback
+The Safari installer publishes one Git commit on the current default branch. The previous commit SHA is shown in its log. Roll back by reverting that commit in GitHub (preserving any subsequent independent work). Do not delete the original `game.js` or `game-data.js` baselines.

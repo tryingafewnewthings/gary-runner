@@ -2475,7 +2475,7 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
-    if (window.GaryRoadEvolution && mystery.quiet()) window.GaryRoadEvolution.trigger(view.distance);
+    if (window.GaryRoadEvolution && mystery.quiet()) window.GaryRoadEvolution.trigger(view.distance, mystery.footAt(view.distance));
     drawHighStreet();drawPavements();drawRoad();
     pigeons.draw();
     if (nightOn) {

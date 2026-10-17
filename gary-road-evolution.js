@@ -1,197 +1,166 @@
-/* Gary Eats! — Forgotten Road ground evolution, v1.
- * Art-direction-safe procedural overlays: six deterministic world-anchored stages.
- * Never changes lane geometry, collisions, shop atlas or physics.
- * Stage activation is triggered by the live street-mystery clearing event.
+/* Gary Eats! — Forgotten Road Decay V2 (GaryRoadDecay20261017V2)
+ * Exact, original 512px alpha PNGs over the unchanged 60px cobble master.
+ * Fixed 360x640 orthographic/composite world; no geometry/physics changes.
+ * Decay is spatially world-anchored and synchronized to hooded bench entry.
  */
 (function (root) {
   'use strict';
-  const CELL = 60;
-  const VARIANTS = 5;
-  const LENGTH = 3000;
+  const WORLD_HEIGHT = 640;
+  const ROAD_LEFT = 105;
+  const ROAD_RIGHT = 255;
+  const PHASE_OFFSET = 304; // Matches worldDepth = distance - screenY + 304 in V1
+  const STRIDE = 156;       // Candidate patch frequency in world design pixels
   const SPEC = Object.freeze([
-    {name:'Original high street', note:'Existing cobbles and tarmac preserved'},
-    {name:'Wet and neglected', note:'Dark damp patches and puddle reflections'},
-    {name:'Cracks appear', note:'Hairline fractures and sparse kerb weeds'},
-    {name:'Broken surface', note:'Crumbled mortar, exposed earth, chipped edges'},
-    {name:'Overgrown', note:'Moss, weeds, soil and narrowing clear ground'},
-    {name:'Wilderness road', note:'Roots, vegetation, mud and aged stone'}
+    {name:'Original high street'}, {name:'Light moss'},
+    {name:'Early neglect'}, {name:'Medium growth'},
+    {name:'Roadside encroachment'}, {name:'Heavy overgrowth'}
   ]);
-  const q = new URLSearchParams(root.location ? root.location.search : '');
-  const forced = q.has('roadstage') ? Number(q.get('roadstage')) : NaN;
+  const LEAD = 1400;        // Begin gentle neglect before hooded bench entry
+  const MILESTONES = Object.freeze([
+    [-LEAD, 0], [-1060, .17], [-710, .38],
+    [-390, .57], [-220, .70], [-110, .76],
+    [20, .91], [200, 1]
+  ]);
+  const ASSETS = Object.freeze({
+    light: 'art/forgotten-road/decay-light.png?v=roaddecay20261017v2',
+    medium: 'art/forgotten-road/decay-medium.png?v=roaddecay20261017v2',
+    heavy: 'art/forgotten-road/decay-heavy.png?v=roaddecay20261017v2',
+    kerb: 'art/forgotten-road/decay-kerb.png?v=roaddecay20261017v2'
+  });
+  const imgs = Object.create(null);
+  let loadedCount = 0;
+  for (const key of Object.keys(ASSETS)) {
+    const img = new Image();
+    img.ready = false;
+    img.onload = () => { if (!img.ready) loadedCount++; img.ready = true; };
+    img.onerror = () => { if (img.ready) loadedCount--; img.ready = false; };
+    img.src = ASSETS[key];
+    imgs[key] = img;
+  }
+
+  const query = new URLSearchParams(root.location ? root.location.search : '');
+  const rawForced = query.get('roadstage');
+  const forced = rawForced === null || rawForced.trim() === '' ? null : Number(rawForced);
   const debugStage = Number.isFinite(forced) ? Math.max(0, Math.min(5, forced)) : null;
-  const earlyPreview = q.get('roadpreview') === '1';
-  let start = Infinity;
-  let tiles = null;
-  const clamp = x => Math.max(0, Math.min(1, x));
-  function hash(a, b, c) {
-    let x = (Math.imul(a, 374761393) ^ Math.imul(b, 668265263) ^ Math.imul(c, 1442695041)) | 0;
+  let benchEntryDistance = Infinity; // Distance when mysterious bench foot enters y=0
+  let triggeredAt = Infinity;
+  let lastDistance = 0;
+  const clamp = v => Math.min(1, Math.max(0, v));
+  const smooth = v => { const x = clamp(v); return x*x*(3-2*x); };
+  function hash(a,b,c) {
+    let x = (Math.imul(a|0, 374761393) ^ Math.imul(b|0, 668265263) ^ Math.imul(c|0, 1442695041)) | 0;
     x = Math.imul(x ^ (x >>> 13), 1274126177);
     return (x ^ (x >>> 16)) >>> 0;
   }
-  function rand(seed) {
-    let state = seed >>> 0;
-    return () => {
-      state ^= state << 13; state ^= state >>> 17; state ^= state << 5;
-      return (state >>> 0) / 4294967296;
-    };
-  }
-  function ellipse(g,x,y,rx,ry,color) {
-    g.fillStyle=color;g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fill();
-  }
-  function crack(g,r,x,y,scale) {
-    g.strokeStyle = 'rgba(21,27,29,.68)';g.lineWidth=0.75+r()*0.65;
-    g.beginPath();g.moveTo(x,y);
-    for(let j=0;j<3;j++){ x+=(r()-.5)*13*scale;y+=(2+r()*6)*scale;g.lineTo(x,y); }
-    g.stroke();
-    g.strokeStyle='rgba(173,166,145,.19)';g.lineWidth=.6;
-    g.beginPath();g.moveTo(x+1,y);g.lineTo(x+2.5,y+3);g.stroke();
-  }
-  function leaves(g,r,x,y) {
-    for(let j=0;j<3;j++){
-      const a=r()*Math.PI*2,dx=Math.cos(a)*3,dy=Math.sin(a)*2;
-      ellipse(g,x+dx,y+dy,1.5+r()*1.5,.75+r(),'rgba(117,82,45,.6)');
+  function fraction(a,b,c) { return hash(a,b,c) / 4294967296; }
+  function remap(worldY) {
+    if (debugStage !== null) return [0, .14, .34, .53, .73, .98][debugStage];
+    if (!Number.isFinite(benchEntryDistance)) return 0;
+    const relative = worldY - benchEntryDistance;
+    // Heavy moss appears only in the final approach to the reader.
+    if (relative <= MILESTONES[0][0]) return 0;
+    for (let i=1;i<MILESTONES.length;i++) {
+      const a=MILESTONES[i-1], b=MILESTONES[i];
+      if (relative <= b[0]) return a[1] + (b[1]-a[1])*smooth((relative-a[0])/(b[0]-a[0]));
     }
+    return 1;
   }
-  function moss(g,r,x,y,amount) {
-    for(let j=0;j<amount;j++) {
-      const a=r()*Math.PI*2, d=2+r()*9;
-      ellipse(g,x+Math.cos(a)*d,y+Math.sin(a)*d,1+r()*3,.65+r()*1.8,
-        ['rgba(66,94,58,.68)','rgba(95,114,55,.65)','rgba(37,72,55,.68)'][Math.floor(r()*3)]);
-    }
+  function trigger(distance, benchFoot) {
+    if (debugStage !== null || Number.isFinite(benchEntryDistance)) return;
+    // The live runtime supplies the first encounter's actual screen foot.
+    // This prevents the decay timing from drifting if segment layout changes.
+    if (!Number.isFinite(distance) || !Number.isFinite(benchFoot) || benchFoot >= 0) return;
+    benchEntryDistance = distance - benchFoot;
+    triggeredAt = distance;
   }
-  function grass(g,r,x,y,n) {
-    g.lineCap='round';
-    for(let j=0;j<n;j++){
-      g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+(r()-.5)*7,y-3-r()*5,x+(r()-.5)*12,y-5-r()*8);
-      g.strokeStyle=j%2?'rgba(80,111,62,.84)':'rgba(50,86,54,.82)';
-      g.lineWidth=.7+r()*.9;g.stroke();
-    }
+  function reset() {
+    benchEntryDistance = Infinity;
+    triggeredAt = Infinity;
+    lastDistance = 0;
   }
-  function root(g,r,x,y) {
-    g.lineCap='round';g.lineJoin='round';g.strokeStyle='rgba(62,54,42,.79)';g.lineWidth=2.3;
-    g.beginPath();g.moveTo(x,y);g.bezierCurveTo(x+6,y+5,x+2,y+12,x+12,y+17);g.stroke();
-    g.lineWidth=.95;g.beginPath();g.moveTo(x+5,y+8);g.lineTo(x-2,y+12);g.lineTo(x-6,y+17);g.stroke();
+  function drawSprite(ctx,img,x,y,width,height,alpha,flip) {
+    if (!img || !img.ready || alpha <= .009) return;
+    ctx.globalAlpha = Math.min(.92,alpha);
+    if (flip) {
+      ctx.save();ctx.translate(x + width, y);ctx.scale(-1,1);
+      ctx.drawImage(img,0,0,width,height);ctx.restore();
+    } else ctx.drawImage(img,x,y,width,height);
   }
-  function tile(type,stage,variant) {
-    const canvas=document.createElement('canvas');canvas.width=canvas.height=CELL;
-    const g=canvas.getContext('2d');
-    const r=rand(hash(stage+1,variant+91,type==='road'?181:117));
-    if(stage===0)return canvas;
-    const road=type==='road';
-    // The base already exists in the live renderer. Keep these painted marks
-    // deliberately sparse, scaled like the original 60px cobble cells.
-    if(stage>=1){
-      g.fillStyle=road?'rgba(30,38,44,.10)':'rgba(28,40,48,.13)';g.fillRect(0,0,CELL,CELL);
-      for(let n=0;n<(stage>=3?3:2);n++){
-        const x=7+r()*46,y=8+r()*46;
-        ellipse(g,x,y,6+r()*8,2+r()*5,road?'rgba(34,56,65,.19)':'rgba(31,53,59,.25)');
-        ellipse(g,x-1,y-1,2+r()*3,.7+r(),'rgba(133,156,166,.11)');
-      }
-    }
-    if(stage>=2){
-      for(let n=0;n<(stage===2?2:4);n++)crack(g,r,4+r()*46,4+r()*42,stage>=4?1.15:0.83);
-      for(let n=0;n<(road?1:2);n++)moss(g,r,8+r()*44,8+r()*44,2);
-    }
-    if(stage>=3){
-      for(let n=0;n<3;n++){
-        const x=7+r()*46,y=7+r()*46;
-        ellipse(g,x,y,3+r()*5,2+r()*4,'rgba(68,59,50,.35)');
-        ellipse(g,x-1,y-1,1+r()*2,1+r()*2,'rgba(118,104,77,.29)');
-      }
-      for(let n=0;n<2;n++)leaves(g,r,6+r()*48,6+r()*48);
-    }
-    if(stage>=4){
-      // Irregular semi-transparent earthy cover, not a rectangular texture swap.
-      for(let n=0;n<7;n++){
-        const x=7+r()*45,y=7+r()*45;
-        ellipse(g,x,y,6+r()*8,3+r()*7,
-          road?'rgba(66,62,48,.26)':'rgba(65,74,49,.34)');
-        if(n%2===0)moss(g,r,x,y,5);
-      }
-      for(let n=0;n<(road?1:3);n++)grass(g,r,7+r()*46,10+r()*45,3+r()*4|0);
-    }
-    if(stage>=5){
-      g.fillStyle=road?'rgba(51,58,46,.12)':'rgba(53,62,44,.75)';g.fillRect(0,0,CELL,CELL);
-      for(let n=0;n<8;n++){
-        const x=6+r()*48,y=6+r()*48;
-        ellipse(g,x,y,4+r()*8,3+r()*6,
-          n%3===0?'rgba(61,49,38,.42)':'rgba(56,72,43,.4)');
-        if(n%3===0)leaves(g,r,x,y);
-      }
-      root(g,r,9+r()*34,6+r()*28);
-      for(let n=0;n<(road?2:4);n++)grass(g,r,4+r()*49,8+r()*46,3);
-    }
-    return canvas;
-  }
-  function ensureTiles() {
-    if(tiles)return;
-    tiles={road:[],cobble:[]};
-    for(const type of ['road','cobble'])for(let stage=0;stage<6;stage++){
-      const variants=[];
-      for(let v=0;v<VARIANTS;v++)variants.push(tile(type,stage,v));
-      tiles[type].push(variants);
-    }
-  }
-  function sample(worldY) {
-    if(debugStage!==null)return debugStage;
-    if(!Number.isFinite(start))return 0;
-    const t=clamp((worldY-start)/LENGTH);
-    return t*t*(3-2*t)*5;
-  }
-  function trigger(distance) {
-    if(debugStage!==null)return;
-    if(Number.isFinite(start))return;
-    start = earlyPreview ? distance - 200 : distance + 250;
-  }
-  function reset() { start=Infinity; }
-  function paint(ctx,kind,x,y,w,h,scrollY,distance,roadLeft,roadRight) {
-    if(debugStage===null&&!Number.isFinite(start))return;
-    ensureTiles();
-    const source=tiles[kind];
-    const phase=((scrollY%CELL)+CELL)%CELL;
-    const shift=Math.floor(scrollY/CELL);
-    ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
-    const yFirst=Math.floor((y-phase)/CELL);
-    const xFirst=Math.floor(x/CELL);
-    for(let j=yFirst;j*CELL+phase<y+h;j++){
-      const py=j*CELL+phase,worldRow=j-shift;
-      const worldDepth=distance-py+304;
-      const value=sample(worldDepth);
-      if(value<=.0001)continue;
-      const lo=Math.floor(value),hi=Math.min(5,lo+1),blend=value-lo;
-      for(let c=xFirst;c*CELL<x+w;c++){
-        const px=c*CELL,worldCol=c;
-        const v=hash(worldCol,worldRow,37)%VARIANTS;
-        let strength=1;
-        if(kind==='road'){
-          const center=px+CELL*.5;
-          const proximity=Math.min(Math.abs(center-roadLeft),Math.abs(center-roadRight));
-          // Vegetation invades the edges first, retaining an uncluttered running lane.
-          strength=value<2.3?0.88:Math.max(.25,0.95-proximity/93);
+  // Draw from a small set of fixed world slots; identical world coordinates
+  // are painted in both the pavement and road passes, with independent clips.
+  function paintOverlays(ctx,params,type) {
+    if (debugStage === null && !Number.isFinite(benchEntryDistance)) return;
+    if (!loadedCount) return;
+    const clipX = params.x;
+    const clipY = params.y;
+    const clipW = params.w;
+    const clipH = params.h;
+    const distance = params.distance;
+    if (clipW <= 0 || clipH <= 0 || !Number.isFinite(distance)) return;
+    ctx.save();
+    ctx.beginPath();ctx.rect(clipX,clipY,clipW,clipH);ctx.clip();
+    const lower = Math.floor((distance+PHASE_OFFSET-clipY-clipH-220) / STRIDE);
+    const upper = Math.ceil((distance+PHASE_OFFSET-clipY+220) / STRIDE);
+    for (let idx=lower; idx<=upper; idx++) {
+      for (let side=0; side<2; side++) {
+        const seed = hash(idx,side,731);
+        const jitter = (fraction(idx,side,42)-.5)*58;
+        const worldY = idx * STRIDE + jitter;
+        const p = remap(worldY);
+        if (p < .025) continue;
+        const chance = fraction(idx,side,99);
+        const frequency = .15 + .82*smooth(p);
+        if (chance > frequency) continue;
+        const yy = distance+PHASE_OFFSET-worldY;
+        const shape = fraction(idx,side,201);
+        const width = 70 + Math.round(fraction(idx,side,321)*40);
+        const height = width*(.82 + fraction(idx,side,523)*.25);
+        const variation = fraction(idx,side,156);
+        const kerbPatch = p > .17 && shape > .60;
+        let image = imgs.light;
+        if (kerbPatch) image = imgs.kerb;
+        else if (p >= .77 && variation < smooth((p-.77)/.18)) image = imgs.heavy;
+        else if (p >= .32 && variation < smooth((p-.25)/.25)) image = imgs.medium;
+        // Constrain each shared patch to a narrow roadside footprint.
+        // The middle running lane remains visually quiet in every stage.
+        const centerX = side===0 ? 109 : 251;
+        const xx = centerX - width/2 + (fraction(idx,side,55)-.5)*13;
+        const alpha = Math.min(.87, (.23 + p*.64)*( .78 + fraction(idx,side,72)*.22));
+        // For kerb growth, orientation means growth is at the *outer* edge
+        // of each pavement and extends naturally across the kerb line.
+        if (kerbPatch) {
+          const edgeWidth = 100 + 18*p;
+          const edgeX = side===0 ? 86 : 274-edgeWidth;
+          drawSprite(ctx,image,edgeX,yy-6,edgeWidth,Math.max(90,height),alpha,side===0);
+        } else {
+          drawSprite(ctx,image,xx,yy,width,height,alpha,false);
         }
-        ctx.globalAlpha=strength*(1-blend);
-        if(lo)ctx.drawImage(source[lo][v],px,py,CELL+.5,CELL+.5);
-        if(hi!==lo&&blend>.001){ctx.globalAlpha=strength*blend;ctx.drawImage(source[hi][v],px,py,CELL+.5,CELL+.5);}
       }
     }
     ctx.restore();
   }
+  // Buildings are painted over outer-cobble areas. We leave the thin
+  // pavements (89..105 and 255..271) for the final over-road pass below,
+  // preventing the existing pavement renderer from hiding our new art.
   function drawCobbles(ctx,params) {
-    paint(ctx,'cobble',params.x,params.y,params.w,params.h,params.scrollY,params.distance,105,255);
+    const leftEnd = Math.min(params.x + params.w, 89);
+    if (params.x < leftEnd) paintOverlays(ctx,{x:params.x,y:params.y,w:leftEnd-params.x,h:params.h,distance:params.distance},'cobble');
+    const rightStart = Math.max(params.x, 271);
+    if (rightStart < params.x + params.w) paintOverlays(ctx,{x:rightStart,y:params.y,w:params.x+params.w-rightStart,h:params.h,distance:params.distance},'cobble');
   }
+  // The live engine draws road after the pavement strips. A final overlay
+  // across the 16px kerbs and 150px roadway makes vegetation cross their join
+  // without ever painting over shop facades or covering the centre lane.
   function drawRoad(ctx,params) {
-    paint(ctx,'road',params.left,0,params.width,params.height,params.scrollY,params.distance,params.left,params.left+params.width);
-    // Paint and lane markers gradually age, but never disappear completely for readability.
-    const amount=sample(params.distance+220);
-    if(amount>1.9){
-      ctx.save();ctx.beginPath();ctx.rect(params.left,0,params.width,params.height);ctx.clip();
-      ctx.globalAlpha=Math.min(.16,(amount-1.9)*.048);
-      ctx.fillStyle='#353a34';ctx.fillRect(params.left,0,params.width,params.height);ctx.restore();
-    }
+    lastDistance = params.distance;
+    paintOverlays(ctx,{x:89,y:0,w:182,h:params.height,distance:params.distance},'road');
   }
-  // Warm textures while the intro/menu loads, rather than at the first wilderness frame.
-  if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(ensureTiles, {timeout:1500});
-  else root.setTimeout(ensureTiles, 200);
-  root.GaryRoadEvolution=Object.freeze({SPEC,LENGTH,trigger,reset,drawCobbles,drawRoad,
-    snapshot:()=>({start,debugStage,stage:debugStage===null?sample(start+LENGTH/2):debugStage})});
+  root.GaryRoadEvolution = Object.freeze({
+    version:'GaryRoadDecay20261017V2', SPEC, LENGTH:LEAD,
+    trigger,reset,drawCobbles,drawRoad,
+    snapshot:()=>({start:triggeredAt,debugStage,
+      benchEntryDistance,stage:debugStage !== null ? debugStage : remap(lastDistance)*5,
+      progress:remap(lastDistance),
+      loaded:Object.keys(imgs).filter(k=>imgs[k].ready)})
+  });
 })(window);

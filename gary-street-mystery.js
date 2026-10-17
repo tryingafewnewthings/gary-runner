@@ -6,7 +6,7 @@
   'use strict';
   const SPEC = Object.freeze({
     id: 'hooded-reader', file: 'gary-mysterious-bench.png?v=1', columns: 4, rows: 2,
-    frameWidth: 384, frameHeight: 512, height: 128, pivotX: 44,
+    frameWidth: 384, frameHeight: 512, height: 100, pivotX: 44,
     anchorX: Object.freeze([144.5,161.5,141.5,148.5,139.5,161,158,171]),
     anchorY: Object.freeze([504,506,506,506,506,506,506,506]),
     slowSpeed: 72, rainThreshold: 0.8,
