@@ -1,4 +1,4 @@
-/* Gary Eats! — persistent Food Catalogue v1. No dependencies, no impact on gameplay. */
+/* Gary Eats! — Food Catalogue v2: first discoveries, unread highlights and pause-aware notices. */
 (function () {
   'use strict';
   const STORAGE = 'gary-eats-discovered-food-v1';
@@ -18,7 +18,7 @@
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       for (const id of allowed) {
         if (parsed[id] && Number.isFinite(parsed[id].firstSeen)) {
-          found[id] = {firstSeen: parsed[id].firstSeen, count: Math.max(1, Math.min(999999, Math.floor(parsed[id].count) || 1))};
+          found[id] = {firstSeen: parsed[id].firstSeen, count: Math.max(1, Math.min(999999, Math.floor(parsed[id].count) || 1)), unread: parsed[id].unread === true};
         }
       }
     }
@@ -54,6 +54,15 @@
     .garyFoodInfo{font-size:.78rem;color:#cad1df;line-height:1.35;margin:0}
     .garyFoodTile.locked .garyFoodInfo{color:#919dae}
     .garyFoodCount{color:#ffe600;font-weight:700;font-size:.75rem;margin-top:auto}
+    .garyFoodTile.unread{border:2px solid #ffe600;background:#303126}
+    .garyFoodNew{align-self:flex-start;background:#ffe600;color:#151a23;border-radius:5px;padding:3px 6px;font-size:.66rem;font-weight:900;letter-spacing:1px}
+    #garyDiscoveryToast{position:absolute;top:max(118px,calc(env(safe-area-inset-top) + 89px));left:14px;right:14px;z-index:6;pointer-events:none;display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid #e5c75b;border-radius:12px;background:#101b2bf2;box-shadow:0 5px 16px #0005;color:#fff;text-align:left}
+    #garyDiscoveryToast[hidden]{display:none}
+    #garyDiscoveryToast .icon{font-size:1.8rem;line-height:1}
+    #garyDiscoveryToast strong{display:block;color:#ffe07c;font-size:.72rem;letter-spacing:.6px;text-transform:uppercase}
+    #garyDiscoveryName{display:block;margin-top:3px;font-weight:800;font-size:.96rem}
+    #garyDiscoveryToast small{display:block;margin-top:2px;color:#d4dbe4;font-size:.7rem}
+    @media(prefers-reduced-motion:reduce){#garyCatalogueFill{transition:none}}
     @media(max-width:345px){#garyCatalogueList{gap:8px;padding:10px}.garyFoodTile{padding:9px}}
   `;
   document.head.appendChild(style);
@@ -69,6 +78,28 @@
   layer.setAttribute('aria-modal','true'); layer.setAttribute('aria-label','Food catalogue');
   layer.innerHTML = `<div id="garyCatalogueTop"><div class="heading"><h2>Gary's Food Catalogue</h2><button id="garyCatalogueClose" type="button" aria-label="Back to menu">×</button></div><p id="garyCatalogueSub"></p><div id="garyCatalogueBar"><div id="garyCatalogueFill"></div></div></div><div id="garyCatalogueList"></div>`;
   stage.appendChild(layer);
+  layer.setAttribute('aria-hidden','true');
+  const notice=document.createElement('div');
+  notice.id='garyDiscoveryToast';notice.hidden=true;
+  notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');notice.setAttribute('aria-atomic','true');
+  notice.innerHTML='<span class="icon" aria-hidden="true"></span><span><strong>New food discovered!</strong><span id="garyDiscoveryName"></span><small>Added to your Food Catalogue</small></span>';
+  stage.appendChild(notice);
+  const notices=[];
+  let noticeTime=0, currentNotice=null, playing=false;
+  const updateButton=()=>{
+    const unread=Object.values(found).filter(food=>food.unread).length;
+    btn.textContent='Food Catalogue'+(unread?' · '+unread+' new':'');
+    btn.setAttribute('aria-label','Food Catalogue'+(unread?', '+unread+' new discoveries':''));
+  };
+  function showNextNotice(){
+    currentNotice=notices.shift()||null;noticeTime=0;
+    if(currentNotice){
+      notice.querySelector('.icon').textContent=LABELS[currentNotice]?.icon||'🍴';
+      notice.querySelector('#garyDiscoveryName').textContent=nameFor(currentNotice);
+    }
+    notice.hidden=!playing||!currentNotice;
+  }
+  updateButton();
   const list=layer.querySelector('#garyCatalogueList');
   let previousFocus=null;
   const paint=()=>{
@@ -78,7 +109,9 @@
     list.textContent='';
     for (const [id, item] of foodEntries) {
       const discovery=found[id], meta=LABELS[id]||{};
-      const tile=document.createElement('article');tile.className='garyFoodTile'+(!discovery?' locked':'');
+      const tile=document.createElement('article');tile.className='garyFoodTile'+(!discovery?' locked':discovery.unread?' unread':'');
+      tile.setAttribute('aria-label',discovery?nameFor(id)+(discovery.unread?', newly discovered':''):'Undiscovered food');
+      if(discovery?.unread){const badge=document.createElement('span');badge.className='garyFoodNew';badge.textContent='NEW';tile.appendChild(badge)}
       const art=document.createElement('div');art.className='garyFoodArt';
       if(discovery && item.file){const pic=document.createElement('img');pic.src=item.file;pic.alt='';pic.loading='lazy';pic.onerror=()=>{art.textContent=meta.icon||'🍴'};art.appendChild(pic)}
       else art.textContent=discovery?(meta.icon||'🍴'):'?';
@@ -88,7 +121,12 @@
       tile.append(art,title,info,bottom);list.appendChild(tile);
     }
   };
-  const close=()=>{layer.classList.remove('open');layer.setAttribute('aria-hidden','true');(previousFocus||btn).focus();};
+  const close=()=>{
+    if(!layer.classList.contains('open'))return;
+    layer.classList.remove('open');layer.setAttribute('aria-hidden','true');
+    for(const food of Object.values(found))food.unread=false;
+    updateButton();save();(previousFocus||btn).focus();
+  };
   const open=()=>{previousFocus=document.activeElement;paint();layer.classList.add('open');layer.removeAttribute('aria-hidden');layer.querySelector('#garyCatalogueClose').focus();};
   btn.addEventListener('click',open);
   layer.querySelector('#garyCatalogueClose').addEventListener('click',close);
@@ -97,10 +135,19 @@
     discover(id) {
       if (!allowed.has(id)) return false;
       const first = !found[id];
-      if(first) found[id]={firstSeen:Date.now(),count:1};
+      if(first) found[id]={firstSeen:Date.now(),count:1,unread:true};
       else found[id].count=Math.min(999999,found[id].count+1);
+      if(first){notices.push(id);if(!currentNotice)showNextNotice();updateButton();}
       save();return first;
     },
+    // Called by the fixed gameplay clock. Pausing or hiding the page cannot consume a notice.
+    tick(dt){
+      if(!playing||!currentNotice)return;
+      noticeTime+=dt;
+      if(noticeTime>=2.6)showNextNotice();
+    },
+    setPlaying(value){playing=!!value;notice.hidden=!playing||!currentNotice;},
+    resetRun(){notices.length=0;currentNotice=null;noticeTime=0;playing=false;notice.hidden=true;},
     isDiscovered(id){return !!found[id];},
     open,close,
     count(){return Object.keys(found).length;}

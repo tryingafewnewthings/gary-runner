@@ -262,6 +262,12 @@ let shutterMix = 0;
     return {reset,begin,update,camera,pose,screen,finish,pause,resume,prepareAudio};
   })();
 
+  // GaryLastOrders20261017V1 — environmental cameo; future interaction has a stable identity.
+  const mystery = window.GaryStreetMystery.create(STREET, STREET_SEGMENT_H, H);
+  const mysterySpec = window.GaryStreetMystery.SPEC;
+  const imgMystery = loadGary(mysterySpec.file, img => validateSheet(img, 'Hooded bench',
+    mysterySpec.columns, mysterySpec.rows, mysterySpec.frameWidth, mysterySpec.frameHeight));
+
   // GaryAssetGate20261017: do not expose a playable street until its artwork is decoded.
   let startupReady = false, startupPreparing = false;
   const decodedStartupImages = new WeakSet();
@@ -312,7 +318,7 @@ let shutterMix = 0;
     status.textContent = 'Getting the high street ready…';
     try {
       const images = [...new Set([
-        imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight,
+        imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery,
         imgCheer, imgCrash, ...imgRun, ...Object.values(cobbleImgs),
         ...PROPS.map(prop => prop.img), ...Object.values(itemImages)
       ].filter(Boolean))];
@@ -323,7 +329,7 @@ let shutterMix = 0;
       }));
       if (results.some(result => result.status === 'rejected') ||
           !imgWalkSheet.ready || !streetLoaded || !garyIntroLoaded ||
-          !imgSideLeft.ready || !imgSideRight.ready) throw Error('Artwork unavailable');
+          !imgSideLeft.ready || !imgSideRight.ready || !imgMystery.ready) throw Error('Artwork unavailable');
       // Drop only stale network messages for images now successfully decoded.
       loadErrorLog = loadErrorLog.filter(message => !images.some(image =>
         decodedStartupImages.has(image) && message === new URL(image.src, location.href).pathname.split('/').pop() + ' not found'));
@@ -891,7 +897,7 @@ let shutterMix = 0;
       if (index < 0) continue;
       const y = worldDistance - index * STREET_SEGMENT_H + (STREET_SEGMENT_H - peek);
       const plan = STREET[((index % STREET.length) + STREET.length) % STREET.length];
-      cb(plan, index, y);
+      cb(mystery.planFor(plan, index), index, y);
     }
   }
 
@@ -1033,6 +1039,8 @@ let shutterMix = 0;
   }
   function reset() {
     crashScene.reset();
+    mystery.reset();
+    window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
     window.GaryIntroTransition?.cancel();
     if (gameOverFrameRequest !== null) cancelAnimationFrame(gameOverFrameRequest);
@@ -1612,6 +1620,14 @@ let shutterMix = 0;
     clock += dt;
     syncNight(dt);
     updateRain(dt, true);
+    const hazardsClear = !objs.some(o => !o.d && isHazard(o.t));
+    const wasQuiet = mystery.quiet();
+    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear, imgMystery.ready);
+    if (wasQuiet && !mystery.quiet()) {
+      // Fresh, safe lead-in after the cameo; never release a backlog of rows.
+      roadQueue = []; acc = 0; lastLanes = ['none','none','none']; gap = LEARN_GAP;
+    }
+    window.GaryFoodCatalogue?.tick?.(dt);
     updateGaryLane(dt);
     grinTimer = Math.max(0, grinTimer - dt);
     updateWalkAnimation(dt);
@@ -1631,7 +1647,8 @@ let shutterMix = 0;
     for (const effect of fx) effect.t += dt;
     effectPool.retain(livingEffect);
 
-    const desiredSpeed = Math.min(300, 200 + Math.floor(score / 150) * 10);
+    const normalSpeed = Math.min(300, 200 + Math.floor(score / 150) * 10);
+    const desiredSpeed = mystery.slow(distance, hazardsClear) ? mysterySpec.slowSpeed : normalSpeed;
     shownSpeed += (desiredSpeed - shownSpeed) * Math.min(1, dt * 0.7);
     const speed = shownSpeed;
     nearCd = Math.max(0, nearCd - dt);
@@ -1646,9 +1663,10 @@ let shutterMix = 0;
     pigeons.update(dt);
     updateShopClosures();
     performance.distance = distance;
-    acc += dt;
+    if (mystery.quiet()) acc = 0;
+    else acc += dt;
     let spawned = 0;
-    while (acc >= gap && spawned < 3) {
+    while (!mystery.quiet() && acc >= gap && spawned < 3) {
       const elapsedGap = gap;
       if (!spawnRow()) break;
       acc -= elapsedGap;
@@ -2425,6 +2443,26 @@ function updateRain(dt, advancing) {
   }
 
 
+  function drawMysteriousBench() {
+    if (!imgMystery.ready || !mystery.visible(view.distance)) return;
+    if (state==='menu' || state==='intro' || state==='intro_transition') return;
+    const foot=mystery.footAt(view.distance), height=mysterySpec.height;
+    const width=height*mysterySpec.frameWidth/mysterySpec.frameHeight;
+    const frame=mystery.frame(), scale=height/mysterySpec.frameHeight;
+    // Register the bench feet rather than the changing umbrella silhouette.
+    const x=mysterySpec.pivotX-mysterySpec.anchorX[frame]*scale;
+    const y=foot-mysterySpec.anchorY[frame]*scale;
+    ctx.save();
+    // A restrained light pool keeps the dark hood legible in the storm.
+    ctx.globalAlpha=0.18;
+    ctx.drawImage(nightGlow, x-12, foot-height-8, width+24, height+20);
+    ctx.globalAlpha=1;
+    ctx.drawImage(imgMystery, (frame%4)*mysterySpec.frameWidth,
+      Math.floor(frame/4)*mysterySpec.frameHeight, mysterySpec.frameWidth, mysterySpec.frameHeight,
+      x, y, width, height);
+    ctx.restore();
+  }
+
   function render(dt){
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
@@ -2440,7 +2478,8 @@ function updateRain(dt, advancing) {
     drawStreetLight();
     drawKeepersAboveWindowLighting();
     drawShopShutters();
-drawRainSplashes();
+    drawMysteriousBench();
+    drawRainSplashes();
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
@@ -2529,7 +2568,8 @@ drawRainSplashes();
       }
     }},
     play: {next:['crash_m','crash_fork','paused'],update:updatePlay,render:paint,
-      enter:()=>{$('pauseBtn').hidden=false;},exit:()=>{$('pauseBtn').hidden=true;}},
+      enter:()=>{$('pauseBtn').hidden=false;window.GaryFoodCatalogue?.setPlaying?.(true);},
+      exit:()=>{$('pauseBtn').hidden=true;window.GaryFoodCatalogue?.setPlaying?.(false);}},
     crash_m: {next:['over','paused'],update:updateCrash,render:paint},
     crash_fork: {next:['over','paused'],update:updateCrash,render:paint},
     over: {next:['menu'],update:idleUpdate,render:paint,

@@ -1,0 +1,18 @@
+{
+  "build": "lastorders20261017v1",
+  "baseCommit": "a46809bb3a1a3fd806f09097c1640b859339c419",
+  "originals": {
+    "game-runtime.js": "4bdcd3562c2ea5d5c4e52217193f03a0500ec2f0",
+    "food-catalogue.js": "f94a042f781240fc432b01cfb28c7d4eb98ff347",
+    "index.html": "3269547142b2a199dad8523f32f80502555fadea",
+    "PROJECT_STATE.md": "fe081d51afea5eeb70c6787b90116c4a6246b922",
+    "GAME_STATUS.txt": "0422d5ed38c2d9f7200b40b5df763c8f773e29e0"
+  },
+  "installed": {
+    "game-runtime.js": "4d997efba0ea0e4f46ee70f916ced9a54b0e5a32",
+    "food-catalogue.js": "e1f929d6476148e551a953c8aa0b09a63c05d745",
+    "index.html": "a6402e1cfa3dd2ea0e9d2a33c96aab92fa73cce2",
+    "PROJECT_STATE.md": "7d2e0aa20803fc8e98ce28aed2624cf19ea40eff",
+    "GAME_STATUS.txt": "a9f676ff365d02c9531312b0c7b3e8640b87d2e8"
+  }
+}

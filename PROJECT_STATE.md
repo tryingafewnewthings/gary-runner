@@ -125,3 +125,7 @@ If an automated install step fails, **inspect actual GitHub contents and the lat
 Open decisions include: definitive USP beyond discovery; whether the menu should call it a *Food Catalogue* versus a *Recipe Book* (there is currently no crafting); rarity, chapter-locking and review text for foods; exact later chapter pacing; stranger visual identity and lantern interaction; and whether to consolidate the two engines after the cinematic route is fully regression-tested.
 
 **Source-of-truth rule:** when code, editor preview, config and this handoff disagree, verify and correct the live runtime/config first. Do not silently change the design contract to fit an inaccurate preview.
+
+
+## Hooded bench and discovery upgrade (17 October 2026)
+See LAST_ORDERS_UPGRADE.md for the new rain-driven end-of-street cameo, animation timing, safe slowdown, discovery banners and unread catalogue markers. The actor is environmental scenery with stable identity hooded-reader; interaction/lantern/wilderness remain future work. Preview and production verification are separate; use gary-last-orders-preview.html before promotion.
