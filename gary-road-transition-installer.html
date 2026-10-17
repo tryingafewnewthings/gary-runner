@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1522">
+<title>Gary Eats! — Forgotten Road Installer</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0d1522;color:#f5f7fd}
+*{box-sizing:border-box}body{margin:0;padding:max(22px,env(safe-area-inset-top)) 16px max(40px,env(safe-area-inset-bottom))}
+main{max-width:680px;margin:0 auto}h1{font-size:1.66rem;line-height:1.18;margin:8px 0 12px}h2{font-size:1.02rem;margin:4px 0 12px}
+p{color:#c5d0df;margin:10px 0}small,.muted{font-size:.82rem;color:#afc0d5}.panel{background:#192436;border:1px solid #3a4c65;border-radius:16px;padding:17px;margin:16px 0}
+header .kicker{color:#ffcf73;font-size:13px;letter-spacing:.11em;font-weight:800;text-transform:uppercase}
+input{display:block;width:100%;background:#0b1626;color:#fff;border:1px solid #6b819c;border-radius:10px;margin:9px 0;padding:13px;font:16px -apple-system,sans-serif}
+button,.button{display:block;width:100%;padding:14px 12px;border:0;border-radius:11px;font:800 16px -apple-system,sans-serif;background:#ffd65a;color:#19190d;text-align:center;text-decoration:none;margin:9px 0;cursor:pointer}
+button:disabled{background:#526072;color:#bec8d8;cursor:default}.secondary{background:#344d6a;color:#fff}.danger{background:#864e58;color:#fff}
+#log{white-space:pre-wrap;overflow-wrap:anywhere;background:#091421;color:#d8e3f5;padding:13px;font:13px/1.5 ui-monospace,monospace;min-height:105px;border-radius:10px}
+#play{display:none;background:#93d6ac;color:#0e2a1b}.stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stage{min-height:118px;background:#101c2a;border:1px solid #3a4d5c;border-radius:12px;padding:9px;text-align:center;font-size:.75rem}
+.swatch{height:55px;border-radius:8px;margin-bottom:8px;background-size:12px 12px;background-image:linear-gradient(30deg,#798186,#68747d 50%,#798186 52%)}
+.stage:nth-child(2) .swatch{filter:brightness(.78) saturate(.84)}.stage:nth-child(3) .swatch{background-image:repeating-linear-gradient(35deg,transparent 0 13px,#313637 14px 16px,transparent 17px 26px),linear-gradient(#727878,#667174)}
+.stage:nth-child(4) .swatch{background-image:repeating-linear-gradient(145deg,transparent 0 16px,#504b42 17px 25px,transparent 26px 34px),linear-gradient(#65706b,#676e66)}
+.stage:nth-child(5) .swatch{background-image:repeating-linear-gradient(125deg,transparent 0 8px,#4d6950 9px 18px,transparent 19px 27px),linear-gradient(#5b6152,#666b58)}
+.stage:nth-child(6) .swatch{background-image:repeating-linear-gradient(38deg,#39493a 0 7px,#5b6245 8px 13px,#62583d 14px 21px)}
+a{color:#ffdc89}code{overflow-wrap:anywhere;color:#ffe1a8}
+</style>
+</head>
+<body><main>
+<header><div class="kicker">Gary Eats! • Production Upgrade</div><h1>Forgotten Road — Six-Stage Ground Transition</h1>
+<p>Turn the original cobbled high street into wet paving, cracked stone, broken road, moss and wilderness. Compatible with the existing three-lane mobile game.</p></header>
+<div class="panel"><h2>The six stages</h2><div class="stages">
+<div class="stage"><div class="swatch"></div><b>1 · High street</b></div>
+<div class="stage"><div class="swatch"></div><b>2 · Damp</b></div>
+<div class="stage"><div class="swatch"></div><b>3 · Cracked</b></div>
+<div class="stage"><div class="swatch"></div><b>4 · Broken</b></div>
+<div class="stage"><div class="swatch"></div><b>5 · Overgrown</b></div>
+<div class="stage"><div class="swatch"></div><b>6 · Wilderness</b></div>
+</div><p class="muted">Colour swatches are illustrative. The actual upgrade generates detail-matched 60px overlay sprites from code, layered over your original ground artwork.</p></div>
+<div class="panel"><h2>1. Check the current live files</h2>
+<p>Scan checks the latest <code>game-runtime.js</code>, <code>index.html</code> and game configuration. Nothing is changed by scanning.</p>
+<button class="secondary" id="scan" type="button">Scan my live game</button><p id="scanresult" class="muted">Not scanned yet.</p></div>
+<div class="panel"><h2>2. Publish one safe commit</h2>
+<p>Your GitHub token needs access to <code>tryingafewnewthings/gary-runner</code> with <b>Contents: Read and write</b>.</p>
+<label for="token">GitHub token</label><input type="password" id="token" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Paste GitHub token">
+<label for="confirm">Type <b>ROAD</b> to confirm</label><input type="text" id="confirm" placeholder="ROAD" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<button id="install" type="button">Install ground transition</button>
+<button class="danger" id="undo" type="button">Disable ground transition (safe rollback)</button>
+<a id="play" class="button" href="https://tryingafewnewthings.github.io/gary-runner/?roadstage=4" target="_blank" rel="noopener">Test stage 5 in Safari</a>
+<p class="muted">Installation atomically updates <code>index.html</code> and <code>game-runtime.js</code>, adds <code>gary-road-evolution.js</code> and a production specification. No existing shop graphics, physics or input code are replaced. Rollback removes both live hooks, leaving additive documentation untouched.</p></div>
+<div class="panel"><h2>Installer log</h2><div id="log" role="status" aria-live="polite">Ready. Please scan before publishing.</div></div>
+<p class="muted">Runs entirely in Safari. The token is sent directly to <code>api.github.com</code> and is not persisted by this installer. GitHub Pages can take a minute to refresh. If you opened this file as a local download, host it in your repository's GitHub Pages to avoid Safari file-network restrictions.</p>
+</main>
+<script>
+'use strict';
+const MODULE="/* Gary Eats! — Forgotten Road ground evolution, v1.\n * Art-direction-safe procedural overlays: six deterministic world-anchored stages.\n * Never changes lane geometry, collisions, shop atlas or physics.\n * Stage activation is triggered by the live street-mystery clearing event.\n */\n(function (root) {\n  'use strict';\n  const CELL = 60;\n  const VARIANTS = 5;\n  const LENGTH = 3000;\n  const SPEC = Object.freeze([\n    {name:'Original high street', note:'Existing cobbles and tarmac preserved'},\n    {name:'Wet and neglected', note:'Dark damp patches and puddle reflections'},\n    {name:'Cracks appear', note:'Hairline fractures and sparse kerb weeds'},\n    {name:'Broken surface', note:'Crumbled mortar, exposed earth, chipped edges'},\n    {name:'Overgrown', note:'Moss, weeds, soil and narrowing clear ground'},\n    {name:'Wilderness road', note:'Roots, vegetation, mud and aged stone'}\n  ]);\n  const q = new URLSearchParams(root.location ? root.location.search : '');\n  const forced = q.has('roadstage') ? Number(q.get('roadstage')) : NaN;\n  const debugStage = Number.isFinite(forced) ? Math.max(0, Math.min(5, forced)) : null;\n  const earlyPreview = q.get('roadpreview') === '1';\n  let start = Infinity;\n  let tiles = null;\n  const clamp = x => Math.max(0, Math.min(1, x));\n  function hash(a, b, c) {\n    let x = (Math.imul(a, 374761393) ^ Math.imul(b, 668265263) ^ Math.imul(c, 1442695041)) | 0;\n    x = Math.imul(x ^ (x >>> 13), 1274126177);\n    return (x ^ (x >>> 16)) >>> 0;\n  }\n  function rand(seed) {\n    let state = seed >>> 0;\n    return () => {\n      state ^= state << 13; state ^= state >>> 17; state ^= state << 5;\n      return (state >>> 0) / 4294967296;\n    };\n  }\n  function ellipse(g,x,y,rx,ry,color) {\n    g.fillStyle=color;g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fill();\n  }\n  function crack(g,r,x,y,scale) {\n    g.strokeStyle = 'rgba(21,27,29,.68)';g.lineWidth=0.75+r()*0.65;\n    g.beginPath();g.moveTo(x,y);\n    for(let j=0;j<3;j++){ x+=(r()-.5)*13*scale;y+=(2+r()*6)*scale;g.lineTo(x,y); }\n    g.stroke();\n    g.strokeStyle='rgba(173,166,145,.19)';g.lineWidth=.6;\n    g.beginPath();g.moveTo(x+1,y);g.lineTo(x+2.5,y+3);g.stroke();\n  }\n  function leaves(g,r,x,y) {\n    for(let j=0;j<3;j++){\n      const a=r()*Math.PI*2,dx=Math.cos(a)*3,dy=Math.sin(a)*2;\n      ellipse(g,x+dx,y+dy,1.5+r()*1.5,.75+r(),'rgba(117,82,45,.6)');\n    }\n  }\n  function moss(g,r,x,y,amount) {\n    for(let j=0;j<amount;j++) {\n      const a=r()*Math.PI*2, d=2+r()*9;\n      ellipse(g,x+Math.cos(a)*d,y+Math.sin(a)*d,1+r()*3,.65+r()*1.8,\n        ['rgba(66,94,58,.68)','rgba(95,114,55,.65)','rgba(37,72,55,.68)'][Math.floor(r()*3)]);\n    }\n  }\n  function grass(g,r,x,y,n) {\n    g.lineCap='round';\n    for(let j=0;j<n;j++){\n      g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+(r()-.5)*7,y-3-r()*5,x+(r()-.5)*12,y-5-r()*8);\n      g.strokeStyle=j%2?'rgba(80,111,62,.84)':'rgba(50,86,54,.82)';\n      g.lineWidth=.7+r()*.9;g.stroke();\n    }\n  }\n  function root(g,r,x,y) {\n    g.lineCap='round';g.lineJoin='round';g.strokeStyle='rgba(62,54,42,.79)';g.lineWidth=2.3;\n    g.beginPath();g.moveTo(x,y);g.bezierCurveTo(x+6,y+5,x+2,y+12,x+12,y+17);g.stroke();\n    g.lineWidth=.95;g.beginPath();g.moveTo(x+5,y+8);g.lineTo(x-2,y+12);g.lineTo(x-6,y+17);g.stroke();\n  }\n  function tile(type,stage,variant) {\n    const canvas=document.createElement('canvas');canvas.width=canvas.height=CELL;\n    const g=canvas.getContext('2d');\n    const r=rand(hash(stage+1,variant+91,type==='road'?181:117));\n    if(stage===0)return canvas;\n    const road=type==='road';\n    // The base already exists in the live renderer. Keep these painted marks\n    // deliberately sparse, scaled like the original 60px cobble cells.\n    if(stage>=1){\n      g.fillStyle=road?'rgba(30,38,44,.10)':'rgba(28,40,48,.13)';g.fillRect(0,0,CELL,CELL);\n      for(let n=0;n<(stage>=3?3:2);n++){\n        const x=7+r()*46,y=8+r()*46;\n        ellipse(g,x,y,6+r()*8,2+r()*5,road?'rgba(34,56,65,.19)':'rgba(31,53,59,.25)');\n        ellipse(g,x-1,y-1,2+r()*3,.7+r(),'rgba(133,156,166,.11)');\n      }\n    }\n    if(stage>=2){\n      for(let n=0;n<(stage===2?2:4);n++)crack(g,r,4+r()*46,4+r()*42,stage>=4?1.15:0.83);\n      for(let n=0;n<(road?1:2);n++)moss(g,r,8+r()*44,8+r()*44,2);\n    }\n    if(stage>=3){\n      for(let n=0;n<3;n++){\n        const x=7+r()*46,y=7+r()*46;\n        ellipse(g,x,y,3+r()*5,2+r()*4,'rgba(68,59,50,.35)');\n        ellipse(g,x-1,y-1,1+r()*2,1+r()*2,'rgba(118,104,77,.29)');\n      }\n      for(let n=0;n<2;n++)leaves(g,r,6+r()*48,6+r()*48);\n    }\n    if(stage>=4){\n      // Irregular semi-transparent earthy cover, not a rectangular texture swap.\n      for(let n=0;n<7;n++){\n        const x=7+r()*45,y=7+r()*45;\n        ellipse(g,x,y,6+r()*8,3+r()*7,\n          road?'rgba(66,62,48,.26)':'rgba(65,74,49,.34)');\n        if(n%2===0)moss(g,r,x,y,5);\n      }\n      for(let n=0;n<(road?1:3);n++)grass(g,r,7+r()*46,10+r()*45,3+r()*4|0);\n    }\n    if(stage>=5){\n      g.fillStyle=road?'rgba(51,58,46,.12)':'rgba(53,62,44,.75)';g.fillRect(0,0,CELL,CELL);\n      for(let n=0;n<8;n++){\n        const x=6+r()*48,y=6+r()*48;\n        ellipse(g,x,y,4+r()*8,3+r()*6,\n          n%3===0?'rgba(61,49,38,.42)':'rgba(56,72,43,.4)');\n        if(n%3===0)leaves(g,r,x,y);\n      }\n      root(g,r,9+r()*34,6+r()*28);\n      for(let n=0;n<(road?2:4);n++)grass(g,r,4+r()*49,8+r()*46,3);\n    }\n    return canvas;\n  }\n  function ensureTiles() {\n    if(tiles)return;\n    tiles={road:[],cobble:[]};\n    for(const type of ['road','cobble'])for(let stage=0;stage<6;stage++){\n      const variants=[];\n      for(let v=0;v<VARIANTS;v++)variants.push(tile(type,stage,v));\n      tiles[type].push(variants);\n    }\n  }\n  function sample(worldY) {\n    if(debugStage!==null)return debugStage;\n    if(!Number.isFinite(start))return 0;\n    const t=clamp((worldY-start)/LENGTH);\n    return t*t*(3-2*t)*5;\n  }\n  function trigger(distance) {\n    if(debugStage!==null)return;\n    if(Number.isFinite(start))return;\n    start = earlyPreview ? distance - 200 : distance + 250;\n  }\n  function reset() { start=Infinity; }\n  function paint(ctx,kind,x,y,w,h,scrollY,distance,roadLeft,roadRight) {\n    if(debugStage===null&&!Number.isFinite(start))return;\n    ensureTiles();\n    const source=tiles[kind];\n    const phase=((scrollY%CELL)+CELL)%CELL;\n    const shift=Math.floor(scrollY/CELL);\n    ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();\n    const yFirst=Math.floor((y-phase)/CELL);\n    const xFirst=Math.floor(x/CELL);\n    for(let j=yFirst;j*CELL+phase<y+h;j++){\n      const py=j*CELL+phase,worldRow=j-shift;\n      const worldDepth=distance-py+304;\n      const value=sample(worldDepth);\n      if(value<=.0001)continue;\n      const lo=Math.floor(value),hi=Math.min(5,lo+1),blend=value-lo;\n      for(let c=xFirst;c*CELL<x+w;c++){\n        const px=c*CELL,worldCol=c;\n        const v=hash(worldCol,worldRow,37)%VARIANTS;\n        let strength=1;\n        if(kind==='road'){\n          const center=px+CELL*.5;\n          const proximity=Math.min(Math.abs(center-roadLeft),Math.abs(center-roadRight));\n          // Vegetation invades the edges first, retaining an uncluttered running lane.\n          strength=value<2.3?0.88:Math.max(.25,0.95-proximity/93);\n        }\n        ctx.globalAlpha=strength*(1-blend);\n        if(lo)ctx.drawImage(source[lo][v],px,py,CELL+.5,CELL+.5);\n        if(hi!==lo&&blend>.001){ctx.globalAlpha=strength*blend;ctx.drawImage(source[hi][v],px,py,CELL+.5,CELL+.5);}\n      }\n    }\n    ctx.restore();\n  }\n  function drawCobbles(ctx,params) {\n    paint(ctx,'cobble',params.x,params.y,params.w,params.h,params.scrollY,params.distance,105,255);\n  }\n  function drawRoad(ctx,params) {\n    paint(ctx,'road',params.left,0,params.width,params.height,params.scrollY,params.distance,params.left,params.left+params.width);\n    // Paint and lane markers gradually age, but never disappear completely for readability.\n    const amount=sample(params.distance+220);\n    if(amount>1.9){\n      ctx.save();ctx.beginPath();ctx.rect(params.left,0,params.width,params.height);ctx.clip();\n      ctx.globalAlpha=Math.min(.16,(amount-1.9)*.048);\n      ctx.fillStyle='#353a34';ctx.fillRect(params.left,0,params.width,params.height);ctx.restore();\n    }\n  }\n  // Warm textures while the intro/menu loads, rather than at the first wilderness frame.\n  if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(ensureTiles, {timeout:1500});\n  else root.setTimeout(ensureTiles, 200);\n  root.GaryRoadEvolution=Object.freeze({SPEC,LENGTH,trigger,reset,drawCobbles,drawRoad,\n    snapshot:()=>({start,debugStage,stage:debugStage===null?sample(start+LENGTH/2):debugStage})});\n})(window);\n";
+const DOC="# Gary Eats! — Forgotten Road Ground Evolution V1\n\n## Status\nInstaller-only until installed through `gary-road-transition-installer.html`. Installation adds `gary-road-evolution.js`, hooks the live `game-runtime.js` renderer, and loads the module from `index.html`. No collision, speed, spawn or three-lane geometry changes.\n\n## Design geometry\nPortrait design canvas 360×640. Road from x=105 to x=255 (150px wide, 3 lanes × 50px). Pavement strips 16px. Shop display footprint 89×236px. Repeating original cobble quadrants occupy 60×60 design-pixel cells. Overlay stage art is built in 60×60 offscreen canvases and cached after first visible use.\n\n## Six visual stages\n0. Original high street: preserve approved textures.\n1. Wet & neglected: subtle stains and puddle flecks.\n2. Cracks appear: thin fractures, sparse moss.\n3. Broken surface: missing mortar, chipped tarmac, exposed earth.\n4. Overgrown: darker soil, weeds, leaf litter, moss creeping inward.\n5. Wilderness road: roots, low vegetation, mud and old stone; running lanes remain readable.\n\n## Trigger and transition\nAfter the hooded-reader mystery system begins clearing the street, record a one-time `start` depth slightly ahead of the current world position. Blend adjacent stage overlays over 3,000 design world-distance units using a smoothstep progression. Texture variations use deterministic world-cell hashes; no frame-dependent randomness and no allocations during gameplay after initial caching. Existing original cobbles and tarmac stay underneath, so the first implementation is a non-destructive overlay system. No new large texture downloads.\n\n## Preview / QA\nAfter installing, append `?roadstage=0` through `?roadstage=5` to the game URL to force any visual stage. `?roadpreview=1` accelerates the beginning only after the street event has triggered. Check legibility of lane markings, shop collisions, mobile Safari frame rate, no visible cell pops as the ground scrolls, reset on retry, and clarity in heavy rain. The stage-5 overlay is a prototype requiring further art direction before declaring a complete forest biome.\n\n## Production intent\nThis environmental deterioration belongs to the Forgotten Road transition before wilderness and the unrevealed Victorian time-travel reveal. Do not introduce Victorian/Roman artwork in this first ground pass. Keep seamless narrative and art coherence with STYLE.txt and PROJECT_STATE.md. Visual progression is cosmetic; gameplay stays accessible and deterministic.\n";
+const REPO='tryingafewnewthings/gary-runner',ROOT='https://api.github.com/repos/'+REPO,BRANCH='main';
+const HOOK='// GARY_ROAD_EVOLUTION_V1';
+const SCRIPT='<script src="gary-road-evolution.js?v=forgottenroad20261017v1"><'+'/script>';
+const $=id=>document.getElementById(id);
+let busy=false;
+function log(s){$('log').textContent+='\n'+s;}
+function error(s){throw Error(s);}
+function count(hay,needle){return hay.split(needle).length-1;}
+function onlyOnce(s,needle,label){if(count(s,needle)!==1)error(label+' changed or is missing; stopped safely.');}
+function b64decode(str){const binary=atob(str.replace(/\s/g,'')),bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));return new TextDecoder().decode(bytes);}
+async function api(path,options={},token=''){
+ const headers={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(token?{'Authorization':'Bearer '+token}:{}),...(options.headers||{})};
+ const response=await fetch(ROOT+path,{...options,headers,cache:'no-store'});
+ let data;try{data=await response.json();}catch{error('Unparseable GitHub response (HTTP '+response.status+').');}
+ if(!response.ok){const msg=data?.message||'GitHub error';error(msg+' (HTTP '+response.status+').');}
+ return data;
+}
+function req(path,token=''){return api(path,{},token);}
+async function readRepo(token=''){
+ const ref=await req('/git/ref/heads/'+BRANCH,token),head=ref.object?.sha;
+ if(!/^[a-f0-9]{40}$/.test(head||''))error('Could not identify a safe branch head.');
+ const [commit,idx,game,config]=await Promise.all([
+ req('/git/commits/'+head,token),req('/contents/index.html?ref='+head,token),
+ req('/contents/game-runtime.js?ref='+head,token),req('/contents/game-data.js?ref='+head,token)]);
+ function textFile(v,name){if(v.type!=='file'||v.encoding!=='base64')error('Invalid file: '+name);return b64decode(v.content);}
+ const i=textFile(idx,'index.html'),g=textFile(game,'game-runtime.js'),d=textFile(config,'game-data.js');
+ if(!d.includes('cobbleCell: 60')||!d.includes('roadWidth: 150'))error('Game geometry differs from the verified 60px / 150px contract.');
+ return {head,tree:commit.tree?.sha,index:i,game:g};
+}
+function mutateFunction(src,first,last,oldText,newText){
+ const a=src.indexOf(first),b=src.indexOf(last,a+first.length);
+ if(a===-1||b<=a)error('Cannot locate expected function boundary: '+first);
+ const section=src.slice(a,b);onlyOnce(section,oldText,first);
+ return src.slice(0,a)+section.replace(oldText,newText)+src.slice(b);
+}
+function patchIndex(s){
+ if(s.includes('gary-road-evolution.js'))error('Module script already registered; check installed status.');
+ const marker='<script src="gary-street-mystery.js?v=1"></'+'script>';
+ onlyOnce(s,marker,'index.html mystery script');
+ return s.replace(marker,marker+'\n'+SCRIPT);
+}
+function patchGame(s){
+ if(s.includes(HOOK))error('Runtime already contains road transition hooks.');
+ if(s.length<50000||!s.includes('const mystery = window.GaryStreetMystery.create('))error('Unexpected active runtime; nothing changed.');
+ s=mutateFunction(s,'  function drawCobbles(','  function forEachStreetFront(',
+ '    ctx.restore();',
+ '    '+HOOK+'\n    if (window.GaryRoadEvolution) {\n      window.GaryRoadEvolution.drawCobbles(ctx, {x, y, w, h, scrollY: view.scrollY, distance: view.distance});\n    }\n    ctx.restore();');
+ s=mutateFunction(s,'  function drawRoad(){','  function paintLaneMarkings(',
+ "    paintLaneMarkings('#c5c8cc');",
+ "    paintLaneMarkings('#c5c8cc');\n    if (window.GaryRoadEvolution) {\n      window.GaryRoadEvolution.drawRoad(ctx, {left: ROAD_LEFT, width: ROAD_WIDTH, height: H, scrollY: view.scrollY, distance: view.distance});\n    }");
+ s=mutateFunction(s,'  function reset() {','  function move(direction)',
+ '    mystery.reset();',
+ '    mystery.reset();\n    window.GaryRoadEvolution?.reset();');
+ s=mutateFunction(s,'  function render(dt){','  const paint = () => render();',
+ '    crashScene.camera();',
+ '    crashScene.camera();\n    if (window.GaryRoadEvolution && mystery.quiet()) window.GaryRoadEvolution.trigger(view.distance);');
+ return s;
+}
+function unpatchGame(s){
+ if(!s.includes(HOOK))error('Road transition hooks missing.');
+ const old='    '+HOOK+'\n    if (window.GaryRoadEvolution) {\n      window.GaryRoadEvolution.drawCobbles(ctx, {x, y, w, h, scrollY: view.scrollY, distance: view.distance});\n    }\n    ctx.restore();';
+ onlyOnce(s,old,'cobble hook');s=s.replace(old,'    ctx.restore();');
+ const road="    paintLaneMarkings('#c5c8cc');\n    if (window.GaryRoadEvolution) {\n      window.GaryRoadEvolution.drawRoad(ctx, {left: ROAD_LEFT, width: ROAD_WIDTH, height: H, scrollY: view.scrollY, distance: view.distance});\n    }";
+ onlyOnce(s,road,'road hook');s=s.replace(road,"    paintLaneMarkings('#c5c8cc');");
+ onlyOnce(s,'    mystery.reset();\n    window.GaryRoadEvolution?.reset();','reset hook');s=s.replace('    mystery.reset();\n    window.GaryRoadEvolution?.reset();','    mystery.reset();');
+ const trig='    crashScene.camera();\n    if (window.GaryRoadEvolution && mystery.quiet()) window.GaryRoadEvolution.trigger(view.distance);';
+ onlyOnce(s,trig,'trigger hook');s=s.replace(trig,'    crashScene.camera();');return s;
+}
+function makePatch(s,undo){
+ if(undo){onlyOnce(s.index,SCRIPT,'script tag');return {index:s.index.replace('\n'+SCRIPT,''),game:unpatchGame(s.game)};}
+ return {index:patchIndex(s.index),game:patchGame(s.game)};
+}
+async function publish(files,head,tree,token,message){
+ const blobs=[];
+ for(const file of files){
+  const item=await api('/git/blobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:file.content,encoding:'utf-8'})},token);
+  if(!/^[a-f0-9]{40}$/.test(item.sha||''))error('Invalid uploaded blob for '+file.path);
+  blobs.push({path:file.path,mode:'100644',type:'blob',sha:item.sha});
+  log('Staged '+file.path);
+ }
+ const treeObj=await api('/git/trees',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base_tree:tree,tree:blobs})},token);
+ const commit=await api('/git/commits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,tree:treeObj.sha,parents:[head]})},token);
+ const updated=await api('/git/refs/heads/'+BRANCH,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:commit.sha,force:false})},token);
+ if(updated.object?.sha!==commit.sha)error('Cannot verify final branch update. Check GitHub history.');
+ return commit.sha;
+}
+async function scan(){
+ if(busy)return;busy=true;$('scan').disabled=true;$('log').textContent='Scanning latest main branch…';
+ try{const s=await readRepo();const active=s.game.includes(HOOK)&&s.index.includes('gary-road-evolution.js');
+ $('scanresult').textContent=active?'Ground transition is already active.':'Ground transition is not currently active.';
+ log('Verified 360 × 640 architecture, 150 px road and 60 px cobble cell.');
+ log('Repository main: '+s.head.slice(0,12));
+ }catch(e){log('Scan stopped: '+e.message);$('scanresult').textContent='Scan failed; see log.';}
+ finally{busy=false;$('scan').disabled=false;}
+}
+async function run(undo){
+ if(busy)return;
+ const token=$('token').value.trim();
+ if(!token){$('token').focus();$('log').textContent='Paste your GitHub token first.';return;}
+ if($('confirm').value.trim().toUpperCase()!=='ROAD'){$('confirm').focus();$('log').textContent='Type ROAD to confirm the change.';return;}
+ busy=true;$('install').disabled=$('undo').disabled=$('scan').disabled=true;
+ $('log').textContent=undo?'Checking rollback compatibility…':'Checking installation compatibility…';
+ try{
+  const s=await readRepo(token);
+  const active=s.game.includes(HOOK)&&s.index.includes('gary-road-evolution.js');
+  if(undo&&!active)error('The installed markers are not present; no rollback required.');
+  if(!undo&&active)error('Already installed. No files were changed.');
+  if(s.game.includes(HOOK)!==s.index.includes('gary-road-evolution.js'))error('Partial/manual installation detected. Stop and inspect repository.');
+  const next=makePatch(s,undo);
+  let files=[{path:'game-runtime.js',content:next.game},{path:'index.html',content:next.index}];
+  if(!undo){files.push({path:'gary-road-evolution.js',content:MODULE},{path:'FORGOTTEN_ROAD_GROUND.md',content:DOC});}
+  log('Source checks passed. Publishing one atomic commit…');
+  const sha=await publish(files,s.head,s.tree,token,undo?'Gary Eats: disable Forgotten Road ground transition':'Gary Eats: install six-stage Forgotten Road ground evolution');
+  log('SUCCESS. Commit '+sha.slice(0,12)+'.');
+  log('Allow GitHub Pages to deploy. Refresh in Safari.');
+  $('scanresult').textContent=undo?'Transition disabled.':'Transition installed.';
+  if(!undo)$('play').style.display='block';
+ }catch(e){log('STOPPED SAFELY: '+e.message);log('If a conflict occurred, scan again.');}
+ finally{busy=false;$('install').disabled=$('undo').disabled=$('scan').disabled=false;}
+}
+$('scan').addEventListener('click',scan);
+$('install').addEventListener('click',()=>run(false));
+$('undo').addEventListener('click',()=>run(true));
+</script></body></html>
