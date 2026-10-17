@@ -141,11 +141,13 @@ let shutterMix = 0;
   const imgCheer = loadGary(GARY_SPRITES.cheer);
   const imgCrash = loadGary(GARY_SPRITES.crash);
 
-  // GarySmoothSidestepFourFramesV4 — frame visibility independent from lane travel.
+  // Six-frame sidesteps — frame visibility independent from lane travel.
   // GaryApprovedSidesteps20261016V1
-  const SIDE_FRAMES = 4, SIDE_W = 543, SIDE_H = 724;
+  const SIDE_FRAMES = 6, SIDE_W = 362, SIDE_H = 724;
+  // GarySixFrameWidth20261017V2 — width only; preserve height and foot alignment.
+  const SIDE_WIDTH_SCALE = 0.89;
   // GarySidestepVisibleHeight20261016V3
-  const SIDE_ANIM_SECONDS = 0.32; // Four frames, 80 ms each; lane travel is independent.
+  const SIDE_ANIM_SECONDS = 0.32; // Six frames, about 53 ms each.
   let sideAnimTime = SIDE_ANIM_SECONDS, sideAnimDir = 0;
   const imgSideLeft = new Image(), imgSideRight = new Image();
   const sideArt = { left: false, right: false, anchors: [[], []], visibleHeights: [0.5, 0.5], walkFoot: 0.975, walkTop: 0.02 };
@@ -183,7 +185,7 @@ let shutterMix = 0;
     img.ready = false;
     img.onload = () => {
       if(img.naturalWidth!==SIDE_FRAMES*SIDE_W || img.naturalHeight!==SIDE_H){
-        loadErrorLog.push(file+': expected a 2172 x 724, four-frame sheet');
+        loadErrorLog.push(file+': expected a 2172 x 724, six-frame sheet');
         return;
       }
       const anchors=[];
@@ -196,7 +198,7 @@ let shutterMix = 0;
       sideArt[key]=true;
     };
     img.onerror=()=>loadErrorLog.push(file+': missing; using walking animation');
-    img.src=file+'?v=approved20261016';
+    img.src=file+'?v=sixframewidth20261017v2';
   }
   prepareSideImage(imgSideLeft,'left','gary_sidestep_left.png');
   prepareSideImage(imgSideRight,'right','gary_sidestep_right.png');
@@ -1646,15 +1648,15 @@ let shutterMix = 0;
       const w=h*single.naturalWidth/single.naturalHeight;
       ctx.drawImage(single,-w/2,-h+WORLD.playerFootOffset,w,h);
     } else if(pose){
-      // Four consecutive frames across the whole eased sidestep; no crossfaded ghosts.
+      // Six consecutive frames across the sidestep; no crossfaded ghosts.
       const fraction=Math.min(0.999999,view.sideTime/SIDE_ANIM_SECONDS);
-      const frame=Math.min(3,Math.floor(fraction*SIDE_FRAMES));
+      const frame=Math.min(SIDE_FRAMES-1,Math.floor(fraction*SIDE_FRAMES));
       const anchor=sideArt.anchors[direction<0?0:1][frame]||{torso:0.5,foot:0.96};
       // Match the walking sprite's full hair-to-shoe height, excluding padding.
       // One scale for the whole direction preserves frame-to-frame body proportions.
       const sheetVisible=sideArt.visibleHeights[direction<0?0:1];
       const poseH=h*(sideArt.walkFoot-sideArt.walkTop)/sheetVisible;
-      const w=poseH*SIDE_W/SIDE_H;
+      const w=poseH*SIDE_W/SIDE_H*SIDE_WIDTH_SCALE;
       // Align the shirt/torso centre and shoe baseline to the walking sprites.
       const x=-w*anchor.torso;
       const y=-h+WORLD.playerFootOffset+h*sideArt.walkFoot-poseH*anchor.foot;

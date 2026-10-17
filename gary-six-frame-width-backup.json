@@ -1,0 +1,25 @@
+{
+  "previousCommit": "d4b8a2cfe37de76f38f7a8770f85562d2a34e6f6",
+  "installer": "GarySixFrameWidth20261017V2",
+  "frames": 6,
+  "seconds": 0.32,
+  "widthScale": 0.89,
+  "files": [
+    {
+      "path": "game-runtime.js",
+      "sha": "a9a9d737d98823b6c2205a0756abd717022a5358"
+    },
+    {
+      "path": "index.html",
+      "sha": "7cd66783d19bc4e8c03c78dec38292eae43ca076"
+    },
+    {
+      "path": "gary_sidestep_left.png",
+      "sha": "0ee32ccf1c4ee880ae872f8dc94feebbbc20307b"
+    },
+    {
+      "path": "gary_sidestep_right.png",
+      "sha": "50d0ac414320304e6f543bdac3351b328ba801e0"
+    }
+  ]
+}
