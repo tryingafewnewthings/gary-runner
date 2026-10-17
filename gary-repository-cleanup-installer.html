@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Gary Eats! — Repository Cleanup Installer</title>
+<style>
+:root{font:16px/1.47 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#09111e;color:#f5f6fa;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;padding:max(22px,env(safe-area-inset-top)) 14px max(40px,env(safe-area-inset-bottom))}
+main{max-width:760px;margin:auto}h1{font-size:1.85rem;line-height:1.16;margin:6px 0 10px}h2{font-size:1.16rem;margin:0 0 12px}p{color:#c9d6e7;margin:9px 0}small,.muted{color:#a8bdd5;font-size:.85rem}
+.brand{color:#ffc968;font-weight:800;letter-spacing:.06em;font-size:.81rem;text-transform:uppercase}.card{background:#15243a;border:1px solid #34475e;border-radius:16px;padding:17px;margin:17px 0}
+button,.button{font:750 1rem/1.25 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:48px;padding:12px 14px;width:100%;border:0;border-radius:11px;background:#ffce65;color:#211907;cursor:pointer;display:flex;gap:9px;align-items:center;justify-content:center;text-align:center;text-decoration:none}
+button.secondary,.button.secondary{background:#334b67;color:#f0f6ff}button.danger{background:#b9584e;color:white}button:disabled{cursor:not-allowed;opacity:.42}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:450px){.buttons{grid-template-columns:1fr}}
+input[type=password],input[type=text]{width:100%;margin:7px 0 12px;padding:12px;border-radius:9px;background:#081424;border:1px solid #607b9f;color:white;min-height:47px;font:16px -apple-system,sans-serif}
+label{font-weight:650}label.pick{display:flex;gap:10px;align-items:flex-start;font-weight:400;cursor:pointer;padding:11px 0;border-bottom:1px solid #283a50}input[type=checkbox]{accent-color:#f3bc55;width:20px;height:20px;flex:none;margin:3px 0}
+.filename{color:#fff;overflow-wrap:anywhere;font-size:.91rem;font-weight:670}.reason{display:block;color:#a9bad0;font-size:.81rem;margin:3px 0 0}
+.group-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:14px 0 2px}.tag{font-size:.72rem;border:1px solid #5a7288;padding:3px 7px;border-radius:99px;white-space:nowrap;color:#d9e9f7}
+.meter{display:grid;grid-template-columns:1fr 1fr;gap:11px}.metric{border-radius:11px;background:#0b1a2e;padding:13px}.metric strong{font-size:1.5rem;display:block;font-variant-numeric:tabular-nums}
+#log{white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto;border:1px solid #334760;background:#081322;color:#e5effb;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;border-radius:10px;padding:12px;min-height:70px}
+a{color:#ffcf75}code{background:#071727;color:#ffe2a5;border-radius:4px;padding:2px 4px;font-size:.9em}
+.note{border-left:3px solid #e4b860;padding:9px 12px;background:#1d2b3d;color:#f3e2be;font-size:.89rem;margin:12px 0}
+#selection{display:none}#restorePanel{display:none}#ready{display:none}.line{border-top:1px solid #334760;margin:16px 0}.checkline{display:flex;align-items:flex-start;gap:9px;padding:10px 0}.ok{color:#a8e5b0}.bad{color:#ffbcb0}
+</style>
+</head>
+<body><main>
+<div class="brand">Gary Eats! · Repository maintenance</div>
+<h1>Safe repository cleanup</h1>
+<p>Remove superseded installer pages while preserving the working game, project documentation, historical commits, studio and recovery tools. Nothing is deleted until you approve the exact file list.</p>
+<div class="card">
+<h2>1. Inspect the current GitHub repository</h2>
+<button id="scan" class="secondary" type="button">Scan live repository (no token required)</button>
+<div id="summary" class="muted" role="status" style="margin-top:12px">Not scanned yet. Repository: <code>tryingafewnewthings/gary-runner</code>, branch <code>main</code>.</div>
+</div>
+<section id="selection" class="card">
+<h2>2. Review proposed deletions</h2>
+<div class="meter"><div class="metric"><small>Selected files</small><strong id="fileCount">0</strong></div><div class="metric"><small>Current-tree file size</small><strong id="sizeCount">0 MB</strong></div></div>
+<div class="note">Recommended items are <strong>historical installers</strong>, not game assets. Deleting them breaks their old public links. Git history retains the files. Preview scripts and backup manifests require optional, explicit selection.</div>
+<div class="buttons"><button id="recommended" class="secondary" type="button">Select recommended only</button><button id="uncheck" class="secondary" type="button">Deselect all</button></div>
+<div id="groups"></div>
+</section>
+<div class="card">
+<h2>3. Publish a single reversible commit</h2>
+<p>The installer reads the current branch head, refuses concurrent edits, creates one atomic Git commit and records the original file blob hashes in <code>GARY_CLEANUP_MANIFEST.json</code> for exact restoration.</p>
+<label for="token">GitHub token with Contents: read and write</label>
+<input id="token" type="password" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Paste your existing Gary Eats token">
+<p class="muted">Your token is sent only to <code>api.github.com</code> and is not stored in this page or the cleanup commit.</p>
+<label class="checkline"><input id="consent" type="checkbox"><span>I reviewed the selected files and understand their old public links will stop working.</span></label>
+<label for="confirmation">Type <strong>CLEAN</strong> to enable publishing</label>
+<input id="confirmation" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="CLEAN">
+<button id="publish" type="button" disabled>Delete selected files in one commit</button>
+<div class="line"></div>
+<button id="restore" class="secondary" type="button" disabled>Restore previous cleanup (when eligible)</button>
+<p class="muted">The Restore option becomes available only when the most recent commit is exactly a cleanup made by this installer. Otherwise, use GitHub commit history to restore individual files safely.</p>
+</div>
+<div class="card"><h2>Progress &amp; safety checks</h2><div id="log" aria-live="polite">Ready.</div></div>
+<div id="ready" class="card"><h2>Cleanup committed</h2><p id="commitText"></p><div class="buttons"><a class="button" href="https://tryingafewnewthings.github.io/gary-runner/?clean=1" target="_blank" rel="noopener">Play Gary Eats!</a><a class="button secondary" href="https://github.com/tryingafewnewthings/gary-runner/commits/main/" target="_blank" rel="noopener">Review GitHub history</a></div></div>
+<p class="muted">Guardrails: exact allowlist; immutable protected-file list; script-reference checks; fast-forward only; no force push; no game-engine replacement; no asset deletion; no modifying configuration. After cleanup, verify the live game and Studio in Safari.</p>
+</main>
+<script>
+'use strict';
+(()=>{
+const REPO='tryingafewnewthings/gary-runner', API='https://api.github.com/repos/'+REPO, BRANCH='main';
+const MANIFEST='GARY_CLEANUP_MANIFEST.json';
+const OPTIONS=[
+// Superseded one-time installers, not loaded as runtime scripts.
+['Gary_Eats_One_Button_Installer.html','installer','Older one-button movement installer'],
+['Gary_Eats_Smooth_Sidestep_Installer.html','installer','Superseded sidestep installer'],
+['Gary_Eats_Visible_Sidestep_Fix.html','installer','Superseded sidestep scale fix'],
+['gary-approved-sidestep-installer.html','installer','Historical approved-sidestep publisher'],
+['gary-artwork-loading-fix-installer.html','installer','Completed artwork-loading patch publisher'],
+['gary-cinematic-installer.html','installer','Historical cinematic patch publisher'],
+['gary-cobblestone-60px-installer.html','installer','Completed 60px cobble migration publisher'],
+['gary-crash-audio-fix-installer.html','installer','Completed crash-audio repair publisher'],
+['gary-crash-cinematic-installer.html','installer','Historical crash-cinematic patch publisher'],
+['gary-last-orders-installer.html','installer','Completed Last Orders installation publisher'],
+['gary-movement-polish-installer.html','installer','Historical movement patch publisher'],
+['gary-pickup-audio-installer.html','installer','Historical pickup-audio patch publisher'],
+['gary-pigeon-cobbles-installer.html','installer','Historical pigeon movement patch publisher'],
+['gary-pigeon-installer.html','installer','Historical pigeon asset publisher'],
+['gary-professional-runtime-installer.html','installer','Historical engine upgrade publisher'],
+['gary-remove-landing-ring.html','installer','Historical visual cleanup publisher'],
+['gary-sidestep-installer.html','installer','Superseded sidestep patch publisher'],
+['gary-sidestep-no-ghost-installer.html','installer','Superseded no-ghost sidestep publisher'],
+['gary-sidestep-smooth-installer.html','installer','Superseded smooth sidestep publisher'],
+['gary-six-frame-width-installer.html','installer','Historical six-frame width patch publisher'],
+['gary-smooth-startup-installer.html','installer','Historical startup repair publisher'],
+// Optional: no longer referenced by index.html; check any manual QA use before removal.
+['gary-intro-test.html','preview','Older standalone intro test page'],
+['game-intro-test.js','preview','Engine snapshot for old intro test'],
+['gary-last-orders-preview.html','preview','Historical Last Orders preview page'],
+['game-last-orders-preview.js','preview','Historical Last Orders preview engine'],
+['food-last-orders-preview.js','preview','Catalogue snapshot for Last Orders preview'],
+['gary-sidestep-smooth-test.html','preview','Old smooth sidestep test page'],
+['game-sidestep-smooth.js','preview','Engine for smooth sidestep test'],
+['gary-sidestep-test.html','preview','Old sidestep test page'],
+['game-sidestep-test.js','preview','Engine for original sidestep test'],
+// Backups are optional and are NEVER selected by default.
+['gary-approved-sidestep-backup.json','backup','Historic patch metadata; may help troubleshooting'],
+['gary-artwork-loading-backup.json','backup','Historic patch metadata'],
+['gary-crash-audio-fix-backup.json','backup','Historic patch metadata'],
+['gary-crash-cinematic-backup.json','backup','Historic patch metadata'],
+['gary-last-orders-backup.json','backup','Historic patch metadata'],
+['gary-movement-polish-backup.json','backup','Historic patch metadata'],
+['gary-pigeon-backup.json','backup','Historic patch metadata'],
+['gary-pigeon-cobbles-backup.json','backup','Historic patch metadata'],
+['gary-runtime-upgrade-backup.json','backup','Old engine backup; preserve unless independently verified'],
+['gary-sidestep-full-height-backup.json','backup','Historic patch metadata'],
+['gary-six-frame-width-backup.json','backup','Historic patch metadata']
+].map(([path,group,reason])=>({path,group,reason}));
+const PROTECTED=new Set([
+'index.html','game-runtime.js','game-data.js','game-core.js','game.js','gary-game-config.json',
+'gary-studio.html','gary-docs-publisher.html','gary-emergency-restore.html','gary-road-transition-installer.html',
+'gary-road-evolution.js','gary-street-mystery.js','gary-intro-transition.js','gary-crash-config.js',
+'food-catalogue.js','game-sidestep-no-ghost.js','gary-runtime-preview.html','game-runtime-data.js',
+'food-catalogue-runtime.js','gary-sidestep-no-ghost-test.html','gary-repository-cleanup-installer.html',
+'PROJECT_STATE.md','GAME_STATUS.txt','STYLE.txt','ASSET_GRID.json','ASSET_GRID.png','ASSET_GRID_PROMPT.txt',
+'RUNTIME_UPGRADE.md','LAST_ORDERS_UPGRADE.md','FORGOTTEN_ROAD_GROUND.md','GARY_CLEANUP_MANIFEST.json',
+'gary_transition_sheet.png','gary_walk_sheet.PNG','high_street_sprites.webp'
+]);
+const SOURCE_SCAN=['index.html','game-data.js','game-runtime.js','gary-studio.html','gary-road-evolution.js','gary-street-mystery.js','game-core.js'];
+const $=id=>document.getElementById(id);
+let snapshot=null,working=false;
+function log(message){$('log').textContent += '\n'+message; $('log').scrollTop=$('log').scrollHeight;}
+function startLog(message){$('log').textContent=message;}
+function error(message){throw Error(message);}
+function mb(n){return n>=1e6?(n/1e6).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';}
+function b64decode(s){const t=atob(s.replace(/\s+/g,''));return new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(t,c=>c.charCodeAt(0)));}
+function headers(auth){const h={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};if(auth){const token=$('token').value.trim();if(!token)error('Enter your GitHub token first.');h.Authorization='Bearer '+token;}return h;}
+async function api(path,options={},auth=false){
+ const res=await fetch(API+path,{...options,headers:{...headers(auth),...(options.headers||{})},cache:'no-store'});
+ let obj;try{obj=await res.json();}catch(_){error('GitHub did not return JSON (HTTP '+res.status+').');}
+ if(!res.ok)error((obj.message||'GitHub request failed')+' (HTTP '+res.status+').');return obj;
+}
+function safeOption(row){return !PROTECTED.has(row.path)&&!row.path.includes('/')&&/^[A-Za-z0-9_.-]+$/.test(row.path);}
+async function readSource(path){const r=await api('/contents/'+encodeURIComponent(path)+'?ref='+BRANCH);if(r.type!=='file'||r.encoding!=='base64')error('Unexpected source response: '+path);return b64decode(r.content);}
+function parseIndex(index){
+ const explicit=[...index.matchAll(/<(?:script|link|img|audio|video|source)\b[^>]*(?:src|href)=["']([^"']+)["']/gi)].map(m=>m[1].split(/[?#]/)[0].replace(/^\.\//,''));
+ return new Set(explicit);
+}
+function selectedRows(){if(!snapshot)return[];return OPTIONS.filter(o=>snapshot.entries.has(o.path)&&snapshot.checked.has(o.path)&&!snapshot.blocked.has(o.path));}
+function updateTotals(){const rows=selectedRows();$('fileCount').textContent=rows.length;$('sizeCount').textContent=mb(rows.reduce((s,r)=>s+(snapshot.entries.get(r.path)?.size||0),0));
+ $('publish').disabled=working||rows.length===0||!$('consent').checked||$('confirmation').value.trim().toUpperCase()!=='CLEAN'||!$('token').value.trim();}
+function checkboxes(mode){if(!snapshot)return;for(const o of OPTIONS){if(!snapshot.entries.has(o.path)||snapshot.blocked.has(o.path))continue;if(mode==='none')snapshot.checked.delete(o.path);else if(mode==='recommended'){if(o.group==='installer')snapshot.checked.add(o.path);else snapshot.checked.delete(o.path);}}renderGroups();}
+function renderGroups(){if(!snapshot)return;const host=$('groups');host.replaceChildren();const data=[
+ ['installer','Recommended: superseded installers','These old installers are not loaded by the playable game. Verify you no longer use their public links.'],
+ ['preview','Optional: historical preview builds','Do not delete these if you still use old sidestep/Last Orders comparisons.'],
+ ['backup','Optional: old backup metadata','Leave these alone unless you explicitly no longer need their recovery records.']];
+ for(const [group,title,desc] of data){const members=OPTIONS.filter(o=>o.group===group&&snapshot.entries.has(o.path));if(!members.length)continue;
+ const box=document.createElement('section');const heading=document.createElement('div');heading.className='group-head';const h=document.createElement('strong');h.textContent=title;heading.appendChild(h);const count=document.createElement('span');count.className='tag';count.textContent=members.length+' files';heading.appendChild(count);box.appendChild(heading);
+ const p=document.createElement('p');p.className='muted';p.textContent=desc;box.appendChild(p);
+ for(const o of members){const f=snapshot.entries.get(o.path),blocked=snapshot.blocked.get(o.path);
+ const label=document.createElement('label');label.className='pick';const check=document.createElement('input');check.type='checkbox';check.checked=snapshot.checked.has(o.path);check.disabled=!!blocked||working;check.addEventListener('change',()=>{if(check.checked)snapshot.checked.add(o.path);else snapshot.checked.delete(o.path);updateTotals();});
+ const details=document.createElement('span');const file=document.createElement('span');file.className='filename';file.textContent=o.path+' · '+mb(f.size);const reason=document.createElement('span');reason.className='reason';reason.textContent=blocked?'PROTECTED: '+blocked:o.reason;details.append(file,reason);label.append(check,details);box.appendChild(label);}
+ host.appendChild(box);
+ }
+ updateTotals();
+}
+async function scan(){if(working)return;working=true;$('scan').disabled=true;$('publish').disabled=true;startLog('Reading repository tree and branch head…');
+ try{
+ const [ref,tree]=await Promise.all([api('/git/ref/heads/'+BRANCH),api('/git/trees/'+BRANCH+'?recursive=1')]);
+ if(!ref.object?.sha||!tree.sha||tree.truncated||!Array.isArray(tree.tree))error('Repository snapshot is incomplete. No operation permitted.');
+ const commit=await api('/git/commits/'+ref.object.sha);
+ if(commit.tree?.sha!==tree.sha)error('Branch moved while scanning. Please scan again.');
+ const entries=new Map(tree.tree.filter(f=>f.type==='blob').map(f=>[f.path,f]));
+ const [index,...sources]=await Promise.all(['index.html',...SOURCE_SCAN.filter(p=>p!=='index.html')].map(readSource));
+ const active=parseIndex(index);const blocked=new Map();
+ for(const o of OPTIONS){if(!entries.has(o.path))continue;
+ if(!safeOption(o)){blocked.set(o.path,'Not in cleanup allowlist');continue;}
+ if(active.has(o.path)){blocked.set(o.path,'Directly loaded by the live page');continue;}
+ // We check executable source files, not historical documentation and installer snapshots.
+ for(let k=0;k<sources.length;k++)if(sources[k].includes(o.path)){blocked.set(o.path,'Referenced by '+SOURCE_SCAN.filter(p=>p!=='index.html')[k]);break;}
+ }
+ if(entries.has(MANIFEST))log('Found a previous cleanup manifest; rollback may be available.');
+ const checked=new Set(OPTIONS.filter(o=>o.group==='installer'&&entries.has(o.path)&&!blocked.has(o.path)).map(o=>o.path));
+ snapshot={head:ref.object.sha,treeSha:tree.sha,entries,checked,blocked,active};
+ $('selection').style.display='block';
+ $('summary').textContent='Scanned '+tree.tree.length+' repository entries. '+checked.size+' recommended older installers; '+[...blocked.keys()].length+' cleanup candidates protected by live references.';
+ renderGroups(); log('Scan complete. '+selectedRows().length+' recommended files selected, totalling '+mb(selectedRows().reduce((s,o)=>s+entries.get(o.path).size,0))+'.');
+ await inspectRestore();
+ }catch(e){log('Scan stopped: '+e.message);$('summary').textContent='Scan failed. No files changed.';}finally{working=false;$('scan').disabled=false;renderGroups();updateTotals();}
+}
+async function inspectRestore(){
+ $('restore').disabled=true;if(!snapshot||!snapshot.entries.has(MANIFEST))return;
+ try{const raw=await readSource(MANIFEST),manifest=JSON.parse(raw);
+ const c=await api('/git/commits/'+snapshot.head);
+ if(manifest.kind==='gary-repo-cleanup-v1'&&Array.isArray(manifest.files)&&c.parents?.length===1&&c.parents[0].sha===manifest.previousHead){$('restore').disabled=false;log('Eligible cleanup manifest detected: exact one-commit rollback available.');}
+ else log('Existing cleanup manifest found; one-click rollback unavailable because newer commits exist. Git history can still restore files.');
+ }catch(e){log('Could not validate cleanup manifest: '+e.message);}
+}
+function requireReady(){if(working)error('An operation is already running.');if(!snapshot)error('Scan the repository first.');if(!$('token').value.trim())error('GitHub token required.');if(!$('consent').checked||$('confirmation').value.trim().toUpperCase()!=='CLEAN')error('Review files, tick consent, and type CLEAN.');}
+async function verifyHead(){const now=await api('/git/ref/heads/'+BRANCH,{},true);if(now.object?.sha!==snapshot.head)error('Repository changed since the scan. Nothing changed. Scan again before publishing.');}
+async function makeCommit(treeItems,message){
+ const result=await api('/git/trees',{method:'POST',body:JSON.stringify({base_tree:snapshot.treeSha,tree:treeItems}),headers:{'Content-Type':'application/json'}},true);
+ if(!/^[a-f0-9]{40}$/.test(result.sha||''))error('GitHub did not return a new tree SHA.');
+ const c=await api('/git/commits',{method:'POST',body:JSON.stringify({message,tree:result.sha,parents:[snapshot.head]}),headers:{'Content-Type':'application/json'}},true);
+ if(!/^[a-f0-9]{40}$/.test(c.sha||''))error('GitHub did not return a commit SHA.');
+ await api('/git/refs/heads/'+BRANCH,{method:'PATCH',body:JSON.stringify({sha:c.sha,force:false}),headers:{'Content-Type':'application/json'}},true);
+ return c.sha;
+}
+async function publish(){try{requireReady();const rows=selectedRows();if(!rows.length)error('No files selected.');
+ const description=rows.map(o=>o.path+' · '+mb(snapshot.entries.get(o.path).size)).join('\n');
+ if(!confirm('Delete '+rows.length+' selected files from the latest main branch?\n\n'+description+'\n\nThey remain recoverable from Git history.'))return;
+ working=true;$('scan').disabled=true;updateTotals();startLog('Rechecking branch HEAD and file integrity…');
+ await verifyHead();if(snapshot.entries.has(MANIFEST))error('An earlier cleanup manifest exists. Restore or resolve it before creating another cleanup.');
+ const files=rows.map(o=>{const f=snapshot.entries.get(o.path);if(!f||f.type!=='blob'||!safeOption(o)||snapshot.blocked.has(o.path))error('Unsafe/missing candidate: '+o.path);return {path:o.path,sha:f.sha,size:f.size,group:o.group};});
+ const manifest={kind:'gary-repo-cleanup-v1',repository:REPO,branch:BRANCH,previousHead:snapshot.head,previousTree:snapshot.treeSha,files};
+ const treeItems=files.map(f=>({path:f.path,mode:'100644',type:'blob',sha:null}));
+ treeItems.push({path:MANIFEST,mode:'100644',type:'blob',content:JSON.stringify(manifest,null,2)+'\n'});
+ log('Preparing atomic deletion of '+files.length+' files ('+mb(files.reduce((s,f)=>s+f.size,0))+')…');
+ const newHead=await makeCommit(treeItems,'Gary Eats: remove '+files.length+' superseded development files (manifest for rollback)');
+ log('Published successfully! Commit '+newHead.slice(0,12));
+ $('ready').style.display='block';$('commitText').textContent=files.length+' files removed in commit '+newHead.slice(0,12)+'. GitHub Pages may need a minute to refresh.';
+ await scanAfter();
+ }catch(e){log('STOPPED: '+e.message+'\nIf publishing failed during GitHub confirmation, scan again to verify the result. Never repeat blindly.');}finally{working=false;$('scan').disabled=false;renderGroups();updateTotals();}}
+async function restore(){if(working)return;working=true;$('restore').disabled=true;startLog('Checking cleanup manifest and current branch…');
+ try{if(!$('token').value.trim())error('Enter a GitHub token first.');
+ const ref=await api('/git/ref/heads/'+BRANCH,{},true),commit=await api('/git/commits/'+ref.object.sha,{},true);
+ const raw=await readSource(MANIFEST),m=JSON.parse(raw);
+ if(m.kind!=='gary-repo-cleanup-v1'||m.repository!==REPO||m.branch!==BRANCH||!Array.isArray(m.files)||!m.files.length)error('Invalid cleanup manifest.');
+ if(commit.parents?.length!==1||commit.parents[0].sha!==m.previousHead)error('Newer commits exist; automatic rollback not safe. Restore through Git history.');
+ if(!confirm('Restore '+m.files.length+' files from their original Git blobs and remove the cleanup manifest?'))return;
+ // Read all current names to make sure no file was replaced under a deleted path.
+ const tree=await api('/git/trees/'+BRANCH+'?recursive=1',{},true);
+ if(tree.sha!==commit.tree.sha||tree.truncated)error('Unable to verify the current tree.');
+ const paths=new Set(tree.tree.map(f=>f.path));
+ for(const f of m.files){if(!f.path||PROTECTED.has(f.path)||!OPTIONS.some(o=>o.path===f.path)||!(/^[a-f0-9]{40}$/.test(f.sha)))error('Manifest contains a disallowed file.');if(paths.has(f.path))error('Original filename already exists: '+f.path);}
+ snapshot={head:ref.object.sha,treeSha:tree.sha,entries:new Map(tree.tree.filter(f=>f.type==='blob').map(f=>[f.path,f])),checked:new Set(),blocked:new Map(),active:new Set()};
+ const treeItems=m.files.map(f=>({path:f.path,mode:'100644',type:'blob',sha:f.sha}));treeItems.push({path:MANIFEST,mode:'100644',type:'blob',sha:null});
+ log('Restoring '+m.files.length+' exact original blobs…');const restoredHead=await makeCommit(treeItems,'Gary Eats: restore files from cleanup manifest');log('Restored! Commit '+restoredHead.slice(0,12));await scanAfter();
+ }catch(e){log('Restore stopped: '+e.message);}finally{working=false;$('scan').disabled=false;renderGroups();updateTotals();}}
+async function scanAfter(){snapshot=null;$('selection').style.display='none';$('restore').disabled=true;$('publish').disabled=true;
+ const ref=await api('/git/ref/heads/'+BRANCH,{},true);log('Verified current main: '+ref.object.sha.slice(0,12)+'. Refresh or scan again to inspect the updated tree.');}
+$('scan').addEventListener('click',scan);$('recommended').addEventListener('click',()=>checkboxes('recommended'));$('uncheck').addEventListener('click',()=>checkboxes('none'));
+for(const id of ['token','confirmation'])$(id).addEventListener('input',updateTotals);$('consent').addEventListener('change',updateTotals);
+$('publish').addEventListener('click',publish);$('restore').addEventListener('click',restore);
+})();
+</script>
+</body></html>
