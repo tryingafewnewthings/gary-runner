@@ -1,5 +1,5 @@
 GARY EATS! — DEVELOPER START HERE
-Status verified against main: 16 October 2026
+Status verified against main: 17 October 2026
 Repository: https://github.com/tryingafewnewthings/gary-runner
 Live game: https://tryingafewnewthings.github.io/gary-runner/
 
@@ -50,7 +50,7 @@ AUTHORITATIVE SETTINGS
 - Actual image style and placement acceptance: STYLE.txt.
 
 NOT YET PLAYABLE
-- The Last Orders stranger encounter and dialogue/cutscene state machine.
+- The Last Orders dialogue/cutscene state machine (the environmental cameo is live).
 - The Last Orders Lantern gameplay/inventory and wilderness biome.
 - Food combination/cooking mechanics or Gary Review Effect gameplay USP.
 - New catalogue foods beyond the three active ITEM definitions.
@@ -81,3 +81,10 @@ what still needs testing, and how to revert without technical guesswork.
 
 ## Hooded bench and discovery upgrade (17 October 2026)
 See LAST_ORDERS_UPGRADE.md for the new rain-driven end-of-street cameo, animation timing, safe slowdown, discovery banners and unread catalogue markers. The actor is environmental scenery with stable identity hooded-reader; interaction/lantern/wilderness remain future work. Preview and production verification are separate; use gary-last-orders-preview.html before promotion.
+
+GROUND DECAY V3 — 17 OCTOBER 2026
+Read FORGOTTEN_ROAD_GROUND.md. Night precedes a 30-active-second gradual decay.
+Small overlays cover both cobbled sides; late road intrusion is limited to 12px.
+Stranger scheduling waits for the progression and existing storm/closure gates.
+The former V2 installer is retired; open the normal game directly.
+Automated native Canvas/DOM verification is distinct from iPhone acceptance.

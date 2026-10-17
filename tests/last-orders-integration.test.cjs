@@ -28,7 +28,7 @@ test('actual engine: safe slowdown, all eight visible frames, pause, idle, resta
  w.__test.advance(1/60);assert.equal(w.__test.snapshot().speed>=199,true);
  const seen=new Set();let paused=false,idleTicks=0;
  for(let i=0;i<2600;i++){
-  w.__test.advance(1/60);const snap=w.__test.snapshot(),bench=w.__test.bench();
+  w.__test.clear();w.__test.advance(1/60);const snap=w.__test.snapshot(),bench=w.__test.bench();
   if(bench.foot>=196 && bench.foot<=640)seen.add(bench.frame);
   if(bench.frame>=6 && bench.foot>=196 && bench.foot<=640)idleTicks++;
   if(bench.frame===4&&!paused){
@@ -54,5 +54,24 @@ test('Safari preview shortcuts use the staged engine and an isolated food save',
   w.dispatchEvent(new w.Event('pagehide'));
   assert.equal(JSON.parse(f.store.get(KEY)).kebab.count,9);
   assert.equal(JSON.parse(f.store.get('gary-eats-last-orders-preview-food-v1')).kebab.count,1);
+ }finally{f.close();}
+});
+
+test('natural story starts clean, develops for 30 seconds, pauses and resets',async()=>{
+ const f=await boot();try{
+  const {w}=f,road=w.GaryRoadEvolution;await play(f);
+  for(let i=0;i<1200;i++){w.__test.clear();w.__test.advance(1/60);}
+  assert.equal(road.snapshot().elapsed,0);assert.equal(w.__test.snapshot().mystery.emptyFrom,Infinity);
+  let saved=false;const captured=new Set();
+  for(let i=0;i<9000;i++){
+   w.__test.clear();w.__test.advance(1/60);const ground=road.snapshot();
+   if(ground.elapsed>0&&ground.elapsed<23.9)assert.equal(w.__test.snapshot().mystery.emptyFrom,Infinity);
+   if(ground.elapsed>10&&!saved){w.__test.suspend();const before=road.snapshot();for(let j=0;j<300;j++)w.__test.advance(1/60);assert.deepEqual(road.snapshot(),before);w.__test.resume();saved=true;}
+   for(const t of [0,10,20,30])if(!captured.has(t)&&ground.elapsed>=t){w.__test.render();require('node:fs').writeFileSync('/tmp/gary-decay-'+t+'.png',f.canvas().toBuffer('image/png'));captured.add(t);}
+   if(ground.elapsed===30)break;
+  }
+  assert.equal(road.snapshot().elapsed,30);assert.equal(saved,true);assert.equal(captured.size,4);
+  w.__test.render();const before=road.snapshot();for(let i=0;i<5;i++)w.__test.render();assert.deepEqual(road.snapshot(),before);
+  w.__test.reset();assert.equal(road.snapshot().elapsed,0);assert.equal(road.snapshot().progress,0);
  }finally{f.close();}
 });

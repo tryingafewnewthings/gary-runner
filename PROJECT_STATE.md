@@ -1,6 +1,6 @@
 # Gary Eats! — Project State and Developer Handoff
 
-**Verified against the public `main` repository:** 16 October 2026
+**Verified against the public `main` repository:** 17 October 2026
 **Repository:** https://github.com/tryingafewnewthings/gary-runner  
 **Live game:** https://tryingafewnewthings.github.io/gary-runner/  
 **Current visual editor:** `gary-studio.html` (Studio 3.1)  
@@ -32,7 +32,7 @@ The goal is **a polished, complete game with a memorable identity**, not merely 
 
 ### Not live yet
 
-- The Last Orders stranger encounter, readable text-dialogue/cutscene controller, lantern reward/charges, and wilderness chapter are **specification only**, held in `DEVELOPMENT_PLAN` at the end of `game-data.js`.
+- The hooded-reader environmental cameo is live. Its dialogue/cutscene interaction, lantern reward/charges, and wilderness chapter remain **specification only**, held in `DEVELOPMENT_PLAN` at the end of `game-data.js`.
 - The *Gary Review Effect*, special recipe combinations, more discoverable foods, chapter-specific gameplay mechanics, and an expanded food/recipe system have been discussed but **not implemented**.
 - There is no account-based save system, achievements backend or cloud inventory.
 - New custom eight-frame splash sprites and cinematic cutscene artwork may exist as concepts or drafts; they are not presumed to be live merely because a design was discussed.
@@ -129,3 +129,6 @@ Open decisions include: definitive USP beyond discovery; whether the menu should
 
 ## Hooded bench and discovery upgrade (17 October 2026)
 See LAST_ORDERS_UPGRADE.md for the new rain-driven end-of-street cameo, animation timing, safe slowdown, discovery banners and unread catalogue markers. The actor is environmental scenery with stable identity hooded-reader; interaction/lantern/wilderness remain future work. Preview and production verification are separate; use gary-last-orders-preview.html before promotion.
+
+## Ground decay correction (17 October 2026, V3)
+See FORGOTTEN_ROAD_GROUND.md. Original cobbles remain at 60px cells. Small 32–48px overlays cover both cobbled sides and pavement strips, with a maximum 12px road intrusion. Decay begins after settled night and develops over 30 active seconds; the stranger cannot schedule until 24 seconds into that progression and the storm/closure gates pass. Narrative state advances only in fixed gameplay updates. Old roadstage-only links no longer force immediate overgrowth; forced stages require debug=1. The former decay installer is retired to prevent reinstalling V2. Full wasteland scenery and later narrative chapters are not shipped by this ground repair.

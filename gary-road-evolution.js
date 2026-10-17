@@ -1,166 +1,127 @@
-/* Gary Eats! — Forgotten Road Decay V2 (GaryRoadDecay20261017V2)
- * Exact, original 512px alpha PNGs over the unchanged 60px cobble master.
- * Fixed 360x640 orthographic/composite world; no geometry/physics changes.
- * Decay is spatially world-anchored and synchronized to hooded bench entry.
+/* Gary Eats! — Forgotten Road ground presentation V3.
+ * 30 active seconds after settled night. Ground is authored as it enters the
+ * screen, then remains fixed in world space. Render never advances the story.
  */
 (function (root) {
   'use strict';
-  const WORLD_HEIGHT = 640;
-  const ROAD_LEFT = 105;
-  const ROAD_RIGHT = 255;
-  const PHASE_OFFSET = 304; // Matches worldDepth = distance - screenY + 304 in V1
-  const STRIDE = 156;       // Candidate patch frequency in world design pixels
-  const SPEC = Object.freeze([
-    {name:'Original high street'}, {name:'Light moss'},
-    {name:'Early neglect'}, {name:'Medium growth'},
-    {name:'Roadside encroachment'}, {name:'Heavy overgrowth'}
-  ]);
-  const LEAD = 1400;        // Begin gentle neglect before hooded bench entry
-  const MILESTONES = Object.freeze([
-    [-LEAD, 0], [-1060, .17], [-710, .38],
-    [-390, .57], [-220, .70], [-110, .76],
-    [20, .91], [200, 1]
-  ]);
-  const ASSETS = Object.freeze({
-    light: 'art/forgotten-road/decay-light.png?v=roaddecay20261017v2',
-    medium: 'art/forgotten-road/decay-medium.png?v=roaddecay20261017v2',
-    heavy: 'art/forgotten-road/decay-heavy.png?v=roaddecay20261017v2',
-    kerb: 'art/forgotten-road/decay-kerb.png?v=roaddecay20261017v2'
-  });
+  const DURATION = 30, STRIDE = 64, MAX_SIZE = 48;
+  const geometry = typeof WORLD === 'object' ? WORLD : {width:360,roadWidth:150};
+  const ROAD_LEFT = (geometry.width-geometry.roadWidth)/2;
+  const ROAD_RIGHT = ROAD_LEFT+geometry.roadWidth;
+  const SPEC = Object.freeze(['Original high street','Light moss','Early neglect',
+    'Medium growth','Roadside encroachment','Heavy overgrowth'].map(name=>Object.freeze({name})));
   const imgs = Object.create(null);
-  let loadedCount = 0;
-  for (const key of Object.keys(ASSETS)) {
-    const img = new Image();
-    img.ready = false;
-    img.onload = () => { if (!img.ready) loadedCount++; img.ready = true; };
-    img.onerror = () => { if (img.ready) loadedCount--; img.ready = false; };
-    img.src = ASSETS[key];
-    imgs[key] = img;
+  for (const key of ['light','medium','heavy','kerb']) {
+    const img = new Image(); img.ready=false;
+    img.onload=()=>{img.ready=true;}; img.onerror=()=>{img.ready=false;};
+    img.src='art/forgotten-road/decay-'+key+'.png?v=roaddecay20261017v3'; imgs[key]=img;
   }
-
-  const query = new URLSearchParams(root.location ? root.location.search : '');
-  const rawForced = query.get('roadstage');
-  const forced = rawForced === null || rawForced.trim() === '' ? null : Number(rawForced);
-  const debugStage = Number.isFinite(forced) ? Math.max(0, Math.min(5, forced)) : null;
-  let benchEntryDistance = Infinity; // Distance when mysterious bench foot enters y=0
-  let triggeredAt = Infinity;
-  let lastDistance = 0;
-  const clamp = v => Math.min(1, Math.max(0, v));
-  const smooth = v => { const x = clamp(v); return x*x*(3-2*x); };
-  function hash(a,b,c) {
-    let x = (Math.imul(a|0, 374761393) ^ Math.imul(b|0, 668265263) ^ Math.imul(c|0, 1442695041)) | 0;
-    x = Math.imul(x ^ (x >>> 13), 1274126177);
-    return (x ^ (x >>> 16)) >>> 0;
+  // Forced artwork stages are available only through an explicit debug route.
+  // Old installer URLs with ?roadstage=5 now run the normal story.
+  const query=new URLSearchParams(root.location ? root.location.search : '');
+  const raw=query.get('roadstage'), parsed=raw===null||raw.trim()===''?NaN:Number(raw);
+  const debugStage=query.get('debug')==='1' && Number.isInteger(parsed)
+    ? Math.max(0,Math.min(5,parsed)) : null;
+  const clamp=x=>Math.min(1,Math.max(0,x));
+  const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
+  function fraction(a,b,c) {
+    let x=(Math.imul(a|0,374761393)^Math.imul(b|0,668265263)^Math.imul(c|0,1442695041))|0;
+    x=Math.imul(x^(x>>>13),1274126177);
+    return ((x^(x>>>16))>>>0)/4294967296;
   }
-  function fraction(a,b,c) { return hash(a,b,c) / 4294967296; }
-  function remap(worldY) {
-    if (debugStage !== null) return [0, .14, .34, .53, .73, .98][debugStage];
-    if (!Number.isFinite(benchEntryDistance)) return 0;
-    const relative = worldY - benchEntryDistance;
-    // Heavy moss appears only in the final approach to the reader.
-    if (relative <= MILESTONES[0][0]) return 0;
-    for (let i=1;i<MILESTONES.length;i++) {
-      const a=MILESTONES[i-1], b=MILESTONES[i];
-      if (relative <= b[0]) return a[1] + (b[1]-a[1])*smooth((relative-a[0])/(b[0]-a[0]));
+  // Bounded, preallocated distance/time mapping, sampled at the fixed tick.
+  // This preserves a 30-second story even when score changes running speed.
+  const depths=new Float64Array(2048), values=new Float64Array(2048);
+  let count=0,elapsed=0,lastDistance=0,benchEntryDistance=Infinity;
+  function reset(){count=0;elapsed=0;lastDistance=0;benchEntryDistance=Infinity;}
+  function update(dt,distance,night,ready) {
+    if (!ready || night<.98 || !Number.isFinite(distance) || !(dt>0)) return;
+    if (!count) {depths[0]=distance;values[0]=0;count=1;}
+    if (elapsed>=DURATION) return;
+    elapsed=Math.min(DURATION,elapsed+dt);
+    if (distance>depths[count-1] && count<depths.length) {
+      depths[count]=distance; values[count]=elapsed/DURATION; count++;
     }
-    return 1;
   }
-  function trigger(distance, benchFoot) {
-    if (debugStage !== null || Number.isFinite(benchEntryDistance)) return;
-    // The live runtime supplies the first encounter's actual screen foot.
-    // This prevents the decay timing from drifting if segment layout changes.
-    if (!Number.isFinite(distance) || !Number.isFinite(benchFoot) || benchFoot >= 0) return;
-    benchEntryDistance = distance - benchFoot;
-    triggeredAt = distance;
+  function progressAt(depth) {
+    if (debugStage!==null) return [0,.14,.34,.53,.73,1][debugStage];
+    if (!count || depth<=depths[0]) return 0;
+    if (depth>=depths[count-1]) return values[count-1];
+    let lo=0,hi=count-1;
+    while(hi-lo>1){const mid=(lo+hi)>>>1;if(depths[mid]<=depth)lo=mid;else hi=mid;}
+    return values[lo]+(values[hi]-values[lo])*(depth-depths[lo])/(depths[hi]-depths[lo]);
   }
-  function reset() {
-    benchEntryDistance = Infinity;
-    triggeredAt = Infinity;
-    lastDistance = 0;
+  function trigger(distance,benchFoot) {
+    if (!Number.isFinite(benchEntryDistance) && Number.isFinite(distance) && Number.isFinite(benchFoot))
+      benchEntryDistance=distance-benchFoot;
   }
-  function drawSprite(ctx,img,x,y,width,height,alpha,flip) {
-    if (!img || !img.ready || alpha <= .009) return;
-    ctx.globalAlpha = Math.min(.92,alpha);
-    if (flip) {
-      ctx.save();ctx.translate(x + width, y);ctx.scale(-1,1);
-      ctx.drawImage(img,0,0,width,height);ctx.restore();
-    } else ctx.drawImage(img,x,y,width,height);
+  function sprite(ctx,key,x,y,size,alpha,flip) {
+    const img=imgs[key];if(!img.ready || alpha<=.001)return;
+    ctx.save();ctx.globalAlpha*=alpha;
+    if(flip){ctx.translate(x+size,y);ctx.scale(-1,1);ctx.drawImage(img,0,0,size,size);}
+    else ctx.drawImage(img,x,y,size,size);
+    ctx.restore();
   }
-  // Draw from a small set of fixed world slots; identical world coordinates
-  // are painted in both the pavement and road passes, with independent clips.
-  function paintOverlays(ctx,params,type) {
-    if (debugStage === null && !Number.isFinite(benchEntryDistance)) return;
-    if (!loadedCount) return;
-    const clipX = params.x;
-    const clipY = params.y;
-    const clipW = params.w;
-    const clipH = params.h;
-    const distance = params.distance;
-    if (clipW <= 0 || clipH <= 0 || !Number.isFinite(distance)) return;
-    ctx.save();
-    ctx.beginPath();ctx.rect(clipX,clipY,clipW,clipH);ctx.clip();
-    const lower = Math.floor((distance+PHASE_OFFSET-clipY-clipH-220) / STRIDE);
-    const upper = Math.ceil((distance+PHASE_OFFSET-clipY+220) / STRIDE);
-    for (let idx=lower; idx<=upper; idx++) {
-      for (let side=0; side<2; side++) {
-        const seed = hash(idx,side,731);
-        const jitter = (fraction(idx,side,42)-.5)*58;
-        const worldY = idx * STRIDE + jitter;
-        const p = remap(worldY);
-        if (p < .025) continue;
-        const chance = fraction(idx,side,99);
-        const frequency = .15 + .82*smooth(p);
-        if (chance > frequency) continue;
-        const yy = distance+PHASE_OFFSET-worldY;
-        const shape = fraction(idx,side,201);
-        const width = 70 + Math.round(fraction(idx,side,321)*40);
-        const height = width*(.82 + fraction(idx,side,523)*.25);
-        const variation = fraction(idx,side,156);
-        const kerbPatch = p > .17 && shape > .60;
-        let image = imgs.light;
-        if (kerbPatch) image = imgs.kerb;
-        else if (p >= .77 && variation < smooth((p-.77)/.18)) image = imgs.heavy;
-        else if (p >= .32 && variation < smooth((p-.25)/.25)) image = imgs.medium;
-        // Constrain each shared patch to a narrow roadside footprint.
-        // The middle running lane remains visually quiet in every stage.
-        const centerX = side===0 ? 109 : 251;
-        const xx = centerX - width/2 + (fraction(idx,side,55)-.5)*13;
-        const alpha = Math.min(.87, (.23 + p*.64)*( .78 + fraction(idx,side,72)*.22));
-        // For kerb growth, orientation means growth is at the *outer* edge
-        // of each pavement and extends naturally across the kerb line.
-        if (kerbPatch) {
-          const edgeWidth = 100 + 18*p;
-          const edgeX = side===0 ? 86 : 274-edgeWidth;
-          drawSprite(ctx,image,edgeX,yy-6,edgeWidth,Math.max(90,height),alpha,side===0);
-        } else {
-          drawSprite(ctx,image,xx,yy,width,height,alpha,false);
-        }
+  function paint(ctx,x,y,w,h,distance,side,roadOnly=false) {
+    if(!(w>0&&h>0) || !Number.isFinite(distance) || (!count&&debugStage===null))return;
+    ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+    const lower=Math.floor((distance-y-h-MAX_SIZE)/STRIDE)-1;
+    const upper=Math.ceil((distance-y+MAX_SIZE)/STRIDE)+1;
+    for(let idx=lower;idx<=upper;idx++) {
+      const depth=idx*STRIDE+(fraction(idx,side,42)-.5)*42;
+      const p=progressAt(depth); if(p<=0)continue;
+      const yy=distance-depth;
+      ctx.save();
+      if(roadOnly){
+        const reach=12*smooth((p-.55)/.45);
+        ctx.beginPath();ctx.rect(side===0?ROAD_LEFT-3:ROAD_RIGHT-reach,0,3+reach,h);ctx.clip();
       }
+      // Three small columns cover the entire cobbled width in empty stretches.
+      // Shop artwork naturally occludes these ground decals in occupied stretches.
+      for(let col=0;col<3;col++) {
+        const chance=fraction(idx,side,col+90);
+        const weight=smooth((p-chance*.66)/.34);
+        if(weight<=0)continue;
+        const size=32+fraction(idx,side,col+320)*12;
+        const leftX=[5,40,72][col]+(fraction(idx,side,col+55)-.5)*8;
+        const xx=side===0?leftX:geometry.width-leftX-size;
+        const medium=smooth((p-.36)/.24),heavy=smooth((p-.88)/.12);
+        const alpha=weight*(.12+.40*p);
+        const patchY=yy+(fraction(idx,side,col+880)-.5)*56;
+        sprite(ctx,'light',xx,patchY,size,alpha*(1-medium),side===1);
+        sprite(ctx,'medium',xx,patchY,size,alpha*medium*(1-heavy),side===1);
+        sprite(ctx,'heavy',xx,patchY,size,alpha*heavy,side===1);
+      }
+      // The kerb artwork's dense edge is on its right. Mirror on the right
+      // roadside, keeping growth on the cobbles with a small late road overlap.
+      const growth=smooth((p-.48)/.52);
+      const size=40+8*growth;
+      const xx=side===0?ROAD_LEFT-size+4:ROAD_RIGHT-4;
+      sprite(ctx,'kerb',xx,yy+18,size,.48*growth,side===1);
+      ctx.restore();
     }
     ctx.restore();
   }
-  // Buildings are painted over outer-cobble areas. We leave the thin
-  // pavements (89..105 and 255..271) for the final over-road pass below,
-  // preventing the existing pavement renderer from hiding our new art.
-  function drawCobbles(ctx,params) {
-    const leftEnd = Math.min(params.x + params.w, 89);
-    if (params.x < leftEnd) paintOverlays(ctx,{x:params.x,y:params.y,w:leftEnd-params.x,h:params.h,distance:params.distance},'cobble');
-    const rightStart = Math.max(params.x, 271);
-    if (rightStart < params.x + params.w) paintOverlays(ctx,{x:rightStart,y:params.y,w:params.x+params.w-rightStart,h:params.h,distance:params.distance},'cobble');
+  function drawCobbles(ctx,p) {
+    // Cover actual pavement, including the 16px strips omitted by V2.
+    const leftEnd=Math.min(p.x+p.w,ROAD_LEFT-3);
+    if(leftEnd>p.x)paint(ctx,p.x,p.y,leftEnd-p.x,p.h,p.distance,0);
+    const rightStart=Math.max(p.x,ROAD_RIGHT+3);
+    if(rightStart<p.x+p.w)paint(ctx,rightStart,p.y,p.x+p.w-rightStart,p.h,p.distance,1);
   }
-  // The live engine draws road after the pavement strips. A final overlay
-  // across the 16px kerbs and 150px roadway makes vegetation cross their join
-  // without ever painting over shop facades or covering the centre lane.
-  function drawRoad(ctx,params) {
-    lastDistance = params.distance;
-    paintOverlays(ctx,{x:89,y:0,w:182,h:params.height,distance:params.distance},'road');
+  function drawRoad(ctx,p) {
+    // Draw disjoint kerb strips after the road; never repaint the cobble pass.
+    // Maximum road intrusion is 12 design pixels; all lane centres stay clear.
+    paint(ctx,ROAD_LEFT-3,0,15,p.height,p.distance,0,true);
+    paint(ctx,ROAD_RIGHT-12,0,15,p.height,p.distance,1,true);
   }
-  root.GaryRoadEvolution = Object.freeze({
-    version:'GaryRoadDecay20261017V2', SPEC, LENGTH:LEAD,
-    trigger,reset,drawCobbles,drawRoad,
-    snapshot:()=>({start:triggeredAt,debugStage,
-      benchEntryDistance,stage:debugStage !== null ? debugStage : remap(lastDistance)*5,
-      progress:remap(lastDistance),
-      loaded:Object.keys(imgs).filter(k=>imgs[k].ready)})
-  });
+  function recordDistance(distance){lastDistance=distance;}
+  root.GaryRoadEvolution=Object.freeze({version:'GaryRoadDecay20261017V3',SPEC,
+    DURATION,LENGTH:30,update,trigger,reset,drawCobbles,drawRoad,progressAt,
+    // Schedule the final empty stretch at 24s; the bench then approaches as
+    // the last six seconds bring the entering terrain to heavy deterioration.
+    encounterReady:()=>elapsed>=DURATION*.8,recordDistance,
+    snapshot:()=>({start:count?depths[0]:Infinity,debugStage,benchEntryDistance,
+      elapsed,stage:progressAt(lastDistance)*5,progress:progressAt(lastDistance),
+      samples:count,loaded:Object.keys(imgs).filter(k=>imgs[k].ready)})});
 })(window);

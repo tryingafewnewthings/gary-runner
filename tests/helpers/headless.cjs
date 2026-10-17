@@ -25,11 +25,11 @@ module.exports=async function boot(saved={},preview=false){
   decode(){return Promise.resolve();}
  }
  w.Image=Artwork;
- for(const file of ['game-data.js','game-core.js','food-catalogue.js','gary-intro-transition.js','gary-crash-config.js','gary-street-mystery.js','game-runtime.js']){
+ for(const file of ['game-data.js','game-core.js','food-catalogue.js','gary-intro-transition.js','gary-crash-config.js','gary-street-mystery.js',...(!preview?['gary-road-evolution.js']:[]),'game-runtime.js']){
   const actual=preview?(file==='game-runtime.js'?'game-last-orders-preview.js':file==='food-catalogue.js'?'food-last-orders-preview.js':file):file;
   let text=fs.readFileSync(path.join(root,actual),'utf8');
   if(file==='game-runtime.js')text=text.replace(/\}\)\(\);\s*$/,`window.__test={
-   ready:()=>startupReady,advance:fixedUpdate,render:()=>{prepareView(1);render();},reset,move,suspend,resume,
+   ready:()=>startupReady,clear:()=>itemPool.clear(),advance:fixedUpdate,render:()=>{prepareView(1);render();},reset,move,suspend,resume,
    snapshot:()=>({state,distance,lane,score,speed:shownSpeed,rain:rainMix,mystery:mystery.snapshot(),errors:loadErrorLog.slice(),objects:objs.length}),
    ending:()=>{distance=STREET.length*STREET_SEGMENT_H+6500;nightMix=rainMix=shutterMix=1;nightOn=true;nightHeld=30;itemPool.clear();roadQueue=[];acc=0;rememberPositions();},
    pickup:kind=>{const o={t:kind,l:1,y:540,dare:0};collect(o);},

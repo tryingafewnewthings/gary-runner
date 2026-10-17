@@ -1627,7 +1627,12 @@ let shutterMix = 0;
     updateRain(dt, true);
     const hazardsClear = !objs.some(o => !o.d && isHazard(o.t));
     const wasQuiet = mystery.quiet();
-    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear, imgMystery.ready);
+    const ground = window.GaryRoadEvolution;
+    ground?.update(dt, distance, nightMix, imgMystery.ready);
+    ground?.recordDistance(distance);
+    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear,
+      imgMystery.ready && (!ground || ground.encounterReady()));
+    if (mystery.quiet()) ground?.trigger(distance, mystery.footAt(distance));
     if (wasQuiet && !mystery.quiet()) {
       // Fresh, safe lead-in after the cameo; never release a backlog of rows.
       roadQueue = []; acc = 0; lastLanes = ['none','none','none']; gap = LEARN_GAP;
@@ -2475,7 +2480,6 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
-    if (window.GaryRoadEvolution && mystery.quiet()) window.GaryRoadEvolution.trigger(view.distance, mystery.footAt(view.distance));
     drawHighStreet();drawPavements();drawRoad();
     pigeons.draw();
     if (nightOn) {

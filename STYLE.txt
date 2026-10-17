@@ -136,3 +136,14 @@ Make only tested changes to live source. After new images/scripts, update the
 appropriate ?v= cache reference and retest Play/Skip/collection/restart.
 ASSET_GRID.json/png are historical review snapshots. The current repository
 and actual rendered game supersede them where they disagree.
+
+GROUND DECAY V3 (17 October 2026)
+Preserve the 60px cobble quadrant grid. 512px transparent decay assets render
+at 32–48 design pixels, with their square aspect ratio intact. Cover the
+cobbled side ground and the narrow pavement strips; buildings and props
+occlude ground. Kerb art has its dense edge on the right: mirror it only
+for the right roadside. At most 12px of late growth reaches the road.
+Heavy artwork belongs to the final approach to the reader. A normal run
+starts without decay overlays and develops them after night over 30 active
+seconds. Forced artwork previews must be explicitly labelled as debug.
+Moss is one layer of the eventual barren wasteland, not the complete biome.
