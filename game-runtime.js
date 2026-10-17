@@ -147,8 +147,11 @@ let shutterMix = 0;
   // GarySixFrameWidth20261017V2 — width only; preserve height and foot alignment.
   const SIDE_WIDTH_SCALE = 1.00;
   // GarySidestepVisibleHeight20261016V3
-  const SIDE_ANIM_SECONDS = 0.32; // Six frames, about 53 ms each.
+  // GaryMovementPolish20261017V1
+  const SIDE_ANIM_SECONDS = LANE_CHANGE_SECONDS; // Animation follows actual lane progress.
   let sideAnimTime = SIDE_ANIM_SECONDS, sideAnimDir = 0;
+  let sidePhaseStart = 0, laneVelocity = 0, laneTangent = 0;
+  const sideHandoffFrames = [0, 0];
   const imgSideLeft = new Image(), imgSideRight = new Image();
   const sideArt = { left: false, right: false, anchors: [[], []], visibleHeights: [0.5, 0.5], walkFoot: 0.975, walkTop: 0.02 };
 
@@ -196,6 +199,7 @@ let shutterMix = 0;
       sideArt.visibleHeights[direction]=Math.max(0.5,...anchors.map(a=>a.foot-(a.top??0.02)));
       img.ready=true;
       sideArt[key]=true;
+      prepareWalkHandoffs();
     };
     img.onerror=()=>loadErrorLog.push(file+': missing; using walking animation');
     img.src=file+'?v=sixframewidth20261017v2';
@@ -208,6 +212,7 @@ let shutterMix = 0;
     const height=imgWalkSheet.naturalHeight;
     const walkMetrics=analyseGaryFrame(imgWalkSheet,0,width,height);
     sideArt.walkFoot=walkMetrics.foot; sideArt.walkTop=walkMetrics.top||0.02;
+    prepareWalkHandoffs();
   });
   let runFrame = 0, runTimer = 0;
 
@@ -810,6 +815,7 @@ let shutterMix = 0;
     laneLean = 0;
     sideAnimTime = SIDE_ANIM_SECONDS;
     sideAnimDir = 0;
+    sidePhaseStart = laneVelocity = laneTangent = 0;
     gap = LEARN_GAP;
     playTime = nightMix = nightHeld = rainMix = shutterMix = 0;
     nightOn = false;
@@ -839,16 +845,98 @@ let shutterMix = 0;
     if (state !== 'play') return;
     const next = Math.max(0, Math.min(WORLD.laneCount - 1, target + direction));
     if (next === target) return;
-    // Preserve the current visual position, including on a quick reversal.
+    const travelDirection = Math.sign(next - lane);
+    const continuing = sideAnimDir === travelDirection && sideAnimTime < SIDE_ANIM_SECONDS;
+    const velocity = continuing ? laneVelocity : 0;
+    sidePhaseStart = continuing ? sideAnimTime / SIDE_ANIM_SECONDS : 0;
     laneStart = lane;
     target = next;
     laneTime = 0;
-    sideAnimDir = direction;
-    sideAnimTime = 0;
     laneDuration = Math.max(0.12, Math.min(0.40,
       LANE_CHANGE_SECONDS * Math.abs(target - laneStart)));
-    grinTimer = 0; // A lane change immediately interrupts a cheer.
+    const delta = target - laneStart;
+    if (Math.abs(delta) < 1e-9) {
+      lane = target; laneTime = laneDuration; laneVelocity = laneTangent = 0;
+      sideAnimDir = 0; sideAnimTime = SIDE_ANIM_SECONDS;
+      previous.sideTime = view.sideTime = sideAnimTime; previous.sideDir = 0;
+      return;
+    }
+    // A bounded Hermite tangent preserves speed on repeated same-way taps.
+    laneTangent = delta ? Math.max(0, Math.min(2.5, velocity * laneDuration / delta)) : 0;
+    laneVelocity = velocity;
+    sideAnimDir = travelDirection;
+    sideAnimTime = sidePhaseStart * SIDE_ANIM_SECONDS;
+    previous.sideTime = view.sideTime = sideAnimTime;
+    previous.sideDir = travelDirection;
+    grinTimer = 0;
     performance.laneChanges++;
+  }
+
+  function updateGaryLane(dt) {
+    const wasAnimating = sideAnimDir !== 0 && sideAnimTime < SIDE_ANIM_SECONDS;
+    if (laneTime < laneDuration) {
+      laneTime = Math.min(laneDuration, laneTime + dt);
+      if (laneDuration - laneTime < 1e-9) laneTime = laneDuration;
+      const t = laneTime / laneDuration, t2 = t * t, t3 = t2 * t;
+      const delta = target - laneStart;
+      const eased = -2 * t3 + 3 * t2 + laneTangent * (t3 - 2 * t2 + t);
+      lane = laneStart + delta * eased;
+      laneVelocity = delta * (-6 * t2 + 6 * t + laneTangent * (3 * t2 - 4 * t + 1)) / laneDuration;
+    } else {
+      lane = target;
+      laneVelocity = 0;
+    }
+    const moving = laneTime < laneDuration;
+    const phase = moving ? laneTime / laneDuration : 1;
+    const desiredLean = moving
+      ? Math.sign(target - laneStart) * MAX_LANE_LEAN * Math.sin(Math.PI * phase)
+      : 0;
+    laneLean += (desiredLean - laneLean) * (1 - Math.exp(-dt / 0.075));
+    if (!moving && Math.abs(laneLean) < 0.0001) laneLean = 0;
+    if (wasAnimating) {
+      sideAnimTime = SIDE_ANIM_SECONDS * (sidePhaseStart + (1 - sidePhaseStart) * phase);
+      if (!moving) {
+        sideAnimTime = SIDE_ANIM_SECONDS;
+        runFrame = sideHandoffFrames[sideAnimDir < 0 ? 0 : 1];
+        runTimer = 0;
+        sideAnimDir = 0;
+      }
+    }
+  }
+
+  // Compare registered lower-body silhouettes once assets load, never during play.
+  function prepareWalkHandoffs() {
+    if (!imgWalkSheet.ready || !sideArt.walkFoot) return;
+    const w = 72, h = 150, height = WORLD.playerHeight, base = 144;
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    const c = canvas.getContext('2d', {willReadFrequently:true});
+    function sample(image, frame, columns, drawH, centre, foot) {
+      c.clearRect(0, 0, w, h);
+      const fw = image.naturalWidth / columns, fh = image.naturalHeight;
+      const drawW = drawH * fw / fh * (image === imgWalkSheet ? 1 : SIDE_WIDTH_SCALE);
+      c.drawImage(image, frame * fw, 0, fw, fh, w / 2 - drawW * centre, base - drawH * foot, drawW, drawH);
+      return c.getImageData(0, 0, w, h).data;
+    }
+    try {
+      const walk = [];
+      for (let f = 0; f < WALK_FRAMES; f++) walk.push(sample(imgWalkSheet, f, WALK_FRAMES, height, 0.5, sideArt.walkFoot));
+      [imgSideLeft, imgSideRight].forEach((image, direction) => {
+        if (!image.ready) return;
+        const a = sideArt.anchors[direction][SIDE_FRAMES - 1];
+        const poseH = height * (sideArt.walkFoot - sideArt.walkTop) / sideArt.visibleHeights[direction];
+        const pose = sample(image, SIDE_FRAMES - 1, SIDE_FRAMES, poseH, a.torso, a.foot);
+        let best = Infinity;
+        walk.forEach((pixels, frame) => {
+          let error = 0;
+          for (let p = Math.floor(h * 0.53) * w * 4; p < pixels.length; p += 4) {
+            error += Math.abs(pose[p + 3] - pixels[p + 3]);
+            if (pose[p + 3] > 100 && pixels[p + 3] > 100)
+              error += 0.05 * (Math.abs(pose[p] - pixels[p]) + Math.abs(pose[p + 1] - pixels[p + 1]) + Math.abs(pose[p + 2] - pixels[p + 2]));
+          }
+          if (error < best) { best = error; sideHandoffFrames[direction] = frame; }
+        });
+      });
+    } catch (_) { /* The normal walking cycle remains a safe fallback. */ }
   }
 
   /* layout:start
@@ -1292,27 +1380,7 @@ let shutterMix = 0;
     clock += dt;
     syncNight(dt);
     updateRain(dt, true);
-    // Smoothstep gives a predictable start and finish without position pops.
-    if (laneTime < laneDuration) {
-      laneTime = Math.min(laneDuration, laneTime + dt);
-      const t = laneTime / laneDuration;
-      const eased = t * t * (3 - 2 * t);
-      lane = laneStart + (target - laneStart) * eased;
-    } else {
-      lane = target;
-    }
-    const moving = laneTime < laneDuration;
-    const phase = moving ? laneTime / laneDuration : 1;
-    const desiredLean = moving
-      ? Math.sign(target - laneStart) * MAX_LANE_LEAN * Math.sin(Math.PI * phase)
-      : 0;
-    // Gentle damping also handles quick direction reversals.
-    laneLean += (desiredLean - laneLean) * (1 - Math.exp(-dt / 0.075));
-    if (!moving && Math.abs(laneLean) < 0.0001) laneLean = 0;
-    if (sideAnimTime < SIDE_ANIM_SECONDS) {
-      sideAnimTime = Math.min(SIDE_ANIM_SECONDS, sideAnimTime + dt);
-      if (sideAnimTime >= SIDE_ANIM_SECONDS) sideAnimDir = 0;
-    }
+    updateGaryLane(dt);
     grinTimer = Math.max(0, grinTimer - dt);
     updateWalkAnimation(dt);
 
@@ -1570,6 +1638,7 @@ let shutterMix = 0;
   }
 
   function updateWalkAnimation(dt) {
+    if (sideAnimDir && sideAnimTime < SIDE_ANIM_SECONDS) return;
     if (grinTimer > 0 && imgCheer.ready) return;
     runTimer += dt;
     while (runTimer >= WALK_FRAME_TIME) {
@@ -1636,7 +1705,7 @@ let shutterMix = 0;
 
     ctx.save(); ctx.translate(px,py);
     const isCrashing=state.startsWith('crash');
-    const direction=sideAnimDir;
+    const direction=sideAnimDir || (view.sideTime < SIDE_ANIM_SECONDS ? previous.sideDir : 0);
     const image=direction<0?imgSideLeft:direction>0?imgSideRight:null;
     const pose=state==='play' && !isCrashing &&
       view.sideTime<SIDE_ANIM_SECONDS && image && image.ready;
@@ -2166,11 +2235,11 @@ drawRainSplashes();
 
   /* Fixed simulation and interpolated presentation. Collision always reads the
      authoritative lane/distance, never this view or a sprite silhouette. */
-  const previous = {lane:1,distance:0,clock:0,lean:0,sideTime:SIDE_ANIM_SECONDS};
+  const previous = {lane:1,distance:0,clock:0,lean:0,sideTime:SIDE_ANIM_SECONDS,sideDir:0};
   const view = {lane:1,distance:0,scrollY:0,clock:0,lean:0,sideTime:SIDE_ANIM_SECONDS,alpha:1};
   function rememberPositions() {
     previous.lane=lane; previous.distance=distance; previous.clock=clock;
-    previous.lean=laneLean; previous.sideTime=sideAnimTime;
+    previous.lean=laneLean; previous.sideTime=sideAnimTime; previous.sideDir=sideAnimDir;
     for (const o of objs) o.previousY=o.y;
     for (const o of stars) { o.previousX=o.x; o.previousY=o.y; }
     for (const o of streaks) { o.previousX=o.x; o.previousY=o.y; }

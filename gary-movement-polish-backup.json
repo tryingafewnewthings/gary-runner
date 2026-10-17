@@ -1,0 +1,14 @@
+{
+  "previousCommit": "bf171d0333d75e1bcd95f2cf4ea5b93b153960ed",
+  "installer": "GaryMovementPolish20261017V1",
+  "files": [
+    {
+      "path": "game-runtime.js",
+      "sha": "6e04b90989e8044943ea65026a48975fab3eb268"
+    },
+    {
+      "path": "index.html",
+      "sha": "4b443cbec96f1937496fc74a4ebcc7dc0b8bd2fa"
+    }
+  ]
+}
