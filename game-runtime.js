@@ -262,6 +262,84 @@ let shutterMix = 0;
     return {reset,begin,update,camera,pose,screen,finish,pause,resume,prepareAudio};
   })();
 
+  // GaryAssetGate20261017: do not expose a playable street until its artwork is decoded.
+  let startupReady = false, startupPreparing = false;
+  const decodedStartupImages = new WeakSet();
+  const failedStartupImages = new WeakSet();
+  const STARTUP_TIMEOUT_MS = 45000;
+
+  async function prepareStartupImage(image) {
+    if (decodedStartupImages.has(image)) return;
+    const file = image.src;
+    await new Promise((resolve, reject) => {
+      let settled = false;
+      const timeout = setTimeout(() => finish(Error('Artwork timed out')), STARTUP_TIMEOUT_MS);
+      function finish(error) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        image.removeEventListener('load', loaded);
+        image.removeEventListener('error', failed);
+        if (error) { failedStartupImages.add(image); reject(error); }
+        else { failedStartupImages.delete(image); resolve(); }
+      }
+      async function loaded() {
+        try {
+          if (!image.naturalWidth) throw Error('Artwork unavailable');
+          if (image.decode) await image.decode();
+          finish();
+        } catch (error) { finish(error); }
+      }
+      function failed() { finish(Error('Artwork unavailable')); }
+      image.addEventListener('load', loaded);
+      image.addEventListener('error', failed);
+      if (image.complete && image.naturalWidth) loaded();
+      else if (image.complete || failedStartupImages.has(image)) {
+        // A failed download must be requested again, rather than waiting for an event already fired.
+        const retry = new URL(file, location.href);
+        retry.searchParams.set('artworkRetry', Date.now());
+        image.src = retry.href;
+      }
+    });
+    decodedStartupImages.add(image);
+  }
+
+  async function prepareStartup() {
+    if (startupPreparing || startupReady) return;
+    startupPreparing = true;
+    const button = $('startBtn'), status = $('startupStatus');
+    button.disabled = true; button.textContent = 'Loading Gary…';
+    status.textContent = 'Getting the high street ready…';
+    try {
+      const images = [...new Set([
+        imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight,
+        imgCheer, imgCrash, ...imgRun, ...Object.values(cobbleImgs),
+        ...PROPS.map(prop => prop.img), ...Object.values(itemImages)
+      ].filter(Boolean))];
+      let loaded = 0;
+      const results = await Promise.allSettled(images.map(async image => {
+        await prepareStartupImage(image);
+        status.textContent = 'Preparing artwork ' + (++loaded) + ' / ' + images.length + '…';
+      }));
+      if (results.some(result => result.status === 'rejected') ||
+          !imgWalkSheet.ready || !streetLoaded || !garyIntroLoaded ||
+          !imgSideLeft.ready || !imgSideRight.ready) throw Error('Artwork unavailable');
+      // Drop only stale network messages for images now successfully decoded.
+      loadErrorLog = loadErrorLog.filter(message => !images.some(image =>
+        decodedStartupImages.has(image) && message === new URL(image.src, location.href).pathname.split('/').pop() + ' not found'));
+      startupReady = true;
+      simulation.reset();
+      button.textContent = 'Play Game';
+      status.textContent = 'Ready. Let’s give it a go.';
+    } catch (_) {
+      button.textContent = 'Try again';
+      status.textContent = 'Some artwork could not load. Check your connection and tap Try again.';
+    } finally {
+      startupPreparing = false;
+      button.disabled = false;
+    }
+  }
+
   function loadGary(file, validate) {
     const img = new Image();
     img.onload = () => { img.ready = validate ? validate(img) : true; };
@@ -1365,7 +1443,7 @@ let shutterMix = 0;
     }catch(e){}
   }
   function startGameplay(){
-    if (state !== 'intro') return;
+    if (state !== 'intro' || !startupReady) return;
     introAttempt++;
     clearTimeout(introFallbackTimer);
     introFallbackTimer = null;
@@ -2518,6 +2596,7 @@ drawRainSplashes();
 
   $('startBtn').addEventListener('click', e => {
     if (state !== 'menu') return;
+    if (!startupReady) { prepareStartup(); return; }
     e.currentTarget.blur();
     initAudio();
     reset();
@@ -2561,7 +2640,7 @@ drawRainSplashes();
   }
 
   function loop(ts) {
-    if (!document.hidden) {
+    if (!document.hidden && startupReady) {
       const alpha = simulation.frame(ts, fixedUpdate);
       prepareView(alpha);
       handlers[state].render();
@@ -2572,5 +2651,6 @@ drawRainSplashes();
   addEventListener('resize',resize);
   resize();
   rememberPositions(); prepareView(1);
+  prepareStartup();
   requestAnimationFrame(loop);
 })();

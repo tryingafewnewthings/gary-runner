@@ -1,0 +1,14 @@
+{
+  "previousCommit": "a96764471751d04ed363315c08799ea15c4edbd5",
+  "installer": "GaryAssetGate20261017",
+  "files": [
+    {
+      "path": "game-runtime.js",
+      "sha": "fb08f86798883d40818f5f54ee683b4c5199e150"
+    },
+    {
+      "path": "index.html",
+      "sha": "c96eee4c01e3672828b51b4c315735e81539fef0"
+    }
+  ]
+}

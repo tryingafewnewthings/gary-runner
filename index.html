@@ -32,6 +32,7 @@
       font-size: 1.05rem; font-weight: 900; border-radius: 32px; cursor: pointer;
       text-transform: uppercase; box-shadow: 0 6px 24px rgba(255,230,0,0.35);
     }
+    button:disabled { opacity:.6;cursor:wait;box-shadow:none; }
     button:active { transform: scale(0.96); background: #e5ce00; }
     #pauseBtn { position:absolute;top:80px;right:12px;z-index:5;padding:9px 15px;font-size:.75rem;box-shadow:none; }
     #pauseBtn[hidden] { display:none; }
@@ -87,7 +88,8 @@
       <img class="profile-img" src="gary_closed.png.PNG" alt="Gary" onerror="this.src='gary_open.png.PNG'">
       <h1>Gary Eats!</h1>
       <p>Navigate the high street, dodge hazards, and collect proper decent grub. Stay out after dark. The rain finds the street.</p>
-      <button id="startBtn">Play Game</button>
+      <button id="startBtn" disabled>Loading Gary…</button>
+      <p id="startupStatus" role="status" aria-live="polite" style="font-size:.82rem;margin:14px 0 0;color:#b7c5d5">Getting the high street ready…</p>
     </div>
 
     <div id="introOverlay" class="overlay">
@@ -117,6 +119,6 @@
 <!-- GarySidestepNoGhostPrevious=game-sidestep-smooth.js?v=1 -->
 <!-- GARY_PICKUP_SFX_INDEX_V1: game-sidestep-no-ghost.js -->
 <script src="gary-crash-config.js?v=crashaudio20261017v1-f90dcf41252f"></script>
-<script src="game-runtime.js?v=crashaudio20261017v1-f90dcf41252f"></script>
+<script src="game-runtime.js?v=assetgate20261017v1"></script>
 </body>
 </html>
