@@ -1,0 +1,114 @@
+{
+  "kind": "gary-repo-cleanup-v1",
+  "repository": "tryingafewnewthings/gary-runner",
+  "branch": "main",
+  "previousHead": "57d189af4c8e31407526a7e4ac0b8986e66dcd7f",
+  "previousTree": "24daaa2454a39d06b53f106a0ae83405d35c0592",
+  "files": [
+    {
+      "path": "Gary_Eats_One_Button_Installer.html",
+      "sha": "e6f62b3ad4a2e360b8da4d4ee2780f30c9451d99",
+      "size": 15113
+    },
+    {
+      "path": "Gary_Eats_Smooth_Sidestep_Installer.html",
+      "sha": "80bd64d5c328fbd4fc514ebd9a61f1083f3520d0",
+      "size": 14896
+    },
+    {
+      "path": "Gary_Eats_Visible_Sidestep_Fix.html",
+      "sha": "ad2201bb9304d6494df29e42d02cb87a3f8e4c64",
+      "size": 12466
+    },
+    {
+      "path": "gary-approved-sidestep-installer.html",
+      "sha": "18c7b3689d73e1cf930ca656008c474e1edd76de",
+      "size": 2697681
+    },
+    {
+      "path": "gary-artwork-loading-fix-installer.html",
+      "sha": "67ccc0494db0b1b53d25191f385ad55b917f7f44",
+      "size": 15422
+    },
+    {
+      "path": "gary-cinematic-installer.html",
+      "sha": "0de2207614ee337f17b95006d320f67857eeb41b",
+      "size": 20796
+    },
+    {
+      "path": "gary-cobblestone-60px-installer.html",
+      "sha": "12e106d1dce0f61253f035ea005714d15497b021",
+      "size": 14121
+    },
+    {
+      "path": "gary-crash-audio-fix-installer.html",
+      "sha": "b8cc02ba9b61383dbaaa65e397adcd4f38e41eb1",
+      "size": 8019
+    },
+    {
+      "path": "gary-crash-cinematic-installer.html",
+      "sha": "78d73a03b7cd4d177cc18ff7846ace76ba8b420e",
+      "size": 16174
+    },
+    {
+      "path": "gary-last-orders-installer.html",
+      "sha": "0c48b7f52d920a81d8d71177c005f07c5933a0e4",
+      "size": 3130179
+    },
+    {
+      "path": "gary-movement-polish-installer.html",
+      "sha": "5650386396ff07efa0569c7a9e6ec762f6366b7f",
+      "size": 14011
+    },
+    {
+      "path": "gary-pickup-audio-installer.html",
+      "sha": "d3d63822d507412e92aafe8785480847d19740af",
+      "size": 14559
+    },
+    {
+      "path": "gary-pigeon-cobbles-installer.html",
+      "sha": "0dd843a4aa853297d1d57449c021314dfbab7502",
+      "size": 13711
+    },
+    {
+      "path": "gary-pigeon-installer.html",
+      "sha": "4c9931db66628c67f315b9dc6983d452332aa6f0",
+      "size": 972834
+    },
+    {
+      "path": "gary-professional-runtime-installer.html",
+      "sha": "f52320317f0722afc1579f5967ac6a5a450e0e24",
+      "size": 218384
+    },
+    {
+      "path": "gary-remove-landing-ring.html",
+      "sha": "ebd04b526ef0c44d0996a03465de383ced086967",
+      "size": 7246
+    },
+    {
+      "path": "gary-sidestep-installer.html",
+      "sha": "55f16ff6db421f0e603f4662422742aa9e1835bb",
+      "size": 2503797
+    },
+    {
+      "path": "gary-sidestep-no-ghost-installer.html",
+      "sha": "21599f0393d03201cdc0991e931053d81cba654b",
+      "size": 13870
+    },
+    {
+      "path": "gary-sidestep-smooth-installer.html",
+      "sha": "7663fa58b9091a08bf60402062cd8844fc95e30c",
+      "size": 14716
+    },
+    {
+      "path": "gary-six-frame-width-installer.html",
+      "sha": "f7340715b0105c6ee21bd8d8cd38e8c05d703365",
+      "size": 3339517
+    },
+    {
+      "path": "gary-smooth-startup-installer.html",
+      "sha": "8cba6df84fd786bbde918d43fa3574271adcbdaa",
+      "size": 16729
+    }
+  ]
+}
