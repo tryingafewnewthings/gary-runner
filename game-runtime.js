@@ -113,66 +113,84 @@ let shutterMix = 0;
   /* Gary assets                                                                */
   /* -------------------------------------------------------------------------- */
 
-  // GaryPigeon20261017V1 — decorative, fixed-step birds; no collision or score effects.
+  // GaryPigeon20261017V2 — cobble-only, two-dimensional decorative movement.
   const pigeons = (() => {
     const sheet = new Image();
-    let ready = false, seed = 27183;
-    // Original PNG is retained. Crop out transparent padding, never redraw the art.
-    const feet = [514,518,515,516,519,517];
-    const birds = Array.from({length:3}, () => ({x:0,previousX:0,z:0,dir:1,timer:0,walking:true,phase:0,fleeing:false}));
-    function random() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; }
-    function place(b,z) {
-      b.x=ROAD_LEFT+24+random()*(ROAD_WIDTH-48); b.previousX=b.x; b.z=z;
-      b.dir=random()<0.5?-1:1; b.timer=0.6+random()*1.1; b.walking=true; b.phase=0; b.fleeing=false;
+    let ready=false, seed=27183;
+    const feet=[514,518,515,516,519,517];
+    const birds=Array.from({length:3},()=>({segment:0,side:0,x:0,y:0,previousX:0,previousY:0,vx:0,vy:0,dx:1,dy:0,dir:1,timer:0,walking:true,phase:0,alert:0,cooldown:0}));
+    function random(){seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)/4294967296;}
+    // Empty shop footprints are exposed cobbles. Keep clear of each segment's
+    // prop/detail zone, the kerbs and all three playable lanes.
+    const leftMin=18,leftMax=ROAD_LEFT-19,rightMin=ROAD_RIGHT+19,rightMax=W-18;
+    const top=32,bottom=BUILDING_H-12;
+    function heading(b){const angle=random()*Math.PI*2;b.dx=Math.cos(angle);b.dy=Math.sin(angle);}
+    function place(b,from){
+      let segment=from,side=-1;
+      for(let n=0;n<STREET.length;n++,segment++){
+        const plan=STREET[segment%STREET.length];
+        const l=!plan.left||plan.left==='none',r=!plan.right||plan.right==='none';
+        if(l||r){side=l&&r?(random()<0.5?0:1):(l?0:1);break;}
+      }
+      b.segment=segment;b.side=side;
+      const low=side===0?leftMin:rightMin,high=side===0?leftMax:rightMax;
+      b.x=low+(high-low)*(0.25+random()*0.5);b.y=top+(bottom-top)*(0.25+random()*0.5);
+      b.previousX=b.x;b.previousY=b.y;b.vx=b.vy=0;
+      b.walking=true;b.timer=0.7+random()*1.3;b.phase=b.alert=b.cooldown=0;
+      heading(b);b.dir=b.dx<0?-1:1;
     }
-    function reset() { seed=27183; birds.forEach((b,i)=>place(b,-240+i*820)); }
-    sheet.onload=async()=>{
-      if(sheet.naturalWidth!==2172 || sheet.naturalHeight!==724)return;
-      try { if(sheet.decode)await sheet.decode(); ready=true; } catch(_) { ready=false; }
-    };
-    sheet.onerror=()=>{ready=false;};
-    sheet.src='gary-pigeon-walk.png?v=pigeon20261017v1';
-    function remember() { for(const b of birds)b.previousX=b.x; }
-    function update(dt) {
+    function reset(){seed=27183;let segment=0;for(const b of birds){place(b,segment);segment=b.segment+2;}}
+    sheet.onload=async()=>{if(sheet.naturalWidth!==2172||sheet.naturalHeight!==724)return;try{if(sheet.decode)await sheet.decode();ready=true;}catch(_){ready=false;}};
+    sheet.onerror=()=>{ready=false;};sheet.src='gary-pigeon-walk.png?v=pigeon20261017v1';
+    function remember(){for(const b of birds){b.previousX=b.x;b.previousY=b.y;}}
+    function update(dt){
       if(!ready)return;
       for(const b of birds){
-        const y=distance-b.z;
-        if(y>H+48){
-          let furthest=distance; for(const other of birds)furthest=Math.max(furthest,other.z);
-          place(b,furthest+700+random()*300); continue;
+        if(b.side<0)continue;
+        const baseY=distance-b.segment*STREET_SEGMENT_H+STREET_SEGMENT_H-56;
+        if(baseY+top>H+48){
+          let next=Math.max(0,Math.floor((distance+56)/STREET_SEGMENT_H)+2);
+          for(const other of birds)next=Math.max(next,other.segment+2);
+          place(b,next);continue;
         }
-        if(y < -48)continue;
-        if(!b.fleeing && y>PLAYER_Y-145 && y<PLAYER_Y+15 && Math.abs(b.x-lx(lane))<70){
-          b.fleeing=true; b.walking=true; b.dir=b.x<CX?-1:1;
+        const y=baseY+b.y;if(y < -48)continue;
+        b.cooldown=Math.max(0,b.cooldown-dt);
+        if(b.alert<=0&&b.cooldown<=0&&Math.abs(y-PLAYER_Y)<145&&Math.abs(b.x-lx(lane))<100){
+          b.alert=1.1;b.cooldown=3;b.walking=true;
+          b.dx=b.side===0?-0.6:0.6;b.dy=y<PLAYER_Y?-0.8:0.8;
         }
-        if(!b.fleeing){
-          b.timer-=dt;
-          if(b.timer<=0){b.walking=!b.walking;b.timer=b.walking?0.7+random()*1.2:0.4+random()*0.8;if(b.walking&&random()<0.3)b.dir*=-1;}
-        }
-        if(b.walking){
-          const speed=b.fleeing?85:11;
-          b.x+=b.dir*speed*dt; b.phase+=dt*(b.fleeing?14:8);
-          const left=b.fleeing?ROAD_LEFT-5:ROAD_LEFT+16;
-          const right=b.fleeing?ROAD_RIGHT+5:ROAD_RIGHT-16;
-          if(b.x<left || b.x>right){b.x=Math.max(left,Math.min(right,b.x));if(b.fleeing)b.walking=false;else b.dir*=-1;}
-        }
+        if(b.alert>0){b.alert=Math.max(0,b.alert-dt);if(b.alert===0){b.walking=false;b.timer=0.65;}}
+        else {b.timer-=dt;if(b.timer<=0){b.walking=!b.walking;b.timer=b.walking?0.8+random()*1.6:0.5+random()*0.9;if(b.walking)heading(b);}}
+        const speed=b.walking?(b.alert>0?42:12):0;
+        const ease=Math.min(1,dt*10);
+        b.vx+=(b.dx*speed-b.vx)*ease;b.vy+=(b.dy*speed-b.vy)*ease;
+        b.x+=b.vx*dt;b.y+=b.vy*dt;
+        const low=b.side===0?leftMin:rightMin,high=b.side===0?leftMax:rightMax;
+        if(b.x<low){b.x=low;b.vx=0;if(b.alert<=0)b.dx=Math.abs(b.dx);}
+        if(b.x>high){b.x=high;b.vx=0;if(b.alert<=0)b.dx=-Math.abs(b.dx);}
+        if(b.y<top){b.y=top;b.vy=0;if(b.alert<=0)b.dy=Math.abs(b.dy);}
+        if(b.y>bottom){b.y=bottom;b.vy=0;if(b.alert<=0)b.dy=-Math.abs(b.dy);}
+        if(Math.abs(b.vx)>0.8)b.dir=b.vx<0?-1:1;
+        // Frame rate follows ground travel, including vertical movement.
+        b.phase+=Math.hypot(b.vx,b.vy)*dt*0.65;
       }
     }
-    function draw() {
-      if(!ready || state==='menu' || state==='intro' || state==='intro_transition')return;
+    function draw(){
+      if(!ready||state==='menu'||state==='intro'||state==='intro_transition')return;
       for(const b of birds){
-        const y=view.distance-b.z; if(y < -32 || y>H+32)continue;
-        const x=lerp(b.previousX,b.x,view.alpha),frame=b.walking?Math.floor(b.phase)%6:0;
-        const scale=0.078; // ~26px visible width, ~23px high at the 360px design size.
+        if(b.side<0)continue;
+        const y=view.distance-b.segment*STREET_SEGMENT_H+STREET_SEGMENT_H-56+lerp(b.previousY,b.y,view.alpha);
+        if(y < -32||y>H+32)continue;
+        const x=lerp(b.previousX,b.x,view.alpha),moving=Math.hypot(b.vx,b.vy)>0.7;
+        const frame=moving?Math.floor(b.phase)%6:0,scale=0.078;
         ctx.save();ctx.translate(x,y);
-        ctx.fillStyle='rgba(12,17,23,.19)';ctx.beginPath();ctx.ellipse(0,-1,9,2.3,0,0,Math.PI*2);ctx.fill();
-        ctx.scale(b.dir,1);
+        ctx.fillStyle='rgba(12,17,23,.12)';ctx.beginPath();ctx.ellipse(0,-1,9,2.3,0,0,Math.PI*2);ctx.fill();
+        ctx.globalAlpha*=0.78;ctx.scale(b.dir,1);
         ctx.drawImage(sheet,frame*362,220,362,304,-181*scale,(220-feet[frame])*scale,362*scale,304*scale);
         ctx.restore();
       }
     }
-    reset();
-    return {reset,remember,update,draw};
+    reset();return {reset,remember,update,draw};
   })();
 
   function loadGary(file, validate) {

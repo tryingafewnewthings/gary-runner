@@ -1,0 +1,14 @@
+{
+  "previousCommit": "af3d4c8a489f3d1de0d56baf65794fe272bdcb41",
+  "installer": "GaryPigeon20261017V2",
+  "files": [
+    {
+      "path": "game-runtime.js",
+      "sha": "bdca1aca12e93cedd82833ee29ebb87a803609b3"
+    },
+    {
+      "path": "index.html",
+      "sha": "05d56202b48aba6c30c27280596b6349cffc0723"
+    }
+  ]
+}
