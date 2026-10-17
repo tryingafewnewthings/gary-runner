@@ -4,8 +4,7 @@
    * Active runtime: fixed simulation, interpolated rendering, pooled entities and guarded states.
    * PROJECT_STATE.md owns priorities; STYLE.txt owns visual approval.
    * All authored geometry, atlas crops and item definitions live in game-data.js.
-   * DEVELOPMENT_PLAN is a specification only: dialogue and the lantern are
-   * not active yet. Heavy rain is live. It builds after a settled night.
+   * Cutscene Studio V3 owns dialogue; planned item handovers are not active. Heavy rain is live. It builds after a settled night.
    *
    * Reading map: setup -> assets -> street rendering -> procedural item art ->
    * run lifecycle -> safe row spawning -> collection/rating -> audio -> update ->
@@ -268,6 +267,23 @@ let shutterMix = 0;
   const imgMystery = loadGary(mysterySpec.file, img => validateSheet(img, 'Hooded bench',
     mysterySpec.columns, mysterySpec.rows, mysterySpec.frameWidth, mysterySpec.frameHeight));
 
+  // GaryCutsceneStudioV3: safe, reusable one-third narrative banners.
+  const cutscenes = window.GaryCutscene.createManager({host:stage,onComplete:finishCutscene});
+  window.GaryCutscenes = Object.freeze({signal:name=>cutscenes.signal(name),setStage:name=>cutscenes.setStage(name)});
+  const cutsceneWorld={stage:'high-street',distance:0,elapsed:0,playerY:PLAYER_Y+WORLD.playerFootOffset,
+    hazardsClear:true,actors:[{id:'hooded-reader',footY:-Infinity,ready:false,introComplete:false}]};
+  function sampleCutsceneWorld(clear){
+    cutsceneWorld.stage=mystery.quiet()?'forgotten-road':rainMix>.5?'rainy-high-street':nightMix>.5?'night-high-street':'high-street';
+    cutsceneWorld.distance=distance;cutsceneWorld.elapsed=playTime;cutsceneWorld.hazardsClear=clear;
+    const actor=cutsceneWorld.actors[0];actor.footY=mystery.footAt(distance);actor.ready=imgMystery.ready;
+    actor.introComplete=mystery.frame()>=6 && mystery.snapshot().time>=4.1;
+    return cutsceneWorld;
+  }
+  function finishCutscene(){
+    roadQueue=[];acc=0;lastLanes=['none','none','none'];gap=LEARN_GAP;nearCd=1.5;
+    shownSpeed=Math.min(shownSpeed,mysterySpec.slowSpeed);
+    transition('play');musicTo(MUSIC_VOL,1.2);
+  }
   // GaryAssetGate20261017: do not expose a playable street until its artwork is decoded.
   let startupReady = false, startupPreparing = false;
   const decodedStartupImages = new WeakSet();
@@ -336,6 +352,8 @@ let shutterMix = 0;
       status.textContent = 'Preparing the changing street…';
       await window.GaryRoadEvolution?.prepare();
       window.GaryRoadEvolution?.warm(ctx);
+      status.textContent = 'Preparing the story…';
+      await cutscenes.prepare();
       startupReady = true;
       simulation.reset();
       button.textContent = 'Play Game';
@@ -1047,6 +1065,7 @@ let shutterMix = 0;
   function reset() {
     crashScene.reset();
     mystery.reset();
+    cutscenes.reset();
     window.GaryRoadEvolution?.reset();
     window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
@@ -1579,7 +1598,7 @@ let shutterMix = 0;
   }
   function suspend() {
     simulation.reset();
-    if (state === 'play' || state === 'intro' || state === 'intro_transition' || state.startsWith('crash')) {
+    if (state === 'play' || state === 'cutscene' || state === 'intro' || state === 'intro_transition' || state.startsWith('crash')) {
       pausedFrom = state;
       transition('paused');
     }
@@ -1636,6 +1655,10 @@ let shutterMix = 0;
     mystery.update(dt, distance, rainMix, shutterMix, hazardsClear,
       imgMystery.ready && (!ground || ground.encounterReady()));
     if (mystery.quiet()) ground?.trigger(distance, mystery.footAt(distance));
+    sampleCutsceneWorld(hazardsClear);cutscenes.prewarm(cutsceneWorld);
+    if(cutscenes.tryStart(cutsceneWorld)){transition('cutscene');return;}
+    const sceneQuiet=cutscenes.quiet(cutsceneWorld);
+    const waitForBenchIntro=mystery.quiet()&&hazardsClear&&mystery.footAt(distance)>=cutsceneWorld.playerY&&!cutsceneWorld.actors[0].introComplete;
     if (wasQuiet && !mystery.quiet()) {
       // Fresh, safe lead-in after the cameo; never release a backlog of rows.
       roadQueue = []; acc = 0; lastLanes = ['none','none','none']; gap = LEARN_GAP;
@@ -1663,7 +1686,7 @@ let shutterMix = 0;
     const normalSpeed = Math.min(300, 200 + Math.floor(score / 150) * 10);
     const desiredSpeed = mystery.slow(distance, hazardsClear) ? mysterySpec.slowSpeed : normalSpeed;
     shownSpeed += (desiredSpeed - shownSpeed) * Math.min(1, dt * 0.7);
-    const speed = shownSpeed;
+    const speed = waitForBenchIntro ? 0 : shownSpeed;
     nearCd = Math.max(0, nearCd - dt);
     flash = Math.max(0, flash - dt);
     if (review > 0) {
@@ -1676,10 +1699,10 @@ let shutterMix = 0;
     pigeons.update(dt);
     updateShopClosures();
     performance.distance = distance;
-    if (mystery.quiet()) acc = 0;
+    if (mystery.quiet() || sceneQuiet) acc = 0;
     else acc += dt;
     let spawned = 0;
-    while (!mystery.quiet() && acc >= gap && spawned < 3) {
+    while (!mystery.quiet() && !sceneQuiet && acc >= gap && spawned < 3) {
       const elapsedGap = gap;
       if (!spawnRow()) break;
       acc -= elapsedGap;
@@ -2519,7 +2542,7 @@ function updateRain(dt, advancing) {
     if (nightOn) drawNightVignette();
 
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
-      if(!state.startsWith('crash')){drawHud();drawCap();}
+      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();}
       crashScene.screen();
     }
     drawDiagnostics();
@@ -2583,14 +2606,15 @@ function updateRain(dt, advancing) {
         transition('play'); musicTo(MUSIC_VOL,2);
       }
     }},
-    play: {next:['crash_m','crash_fork','paused'],update:updatePlay,render:paint,
+    play: {next:['crash_m','crash_fork','paused','cutscene'],update:updatePlay,render:paint,
       enter:()=>{$('pauseBtn').hidden=false;window.GaryFoodCatalogue?.setPlaying?.(true);},
       exit:()=>{$('pauseBtn').hidden=true;window.GaryFoodCatalogue?.setPlaying?.(false);}},
+    cutscene: {next:['play','paused'],render:paint,enter:()=>{cutscenes.enter();musicTo(.025,.5);},exit:()=>cutscenes.pause(),update:dt=>{setRainVolume(rainMix,dt);cutscenes.update(dt);}},
     crash_m: {next:['over','paused'],update:updateCrash,render:paint},
     crash_fork: {next:['over','paused'],update:updateCrash,render:paint},
     over: {next:['menu'],update:idleUpdate,render:paint,
       enter:()=>{$('over').classList.add('show');},exit:()=>{$('over').classList.remove('show');}},
-    paused: {next:['intro','intro_transition','play','crash_m','crash_fork'],update:idleUpdate,render:()=>{},
+    paused: {next:['intro','intro_transition','play','cutscene','crash_m','crash_fork'],update:idleUpdate,render:()=>{},
       enter:()=>{$('pauseOverlay').classList.add('show');},exit:()=>{$('pauseOverlay').classList.remove('show');}}
   };
   function transition(next) {

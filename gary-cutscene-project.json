@@ -1,0 +1,250 @@
+{
+  "version": 3,
+  "title": "Gary Eats! Story",
+  "assets": [
+    {
+      "id": "gary-talk",
+      "name": "Gary talking",
+      "src": "art/cutscene01/gary-talking.webp",
+      "cols": 3,
+      "rows": 2,
+      "bodyHeight": 768,
+      "top": 64,
+      "anchorX": 256
+    },
+    {
+      "id": "stranger-paper",
+      "name": "Stranger newspaper",
+      "src": "art/cutscene01/stranger-newspaper.webp",
+      "cols": 3,
+      "rows": 2,
+      "bodyHeight": 768,
+      "top": 64,
+      "anchorX": 256
+    },
+    {
+      "id": "meeting-world",
+      "name": "Bench meeting background",
+      "src": "art/cutscene01/meeting-background.webp",
+      "cols": 1,
+      "rows": 1
+    }
+  ],
+  "actors": [
+    {
+      "id": "gary",
+      "name": "GARY",
+      "asset": "gary-talk",
+      "idle": 0,
+      "talk": [
+        1,
+        2,
+        3
+      ],
+      "portraitScale": 230
+    },
+    {
+      "id": "stranger",
+      "name": "STRANGER",
+      "asset": "stranger-paper",
+      "idle": 0,
+      "talk": [],
+      "portraitScale": 230
+    }
+  ],
+  "scenes": [
+    {
+      "id": "first-bench-meeting",
+      "name": "First bench meeting",
+      "enabled": true,
+      "background": "meeting-world",
+      "left": "stranger",
+      "right": "gary",
+      "height": 0.3333333333333333,
+      "position": "middle",
+      "dim": 0.2,
+      "typeSpeed": 32,
+      "trigger": {
+        "type": "alignment",
+        "stage": "forgotten-road",
+        "actorId": "hooded-reader",
+        "value": 0,
+        "event": ""
+      },
+      "lines": [
+        {
+          "id": "beat-1",
+          "actor": "gary",
+          "text": "Evening. Don’t suppose there’s anywhere still serving?",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 0
+          }
+        },
+        {
+          "id": "beat-2",
+          "actor": "stranger",
+          "text": "Nothing along here now.",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 0
+          }
+        },
+        {
+          "id": "beat-3",
+          "actor": "gary",
+          "text": "You’re telling me. I’ve reviewed three shutters and a bus stop.",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 0
+          }
+        },
+        {
+          "id": "beat-4",
+          "actor": "stranger",
+          "text": "You shouldn’t be on this road after closing.",
+          "pause": 0.32,
+          "animate": true,
+          "poses": {
+            "stranger": 1
+          }
+        },
+        {
+          "id": "beat-5",
+          "actor": "gary",
+          "text": "Closing? It’s a road.",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 1
+          }
+        },
+        {
+          "id": "beat-6",
+          "actor": "stranger",
+          "text": "Used to be.",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 1
+          }
+        },
+        {
+          "id": "beat-7",
+          "actor": "gary",
+          "text": "Right… Well, I was only looking for somewhere to eat.",
+          "pause": 0.7,
+          "animate": true,
+          "poses": {
+            "stranger": 1
+          }
+        },
+        {
+          "id": "beat-8",
+          "actor": "stranger",
+          "text": "Through the bridge. Follow the road past the trees.",
+          "pause": 0.42,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          },
+          "transitions": {
+            "stranger": [
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "id": "beat-9",
+          "actor": "gary",
+          "text": "There’s somewhere out there?",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          }
+        },
+        {
+          "id": "beat-10",
+          "actor": "stranger",
+          "text": "You’ll see the lights.",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          }
+        },
+        {
+          "id": "beat-11",
+          "actor": "gary",
+          "text": "And they’ll still be serving?",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          }
+        },
+        {
+          "id": "beat-12",
+          "actor": "stranger",
+          "text": "They will tonight.",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          }
+        },
+        {
+          "id": "beat-13",
+          "actor": "gary",
+          "text": "Well, I’m not getting much round here.",
+          "pause": 0.55,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          }
+        },
+        {
+          "id": "beat-14",
+          "actor": "stranger",
+          "text": "Best keep moving.",
+          "pause": 0,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          }
+        },
+        {
+          "id": "beat-15",
+          "actor": "gary",
+          "text": "Cheers. Didn’t catch your name.",
+          "pause": 0.45,
+          "animate": true,
+          "poses": {
+            "stranger": 3
+          }
+        },
+        {
+          "id": "beat-16",
+          "actor": "gary",
+          "text": "Lovely. Very helpful. Mostly.",
+          "pause": 0.8,
+          "animate": true,
+          "poses": {
+            "stranger": 0
+          },
+          "transitions": {
+            "stranger": [
+              4,
+              0
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

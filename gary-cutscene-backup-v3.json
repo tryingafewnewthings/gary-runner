@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "base": "5c8cd1d7d95be5646a4ee7aa912c3e3248bbbb99",
+  "original": {
+    "game-runtime.js": "9f2836c0b817853887977529616e66538c4e348d",
+    "index.html": "84c232b96c636a3ba092e6261bdb3d34e11b6bba"
+  },
+  "installed": {
+    "game-runtime.js": "05f6d14cafb0adb8a588d024267102fd2244d792",
+    "index.html": "4faa5dbccffbbb04a4e597ab9f03ad2a4c5fdace"
+  },
+  "createdAt": "2026-10-17T22:33:54.987Z"
+}
