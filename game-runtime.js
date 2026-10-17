@@ -201,9 +201,10 @@ let shutterMix = 0;
     const sheet=spec.sheet?new Image():null;
     const columns=Math.max(1,Math.min(12,Number(spec.frames)||1));
     let sheetReady=false,buffer=null,source=null,voiceGain=null,voiceStarted=false,decoding=false;
-    let duration=2.15,previousTime=0,elapsed=0,active=false;
+    // GaryCrashAudioFix20261017V1: retry readiness; mark playback only after source.start succeeds.
+    let duration=2.15,previousTime=0,elapsed=0,active=false,voiceAt=0;
     // Fetch once, before a crash. No network or decode work in the crash update.
-    const bytes=spec.audio?fetch(spec.audio).then(r=>{if(!r.ok)throw Error('Voice unavailable');return r.arrayBuffer();}).catch(()=>null):Promise.resolve(null);
+    const bytes=spec.audio?fetch(spec.audio,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Voice unavailable');return r.arrayBuffer();}).catch(()=>null):Promise.resolve(null);
     if(sheet){sheet.onload=async()=>{try{if(sheet.naturalWidth%columns||!sheet.naturalHeight)return;if(sheet.decode)await sheet.decode();sheetReady=true;}catch(_){sheetReady=false;}};sheet.onerror=()=>{sheetReady=false;};sheet.src=spec.sheet;}
     async function prepareAudio(){
       if(!audioCtx||decoding||buffer)return;decoding=true;
@@ -211,15 +212,14 @@ let shutterMix = 0;
       finally{decoding=false;}
     }
     function stopVoice(){if(source){try{source.stop();}catch(_){}source.disconnect();source=null;}if(voiceGain){voiceGain.disconnect();voiceGain=null;}}
-    function reset(){stopVoice();active=false;elapsed=previousTime=0;voiceStarted=false;}
+    function reset(){stopVoice();active=false;elapsed=previousTime=0;voiceStarted=false;voiceAt=0;}
     function begin(){
       reset();active=true;duration=buffer?Math.min(6,Math.max(2.15,0.55+buffer.duration+0.4)):2.15;
       musicTo(0.035,0.2);
     }
     function playVoice(){
-      if(voiceStarted)return;voiceStarted=true;
-      if(!buffer||!audioCtx||audioCtx.state!=='running')return;
-      try{source=audioCtx.createBufferSource();source.buffer=buffer;voiceGain=audioCtx.createGain();voiceGain.gain.value=0.9;source.connect(voiceGain);voiceGain.connect(audioCtx.destination);source.start();}catch(_){stopVoice();}
+      if(voiceStarted||!buffer||!audioCtx||audioCtx.state!=='running')return;
+      try{source=audioCtx.createBufferSource();source.buffer=buffer;voiceGain=audioCtx.createGain();voiceGain.gain.value=0.9;source.connect(voiceGain);voiceGain.connect(audioCtx.destination);source.start();voiceStarted=true;voiceAt=elapsed;duration=Math.min(6,Math.max(duration,elapsed+buffer.duration+0.38));}catch(_){stopVoice();}
     }
     function update(dt){previousTime=elapsed;elapsed+=dt;if(elapsed>=0.5)playVoice();return elapsed>=duration;}
     function time(){return lerp(previousTime,elapsed,view.alpha);}
@@ -256,7 +256,7 @@ let shutterMix = 0;
     function pause(){stopVoice();}
     function resume(){
       if(!voiceStarted||!buffer||!audioCtx||elapsed<0.5)return;
-      const offset=elapsed-0.5;if(offset>=buffer.duration)return;
+      const offset=elapsed-voiceAt;if(offset>=buffer.duration)return;
       try{source=audioCtx.createBufferSource();source.buffer=buffer;voiceGain=audioCtx.createGain();voiceGain.gain.value=0.9;source.connect(voiceGain);voiceGain.connect(audioCtx.destination);source.start(0,offset);}catch(_){stopVoice();}
     }
     return {reset,begin,update,camera,pose,screen,finish,pause,resume,prepareAudio};

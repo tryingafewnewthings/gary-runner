@@ -1,0 +1,18 @@
+{
+  "previousCommit": "f90dcf41252f1f24aee8344e78f2854c7bb34700",
+  "installer": "GaryCrashAudioFix20261017V1",
+  "files": [
+    {
+      "path": "game-runtime.js",
+      "sha": "e829c4b82df929fecca9dd5e3bca2ac0ee7c106f"
+    },
+    {
+      "path": "index.html",
+      "sha": "9895bc1f6d1de88244da8bc6e0f4c2f323b55cdc"
+    },
+    {
+      "path": "gary-crash-config.js",
+      "sha": "c82617ba5a46a23badba4cd85b3346288f459123"
+    }
+  ]
+}
