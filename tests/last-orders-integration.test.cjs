@@ -26,9 +26,16 @@ test('actual engine: safe slowdown, all eight visible frames, pause, idle, resta
  const f=await boot();try{
  const {w}=f;await play(f);w.__test.ending();w.__test.hazard();
  w.__test.advance(1/60);assert.equal(w.__test.snapshot().speed>=199,true);
- const seen=new Set();let paused=false,idleTicks=0;
+ const seen=new Set();let paused=false,idleTicks=0,checkedGround=false;
  for(let i=0;i<2600;i++){
   w.__test.clear();w.__test.advance(1/60);const snap=w.__test.snapshot(),bench=w.__test.bench();
+  if(bench.foot>=0&&!checkedGround){
+   const c=w.document.createElement('canvas');c.width=360;c.height=640;const g=c.getContext('2d');
+   w.GaryRoadEvolution.drawCobbles(g,{x:0,y:0,w:105,h:640,distance:snap.distance});
+   const pixels=g.getImageData(0,0,102,640).data;let covered=0;
+   for(let k=3;k<pixels.length;k+=4)if(pixels[k]>=230)covered++;
+   assert.ok(covered/(102*640)>.95,'ground must already swallow the cobbles before bench entry');checkedGround=true;
+  }
   if(bench.foot>=196 && bench.foot<=640)seen.add(bench.frame);
   if(bench.frame>=6 && bench.foot>=196 && bench.foot<=640)idleTicks++;
   if(bench.frame===4&&!paused){
@@ -39,7 +46,7 @@ test('actual engine: safe slowdown, all eight visible frames, pause, idle, resta
   if(snap.mystery.passed){assert.equal(snap.objects,0);assert.equal(snap.state,'play');break;}
  }
  assert.deepEqual([...seen],[0,1,2,3,4,5,6,7]);assert.ok(idleTicks>=84,idleTicks+' idle ticks');assert.equal(paused,true);
- assert.equal(w.__test.snapshot().mystery.passed,true);assert.deepEqual(Array.from(w.__test.snapshot().errors),[]);
+ assert.equal(checkedGround,true);assert.equal(w.__test.snapshot().mystery.passed,true);assert.deepEqual(Array.from(w.__test.snapshot().errors),[]);
  w.__test.reset();assert.equal(w.__test.snapshot().mystery.started,false);assert.equal(w.__test.snapshot().mystery.emptyFrom,Infinity);
  }finally{f.close();}
 });

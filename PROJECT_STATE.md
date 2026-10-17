@@ -132,3 +132,13 @@ See LAST_ORDERS_UPGRADE.md for the new rain-driven end-of-street cameo, animatio
 
 ## Ground decay correction (17 October 2026, V3)
 See FORGOTTEN_ROAD_GROUND.md. Original cobbles remain at 60px cells. Small 32–48px overlays cover both cobbled sides and pavement strips, with a maximum 12px road intrusion. Decay begins after settled night and develops over 30 active seconds; the stranger cannot schedule until 24 seconds into that progression and the storm/closure gates pass. Narrative state advances only in fixed gameplay updates. Old roadstage-only links no longer force immediate overgrowth; forced stages require debug=1. The former decay installer is retired to prevent reinstalling V2. Full wasteland scenery and later narrative chapters are not shipped by this ground repair.
+
+GROUND DECAY V4 — performance and late coverage (17 October 2026)
+Supersedes the V3 renderer described above. See FORGOTTEN_ROAD_GROUND.md.
+Decode all decay PNGs and prebuild/warm ten fixed atlases before enabling Play.
+Never create canvases or scale raw 512px decay sprites during active rendering.
+Keep the 30-active-second transition; near-total ground occlusion is established
+in the final approach, before bench entry. Retain irregular small cobble gaps.
+V4 tests: 24 passing checks, including pre-entry coverage and bounded render
+work. Native mature renderer: 248 to 24 image draws/frame versus V3. This is
+not an on-device FPS claim. Physical iPhone Safari acceptance remains required.

@@ -41,6 +41,7 @@ module.exports=async function boot(saved={},preview=false){
   vm.runInContext(text,context,{filename:file});
  }
  await Promise.all(pending);await new Promise(r=>setImmediate(r));
+ for(let i=0;i<200&&!w.__test.ready();i++)await new Promise(r=>setTimeout(r,5));
  if(errors.length)throw Error(errors.join('\n'));
  if(!w.__test.ready())throw Error('Startup failed: '+w.document.getElementById('startupStatus').textContent);
  return {w,store,dom,canvas:()=>backing(w.document.getElementById('c')),close:()=>{w.dispatchEvent(new w.Event('pagehide'));dom.window.close();}};

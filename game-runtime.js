@@ -319,7 +319,7 @@ let shutterMix = 0;
     try {
       const images = [...new Set([
         imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery,
-        imgCheer, imgCrash, ...imgRun, ...Object.values(cobbleImgs),
+        imgCheer, imgCrash, ...imgRun, ...(window.GaryRoadEvolution?.images || []), ...Object.values(cobbleImgs),
         ...PROPS.map(prop => prop.img), ...Object.values(itemImages)
       ].filter(Boolean))];
       let loaded = 0;
@@ -333,6 +333,9 @@ let shutterMix = 0;
       // Drop only stale network messages for images now successfully decoded.
       loadErrorLog = loadErrorLog.filter(message => !images.some(image =>
         decodedStartupImages.has(image) && message === new URL(image.src, location.href).pathname.split('/').pop() + ' not found'));
+      status.textContent = 'Preparing the changing street…';
+      await window.GaryRoadEvolution?.prepare();
+      window.GaryRoadEvolution?.warm(ctx);
       startupReady = true;
       simulation.reset();
       button.textContent = 'Play Game';

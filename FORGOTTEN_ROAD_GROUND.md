@@ -1,34 +1,34 @@
-# Forgotten Road ground presentation — V3, 17 October 2026
+# Forgotten Road ground — V4 performance and coverage repair
+17 October 2026. Replaces the installed V3 overlay renderer.
 
-## Behaviour
-The original daylight high street starts clean of these overlays. Once night has settled (nightMix >= .98), decay develops over **30 seconds of active play**, as chosen by the game owner. Light moss enters first, then medium deterioration, with heavy artwork reserved for the final 12% of the transition. The existing cobble texture mixture is preserved, including its original small weeds.
+## Player-facing behaviour
+The original high street starts without new decay. Settled night starts the existing 30-active-second progression. Light moss develops gradually, then the final approach becomes a dense soil/matted vegetation layer. Late ground obscures almost all cobbles with a few irregular gaps. All lane centres stay clear; roadside art reaches at most 12px onto the road. The original 60px cobble textures are unchanged beneath the layer.
 
-The stranger may be scheduled only after 24 seconds of this transition and after the existing storm/shutter/artwork gates pass. His segment then approaches naturally, with safe slowdown after hazards clear. This aligns heavy decay with the final approach. The exact second his bench becomes visible varies with the street segment boundary and running speed; it is not a timer-driven pop-in. Dialogue, a complete barren-wasteland biome, underpass and wilderness remain future work. Moss overlays alone are not the finished wasteland environment.
+Mature appearance is established by 25.5 seconds of progression, before the hooded bench enters under the normal encounter gates. The remaining time sustains this appearance. Stranger scheduling still waits for 24 seconds, heavy rain, closed shutters and decoded bench art. Pause/crash freeze progression; restart clears story state without rebuilding texture caches.
 
-## Architecture
-`game-runtime.js` calls `GaryRoadEvolution.update()` from the fixed gameplay update. Rendering never starts or advances narrative progression. A bounded, preallocated map of distance to transition progress records the entering ground during those 30 seconds. Ground retains its authored appearance as it scrolls; changing running speed cannot compress the transition into a few seconds. Pause/crash do not advance it; restart clears it.
+This is ground deterioration for the abandoned street. A complete wasteland biome, ruined shop replacements, underpass, dialogue and wilderness remain separate work.
 
-`gary-road-evolution.js` draws the existing transparent 512px PNG assets at **32–48 design pixels**, square with preserved aspect ratio. Three deterministic columns distribute small patches across each cobbled side, including the 16px pavement strips. Cobble overlays draw before buildings and street objects. A disjoint final pass covers the 3px kerbs and permits at most 12px of late encroachment onto the road. Growth is sampled per world patch; all three lane centres stay clear. Source PNGs and the 60px cobble/quadrant assembly are unchanged. No new per-frame objects, random decal positions or whole-screen texture stretching.
+## Why V3 could hitch
+V3 repeatedly scaled 512px PNGs down to small stamps, blended overlapping sprites and rebuilt clip/transform work during rendering. Its decay PNGs also bypassed the runtime's startup artwork decode gate, so first use could incur decoding/upload work during play. These are confirmed code-path costs; the precise device-specific cause of a reported iPhone hitch is not proven without on-device profiling.
 
-The kerb asset has its dense edge on the right: unmirrored on the left roadside, mirrored on the right. Building, keeper, lighting and bench calibration are unchanged by V3.
+## V4 rendering contract
+- Decay images join the same retry/timeout/decode gate as the other startup artwork.
+- Before Play becomes available, prepare ten immutable canvases: five stages per side, 117x512 design pixels, at DPR capped at 2. About 9.6 MB maximum atlas pixel storage, independent of run length.
+- Yield between startup builds; warm the atlases on the actual game context before enabling Play. No decay baking, image decoding or new canvas creation when the transition begins or stages change.
+- Gameplay draws cached 128px strips. A 512px vertically wrapped pattern, fixed world registration and sampling of the existing bounded distance/time history preserve ground position. Later terrain does not mutate previously passed terrain.
+- Ground is drawn beneath shops/props, and across narrow pavement strips. The separate disjoint kerb pass is preserved. Right-side orientation is baked at startup.
+- The dense late layer uses the approved small artwork (32–44px stamps) over soil/matted vegetation, with small irregular gaps. It does not enlarge the underlying stones.
+- Forced stages require both debug=1 and roadstage=N. Historical roadstage-only links play the normal story.
 
-## Cause of the previous failure
-The V2 installer's primary test link used `?roadstage=5`, forcing heavy overgrowth immediately. V2 also excluded x=89–105 and x=255–271 from the cobble pass, centred 70–118px overlays over the road edge, and used only a 1,400px approach. V3 removes render-time story mutation, restores cobble coverage, reduces decal scale and gives the transition a deliberate 30-second progression.
+## Validation
+24 automated checks pass: fixed clock/contact/pool tests; artwork preparation; natural clean opening and 30-second progress; pause/reset; bench animation; mature coverage before first bench entry; world scroll registration; road-edge limits; bounded immutable atlas count and per-frame blits; render purity for narrative state.
 
-The previous installer is retired so its embedded V2 source cannot overwrite this repair. Open the main game directly; no new installation or token is needed.
+Native Canvas comparison over 200 mature frames at 360x640 (including pixel readback): V3 averaged 248.08 decay image draws/frame and 4.62ms/frame; V4 averaged 24 draws/frame and 2.13ms/frame. This is approximately 90% fewer decay draw calls. These are same-environment synthetic renderer measurements, not iPhone frame-rate claims or whole-engine timings.
 
-## Preview and verification
-- Normal story: `index.html` with no query parameters.
-- Forced artwork inspection only: `?debug=1&roadstage=0` through `?debug=1&roadstage=5`.
-- Historical `?roadstage=5` links without `debug=1` now play the normal clean-opening story.
-- `gary-decay-preview.html` loads the same repaired production engine as a separate smoke-test entry.
+At maturity, 97.3% of sampled cobble-side pixels have overlay opacity at least 95%. The actual-engine integration also requires over 95% of the cobbled side to have at least 90% occlusion before the bench first enters the screen. Ground screenshots at normal gameplay scale were inspected.
 
-Automated checks: source parsing; original fixed-clock/pool/contact tests; mystery animation/safe slowdown; actual-engine Play/Skip, natural clean opening, night progression, pause/resume/reset; native Canvas rendering with real PNG alpha; both cobbled sides and narrow pavement coverage; road-edge bounds; scroll registration (within native raster rounding); render purity; bounded progression history. Tests clear hazards to exercise narrative progression, rather than claiming to measure natural survival balance.
-
-Run with Node and installed `jsdom` and `@napi-rs/canvas`:
 `node --test tests/core.test.cjs tests/mystery.test.cjs tests/road-decay.test.cjs tests/last-orders-integration.test.cjs`
+Requires jsdom and @napi-rs/canvas. Test runs clear hazards to exercise later narrative, not to prove survival balance. Physical iPhone Safari frame pacing and first transition still require acceptance testing; browser binary download was unavailable in this environment.
 
-Native Canvas and simulated DOM checks do not certify physical iPhone Safari performance, feel, or audio. Physical-device visual acceptance remains required. Rendered QA screenshots were inspected at 360x640. Browser download was unavailable in the repair environment, so no Chromium/Safari execution is claimed.
-
-## Recovery
-Revert the V3 repair commit to restore V2, including its old installer. Prefer reverting the commit to copying an old engine over newer changes. `game.js`, sprite sources, shop JSON, player controls and collision rules are not modified by this repair.
+## Installation and rollback
+Use gary-decay-v4-performance-installer.html. It validates all affected file SHAs against the audited installed V3 baseline, then publishes one atomic commit. It refuses to overwrite newer changes and checks the branch head again before promotion. The previous V3 installer is retired in the same commit. No art sources, published shop JSON, actor scale, collision, score or controls change. Revert the V4 installation commit to recover V3, preserving independent later changes.

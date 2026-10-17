@@ -4,10 +4,13 @@ const fs=require('node:fs'),vm=require('node:vm');
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
 async function setup(search=''){
  const pending=[];class Image{set src(v){pending.push(loadImage(require('node:path').join(__dirname,'..',v.split('?')[0])).then(img=>{this.native=img;this.onload();}));}}
- const w={location:{search}};vm.runInNewContext(fs.readFileSync(require.resolve('../gary-road-evolution.js'),'utf8'),{window:w,Image,URLSearchParams,Float64Array});await Promise.all(pending);
+ const w={location:{search},setTimeout,devicePixelRatio:1,document:{createElement:()=>{
+  const canvas=createCanvas(1,1),get=canvas.getContext.bind(canvas);
+  canvas.getContext=(kind)=>{const g=get(kind);return new Proxy(g,{get:(t,k)=>typeof t[k]==='function'?(...a)=>{if(k==='drawImage')a[0]=a[0].native||a[0];return t[k](...a);}:t[k],set:(t,k,v)=>{t[k]=v;return true;}});};return canvas;
+ }}};vm.runInNewContext(fs.readFileSync(require.resolve('../gary-road-evolution.js'),'utf8'),{window:w,Image,URLSearchParams,Float64Array});await Promise.all(pending);
  const canvas=createCanvas(360,640),ctx=canvas.getContext('2d');
- const proxy=new Proxy(ctx,{get:(target,k)=>typeof target[k]==='function'?(...args)=>{if(k==='drawImage')args[0]=args[0].native;return target[k](...args);}:target[k],set:(t,k,v)=>{t[k]=v;return true;}});
- const api=w.GaryRoadEvolution;
+ const proxy=new Proxy(ctx,{get:(target,k)=>typeof target[k]==='function'?(...args)=>{if(k==='drawImage')args[0]=args[0].native||args[0];return target[k](...args);}:target[k],set:(t,k,v)=>{t[k]=v;return true;}});
+ const api=w.GaryRoadEvolution;await api.prepare();
  function render(d){ctx.clearRect(0,0,360,640);api.drawCobbles(proxy,{x:0,y:0,w:105,h:640,distance:d});api.drawCobbles(proxy,{x:255,y:0,w:105,h:640,distance:d});api.drawRoad(proxy,{height:640,distance:d});return ctx.getImageData(0,0,360,640).data;}
  return {api,render,canvas};
 }
@@ -42,4 +45,15 @@ test('world decals remain registered to the cobbles when scrolling',async()=>{
   for(let c=0;c<3;c++)maxColor=Math.max(maxColor,Math.abs(a[i+c]*a[i+3]/255-b[j+c]*b[j+3]/255));
  }
  assert.ok(maxAlpha<=1,`alpha drift ${maxAlpha}`);assert.ok(maxColor<=2,`colour drift ${maxColor}`);
+});
+
+test('mature decay hides at least 95 percent of the cobbled area; render work is bounded',async()=>{
+ const {api,render}=await setup('?debug=1&roadstage=5');
+ const initial=api.snapshot().buildCount;assert.equal(initial,10);
+ const data=render(15000);let covered=0,total=0;
+ for(let y=0;y<640;y++)for(let x=0;x<102;x++){total++;if(data[(y*360+x)*4+3]>=242)covered++;}
+ assert.ok(covered/total>=.95,`mature cover ${covered/total}`);
+ const before=api.stats().blits;for(let i=0;i<100;i++)render(15000+i*3.25);
+ assert.ok((api.stats().blits-before)/100<=48);assert.equal(api.snapshot().buildCount,initial);
+ console.log('mature cobble cover:',(covered/total*100).toFixed(1)+'%; cached blits/frame:',(api.stats().blits-before)/100);
 });
