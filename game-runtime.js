@@ -185,12 +185,81 @@ let shutterMix = 0;
         const frame=moving?Math.floor(b.phase)%6:0,scale=0.078;
         ctx.save();ctx.translate(x,y);
         ctx.fillStyle='rgba(12,17,23,.12)';ctx.beginPath();ctx.ellipse(0,-1,9,2.3,0,0,Math.PI*2);ctx.fill();
-        ctx.globalAlpha*=0.78;ctx.scale(b.dir,1);
+        ctx.globalAlpha*=1;ctx.scale(b.dir,1); // Full pigeon opacity for clear silhouettes.
         ctx.drawImage(sheet,frame*362,220,362,304,-181*scale,(220-feet[frame])*scale,362*scale,304*scale);
         ctx.restore();
       }
     }
     reset();return {reset,remember,update,draw};
+  })();
+
+  // GaryCrashCinematic20261017V1 — presentation only; the run is frozen after collision.
+  const crashScene = (() => {
+    const spec=window.GaryCrashConfig||{};
+    const reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
+    const sheet=spec.sheet?new Image():null;
+    const columns=Math.max(1,Math.min(12,Number(spec.frames)||1));
+    let sheetReady=false,buffer=null,source=null,voiceGain=null,voiceStarted=false,decoding=false;
+    let duration=2.15,previousTime=0,elapsed=0,active=false;
+    // Fetch once, before a crash. No network or decode work in the crash update.
+    const bytes=spec.audio?fetch(spec.audio).then(r=>{if(!r.ok)throw Error('Voice unavailable');return r.arrayBuffer();}).catch(()=>null):Promise.resolve(null);
+    if(sheet){sheet.onload=async()=>{try{if(sheet.naturalWidth%columns||!sheet.naturalHeight)return;if(sheet.decode)await sheet.decode();sheetReady=true;}catch(_){sheetReady=false;}};sheet.onerror=()=>{sheetReady=false;};sheet.src=spec.sheet;}
+    async function prepareAudio(){
+      if(!audioCtx||decoding||buffer)return;decoding=true;
+      try{const data=await bytes;if(data)buffer=await audioCtx.decodeAudioData(data);}catch(_){buffer=null;}
+      finally{decoding=false;}
+    }
+    function stopVoice(){if(source){try{source.stop();}catch(_){}source.disconnect();source=null;}if(voiceGain){voiceGain.disconnect();voiceGain=null;}}
+    function reset(){stopVoice();active=false;elapsed=previousTime=0;voiceStarted=false;}
+    function begin(){
+      reset();active=true;duration=buffer?Math.min(6,Math.max(2.15,0.55+buffer.duration+0.4)):2.15;
+      musicTo(0.035,0.2);
+    }
+    function playVoice(){
+      if(voiceStarted)return;voiceStarted=true;
+      if(!buffer||!audioCtx||audioCtx.state!=='running')return;
+      try{source=audioCtx.createBufferSource();source.buffer=buffer;voiceGain=audioCtx.createGain();voiceGain.gain.value=0.9;source.connect(voiceGain);voiceGain.connect(audioCtx.destination);source.start();}catch(_){stopVoice();}
+    }
+    function update(dt){previousTime=elapsed;elapsed+=dt;if(elapsed>=0.5)playVoice();return elapsed>=duration;}
+    function time(){return lerp(previousTime,elapsed,view.alpha);}
+    function camera(){
+      if(!active)return;
+      const t=time(),e=reduced?0:smooth((t-0.06)/0.65),zoom=1+0.85*e;
+      const focusY=PLAYER_Y-WORLD.playerHeight*0.57;
+      const x=Math.max(W*(1-zoom),Math.min(0,(CX-lx(view.lane)*zoom)*e));
+      const y=Math.max(H*(1-zoom),Math.min(0,(H*0.49-focusY*zoom)*e));
+      ctx.translate(x,y);ctx.scale(zoom,zoom);
+    }
+    function pose(){
+      if(!sheetReady)return false;
+      const fw=sheet.naturalWidth/columns,fh=sheet.naturalHeight;
+      const talk=Math.max(0,time()-0.45),frame=Math.floor(talk*7)%columns;
+      const h=WORLD.playerHeight,w=h*fw/fh;
+      ctx.drawImage(sheet,frame*fw,0,fw,fh,-w/2,-h+WORLD.playerFootOffset,w,h);return true;
+    }
+    function screen(){
+      if(!active||!state.startsWith('crash'))return;
+      const t=time(),fade=smooth((t-(duration-0.38))/0.38);
+      ctx.save();ctx.fillStyle='rgba(8,10,16,'+(0.12*smooth(t/0.5)+0.8*fade)+')';ctx.fillRect(0,0,W,H);
+      if(t>0.28&&fade<1){
+        ctx.globalAlpha=smooth((t-0.28)/0.18)*(1-fade);
+        const line=String(spec.caption||LINES[lastHit]||'Proper ruined.');
+        ctx.font='700 17px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        const w=Math.min(W-32,ctx.measureText(line).width+30);
+        ctx.fillStyle='rgba(10,12,20,.88)';rr(ctx,CX-w/2,H-114,w,42,12);ctx.fill();
+        ctx.fillStyle='#fff';ctx.fillText(line,CX,H-93,W-52);
+      }
+      ctx.restore();
+    }
+    function finish(){stopVoice();stopMusic();}
+    function pause(){stopVoice();}
+    function resume(){
+      if(!voiceStarted||!buffer||!audioCtx||elapsed<0.5)return;
+      const offset=elapsed-0.5;if(offset>=buffer.duration)return;
+      try{source=audioCtx.createBufferSource();source.buffer=buffer;voiceGain=audioCtx.createGain();voiceGain.gain.value=0.9;source.connect(voiceGain);voiceGain.connect(audioCtx.destination);source.start(0,offset);}catch(_){stopVoice();}
+    }
+    return {reset,begin,update,camera,pose,screen,finish,pause,resume,prepareAudio};
   })();
 
   function loadGary(file, validate) {
@@ -885,6 +954,7 @@ let shutterMix = 0;
     }
   }
   function reset() {
+    crashScene.reset();
     pigeons.reset();
     window.GaryIntroTransition?.cancel();
     if (gameOverFrameRequest !== null) cancelAnimationFrame(gameOverFrameRequest);
@@ -1198,8 +1268,9 @@ let shutterMix = 0;
     }
   }
   function crash(hitType){
+    if(state!=='play')return;
     performance.collisions++;
-    crashT=0;lastHit=hitType;cap=null;transition('crash_'+hitType);
+    crashT=0;lastHit=hitType;cap=null;crashScene.begin();transition('crash_'+hitType);
   }
   function calculatePerformanceRating() {
     const survivalScore =
@@ -1280,6 +1351,7 @@ let shutterMix = 0;
   }
   function endGame(){
     if (!transition('over')) return;
+    crashScene.finish();
     cap=null;
     if(score>best){best=score;try{localStorage.setItem('garyBest',best);}catch(e){}}
     try{
@@ -1345,6 +1417,7 @@ let shutterMix = 0;
       musicGain.connect(audioCtx.destination);
     } catch (e) { musicGain = null; }
     ensureRainBed();
+    crashScene.prepareAudio();
   }
   function ensureRainBed() {
     if (!audioCtx || rainGain) return;
@@ -1416,7 +1489,7 @@ let shutterMix = 0;
       pausedFrom = state;
       transition('paused');
     }
-    music.pause(); garyAudio.pause();
+    music.pause(); garyAudio.pause(); crashScene.pause();
     if (rainGain) rainGain.gain.value = 0;
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
@@ -1794,7 +1867,9 @@ let shutterMix = 0;
     // The sheet already includes its own lean. Avoid doubling it.
     if(!isCrashing) ctx.rotate(view.lean*(pose?0.25:1));
     const h=WORLD.playerHeight;
-    if(isCrashing && imgCrash.ready || (!pose && grinTimer>0 && imgCheer.ready)){
+    if(isCrashing && crashScene.pose()){
+      // Optional talking crash sheet has the same ground anchor as the base pose.
+    } else if(isCrashing && imgCrash.ready || (!pose && grinTimer>0 && imgCheer.ready)){
       const single=isCrashing?imgCrash:imgCheer;
       const w=h*single.naturalWidth/single.naturalHeight;
       ctx.drawImage(single,-w/2,-h+WORLD.playerFootOffset,w,h);
@@ -2275,6 +2350,7 @@ function updateRain(dt, advancing) {
   function render(dt){
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
+    crashScene.camera();
     drawHighStreet();drawPavements();drawRoad();
     pigeons.draw();
     if (nightOn) {
@@ -2310,8 +2386,8 @@ drawRainSplashes();
     if (nightOn) drawNightVignette();
 
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
-      drawHud();drawCap();
-      if(state.startsWith('crash')) ctx.fillStyle='rgba(255,40,40,'+Math.max(0,.45-crashT)+')',ctx.fillRect(0,0,W,H);
+      if(!state.startsWith('crash')){drawHud();drawCap();}
+      crashScene.screen();
     }
     drawDiagnostics();
   }
@@ -2361,7 +2437,7 @@ drawRainSplashes();
   const paint = () => render();
   function updateCrash(dt) {
     crashT+=dt; updateRain(dt,false);
-    if (crashT>0.55) endGame();
+    if(crashScene.update(dt))endGame();
   }
   const handlers = {
     menu: {next:['intro'],update:idleUpdate,render:paint,
@@ -2399,6 +2475,7 @@ drawRainSplashes();
     simulation.reset(); transition(next);
     if (audioCtx?.state==='suspended') audioCtx.resume().catch(()=>{});
     if (musicOn) music.play().catch(()=>{});
+    if(next.startsWith('crash'))crashScene.resume();
     if (next==='intro') {
       const attempt=introAttempt;
       garyAudio.play().catch(()=>{

@@ -66,6 +66,11 @@
       height: 150px;
       margin-bottom: 8px;
     }
+  
+    /* GaryCrashCinematic20261017V1: quiet handoff to the existing results. */
+    #over { transform:translateY(12px); transition:opacity .42s ease,transform .42s ease; }
+    #over.show { transform:translateY(0); }
+    @media (prefers-reduced-motion:reduce) { #over { transform:none;transition:opacity .2s ease; } }
   </style>
 </head>
 <body>
@@ -111,6 +116,7 @@
 <!-- GarySidestepSmoothPrevious=game-sidestep-test.js?v=1 -->
 <!-- GarySidestepNoGhostPrevious=game-sidestep-smooth.js?v=1 -->
 <!-- GARY_PICKUP_SFX_INDEX_V1: game-sidestep-no-ghost.js -->
-<script src="game-runtime.js?v=pigeoncobbles20261017v2"></script>
+<script src="gary-crash-config.js?v=crash20261017v1"></script>
+<script src="game-runtime.js?v=crash20261017v1"></script>
 </body>
 </html>

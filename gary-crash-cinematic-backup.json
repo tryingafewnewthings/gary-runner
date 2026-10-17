@@ -1,0 +1,14 @@
+{
+  "previousCommit": "ce4cbc8db078b19f5e0a64c08072d40b82cd224b",
+  "installer": "GaryCrashCinematic20261017V1",
+  "files": [
+    {
+      "path": "game-runtime.js",
+      "sha": "d62640b773cbbb48681050df11a0914ecaf97b16"
+    },
+    {
+      "path": "index.html",
+      "sha": "fa9e9423c9f7fcb6a7161d6844f31cceddd97a01"
+    }
+  ]
+}
