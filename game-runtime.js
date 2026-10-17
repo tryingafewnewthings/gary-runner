@@ -884,6 +884,10 @@ let shutterMix = 0;
       }
     }
 
+    // GARY_ROAD_EVOLUTION_V1
+    if (window.GaryRoadEvolution) {
+      window.GaryRoadEvolution.drawCobbles(ctx, {x, y, w, h, scrollY: view.scrollY, distance: view.distance});
+    }
     ctx.restore();
   }
 
@@ -1040,6 +1044,7 @@ let shutterMix = 0;
   function reset() {
     crashScene.reset();
     mystery.reset();
+    window.GaryRoadEvolution?.reset();
     window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
     window.GaryIntroTransition?.cancel();
@@ -1714,6 +1719,9 @@ let shutterMix = 0;
   function drawRoad(){
     ctx.fillStyle='#3a3f47';ctx.fillRect(ROAD_LEFT,0,ROAD_WIDTH,H);
     paintLaneMarkings('#c5c8cc');
+    if (window.GaryRoadEvolution) {
+      window.GaryRoadEvolution.drawRoad(ctx, {left: ROAD_LEFT, width: ROAD_WIDTH, height: H, scrollY: view.scrollY, distance: view.distance});
+    }
   }
 
   function paintLaneMarkings(color) {
@@ -2467,6 +2475,7 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
+    if (window.GaryRoadEvolution && mystery.quiet()) window.GaryRoadEvolution.trigger(view.distance);
     drawHighStreet();drawPavements();drawRoad();
     pigeons.draw();
     if (nightOn) {
