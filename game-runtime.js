@@ -145,7 +145,7 @@ let shutterMix = 0;
   // GaryApprovedSidesteps20261016V1
   const SIDE_FRAMES = 6, SIDE_W = 362, SIDE_H = 724;
   // GarySixFrameWidth20261017V2 — width only; preserve height and foot alignment.
-  const SIDE_WIDTH_SCALE = 0.89;
+  const SIDE_WIDTH_SCALE = 1.00;
   // GarySidestepVisibleHeight20261016V3
   const SIDE_ANIM_SECONDS = 0.32; // Six frames, about 53 ms each.
   let sideAnimTime = SIDE_ANIM_SECONDS, sideAnimDir = 0;
