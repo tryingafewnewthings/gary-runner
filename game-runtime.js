@@ -113,6 +113,68 @@ let shutterMix = 0;
   /* Gary assets                                                                */
   /* -------------------------------------------------------------------------- */
 
+  // GaryPigeon20261017V1 — decorative, fixed-step birds; no collision or score effects.
+  const pigeons = (() => {
+    const sheet = new Image();
+    let ready = false, seed = 27183;
+    // Original PNG is retained. Crop out transparent padding, never redraw the art.
+    const feet = [514,518,515,516,519,517];
+    const birds = Array.from({length:3}, () => ({x:0,previousX:0,z:0,dir:1,timer:0,walking:true,phase:0,fleeing:false}));
+    function random() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; }
+    function place(b,z) {
+      b.x=ROAD_LEFT+24+random()*(ROAD_WIDTH-48); b.previousX=b.x; b.z=z;
+      b.dir=random()<0.5?-1:1; b.timer=0.6+random()*1.1; b.walking=true; b.phase=0; b.fleeing=false;
+    }
+    function reset() { seed=27183; birds.forEach((b,i)=>place(b,-240+i*820)); }
+    sheet.onload=async()=>{
+      if(sheet.naturalWidth!==2172 || sheet.naturalHeight!==724)return;
+      try { if(sheet.decode)await sheet.decode(); ready=true; } catch(_) { ready=false; }
+    };
+    sheet.onerror=()=>{ready=false;};
+    sheet.src='gary-pigeon-walk.png?v=pigeon20261017v1';
+    function remember() { for(const b of birds)b.previousX=b.x; }
+    function update(dt) {
+      if(!ready)return;
+      for(const b of birds){
+        const y=distance-b.z;
+        if(y>H+48){
+          let furthest=distance; for(const other of birds)furthest=Math.max(furthest,other.z);
+          place(b,furthest+700+random()*300); continue;
+        }
+        if(y < -48)continue;
+        if(!b.fleeing && y>PLAYER_Y-145 && y<PLAYER_Y+15 && Math.abs(b.x-lx(lane))<70){
+          b.fleeing=true; b.walking=true; b.dir=b.x<CX?-1:1;
+        }
+        if(!b.fleeing){
+          b.timer-=dt;
+          if(b.timer<=0){b.walking=!b.walking;b.timer=b.walking?0.7+random()*1.2:0.4+random()*0.8;if(b.walking&&random()<0.3)b.dir*=-1;}
+        }
+        if(b.walking){
+          const speed=b.fleeing?85:11;
+          b.x+=b.dir*speed*dt; b.phase+=dt*(b.fleeing?14:8);
+          const left=b.fleeing?ROAD_LEFT-5:ROAD_LEFT+16;
+          const right=b.fleeing?ROAD_RIGHT+5:ROAD_RIGHT-16;
+          if(b.x<left || b.x>right){b.x=Math.max(left,Math.min(right,b.x));if(b.fleeing)b.walking=false;else b.dir*=-1;}
+        }
+      }
+    }
+    function draw() {
+      if(!ready || state==='menu' || state==='intro' || state==='intro_transition')return;
+      for(const b of birds){
+        const y=view.distance-b.z; if(y < -32 || y>H+32)continue;
+        const x=lerp(b.previousX,b.x,view.alpha),frame=b.walking?Math.floor(b.phase)%6:0;
+        const scale=0.078; // ~26px visible width, ~23px high at the 360px design size.
+        ctx.save();ctx.translate(x,y);
+        ctx.fillStyle='rgba(12,17,23,.19)';ctx.beginPath();ctx.ellipse(0,-1,9,2.3,0,0,Math.PI*2);ctx.fill();
+        ctx.scale(b.dir,1);
+        ctx.drawImage(sheet,frame*362,220,362,304,-181*scale,(220-feet[frame])*scale,362*scale,304*scale);
+        ctx.restore();
+      }
+    }
+    reset();
+    return {reset,remember,update,draw};
+  })();
+
   function loadGary(file, validate) {
     const img = new Image();
     img.onload = () => { img.ready = validate ? validate(img) : true; };
@@ -805,6 +867,7 @@ let shutterMix = 0;
     }
   }
   function reset() {
+    pigeons.reset();
     window.GaryIntroTransition?.cancel();
     if (gameOverFrameRequest !== null) cancelAnimationFrame(gameOverFrameRequest);
     gameOverFrameRequest = null;
@@ -1411,6 +1474,7 @@ let shutterMix = 0;
 
     distance += speed * dt;
     scrollY = distance;
+    pigeons.update(dt);
     updateShopClosures();
     performance.distance = distance;
     acc += dt;
@@ -2194,6 +2258,7 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     drawHighStreet();drawPavements();drawRoad();
+    pigeons.draw();
     if (nightOn) {
       drawNightAmbient();
       drawNightRoadLight();
@@ -2238,6 +2303,7 @@ drawRainSplashes();
   const previous = {lane:1,distance:0,clock:0,lean:0,sideTime:SIDE_ANIM_SECONDS,sideDir:0};
   const view = {lane:1,distance:0,scrollY:0,clock:0,lean:0,sideTime:SIDE_ANIM_SECONDS,alpha:1};
   function rememberPositions() {
+    pigeons.remember();
     previous.lane=lane; previous.distance=distance; previous.clock=clock;
     previous.lean=laneLean; previous.sideTime=sideAnimTime; previous.sideDir=sideAnimDir;
     for (const o of objs) o.previousY=o.y;
