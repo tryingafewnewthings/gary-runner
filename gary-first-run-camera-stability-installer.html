@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — First-Run Camera Stability Fix</title>
+<style>
+:root{color-scheme:dark;font:16px/1.48 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#090f1a;color:#ecf4ff}
+*{box-sizing:border-box}body{margin:0;padding:max(22px,env(safe-area-inset-top)) 15px 40px}main{max-width:650px;margin:auto}
+h1{font-size:1.63rem;line-height:1.2;margin:10px 0}h2{font-size:1.05rem;margin:0 0 12px}p,li{color:#bfcfe4}small{color:#aabbd1}
+section{border:1px solid #304259;border-radius:15px;background:#152136;padding:17px;margin:14px 0}
+label{display:block;margin:12px 0 6px;font-size:.94rem;font-weight:650}
+input{width:100%;height:48px;border:1px solid #526a8d;border-radius:10px;padding:11px 13px;background:#081322;color:#fff;font-size:16px}
+button{display:block;width:100%;min-height:49px;border:0;border-radius:10px;padding:11px 13px;margin:11px 0;font-size:16px;font-weight:750;background:#ffdb54;color:#1b1c1d}button.secondary{background:#344d71;color:white}button:disabled{opacity:.44}
+a{color:#e1d17b}code{color:#ffe3a2;font-size:.88rem;overflow-wrap:anywhere}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;min-height:70px;background:#070c13;border:1px solid #2b3e56;border-radius:10px;padding:14px;color:#d5e8fc;font:12px/1.5 ui-monospace,SFMono-Regular,monospace}
+.ok{color:#aeeac2}.warning{color:#f4c8a7}
+</style>
+</head>
+<body><main>
+<h1>Gary Eats! — First-Run Stability</h1>
+<p>This update targets early-session scenery stutters and unneeded canvas cache resets. It does <strong>not</strong> change Gary's movement scale, collisions, lane physics, intro or cinematic crash camera.</p>
+<section>
+<h2>What this fixes</h2>
+<ul><li>Prepares all original shop and cobblestone crops <em>before</em> Play is enabled, without painting them onscreen.</li><li>Prepares the Forgotten Road overlay tiles during startup instead of on an independent timeout.</li><li>Rebuilds the game canvas only when its physical dimensions actually change.</li><li>Adds a camera diagnostics strip for optional Safari playtesting using <code>?camera=1</code>.</li></ul>
+<p><small>This is a targeted mitigation for a first-run visual anomaly, not a confirmed proof of its underlying cause.</small></p>
+</section>
+<section>
+<h2>1. Verify your live source</h2>
+<label for="token">GitHub personal access token (repository Contents: read/write)</label>
+<input id="token" type="password" placeholder="Enter your existing editor token" autocomplete="off" spellcheck="false" autocapitalize="off">
+<button class="secondary" id="scan">Verify current game</button>
+<p id="scanSummary">Not yet checked. No changes have been made.</p>
+</section>
+<section>
+<h2>2. Publish one safe commit</h2>
+<label for="word">Type <strong>STABLE</strong> to enable publishing</label>
+<input id="word" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="STABLE">
+<button disabled id="install">Install stability upgrade</button>
+<p><small>Changes only <code>game-runtime.js</code>, <code>gary-road-evolution.js</code> and script cache versions in <code>index.html</code>. Uses an atomic commit and refuses modified or unexpected source. The original version remains in GitHub history.</small></p>
+</section>
+<section>
+<h2>3. Test on your phone</h2>
+<p>Once GitHub Pages publishes, compare several new runs. In the diagnostics view, if canvas dimensions and scale stay constant during a visual jump, the issue is not a viewport resize.</p>
+<p><a href="https://tryingafewnewthings.github.io/gary-runner/?camera=1" target="_blank" rel="noopener noreferrer">Open gameplay with camera diagnostics</a></p>
+<p><a href="https://tryingafewnewthings.github.io/gary-runner/" target="_blank" rel="noopener noreferrer">Open normal game</a></p>
+</section>
+<section><h2>Progress and errors</h2><pre id="log" aria-live="polite">Ready.</pre></section>
+<p><small>Your token is used only for direct calls to <code>api.github.com</code> in this browser session. It is not placed in source files, browser storage or GitHub commits.</small></p>
+<script>
+'use strict';
+(()=>{
+const REPO='tryingafewnewthings/gary-runner';
+const API='https://api.github.com/repos/'+REPO;
+const FILENAMES=['game-runtime.js','gary-road-evolution.js','index.html'];
+const MARK='GARY_FIRST_RUN_STABILITY_20261017_V1';
+const $=id=>document.getElementById(id);
+const utf8=new TextDecoder('utf-8',{fatal:true});
+let checked=null,busy=false;
+function log(s){$('log').textContent+='\n'+s;}
+function report(s){$('log').textContent=s;}
+function fail(s){throw new Error(s);}
+function exactly(src,part,label){
+  if(typeof src!=='string'||!src.includes(part)||src.indexOf(part)!==src.lastIndexOf(part))fail('Unsupported '+label+' — source changed; stopped safely.');
+  return src;
+}
+function once(src,from,to,label){exactly(src,from,label);return src.replace(from,to);}
+function decode64(t){
+  const bytes=Uint8Array.from(atob(t.replace(/\s/g,'')),ch=>ch.charCodeAt(0));
+  return utf8.decode(bytes);
+}
+function patchGame(src){
+  if(src.includes(MARK))fail('This update is already present in game-runtime.js.');
+  if(src.length<70000||!src.includes('const simulation = new FixedStepClock(60, 6)')||!src.includes('GaryRuntimeStats'))fail('Unexpected game runtime; no changes applied.');
+  src=once(src,'  let K = 1;\n  let state = \'menu\';',
+`  let K = 1;
+  // ${MARK}: count real canvas-resize operations, not merely resize events.
+  let cameraBackingResizes = 0;
+  const cameraDiagnostics = /(?:\\?|&)camera=1(?:&|$)/.test(location.search);
+  let state = 'menu';`,'camera setup');
+  src=once(src,'  function drawCachedCrop(image, sx, sy, sw, sh, x, y, w, h) {',
+  '  function drawCachedCrop(image, sx, sy, sw, sh, x, y, w, h, cacheOnly = false) {','cache signature');
+  src=once(src,'    ctx.drawImage(cached, x, y, w, h);\n  }\n\n  function drawStreetBuilding',
+`    if (!cacheOnly) ctx.drawImage(cached, x, y, w, h);
+  }
+
+  // Pre-build immutable scenery crops before the player enters the first run.
+  // A cache-only call never paints over the menu, intro or game world.
+  function warmStaticArt() {
+    if (!streetLoaded) return;
+    for (const building of BUILDINGS) {
+      drawCachedCrop(imgStreet, building.x, building.y, building.w, building.h,
+        0, 0, BUILDING_WIDTH, BUILDING_H, true);
+    }
+    const visited = new Set();
+    for (const image of Object.values(cobbleImgs)) {
+      if (!image || !image.ready || visited.has(image)) continue;
+      visited.add(image);
+      const halfWidth = image.naturalWidth / 2;
+      const halfHeight = image.naturalHeight / 2;
+      for (let row = 0; row < 2; row++) {
+        for (let column = 0; column < 2; column++) {
+          drawCachedCrop(image, column * halfWidth, row * halfHeight,
+            halfWidth, halfHeight, 0, 0, COBBLE_CELL + 0.5, COBBLE_CELL + 0.5, true);
+        }
+      }
+    }
+  }
+
+  function drawStreetBuilding`,'cache prewarm');
+  src=once(src,'      startupReady = true;\n      simulation.reset();',
+`      // Finish one-time artwork work while the loading gate is still visible.
+      warmStaticArt();
+      window.GaryRoadEvolution?.warm?.();
+      startupReady = true;
+      simulation.reset();`,'start gate');
+  const oldResize=`  function resize(){
+    // Design size stays 360x640. The phone picture is 3x that, 1080x1920, when the screen can take it.
+    const w=Math.max(1,stage.clientWidth),dpr=Math.min(window.devicePixelRatio||1,3);
+    rasterCaches.clear(); rasterCacheEntries=0;
+    cv.width=Math.round(w*dpr);cv.height=Math.round(w*16/9*dpr);K=cv.width/W;
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality='high';
+  }`;
+  const newResize=`  function resize(){
+    // Maintain the authored 360x640 design camera. Safari frequently emits
+    // resize events when browser chrome changes without changing canvas width.
+    const widthCss = Math.max(1, stage.clientWidth);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const widthPx = Math.max(1, Math.round(widthCss * dpr));
+    const heightPx = Math.max(1, Math.round(widthPx * H / W));
+    if (cv.width === widthPx && cv.height === heightPx) return;
+    cv.width = widthPx;
+    cv.height = heightPx;
+    K = cv.width / W;
+    cameraBackingResizes++;
+    rasterCaches.clear(); rasterCacheEntries=0;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+  }`;
+  src=once(src,oldResize,newResize,'idempotent canvas resize');
+  src=once(src,'    drawDiagnostics();\n  }\n\n  /* Fixed simulation',
+`    drawDiagnostics();
+    if (cameraDiagnostics) {
+      // A fixed-scale readout distinguishes browser resizing from frame jitter.
+      ctx.save();ctx.setTransform(K,0,0,K,0,0);
+      ctx.fillStyle='rgba(5,10,16,.85)';ctx.fillRect(6,H-30,W-12,22);
+      ctx.font='11px monospace';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillStyle='#e4f8e6';
+      ctx.fillText('CAM '+K.toFixed(3)+' '+cv.width+'x'+cv.height+'  resize='+cameraBackingResizes,12,H-19);
+      ctx.restore();
+    }
+  }
+
+  /* Fixed simulation`,'camera diagnostics');
+  if(!src.includes('cacheOnly = false')||!src.includes('function warmStaticArt()')||!src.includes('cameraBackingResizes++'))fail('Integrity verification failed for runtime.');
+  return src;
+}
+function patchRoad(src){
+  if(src.includes('warm:ensureTiles'))fail('Road tile warm-up is already installed.');
+  if(!src.includes('const CELL = 60')||!src.includes('const VARIANTS = 5'))fail('Road renderer changed unexpectedly.');
+  src=once(src,
+"  if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(ensureTiles, {timeout:1500});\n  else root.setTimeout(ensureTiles, 200);",
+"  // Tiles are prepared by the game startup gate, not a first-run timer.",'road timer');
+  src=once(src,
+'  root.GaryRoadEvolution=Object.freeze({SPEC,LENGTH,trigger,reset,drawCobbles,drawRoad,',
+'  root.GaryRoadEvolution=Object.freeze({SPEC,LENGTH,trigger,reset,warm:ensureTiles,drawCobbles,drawRoad,','road prewarm API');
+  return src;
+}
+function patchIndex(src){
+  if(src.length<4000||!src.includes('<canvas id="c"')||!src.includes('gary-intro-transition.js'))fail('Unexpected live index.html.');
+  src=once(src,'<script src="gary-road-evolution.js?v=forgottenroad20261017v1"></scr'+'ipt>',
+  '<script src="gary-road-evolution.js?v=firstwarm20261017v1"></scr'+'ipt>','road script version');
+  src=once(src,'<script src="game-runtime.js?v=lastorders20261017v1"></scr'+'ipt>',
+  '<script src="game-runtime.js?v=firstwarm20261017v1"></scr'+'ipt>','runtime script version');
+  return src;
+}
+function prepare(files){return {
+'game-runtime.js':patchGame(files['game-runtime.js']),
+'gary-road-evolution.js':patchRoad(files['gary-road-evolution.js']),
+'index.html':patchIndex(files['index.html'])};}
+async function request(path,opt={}){
+  const token=$('token').value.trim();
+  if(!token)fail('Enter a GitHub token before scanning.');
+  let response;try{response=await fetch(API+path,{method:opt.method||'GET',headers:{
+  'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',
+  'Authorization':'Bearer '+token,...(opt.body?{'Content-Type':'application/json'}:{})},
+  body:opt.body?JSON.stringify(opt.body):undefined,cache:'no-store'});}
+  catch(err){fail('Network error contacting GitHub: '+err.message+' — open this installer from GitHub Pages in Safari.');}
+  let data;try{data=await response.json();}catch{fail('GitHub returned an unreadable response (HTTP '+response.status+').');}
+  if(!response.ok){const rate=response.status===403||response.status===429?' Verify token access or rate limits.':'';
+    fail((data.message||'GitHub request failed')+' (HTTP '+response.status+').'+rate);}
+  return data;
+}
+async function audit(){
+  const ref=await request('/git/ref/heads/main');
+  const head=ref.object?.sha;
+  if(!/^[0-9a-f]{40}$/.test(head||''))fail('Invalid branch ref returned by GitHub.');
+  const [commit,...responses]=await Promise.all([
+    request('/git/commits/'+head),
+    ...FILENAMES.map(name=>request('/contents/'+name+'?ref='+head))]);
+  if(!/^[0-9a-f]{40}$/.test(commit.tree?.sha||''))fail('Missing base tree SHA.');
+  const source={};
+  for(let i=0;i<FILENAMES.length;i++){
+    const f=responses[i];if(f.type!=='file'||f.encoding!=='base64'||!f.content)fail('Cannot read '+FILENAMES[i]);
+    source[FILENAMES[i]]=decode64(f.content);
+  }
+  const patched=prepare(source);
+  return {head,tree:commit.tree.sha,source,patched};
+}
+function refreshButtons(){$('install').disabled=busy||!checked||$('word').value.trim().toUpperCase()!=='STABLE';$('scan').disabled=busy;}
+$('word').addEventListener('input',refreshButtons);
+$('scan').addEventListener('click',async()=>{
+  if(busy)return;busy=true;checked=null;refreshButtons();report('Reading live GitHub files and verifying patch safety…');
+  try{checked=await audit();$('scanSummary').textContent='Verified main at '+checked.head.slice(0,12)+'. All three files can be patched safely.';
+    log('Source matches expected active game.\nNo files have been changed.');}
+  catch(err){$('scanSummary').textContent='Verification failed; no changes made.';log('ERROR: '+err.message);}
+  finally{busy=false;refreshButtons();}
+});
+$('install').addEventListener('click',async()=>{
+  if(busy||!checked||$('word').value.trim().toUpperCase()!=='STABLE')return;
+  if(!confirm('Publish ONE new commit updating the live runtime and road tiles for first-run stability?'))return;
+  busy=true;refreshButtons();report('Re-checking latest main…');
+  try{
+    const latest=await audit();
+    if(latest.head!==checked.head)fail('The branch changed after scan; nothing published. Scan again.');
+    log('Creating a new tree with just the three modified files…');
+    const tree=await request('/git/trees',{method:'POST',body:{base_tree_sha:latest.tree,
+      tree:FILENAMES.map(path=>({path,mode:'100644',type:'blob',content:latest.patched[path]}))}});
+    if(!/^[0-9a-f]{40}$/.test(tree.sha||''))fail('GitHub did not confirm a new tree.');
+    const commit=await request('/git/commits',{method:'POST',body:{message:'Gary Eats: stabilise first-run canvas and prewarm static scenery',tree:tree.sha,parents:[latest.head]}});
+    if(!/^[0-9a-f]{40}$/.test(commit.sha||''))fail('GitHub did not confirm a new commit.');
+    await request('/git/refs/heads/main',{method:'PATCH',body:{sha:commit.sha,force:false}});
+    checked=null;refreshButtons();
+    $('scanSummary').textContent='Installed — commit '+commit.sha.slice(0,12);
+    log('SUCCESS: Published one atomic GitHub commit: '+commit.sha+'\n\nGitHub Pages may take 1–2 minutes to update. Reload normal game and then test ?camera=1. The crash zoom and sidestep scaling were left unchanged.');
+  }catch(err){log('STOPPED: '+err.message+'\nGame files were not deliberately overwritten. Refresh and rescan before retrying.');}
+  finally{busy=false;refreshButtons();}
+});
+refreshButtons();
+})();
+</script>
+</main></body></html>
