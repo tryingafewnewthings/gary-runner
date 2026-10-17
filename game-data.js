@@ -1,6 +1,6 @@
 /**
  * GARY EATS! — AUTHORING DATA / HANDOFF 2026-10-10
- * Load before game.js as a classic script. No modules or build step required.
+ * Load before game-runtime.js as a classic script. No modules or build step required.
  *
  * ACTIVE: WORLD, GARY_SPRITES, STREET_ATLAS, BUILDINGS, KEEPERS, SHOP_PANES,
  * COBBLE_KINDS, ITEMS and the existing content lists below.
@@ -76,8 +76,13 @@ const COBBLE_KINDS = {
   cracked: 'IMG_7148.webp?v=6'
 };
 
-// 3. Active item registry. Geometry preserves the existing runner's hit tests.
-// verticalRadius is in design pixels; laneRadius is in lane units, not pixels.
+// Road-plane hurtbox, independent of sprite frame, body lean or transparent padding.
+const PLAYER_CONTACT = Object.freeze({halfWidth: 8, halfDepth: 8});
+
+// 3. Active item registry. Food sensors and hazard contact volumes are separate.
+// Food verticalRadius is in design pixels; laneRadius is in lane units.
+// Hazard contact half extents are design pixels on the road plane. Legacy
+// collision values remain only for archived runtimes and rollback compatibility.
 // Sprite display boxes and collision geometry are deliberately independent.
 const ITEMS = {
   kebab: { kind: 'food', points: 5, file: null, fallback: 'kebab', displaySize: 50,
@@ -86,9 +91,9 @@ const ITEMS = {
     collision: { verticalRadius: 32 * 150 / 189, laneRadius: 0.55 } },
   roast: { kind: 'food', points: 25, file: 'roast.png', fallback: 'roast', displaySize: 46,
     collision: { verticalRadius: 32 * 150 / 189, laneRadius: 0.55 } },
-  m: { kind: 'hazard', points: 0, file: 'mushroom.png?v=1', fallback: 'm', displaySize: 52,
+  m: { contact: {halfWidth: 12, halfDepth: 12}, kind: 'hazard', points: 0, file: 'mushroom.png?v=1', fallback: 'm', displaySize: 52,
     collision: { verticalRadius: 32 * 150 / 189, laneRadius: 0.55 } },
-  fork: { kind: 'hazard', points: 0, file: 'fork.png?v=1', fallback: 'fork', displaySize: 44,
+  fork: { contact: {halfWidth: 8, halfDepth: 14}, kind: 'hazard', points: 0, file: 'fork.png?v=1', fallback: 'fork', displaySize: 44,
     collision: { verticalRadius: 32 * 150 / 189, laneRadius: 0.55 } }
 };
 

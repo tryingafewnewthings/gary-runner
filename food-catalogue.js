@@ -23,7 +23,15 @@
       }
     }
   } catch (e) { /* Private browsing / storage restrictions: retain in memory. */ }
-  const save = () => { try { localStorage.setItem(STORAGE, JSON.stringify(found)); } catch (e) {} };
+  let saveTimer=null, dirty=false;
+  const flush=()=>{
+    clearTimeout(saveTimer); saveTimer=null;
+    if (!dirty) return;
+    try { localStorage.setItem(STORAGE,JSON.stringify(found)); dirty=false; } catch(e) {}
+  };
+  const save=()=>{ dirty=true; if(saveTimer===null) saveTimer=setTimeout(flush,750); };
+  addEventListener('pagehide',flush);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)flush();});
   const style = document.createElement('style');
   style.textContent = `
     #garyCatalogueBtn{margin-top:12px;background:transparent;color:#ffe600;border:2px solid #ffe600;box-shadow:none;padding:12px 28px;font-size:.94rem}

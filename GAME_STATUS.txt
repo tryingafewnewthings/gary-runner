@@ -1,5 +1,5 @@
 GARY EATS! — DEVELOPER START HERE
-Status verified against main: 15 October 2026
+Status verified against main: 16 October 2026
 Repository: https://github.com/tryingafewnewthings/gary-runner
 Live game: https://tryingafewnewthings.github.io/gary-runner/
 
@@ -12,16 +12,22 @@ READ IN THIS ORDER
 5. game-data.js — current WORLD, sprite/item/street definitions; its
    DEVELOPMENT_PLAN is design specification, not executable content.
 6. gary-game-config.json — published shop calibration and keeper anchors.
-7. game-intro-test.js, gary-intro-transition.js, food-catalogue.js and game.js.
+7. game-core.js, game-runtime.js, gary-intro-transition.js and food-catalogue.js.
+8. RUNTIME_UPGRADE.md — changes, checks, phone acceptance and rollback.
 
 CURRENTLY PLAYABLE
+- 60 Hz fixed simulation with interpolated road/player/item/rain presentation.
+- Recycled item/effect/star pools, ground contact collisions, guarded state
+  transitions, Pause/Resume and page-hide suspension. DPR cap remains 3.
+- Static building/cobble crop caches; batched catalogue persistence.
+- Current four-frame sidesteps and normal-food/roast pickup sounds.
 - Three-lane 360x640 HTML5 Canvas high-street runner; score tiers and
   performance-based 1–10 end-of-run rating.
 - Food: kebab, fish, roast. Hazards: fork, mushroom. Safe row patterns,
   roast dare/refusal, near-miss scoring and locally stored best score.
 - Portrait talking intro, six-frame walking animation, music, cheer/crash art.
 - Cinematic 4-frame intro-to-walk transition ACTIVATED on the main page.
-  index.html currently loads game-intro-test.js as the active engine and
+  index.html currently loads game-runtime.js as the active engine and
   gary-intro-transition.js as its optional animation bridge.
 - Persistent Food Catalogue in main menu (discoveries saved on this device).
 - Day -> night visual fade, heavy rain and splashes, nighttime lit shops,
@@ -29,8 +35,8 @@ CURRENTLY PLAYABLE
 - Studio 3.1 is the current shop calibration editor: gary-studio.html.
 
 IMPORTANT ARCHITECTURAL WARNING
-The file name game-intro-test.js is historical: it is CURRENTLY THE MAIN ENGINE
-because index.html loads it. Do not delete, rename or silently replace it.
+The active engine is game-runtime.js, loaded after game-core.js.
+The previous production engine game-sidestep-no-ghost.js remains for rollback.
 game.js is the retained working pre-cinematic engine for rollback.
 The main page has a GaryIntroOriginal comment identifying its rollback script.
 Do not load two engines simultaneously. Verify actual index.html every time.
@@ -40,8 +46,7 @@ AUTHORITATIVE SETTINGS
 - Studio-published calibration: gary-game-config.json.
 - Gold keeper anchors are INDEPENDENT of blue lighting panes; green masks
   control keeper clipping; amber rectangles control shutters.
-- Cobble destination cell is CURRENTLY 48 game units (WORLD.cobbleCell).
-  A proposed 60-unit experiment has not been published as of this audit.
+- Cobble destination cell is CURRENTLY 60 game units (WORLD.cobbleCell).
 - Actual image style and placement acceptance: STYLE.txt.
 
 NOT YET PLAYABLE
@@ -49,7 +54,6 @@ NOT YET PLAYABLE
 - The Last Orders Lantern gameplay/inventory and wilderness biome.
 - Food combination/cooking mechanics or Gary Review Effect gameplay USP.
 - New catalogue foods beyond the three active ITEM definitions.
-- Dedicated normal-food/roast pickup sound effects.
 Do not describe the above as finished because they appear in DEVELOPMENT_PLAN,
 plans, proposed artwork, or past conversations.
 

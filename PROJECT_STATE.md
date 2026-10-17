@@ -1,10 +1,12 @@
 # Gary Eats! — Project State and Developer Handoff
 
-**Verified against the public `main` repository:** 15 October 2026  
+**Verified against the public `main` repository:** 16 October 2026
 **Repository:** https://github.com/tryingafewnewthings/gary-runner  
 **Live game:** https://tryingafewnewthings.github.io/gary-runner/  
 **Current visual editor:** `gary-studio.html` (Studio 3.1)  
 **Purpose:** An accurate, resumable engineering and creative brief. **The repository code and published configuration always take precedence over this document.**
+
+See `RUNTIME_UPGRADE.md` for the runtime audit, validation limits and rollback. The old `game-sidestep-no-ghost.js` remains the pre-upgrade rollback engine. Current production sidestep art is four frames; no six-frame art is installed by this runtime change. Pickup sound effects are active.
 
 ## 1. Product vision and design priorities
 
@@ -26,7 +28,7 @@ The goal is **a polished, complete game with a memorable identity**, not merely 
 - **Food Catalogue:** the main-menu module `food-catalogue.js` generates a locked/discovered catalogue from `ITEMS` and stores discovered-food data in the browser's `localStorage` on that device. Currently three food types; no account/cloud syncing. New definitions can appear in the catalogue, but still require spawn patterns, artwork/fallbacks and tests to be obtainable.
 - Day-to-night transition over the existing high street; warm window lighting and street lamp glow. Heavy rain, animated streaks, cobble splashes, additional darkness and shop shutters are implemented as visual effects. Rain is **not** a change in collision, scoring or running speed. `?rain=1` is a rain-preview route.
 - The shopkeeper and window system reads the published `gary-game-config.json`: separate keeper-position offsets/motion, **independent keeper anchors**, green clipping masks, blue lighting panes, amber shutters and door-darkening regions for all six shops. Keepers are drawn after local/storm lighting so they are not washed out by the glow.
-- **Cinematic start is enabled on the main game's `index.html`.** At the time of review, it loads `gary-intro-transition.js` and `game-intro-test.js` (despite that engine file's *test* name). The 4-frame sheet moves Gary from the talking portrait into the normal 6-frame walking animation. The yellow landing ellipse was removed. The unmodified original `game.js` remains in the repository for rollback.
+- **Cinematic start is enabled on the main game's `index.html`.** At the time of review, it loads `gary-intro-transition.js` and `game-runtime.js`. The 4-frame sheet moves Gary from the talking portrait into the normal 6-frame walking animation. The yellow landing ellipse was removed. The unmodified original `game.js` remains in the repository for rollback.
 
 ### Not live yet
 
@@ -34,16 +36,17 @@ The goal is **a polished, complete game with a memorable identity**, not merely 
 - The *Gary Review Effect*, special recipe combinations, more discoverable foods, chapter-specific gameplay mechanics, and an expanded food/recipe system have been discussed but **not implemented**.
 - There is no account-based save system, achievements backend or cloud inventory.
 - New custom eight-frame splash sprites and cinematic cutscene artwork may exist as concepts or drafts; they are not presumed to be live merely because a design was discussed.
-- **Cobblestones currently use 48 × 48 destination cells** (`WORLD.cobbleCell` in `game-data.js`). A suggested 60-unit size was **not applied** as of this audit. Verify the live value before changing it.
+- **Cobblestones currently use 60 × 60 destination cells** (`WORLD.cobbleCell` in `game-data.js`). This is the value checked in the 16 October baseline; verify the source before changing it.
 
 ## 3. Active code and file responsibilities
 
 | File | Current responsibility |
 | --- | --- |
-| `index.html` | Live browser entry, game UI/overlays, active script loading. **Currently uses the staged cinematic engine, not `game.js`.** |
+| `index.html` | Live browser entry, game UI/overlays, active script loading. Uses `game-runtime.js`; older engine files are retained for rollback. |
 | `game-data.js` | Authoritative `WORLD`, `GARY_SPRITES`, `STREET_ATLAS`, `BUILDINGS`, `KEEPERS`, `SHOP_PANES` fallbacks, `COBBLE_KINDS`, `ITEMS`, `DETAILS`, `STREET`, `STRETCHES`, `WEATHER`, captions and design-only `DEVELOPMENT_PLAN`. |
 | `game.js` | Retained working original engine and **rollback baseline**; do not delete or overwrite. |
-| `game-intro-test.js` | **Currently active main-game engine** containing the cinematic intro state, while also serving the test page. Its name is historical; do not rename without updating and testing all references. |
+| `game-runtime.js` | Active engine: fixed simulation, interpolated rendering, pooled items/effects, guarded states, pause/resume, current sidesteps/audio and cinematic intro. |
+| `game-core.js` | Browser-independent fixed clock, pools and swept-contact primitives. |
 | `gary-intro-transition.js` | Optional 4-frame cinematic renderer/controller, runs before active engine. Graceful fallback when missing/invalid. |
 | `gary_transition_sheet.png` | 1536 × 512, four horizontal 384 × 512 animation cells, true transparency. |
 | `gary-intro-test.html` | Independent playtest page; its script versions may differ from live `index.html`. |
@@ -55,21 +58,21 @@ The goal is **a polished, complete game with a memorable identity**, not merely 
 | `GAME_STATUS.txt` | Short entry point and status summary for a new developer. |
 | `ASSET_GRID.json` / `ASSET_GRID.png` | Historical asset-review snapshots; **not** a substitute for current source definitions. |
 
-**Observed script loading on `index.html` at audit:** `game-data.js?v=32`, `food-catalogue.js?v=1`, `gary-intro-transition.js?v=1`, `game-intro-test.js?v=1`, with a comment recording `GaryIntroOriginal=game.js?v=102`. These are **observations, not fixed version contracts**. Read the current HTML again before any release and increment the affected file's cache version after editing.
+**Observed script loading on `index.html` at audit:** `game-data.js?v=runtime1`, `game-core.js?v=1`, `food-catalogue.js?v=2`, `gary-intro-transition.js?v=2`, `game-runtime.js?v=1`, with a comment recording `GaryIntroOriginal=game.js?v=102`. These are **observations, not fixed version contracts**. Read the current HTML again before any release and increment the affected file's cache version after editing.
 
-**Dependency order:** `game-data.js` must execute before the catalogue and engine; `gary-intro-transition.js` must execute before `game-intro-test.js` if the cinematic route is active. Do not load **both** engines together.
+**Dependency order:** `game-data.js` and `game-core.js` must execute before the catalogue and engine; `gary-intro-transition.js` must execute before `game-runtime.js` if the cinematic route is active. Do not load **both** engines together.
 
 ## 4. Runtime architecture and critical contracts
 
 ### Data and game states
 
-`requestAnimationFrame` updates then renders with a bounded time delta. `update()` owns gameplay mutations. Drawing must not award pickups, alter saves or advance cutscenes. The cinematic-enabled engine uses `menu`, `intro`, `intro_transition`, `play`, crash states and `over`. While `intro_transition` runs, ordinary spawning, scoring and movement are paused until control resumes.
+`requestAnimationFrame` renders independently of 60 Hz fixed simulation ticks. The catch-up budget is six ticks; interpolated presentation coordinates are separate from collision coordinates. State update handlers own gameplay mutations. Drawing must not award pickups, alter saves or advance cutscenes. The cinematic-enabled engine uses `menu`, `intro`, `intro_transition`, `play`, crash states, `paused` and `over`. A guarded handler table owns legal transitions and enter/exit hooks. Page hide pauses the game and requires explicit Resume. While `intro_transition` runs, ordinary spawning, scoring and movement are paused until control resumes.
 
 Reset restarts the run and score, but **must not erase catalogue discoveries or published shop calibration**. Shop settings load asynchronously from `gary-game-config.json` with safe fallbacks: do not assume the config has loaded synchronously during initial frames.
 
 ### Camera, pavement and cobbles
 
-`WORLD` uses 360 × 640 game coordinates, not source image pixels or retina backing pixels. Road and kerb positions must remain consistent. `drawCobbles()` in the engine uses a **single scrolling world grid** and a quadrant of each WebP cobble texture per cell. Current value is `WORLD.cobbleCell = 48`; one cell corresponds to a quadrant, not an entire source image. When changing cell size, keep left/right grids phase-locked to the world scroll and recheck joins between mixed textures, ground-detail segments and kerbs. Increasing cell size preserves grid geometry but cannot fix an intrinsically nonseamless texture.
+`WORLD` uses 360 × 640 game coordinates, not source image pixels or retina backing pixels. Road and kerb positions must remain consistent. `drawCobbles()` in the engine uses a **single scrolling world grid** and a quadrant of each WebP cobble texture per cell. Current value is `WORLD.cobbleCell = 60`; one cell corresponds to a quadrant, not an entire source image. When changing cell size, keep left/right grids phase-locked to the world scroll and recheck joins between mixed textures, ground-detail segments and kerbs. Increasing cell size preserves grid geometry but cannot fix an intrinsically nonseamless texture.
 
 ### Shop geometry: no more hidden coupling
 
@@ -110,7 +113,7 @@ If an automated install step fails, **inspect actual GitHub contents and the lat
 
 1. **Stabilise and document the activated cinematic branch.** Confirm the live entrance, Play/Skip, restart, fallback if the asset fails, and mobile performance. Retain the original `game.js` until the tested code can be consolidated deliberately.
 2. **Complete the food-collection experience.** Catalogue UI polish, discoverability, a delightful first-discovery notification, accessible locked/unlocked states and clearly labelled food. Add new foods only with complete visual/collision/spawn definitions.
-3. **Improve sound and texture readability.** Add separate food and special-roast pickup SFX. Test a small increase from 48 to 60 cobble units on the test build, or adjust the artwork if stones lack distinction; check quadrant seams/scroll stability.
+3. **Profile and playtest on iPhone.** Pickup SFX and 60-unit cobbles are active. Check the runtime upgrade's frame pacing, collision generosity, sound and quadrant seams at gameplay scale.
 4. **Prototype one signature review mechanic.** Make food choices matter within a short 60–90-second vertical slice, without making the run unreadable or awarding automatic wins.
 5. **Implement a robust biome/encounter controller** when the existing runner is stable: continuous rain/darkness, safe cleared corridor, temporary slow/stop, text cutscene, once-per-run gift, safe restart. Follow `DEVELOPMENT_PLAN`'s proposed guardrails but confirm timing on-device.
 6. **Deliver lantern and wilderness** with readable hazards and recognisable camera/asset scale. Do not use darkness to make essential safe lanes impossible to identify.

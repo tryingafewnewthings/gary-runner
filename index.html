@@ -33,6 +33,9 @@
       text-transform: uppercase; box-shadow: 0 6px 24px rgba(255,230,0,0.35);
     }
     button:active { transform: scale(0.96); background: #e5ce00; }
+    #pauseBtn { position:absolute;top:80px;right:12px;z-index:5;padding:9px 15px;font-size:.75rem;box-shadow:none; }
+    #pauseBtn[hidden] { display:none; }
+    #pauseOverlay { z-index:30;transition:none; }
     #introOverlay { background: rgba(8, 10, 16, 0.98); }
     .sub-btn {
       background: transparent; color: #8a99ad; border: 2px solid #333c4d; padding: 12px 30px;
@@ -68,6 +71,11 @@
 <body>
   <div id="stage">
     <canvas id="c"></canvas>
+    <button id="pauseBtn" type="button" hidden aria-label="Pause game">Pause</button>
+    <div id="pauseOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Game paused">
+      <h1>Paused</h1><p>Ready for another bite?</p>
+      <button id="resumeBtn" type="button">Resume</button>
+    </div>
     <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
 
     <div id="menu" class="overlay show">
@@ -94,14 +102,15 @@
     </div>
   </div>
 
-<script src="game-data.js?v=33"></script>
-<script src="food-catalogue.js?v=1"></script>
+<script src="game-data.js?v=runtime1"></script>
+<script src="game-core.js?v=1"></script>
+<script src="food-catalogue.js?v=2"></script>
 <!-- GaryIntroOriginal=game.js?v=102 -->
 <script src="gary-intro-transition.js?v=2"></script>
 <!-- GarySidestepPrevious=game-intro-test.js?v=1 -->
 <!-- GarySidestepSmoothPrevious=game-sidestep-test.js?v=1 -->
 <!-- GarySidestepNoGhostPrevious=game-sidestep-smooth.js?v=1 -->
 <!-- GARY_PICKUP_SFX_INDEX_V1: game-sidestep-no-ghost.js -->
-<script src="game-sidestep-no-ghost.js?v=fullheight20261016v3"></script>
+<script src="game-runtime.js?v=1"></script>
 </body>
 </html>
