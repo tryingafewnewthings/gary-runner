@@ -102,7 +102,7 @@ const ITEMS = {
 };
 
 // Wide barrier uses a SINGLE pooled entity with a two-lane ground footprint. No artwork dependency.
-ITEMS.street_barrier={kind:'hazard',points:0,file:'art/obstacles/gary-service-charge-barrier.png?v=streetseq1',fallback:null,displaySize:98,
+ITEMS.street_barrier={kind:'hazard',points:0,file:null,fallback:null,displaySize:98,
   laneSpan:2,contact:{halfWidth:43,halfDepth:17},collision:{verticalRadius:32*150/189,laneRadius:1}};
 
 // Compatibility view: points are authored only in ITEMS.
@@ -214,15 +214,13 @@ const WEATHER = {
 const DIFFICULTY=Object.freeze({
   readBudget:Object.freeze({moveCost:0.16,reaction:0.25,margin:0.02}),
   speedCap:300, baseGap:1.18, gapDecrease:0.46, gapJitter:0.16,
-  gapFloor:0.67, approachGap:1.25, wideIntroductionLevel:34
+  gapFloor:0.67, approachGap:1.25, wideIntroductionLevel:46
 });
-// GaryStreetSequence20261018V1: visual night biome and procedural night biome begin together.
-const NIGHT_STREET_DISTANCE=STREET.length*WORLD.streetSegmentHeight;
 const BIOMES=Object.freeze([
-  Object.freeze({id:'high_street_day',startDistance:0,endDistance:NIGHT_STREET_DISTANCE,levelFloor:0,levelCeiling:36,
+  Object.freeze({id:'high_street_day',startDistance:0,endDistance:48000,levelFloor:0,levelCeiling:36,
     newIdea:'Learn ordinary single-lane hazards and food paths',
     roles:Object.freeze({food_low:'kebab',food_high:'roast',hazard_basic:'fork',hazard_wide:'street_barrier'})}),
-  Object.freeze({id:'high_street_night',startDistance:NIGHT_STREET_DISTANCE,endDistance:NIGHT_STREET_DISTANCE+58000,levelFloor:28,levelCeiling:65,
+  Object.freeze({id:'high_street_night',startDistance:48000,endDistance:106000,levelFloor:28,levelCeiling:65,
     newIdea:'Two-lane barrier with food in the clear lane; extra darkness never weakens hazard contrast',
     roles:Object.freeze({food_low:'fish',food_high:'roast',hazard_basic:'m',hazard_wide:'street_barrier'})})
 ]);
