@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — Emergency Recovery</title>
+<style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{margin:0;background:#0b111c;color:#f0f4fc;padding:20px 15px 60px}main{max-width:650px;margin:auto}h1{font-size:1.75rem;line-height:1.15;margin:0 0 12px}p,li{color:#c7d1e2;line-height:1.5;font-size:0.97rem}strong{color:#fff}.panel{background:#172236;border:1px solid #34445d;border-radius:14px;padding:18px;margin-top:18px}label{display:block;font-weight:750;margin:0 0 9px}input{display:block;width:100%;color:#f9faff;background:#0b1424;border:1px solid #627894;border-radius:9px;padding:14px;font-size:16px}.row{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}button,a.action{display:inline-block;background:#ffe357;border:0;border-radius:10px;color:#14171d;padding:14px 18px;font-size:15px;font-weight:800;text-decoration:none}button.secondary{background:#344966;color:white}button:disabled{opacity:.42}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:13px;border-radius:10px;background:#070d17;color:#cfdfef;font:12px/1.55 ui-monospace,SFMono-Regular,monospace;min-height:86px}a{color:#a0ceff}small{font-size:.83rem;color:#aabacf}.danger{color:#ffb9b9}.ok{color:#baf0cf}.line{border-top:1px solid #34445d;padding-top:16px;margin-top:16px}
+</style>
+</head>
+<body><main>
+<h1>Gary Eats! — Emergency Recovery</h1>
+<p>This installer <strong>undoes the broken Street Sequence release</strong> and restores the exact pre-installation code from verified commit <code>1fd2135</code>. It does not replace your game artwork, the cutscene/fox modules, game saves, or the published shop calibration.</p>
+<div class="panel"><strong>Restored files (6)</strong><p>gary-difficulty-runtime.js, gary-difficulty-core.js, gary-difficulty-data.js, index.html, PROJECT_STATE.md and GAME_STATUS.txt.</p><p><small>The barrier PNG and previous installer HTML remain in the repository as unused files; they do not run or affect the game. This recovery does not rewrite commit history.</small></p></div>
+<div class="panel">
+<label for="token">GitHub token with Contents read/write access to tryingafewnewthings/gary-runner</label>
+<input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_… / ghp_…" />
+<div class="row"><button id="verify">1. Check recovery</button><button id="restore" disabled>2. Restore working version</button></div>
+<p class="danger">This writes to the <code>main</code> branch. It will refuse to proceed if any targeted file has changed since the verified audit. All six files are checked before the first write.</p>
+<pre id="log" role="status" aria-live="polite">No repository changes have been made.</pre>
+<p id="result"></p>
+</div>
+<div class="panel"><strong>After successful recovery</strong><ol><li>Wait for GitHub Pages to publish the new commits.</li><li>Open the game with a fresh query parameter using the link shown after restoration, and refresh once.</li><li>Test a normal run: Gary cheers, street clears, stranger cutscene plays, and the fox appears.</li></ol><p><a href="https://github.com/tryingafewnewthings/gary-runner/commit/1fd2135d11fceb37f42aaa63e87ac8d6992f0405" target="_blank" rel="noopener">View the original working commit</a></p></div>
+</main>
+<script>
+'use strict';
+// Exact baseline and known broken-release blob identifiers verified 18 October 2026.
+const REPO = 'tryingafewnewthings/gary-runner';
+const BASE = '1fd2135d11fceb37f42aaa63e87ac8d6992f0405';
+const ORIGINAL = [
+ {path:'gary-difficulty-core.js', before:'b965a4c9c7606965691b7d23992c46f5c8c16b43', after:'ca82f434e77a1f86a1238d476ae98737d5792472'},
+ {path:'gary-difficulty-data.js', before:'a9d168dd6f5fbe715e084842f8fe8fae7722163b', after:'16f1c54d6f917bf5086868e2faf4c1a1d3102184'},
+ {path:'gary-difficulty-runtime.js', before:'5ee5aad30a3f478695252a0e451397a1d457a40b', after:'7f9dc8c808d374d310bd704427eadc9fbac8ae62'},
+ {path:'GAME_STATUS.txt', before:'c46b45a2f9b9ee4b01cf3c775740155bfec9a222', after:'ce32727706619b2ba618e1aadc60e6b98dd35da3'},
+ {path:'PROJECT_STATE.md', before:'63fc1fa43215cdb7e9baa74f3980553ebcbb16da', after:'66deb0e7106a6aaa34ad567b47e1bafd26308377'},
+ {path:'index.html', before:'1bf2b35abd7a7caedab5d62265dec9ee7ebb22aa', after:'b21e1de841703ca99b5b7d8a250ab879d4d93500'},
+];
+const token = document.getElementById('token');
+const log = document.getElementById('log');
+const verifyBtn = document.getElementById('verify');
+const restoreBtn = document.getElementById('restore');
+const result = document.getElementById('result');
+let checked=null,busy=false;
+function say(s){log.textContent+='\n'+s;log.scrollTop=log.scrollHeight;}
+function setBusy(v){busy=v;verifyBtn.disabled=v;restoreBtn.disabled=v||!checked;token.disabled=v;}
+function decode(base64){const bin=atob(base64.replace(/\s/g,'')),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes);}
+function encode(source){const bytes=new TextEncoder().encode(source);let s='';for(let i=0;i<bytes.length;i+=16384){s+=String.fromCharCode.apply(null,bytes.subarray(i,i+16384));}return btoa(s);}
+async function api(path,options={}){
+ const t=token.value.trim();if(!t)throw Error('Enter your GitHub token first.');
+ const response=await fetch('https://api.github.com/repos/'+REPO+'/'+path,{...options,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+t,'X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})},cache:'no-store'});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw Error((data.message||'GitHub request failed')+' (HTTP '+response.status+')');
+ return data;
+}
+async function getFile(path,ref){return await api('contents/'+path+'?ref='+encodeURIComponent(ref));}
+async function inspect(){
+ checked=null;setBusy(true);log.textContent='Checking current repository and archived release…';result.textContent='';
+ try{
+  const readings=[];
+  for(const item of ORIGINAL){
+   const [current,archived]=await Promise.all([getFile(item.path,'main'),getFile(item.path,BASE)]);
+   if(current.sha!==item.after && current.sha!==item.before)throw Error(item.path+' was modified after the broken release. Refusing to overwrite newer work.');
+   if(archived.sha!==item.before)throw Error(item.path+' baseline mismatch. Nothing has been written.');
+   readings.push({item,sha:current.sha,content:decode(archived.content)});
+   say('Verified '+item.path+(current.sha===item.before?' (already restored)':''));
+  }
+  if(!readings.find(v=>v.sha!==v.item.before)){
+   say('All six files are already at the working baseline.');result.innerHTML='<span class="ok">No rollback required.</span>';return;
+  }
+  checked=readings;
+  say('All six files verified. Ready to restore.');
+  result.innerHTML='<span class="ok">Preflight passed. Tap “Restore working version”.</span>';
+ }catch(error){say('Stopped: '+error.message);result.textContent='No files changed.';}finally{setBusy(false);}
+}
+async function restore(){
+ if(!checked||busy)return;
+ if(!confirm('Restore the six modified source and documentation files to the verified version before the broken Street Sequence update?'))return;
+ setBusy(true);log.textContent='Restoring verified working baseline…';result.textContent='';
+ let done=0;
+ try{
+  // Verify the exact SHA again before each write. index.html is deliberately last,
+  // so the browser switches back only after the supporting files are restored.
+  for(const v of checked){
+   if(v.sha===v.item.before){say('Already restored '+v.item.path);continue;}
+   const latest=await getFile(v.item.path,'main');
+   if(latest.sha!==v.sha)throw Error('Concurrent modification detected in '+v.item.path+'. STOPPED to protect newer work.');
+   await api('contents/'+v.item.path,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({branch:'main',message:'Recovery: restore '+v.item.path+' to before broken street-sequence release',sha:latest.sha,content:encode(v.content)})});
+   done++;say('Restored '+v.item.path);
+  }
+  checked=null;
+  say('Completed. '+done+' file(s) restored; index.html returned to original script versions.');
+  result.innerHTML='<span class="ok">Recovery committed to main.</span> <a class="action" href="https://tryingafewnewthings.github.io/gary-runner/?recovered=20261018v1" target="_blank" rel="noopener">Open recovered game</a><p><small>Wait for GitHub Pages propagation before opening. If a newer change is detected, stop and re-check instead of forcing it.</small></p>';
+ }catch(error){say('STOPPED: '+error.message);result.textContent=done+' file(s) restored before interruption. Re-run the check; do not reinstall the broken package.';}
+ finally{setBusy(false);}
+}
+verifyBtn.addEventListener('click',inspect);
+restoreBtn.addEventListener('click',restore);
+token.addEventListener('input',()=>{checked=null;restoreBtn.disabled=true;});
+</script></body></html>
