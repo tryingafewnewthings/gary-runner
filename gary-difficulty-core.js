@@ -54,6 +54,8 @@ function create(settings,biomes,items,initialSeed){
   if(!Array.isArray(biomes)||biomes.length<2||biomes.length>10)throw Error('Expected between 2 and 10 authored biomes');
   let rng,seed=0,state=distanceLevel(0,biomes),distance=0,reachable=[0,1,2];
   let lastWasWide=false,lastDare=false,introducedWide=false,rows=0,nextLeadIn=false;
+  // GaryStreetSequence20261018V1: wide hazards require the late, decaying street.
+  let wideAllowed=false;
   let layouts=[],sixgrams=new Set(),hazardRuns=[0,0,0],assist=0,cleanSeconds=0,crashes=[],wideWindow=[];
   const stats={attempted:0,procedural:0,setpieces:0,fallback:0,rejected:0,
     ratingRejected:0,reachRejected:0,repetitionRejected:0,validationFailures:0,
@@ -67,7 +69,7 @@ function create(settings,biomes,items,initialSeed){
   function reset(newValue){
     seed=((newValue??initialSeed??newSeed())>>>0)||1;rng=seeded(seed);
     state=distanceLevel(0,biomes);distance=0;reachable=[0,1,2];
-    lastWasWide=lastDare=introducedWide=nextLeadIn=false;rows=0;layouts=[];sixgrams=new Set();hazardRuns=[0,0,0];wideWindow=[];cleanSeconds=0;
+    lastWasWide=lastDare=introducedWide=nextLeadIn=false;wideAllowed=false;rows=0;layouts=[];sixgrams=new Set();hazardRuns=[0,0,0];wideWindow=[];cleanSeconds=0;
     // Assist and crash history persist briefly, but decay in clean play.
     for(const key of Object.keys(stats))stats[key]=0;
   }
@@ -87,8 +89,8 @@ function create(settings,biomes,items,initialSeed){
     // Noise increases with chaos but hazard count follows the distance level.
     let count=level<17?0:level<45?1:2;
     if(rng()<chaos*.30) count=clamp(count+(rng()<.5?-1:1),0,2);
-    const lanes=['none','none','none'], wide=state.biomeIndex>=1 && level>=settings.wideIntroductionLevel &&
-      count===2 && !lastWasWide && !lastDare && rng()<(.10+.15*chaos);
+    const lanes=['none','none','none'], wide=wideAllowed && state.biomeIndex>=1 && level>=settings.wideIntroductionLevel &&
+      !lastWasWide && !lastDare && (!introducedWide ? rng()<.28 : count===2 && rng()<(.10+.15*chaos));
     if(wide){const anchor=rng()<.5?0:1;lanes[anchor]='hazard_wide';lanes[anchor+1]=null;}
     else if(count){
       const pool=[0,1,2];
@@ -104,7 +106,7 @@ function create(settings,biomes,items,initialSeed){
     if(!next.length){stats.reachRejected++;return null;}
     if(!roles.some((r,i)=>!mask[i]&&(r==='food_low'||r==='food_high'))){stats.validationFailures++;return null;}
     const wide=isWide(roles);
-    if(wide&&(state.biomeIndex<1||level<settings.wideIntroductionLevel||lastWasWide||lastDare||dare||wideWindow.reduce((a,b)=>a+b,0)>=Math.floor(Math.max(1,wideWindow.length)*.15)))return null;
+    if(wide&&(!wideAllowed||state.biomeIndex<1||level<settings.wideIntroductionLevel||lastWasWide||lastDare||dare||wideWindow.reduce((a,b)=>a+b,0)>=Math.floor(Math.max(1,wideWindow.length)*.15)))return null;
     if(dare&&(lastWasWide||lastDare||state.intensity!=='peak'))return null;
     for(let i=0;i<3;i++)if(mask[i]&&hazardRuns[i]>=3){stats.repetitionRejected++;return null;}
     const key=maskString(roles),n=layouts.length;
@@ -171,6 +173,7 @@ function create(settings,biomes,items,initialSeed){
   function fullApproach(){reachable=[0,1,2];lastWasWide=lastDare=false;nextLeadIn=true;hazardRuns=[0,0,0];}
   reset();
   return Object.freeze({reset,progress,row,fullApproach,recordCrash,storyAllowed,
+    allowWide(value){wideAllowed=!!value;},
     get state(){return state;},get seed(){return seed;},get assist(){return assist;},
     get reachable(){return reachable.slice();},stats:()=>({...stats}),
     verify:(roles,gap)=>reachableAfter(reachable,roles,gap,budget)});
