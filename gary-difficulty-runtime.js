@@ -74,7 +74,6 @@
   const STREAK_COUNT = 126;
   const SPLASH_COUNT = 34;
   let nightHeld = 0, rainMix = 0, rainSaid = false;
-// GaryStreetSequence20261018V1: shop closure animation is one-time for each named storefront.
 let shutterMix = 0;
   let rainGain = null;
   const streaks = [];
@@ -657,11 +656,9 @@ let shutterMix = 0;
       shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount,clip:rectIsValid(d.clip)?{...d.clip}:null};
     }
   }
-  function drawKeeper(index, x, y, w, h, phaseSeed, segment, side) {
+  function drawKeeper(index, x, y, w, h, phaseSeed) {
     const keeper = KEEPERS[index];
     if (!streetLoaded || !keeper) return;
-    const closure = closureProgress(BUILDINGS[index]?.name, segment, side, view.clock);
-    if (closure !== null && closure >= 1) return;
 
     // Glass under the awning. Most fronts have the door on the right, so the
     // pane is left of centre. Red Lion is a wider glazed front.
@@ -669,17 +666,13 @@ let shutterMix = 0;
     const wx = win.x, wy = win.y, ww = win.w, wh = win.h;
 
     const spec = shopKeeperSpecs[BUILDINGS[index]?.name] || {offsetX:0,offsetY:0,scale:1,idleAmount:1,cheerAmount:1};
-    const phase = view.clock * 2.1 + (side === 'R' ? 1 : 0);
+    const phase = view.clock * 2.1 + phaseSeed;
     const ahead = PLAYER_Y - (y + h * 0.72);
     const near = ahead > -40 && ahead < 150;
-    // The old cheer scaled and jumped the entire sprite exactly as shutters fell.
-    // Fade cheer away BEFORE closure and use an anchored, restrained pull.
-    const cheer = (near ? Math.max(0, Math.sin(view.clock * 10)) : 0)
-      * spec.cheerAmount * Math.max(0, 1 - shutterMix * 2);
-    const pulling = closure === null ? 0 : Math.sin(Math.PI * closure);
-    const bob = Math.sin(phase) * 0.36 * spec.idleAmount * (closure === null ? 1 : 0.2) - cheer * 2;
-    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.006 * spec.idleAmount + cheer * 0.01;
-    const shift = Math.sin(view.clock * 0.75 + (side === 'R' ? 1.7 : 0)) * 0.3 * spec.idleAmount;
+    const cheer = (near ? Math.max(0, Math.sin(view.clock * 10)) : 0) * spec.cheerAmount;
+    const bob = Math.sin(phase) * 0.7 * spec.idleAmount - cheer * 5;
+    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 * spec.idleAmount + cheer * 0.06;
+    const shift = Math.sin(view.clock * 0.75 + phaseSeed * 1.7) * 0.6 * spec.idleAmount;
 
     // Other windows are large, so the keeper fills them. The pub glass is smaller,
     // so match the other keepers' size and let the frame crop him.
@@ -710,9 +703,7 @@ let shutterMix = 0;
     ctx.rect(visible.x + 1, visible.y + 1, Math.max(1, visible.w - 2), Math.max(1, visible.h - 2));
     ctx.clip();
 
-    // Small reach toward the rolling shutter, with feet fixed at the window base.
-    ctx.translate(baseX + (side === 'L' ? 1 : -1) * pulling * 1.8, baseY);
-    ctx.rotate((side === 'L' ? 1 : -1) * pulling * 0.04);
+    ctx.translate(baseX, baseY);
     ctx.scale(1, breathe);
     ctx.drawImage(
       imgStreet,
@@ -789,9 +780,9 @@ let shutterMix = 0;
     if (!streetLoaded) return;
     forEachStreetFront((plan, segment, y) => {
       const left = shopByName(plan.left);
-      if (left >= 0) drawKeeper(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, false, segment, 'L');
+      if (left >= 0) drawKeeper(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, false);
       const right = shopByName(plan.right);
-      if (right >= 0) drawKeeper(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, segment, 'R');
+      if (right >= 0) drawKeeper(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true);
     });
   }
 
@@ -1118,7 +1109,6 @@ let shutterMix = 0;
     nightOn = false;
     rainSaid = false;
     shopClosureStarted.clear();
-    shopClosuresComplete = false;
     itemPool.clear(); effectPool.clear(); starPool.clear();
     roadQueue = [];
     cap = lastHit = null;
@@ -1619,15 +1609,11 @@ let shutterMix = 0;
     updateRain(dt, true);
     const hazardsClear = !objs.some(o => !o.d && isHazard(o.t));
     const dareActive = objs.some(o => !o.d && o.dare);
-    const ground = window.GaryRoadEvolution;
-    // Story pacing belongs to the completed street/decay sequence, not the
-    // procedural difficulty beat, which can otherwise postpone the reader for minutes.
-    const storyGate = hazardsClear && !dareActive && allShopsClosed()
-      && !!ground && ground.encounterReady();
+    const storyGate = director.storyAllowed(hazardsClear,dareActive);
     const wasQuiet = mystery.quiet();
-    ground?.update(dt, distance, nightMix, imgMystery.ready && allShopsClosed());
+    const ground = window.GaryRoadEvolution;
+    ground?.update(dt, distance, nightMix, imgMystery.ready);
     ground?.recordDistance(distance);
-    director.allowWide(!!ground && allShopsClosed() && ground.progressAt(distance) >= 0.28 && !mystery.quiet());
     mystery.update(dt, distance, rainMix, shutterMix, hazardsClear,
       storyGate && imgMystery.ready && (!ground || ground.encounterReady()));
     if (mystery.quiet()) ground?.trigger(distance, mystery.footAt(distance));
@@ -1877,22 +1863,10 @@ let shutterMix = 0;
     if (!definition) return;
     if (definition.laneSpan===2){
       const bx=lx(o.l)+LANE_WIDTH/2, by=y;
-      // 0-degree yaw: horizontal across two lanes, with gentle camera-height compression.
-      ctx.save();
-      ctx.fillStyle='rgba(9,12,15,.34)';
-      ctx.beginPath();ctx.ellipse(bx,by+21,44,5,0,0,Math.PI*2);ctx.fill();
-      const pic=itemImages[o.t];
-      if(pic && pic.ready){
-        ctx.translate(bx,by+5);
-        ctx.scale(1,.87); // fixed, cheap camera fit; never rotate the sign diagonally
-        ctx.drawImage(pic,-48,-37,96,65);
-      }else{
-        // Safe fallback if the image is unavailable; collision remains authoritative.
-        ctx.lineWidth=3;ctx.strokeStyle='#151b21';ctx.fillStyle='#f9b538';
-        rr(ctx,bx-45,by-24,90,48,7);ctx.fill();ctx.stroke();
-        ctx.fillStyle='#192733';ctx.fillRect(bx-39,by-8,78,16);
-        ctx.fillStyle='#fff0ce';for(let i=0;i<5;i++)ctx.fillRect(bx-37+i*18,by-6,10,12);
-      }
+      ctx.save();ctx.lineWidth=3;ctx.strokeStyle='#151b21';ctx.fillStyle='#f9b538';
+      rr(ctx,bx-45,by-24,90,48,7);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#192733';ctx.fillRect(bx-39,by-8,78,16);
+      ctx.fillStyle='#fff0ce';for(let i=0;i<5;i++){ctx.fillRect(bx-37+i*18,by-6,10,12);}
       ctx.restore();
       return;
     }
@@ -2344,7 +2318,6 @@ function updateRain(dt, advancing) {
   // Gary Eats! Visual Studio bridge. Published data is optional.
   const shopClosureSpecs = Object.create(null);
   const shopClosureStarted = new Map();
-  let shopClosuresComplete = false;
   const RECT_FIELDS = ['x', 'y', 'w', 'h'];
   const rectIsValid = r => r && RECT_FIELDS.every(k => Number.isFinite(r[k]))
     && r.x >= 0 && r.y >= 0 && r.w > 0 && r.h > 0
@@ -2405,77 +2378,85 @@ function updateRain(dt, advancing) {
     })
     .catch(error => console.warn('Visual Studio settings:', error.message));
 
-  // Shop identity is the closure key, not world segment. The same business
-  // may recur in the scrolling street, but it never performs the action twice.
-  function closureProgress(name,segment,side,at) {
-    const entry=shopClosureStarted.get(name);
-    if (!entry || segment < entry.segment) return null;
-    if (segment > entry.segment) return 1; // subsequent shop appearances stay shut
-    if (side !== entry.side) return null;
-    const duration=shopClosureSpecs[name]?.duration || 1;
-    return Math.max(0,Math.min(1,(at-entry.start)/duration));
-  }
-
-  function allShopsClosed() {
-    if(shopClosuresComplete) return true;
-    if(shopClosureStarted.size < BUILDINGS.length) return false;
-    for(const b of BUILDINGS){
-      const entry=shopClosureStarted.get(b.name);
-      if(!entry || clock-entry.start < (shopClosureSpecs[b.name]?.duration||1))return false;
-    }
-    shopClosuresComplete=true;
-    return true;
-  }
-
   function updateShopClosures() {
-    // Only begin after the storm; all shops must finish before ground decay.
-    if (shopClosuresComplete || shutterMix < 0.95 || !streetLoaded) return;
-    function startIfApproaching(name,segment,side,shopY) {
-      const spec=shopClosureSpecs[name];
-      if(!spec || shopClosureStarted.has(name))return;
-      const windowBottom=shopY+spec.shutter.y+spec.shutter.h;
-      if(windowBottom>=PLAYER_Y-230 && windowBottom<=PLAYER_Y+60)
-        shopClosureStarted.set(name,{segment,side,start:clock});
+    // Presentation only. Never affect hazard, food, or lane logic.
+    if (shutterMix < 0.95 || !streetLoaded) return;
+
+    function startIfApproaching(name, segment, side, shopY) {
+      const spec = shopClosureSpecs[name];
+      if (!spec) return;
+      const id = segment + ':' + side;
+      if (shopClosureStarted.has(id)) return;
+      const windowBottom = shopY + spec.shutter.y + spec.shutter.h;
+      if (windowBottom >= PLAYER_Y - 230 && windowBottom <= PLAYER_Y + 60) {
+        shopClosureStarted.set(id, clock);
+      }
     }
-    forEachStreetFront((plan,segment,y)=>{
-      startIfApproaching(plan.left,segment,'L',y);
-      startIfApproaching(plan.right,segment,'R',y);
-    },distance);
+
+    forEachStreetFront((plan, segment, y) => {
+      startIfApproaching(plan.left, segment, 'L', y);
+      startIfApproaching(plan.right, segment, 'R', y);
+    }, distance);
+
+    // Retain only nearby instances; the STREET plan may repeat forever.
+    const oldestVisible = Math.floor((distance + 56) / STREET_SEGMENT_H) - 2;
+    for (const id of shopClosureStarted.keys()) {
+      if (Number(id.split(':')[0]) < oldestVisible) shopClosureStarted.delete(id);
+    }
   }
 
   function drawShopShutters() {
-    if(!shopClosureStarted.size || !streetLoaded)return;
-    function drawOne(name,segment,side,y){
-      const spec=shopClosureSpecs[name];
-      if(!spec)return;
-      const t=closureProgress(name,segment,side,view.clock);
-      if(t===null)return;
-      const eased=t*t*(3-2*t);
-      const s=spec.shutter,bx=side==='L'?0:ROAD_RIGHT+PAVEMENT_WIDTH;
-      const x=bx+s.x,top=y+s.y,h=s.h*eased;
-      if(h>.2){
-        ctx.save();ctx.beginPath();ctx.rect(x,top,s.w,s.h);ctx.clip();
-        ctx.fillStyle='#353b42';ctx.fillRect(x,top,s.w,h);
-        ctx.strokeStyle='#79838e';ctx.lineWidth=1;
-        for(let sy=top+4;sy<top+h;sy+=5){
-          ctx.beginPath();ctx.moveTo(x+1,sy);ctx.lineTo(x+s.w-1,sy);ctx.stroke();
+    if (!shopClosureStarted.size || !streetLoaded) return;
+
+    function drawOne(name, segment, side, y) {
+      const spec = shopClosureSpecs[name];
+      const start = shopClosureStarted.get(segment + ':' + side);
+      if (!spec || start === undefined) return;
+
+      const t = Math.min(1, Math.max(0, (view.clock - start) / spec.duration));
+      const eased = t * t * (3 - 2 * t);
+      const s = spec.shutter;
+      const bx = side === 'L' ? 0 : ROAD_RIGHT + PAVEMENT_WIDTH;
+      const x = bx + s.x, top = y + s.y, h = s.h * eased;
+      if (h > 0.2) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, top, s.w, s.h);
+        ctx.clip();
+        ctx.fillStyle = '#353b42';
+        ctx.fillRect(x, top, s.w, h);
+        ctx.strokeStyle = '#79838e';
+        ctx.lineWidth = 1;
+        for (let sy = top + 4; sy < top + h; sy += 5) {
+          ctx.beginPath();
+          ctx.moveTo(x + 1, sy);
+          ctx.lineTo(x + s.w - 1, sy);
+          ctx.stroke();
         }
-        ctx.fillStyle='#a1aab3';ctx.fillRect(x,top+h-2.5,s.w,2.5);
-        ctx.fillStyle='#242930';ctx.fillRect(x,top,1.6,h);ctx.fillRect(x+s.w-1.6,top,1.6,h);
+        ctx.fillStyle = '#a1aab3';
+        ctx.fillRect(x, top + h - 2.5, s.w, 2.5);
+        ctx.fillStyle = '#242930';
+        ctx.fillRect(x, top, 1.6, h);
+        ctx.fillRect(x + s.w - 1.6, top, 1.6, h);
         ctx.restore();
       }
-      if(spec.doorLight && t>.7){
-        const d=spec.doorLight;ctx.save();
-        ctx.globalAlpha=Math.min(1,(t-.7)/.3)*.94;
-        ctx.fillStyle='#081019';ctx.fillRect(bx+d.x,y+d.y,d.w,d.h);
+
+      if (spec.doorLight && t > 0.7) {
+        const d = spec.doorLight;
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, (t - 0.7) / 0.3) * 0.94;
+        ctx.fillStyle = '#081019';
+        ctx.fillRect(bx + d.x, y + d.y, d.w, d.h);
         ctx.restore();
       }
     }
-    forEachStreetFront((plan,segment,y)=>{
-      drawOne(plan.left,segment,'L',y);
-      drawOne(plan.right,segment,'R',y);
+
+    forEachStreetFront((plan, segment, y) => {
+      drawOne(plan.left, segment, 'L', y);
+      drawOne(plan.right, segment, 'R', y);
     });
   }
+
 
   function drawMysteriousBench() {
     if (!imgMystery.ready || !mystery.visible(view.distance)) return;
