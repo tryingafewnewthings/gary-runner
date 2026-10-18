@@ -119,3 +119,5 @@ The actual bridge/wilderness boundary remains future work. Do not imply the brid
 
 
 Fox encounter V2 correction: enlarge bush from120px to224px canvas (about196px visible foliage), draw foliage in front with a shared ground anchor to conceal the80px fox at entry/exit. Target80% of score-adjusted normal running speed, enforce that floor during encounter instead of72px/s. Faster .55s approach, .36s snatch, .16s turn and .55s retreat keep the action visible.
+
+GaryStreetSequence20261018V2: staged night shutters, progressive offscreen clearance and gated service-charge barrier. See PROJECT_STATE.md.
