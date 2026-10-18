@@ -1,4 +1,4 @@
-/* Gary Eats! — Cinematic Intro Bridge v1
+/* Gary Eats! — Cinematic Intro Bridge v3 — clean sprite edges
  * Optional module: if the 4-frame asset fails to load, the normal game is unaffected.
  * Must be loaded BEFORE game.js. No input, collision, scoring, spawning or settings edits.
  */
@@ -9,10 +9,57 @@
   const SHEET_COLUMNS = 4;
   const CELL_W = 384, CELL_H = 512;
   const image = new Image();
-  let ready = false;
+  let ready = false, transitionSheet = image;
+
+  // The supplied atlas has a white matte outside the dark character outline,
+  // including nearly-white translucent pixels. Clean once, never during draw().
+  // Flood from each cell boundary so light details enclosed by Gary survive.
+  function cleanTransitionEdges(source) {
+    const canvas = document.createElement('canvas');
+    canvas.width = source.naturalWidth;
+    canvas.height = source.naturalHeight;
+    const context = canvas.getContext('2d', {willReadFrequently: true});
+    context.drawImage(source, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+    const data = pixels.data;
+    const count = CELL_W * CELL_H;
+    const seen = new Uint8Array(count);
+    const queue = new Int32Array(count);
+    for (let cell = 0; cell < SHEET_COLUMNS; cell++) {
+      seen.fill(0);
+      let head = 0, tail = 0;
+      function visit(x, y) {
+        const local = y * CELL_W + x;
+        if (seen[local]) return;
+        seen[local] = 1;
+        const offset = (y * canvas.width + cell * CELL_W + x) * 4;
+        const r = data[offset], g = data[offset + 1], b = data[offset + 2];
+        const low = Math.min(r, g, b), high = Math.max(r, g, b);
+        if (data[offset + 3] !== 0 && !(low > 140 && high - low < 40)) return;
+        data[offset] = data[offset + 1] = data[offset + 2] = data[offset + 3] = 0;
+        queue[tail++] = local;
+      }
+      for (let x = 0; x < CELL_W; x++) { visit(x, 0); visit(x, CELL_H - 1); }
+      for (let y = 0; y < CELL_H; y++) { visit(0, y); visit(CELL_W - 1, y); }
+      while (head < tail) {
+        const local = queue[head++], x = local % CELL_W, y = Math.floor(local / CELL_W);
+        if (x > 0) visit(x - 1, y);
+        if (x + 1 < CELL_W) visit(x + 1, y);
+        if (y > 0) visit(x, y - 1);
+        if (y + 1 < CELL_H) visit(x, y + 1);
+      }
+    }
+    context.putImageData(pixels, 0, 0);
+    return canvas;
+  }
   image.onload = function () {
     ready = image.naturalWidth === SHEET_COLUMNS * CELL_W && image.naturalHeight === CELL_H;
-    if (!ready) console.warn('Gary intro sheet must be 1536 x 512. Falling back to normal start.');
+    if (!ready) { console.warn('Gary intro sheet must be 1536 x 512. Falling back to normal start.'); return; }
+    try { transitionSheet = cleanTransitionEdges(image); }
+    catch (error) {
+      ready = false;
+      console.warn('Gary transition edge cleanup failed; normal start will be used.', error);
+    }
   };
   image.onerror = function () { ready = false; console.warn('Gary transition art unavailable; normal start will be used.'); };
   image.src = './gary_transition_sheet.png?v=1';
@@ -93,7 +140,7 @@
       const w = spriteH * CELL_W / CELL_H;
       ctx.save();
       ctx.globalAlpha = entranceOpacity * (1 - walkMix);
-      ctx.drawImage(image, frame * CELL_W, 0, CELL_W, CELL_H, x - w / 2, cy - spriteH / 2, w, spriteH);
+      ctx.drawImage(transitionSheet, frame * CELL_W, 0, CELL_W, CELL_H, x - w / 2, cy - spriteH / 2, w, spriteH);
       ctx.restore();
     }
     if (walkMix > 0.001 && o.walkSheet && o.walkSheet.ready) {
