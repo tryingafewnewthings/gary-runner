@@ -33,3 +33,25 @@ gary-cutscene-project.json holds declarative content; gary-cutscene-runtime.js r
 ## Validation limits
 
 29 automated tests pass, including a logic-only execution of the patched real engine through the full bench approach, all eight introduction frames, exact alignment, world/text pause and safe resume. They also cover script preservation, paging, mouth timing, action ordering, once-per-run triggers, hazard gating, import validation and guarded publication. Mock DOM/canvas fixtures do not verify browser layout or device performance. Browser/device preview automation is unavailable in the build environment. Full Safari/iPhone layout, publishing with a real owner token and end-to-end runner playtesting remain required; they must not be described as already verified.
+
+
+## Natural banner revision (4)
+
+The banner remains one third of the portrait screen. Its art now occupies 68% of the banner and its compact dialogue strip 32%, with automatic two-line pages. The supplied character portraits use a 255px full-body scale in the banner crop; source resolution does not change game-world sprite scale. Gary’s talking frames and the approved dialogue are preserved.
+
+By default, installed scenes copy the exact region of the live game canvas beneath their art strip when the banner opens. The copy keeps the source width, camera, kerb, bench, weather and lighting instead of using a separately generated background. The selected background is only a fallback/editor reference; turn off “Match the live game” to use it deliberately. The frozen crop is refreshed on resize. The portraits remain foreground dialogue layers, not replacements for the world actors.
+
+`play.html` runs the actual integrated game renderer and existing art, loaded from the live game’s GitHub Pages asset URLs. The review starts near the bench so its umbrella introduction completes before conversation. This shortcut is confined to `preview/game-preview.js`; the installer ships the normal game engine. The preview needs an internet connection for the existing game artwork.
+
+The installer can update the previously supplied V3 engine only when its guarded file hashes match. It preserves existing scene data/artwork and the original restore point. Modified engine or tool files stop the update.
+
+Validation: 30 automated logic checks pass, including source-canvas crop geometry and the actual engine’s encounter lifecycle. Real Safari layout, external asset loading and token-based installation have not been device-tested.
+
+
+## Meeting-point placement (revision 6)
+
+Alignment scenes now anchor the banner at the actual meeting point, with its bottom 8 design pixels below Gary’s feet. This covers the world characters’ full silhouettes rather than floating above them. Canvas offsets inside taller phone viewports are included in the placement and background crop. An older alignment scene saved with middle placement also follows the meeting point; explicit top/bottom placements remain available.
+
+The dialogue strip is reduced from 36% to 32% of the banner, retaining the same font size and up to two lines per page. Artwork receives 68%. During entry/exit, the world character layers fade with the banner. While dialogue holds, only the foreground cutscene characters render. A separate actor-free pass captures the ground and rain, so duplicate Gary/reader sprites cannot be baked into the banner. The combined seated bench/reader sprite returns after dialogue; the existing umbrella introduction and foot-alignment trigger remain unchanged.
+
+The Safari preview start-button test uses the real ground controller and confirms dialogue within ten simulated seconds. Engine tests check that both world character draw calls are absent during dialogue and from the crop, and that their visibility returns on completion. Real iPhone layout is not automated here.

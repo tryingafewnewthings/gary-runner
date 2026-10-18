@@ -268,7 +268,7 @@ let shutterMix = 0;
     mysterySpec.columns, mysterySpec.rows, mysterySpec.frameWidth, mysterySpec.frameHeight));
 
   // GaryCutsceneStudioV3: safe, reusable one-third narrative banners.
-  const cutscenes = window.GaryCutscene.createManager({host:stage,onComplete:finishCutscene});
+  const cutscenes = window.GaryCutscene.createManager({host:stage,onComplete:finishCutscene,worldSource:()=>{render(0,true);return cv;}});
   window.GaryCutscenes = Object.freeze({signal:name=>cutscenes.signal(name),setStage:name=>cutscenes.setStage(name)});
   const cutsceneWorld={stage:'high-street',distance:0,elapsed:0,playerY:PLAYER_Y+WORLD.playerFootOffset,
     hazardsClear:true,actors:[{id:'hooded-reader',footY:-Infinity,ready:false,introComplete:false}]};
@@ -2502,7 +2502,7 @@ function updateRain(dt, advancing) {
     ctx.restore();
   }
 
-  function render(dt){
+  function render(dt,cutscenePlate=false){
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
@@ -2517,13 +2517,13 @@ function updateRain(dt, advancing) {
     drawStreetLight();
     drawKeepersAboveWindowLighting();
     drawShopShutters();
-    drawMysteriousBench();
+    if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
     drawRainSplashes();
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
       for(let i=objs.length-1;i>=0;i--)if(!objs[i].d)drawObj(objs[i]);
-      drawPlayer();
+      if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
       for(const f of fx){
         const k=f.t/f.life;
         const pop=f.pop?1.25-k*0.25:1;
