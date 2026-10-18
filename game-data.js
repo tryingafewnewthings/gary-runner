@@ -85,6 +85,10 @@ const PLAYER_CONTACT = Object.freeze({halfWidth: 8, halfDepth: 8});
 // collision values remain only for archived runtimes and rollback compatibility.
 // Sprite display boxes and collision geometry are deliberately independent.
 const ITEMS = {
+  sausage_roll:{kind:'food',points:10,file:'art/food/half-eaten-sausage-roll.png?v=fox2',fallback:null,displaySize:42,
+    collision:{verticalRadius:32*150/189,laneRadius:.55}},
+  custard_cream:{kind:'food',points:5,file:'art/food/custard-cream.png?v=fox2',fallback:null,displaySize:36,
+    collision:{verticalRadius:32*150/189,laneRadius:.55}},
   kebab: { kind: 'food', points: 5, file: null, fallback: 'kebab', displaySize: 50,
     collision: { verticalRadius: 32 * 150 / 189, laneRadius: 0.55 } },
   fish: { kind: 'food', points: 10, file: null, fallback: 'fish', displaySize: 50,

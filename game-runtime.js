@@ -50,7 +50,7 @@
   let laneStart = 1, laneTime = LANE_CHANGE_SECONDS;
   let laneDuration = LANE_CHANGE_SECONDS, laneLean = 0;
   let scrollY = 0, distance = 0, acc = 0, gap = 1.1;
-  const itemPool = new ObjectPool(96, () => ({t:'', l:0, y:0, previousY:0, id:0, d:0, dare:0, refused:0, near:0, cleared:0}));
+  const itemPool = new ObjectPool(96, () => ({t:'', l:0, y:0, previousY:0, id:0, d:0, dare:0, refused:0, near:0, cleared:0,foxEvent:0}));
   const effectPool = new ObjectPool(48, () => ({x:0,y:0,t:0,life:1,txt:'',col:'#fff',pop:0}));
   const starPool = new ObjectPool(128, () => ({x:0,y:0,previousX:0,previousY:0,vx:0,vy:0,life:0,maxLife:1,size:1}));
   const objs = itemPool.active, fx = effectPool.active, stars = starPool.active;
@@ -336,7 +336,7 @@ let shutterMix = 0;
       const images = [...new Set([
         imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery,
         imgCheer, imgCrash, ...imgRun, ...(window.GaryRoadEvolution?.images || []), ...Object.values(cobbleImgs),
-        ...PROPS.map(prop => prop.img), ...Object.values(itemImages)
+        ...PROPS.map(prop => prop.img), ...Object.values(itemImages), ...Object.values(foxImages)
       ].filter(Boolean))];
       let loaded = 0;
       const results = await Promise.allSettled(images.map(async image => {
@@ -1030,6 +1030,25 @@ let shutterMix = 0;
     .filter(([, item]) => item.file)
     .map(([id, item]) => [id, loadGary(item.file)]));
   const SP = { m: mk(dMush), fork: mk(dFork), kebab: mk(dKebab), fish: mk(dFish), roast: mk(dRoast) };
+  // GaryFoxEncounterV1: authored, non-hazard encounter on the Forgotten Road.
+  const foxImages={approach:loadGary('art/fox/fox-approach.png?v=fox2',im=>validateSheet(im,'Fox approach',6,1,256,256)),snatch:loadGary('art/fox/fox-snatch.png?v=fox2',im=>validateSheet(im,'Fox snatch',4,1,256,256)),
+    turn:loadGary('art/fox/fox-turn.png?v=fox2',im=>validateSheet(im,'Fox turn',3,1,256,256)),return:loadGary('art/fox/fox-return.png?v=fox2',im=>validateSheet(im,'Fox return',6,1,256,256)),bush:loadGary('art/fox/fox-bush.png?v=fox2')};
+  const foxWorld={afterBench:false,dialogueActive:false,hazardsClear:false,distance:0};
+  const fox=window.GaryFoxEncounter.create({images:foxImages,spawnFood:spawnFoxFood,
+    onTheft(){performance.foodSpawned=Math.max(0,performance.foodSpawned-1);},
+    onEscape(){cap={s:'Fair enough. He was here first.',t:0};}});
+  function spawnFoxFood(laneIndex,y){
+    const item=itemPool.acquire();if(!item)return null;
+    item.t='sausage_roll';item.l=laneIndex;item.y=item.previousY=y;item.id=uid++;
+    item.d=item.dare=item.refused=item.near=item.cleared=0;item.foxEvent=1;performance.foodSpawned++;
+    return item;
+  }
+  let barrenFoodSpawns=0;
+  function barrenFoodKind(kind){
+    if(mystery.footAt(distance)<=H+116||(kind!=='kebab'&&kind!=='fish'))return kind;
+    return barrenFoodSpawns++%2===0?'custard_cream':'sausage_roll';
+  }
+
 
   function rr(c,x,y,w,h,r) {
     c.beginPath(); c.moveTo(x+r,y);
@@ -1066,6 +1085,7 @@ let shutterMix = 0;
     crashScene.reset();
     mystery.reset();
     cutscenes.reset();
+    fox.reset();barrenFoodSpawns=0;
     window.GaryRoadEvolution?.reset();
     window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
@@ -1298,9 +1318,10 @@ let shutterMix = 0;
         if (!loadErrorLog.includes('Unknown item: ' + kind)) loadErrorLog.push('Unknown item: ' + kind);
         return;
       }
+      kind=barrenFoodKind(kind);
       const item = itemPool.acquire();
       item.t=kind; item.l=laneIndex; item.y=item.previousY=-60; item.id=uid++;
-      item.d=item.refused=item.near=item.cleared=0;
+      item.d=item.refused=item.near=item.cleared=item.foxEvent=0;
       item.dare=row.dare && kind==='roast' ? 1 : 0;
       if (isFood(kind)) performance.foodSpawned++;
     });
@@ -1658,6 +1679,10 @@ let shutterMix = 0;
     sampleCutsceneWorld(hazardsClear);cutscenes.prewarm(cutsceneWorld);
     if(cutscenes.tryStart(cutsceneWorld)){transition('cutscene');return;}
     const sceneQuiet=cutscenes.quiet(cutsceneWorld);
+    foxWorld.afterBench=mystery.footAt(distance)>H+116;foxWorld.dialogueActive=sceneQuiet;
+    foxWorld.hazardsClear=hazardsClear;foxWorld.distance=distance;fox.update(dt,foxWorld);
+    if(state!=='play')return;
+    const foxQuiet=fox.quiet();
     const waitForBenchIntro=mystery.quiet()&&hazardsClear&&mystery.footAt(distance)>=cutsceneWorld.playerY&&!cutsceneWorld.actors[0].introComplete;
     if (wasQuiet && !mystery.quiet()) {
       // Fresh, safe lead-in after the cameo; never release a backlog of rows.
@@ -1684,8 +1709,9 @@ let shutterMix = 0;
     effectPool.retain(livingEffect);
 
     const normalSpeed = Math.min(300, 200 + Math.floor(score / 150) * 10);
-    const desiredSpeed = mystery.slow(distance, hazardsClear) ? mysterySpec.slowSpeed : normalSpeed;
+    const desiredSpeed = foxQuiet&&hazardsClear ? normalSpeed*window.GaryFoxEncounter.SPEC.minSpeedRatio : mystery.slow(distance,hazardsClear) ? mysterySpec.slowSpeed : normalSpeed;
     shownSpeed += (desiredSpeed - shownSpeed) * Math.min(1, dt * 0.7);
+    if(foxQuiet&&hazardsClear)shownSpeed=Math.max(shownSpeed,normalSpeed*window.GaryFoxEncounter.SPEC.minSpeedRatio);
     const speed = waitForBenchIntro ? 0 : shownSpeed;
     nearCd = Math.max(0, nearCd - dt);
     flash = Math.max(0, flash - dt);
@@ -1699,10 +1725,10 @@ let shutterMix = 0;
     pigeons.update(dt);
     updateShopClosures();
     performance.distance = distance;
-    if (mystery.quiet() || sceneQuiet) acc = 0;
+    if (mystery.quiet() || sceneQuiet || foxQuiet) acc = 0;
     else acc += dt;
     let spawned = 0;
-    while (!mystery.quiet() && !sceneQuiet && acc >= gap && spawned < 3) {
+    while (!mystery.quiet() && !sceneQuiet && !foxQuiet && acc >= gap && spawned < 3) {
       const elapsedGap = gap;
       if (!spawnRow()) break;
       acc -= elapsedGap;
@@ -1882,7 +1908,7 @@ let shutterMix = 0;
       ctx.fillStyle='rgba(18,20,24,.45)';
       ctx.beginPath();ctx.ellipse(x,y+16,18,7,0,0,7);ctx.fill();
     }else{
-      ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+18*S,20*S,6*S,0,0,7);ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+(o.foxEvent?4:18*S),o.foxEvent?7:20*S,o.foxEvent?2:6*S,0,0,7);ctx.fill();
     }
     if (o.dare) {
       const pulse = 0.45 + Math.sin(view.clock * 5) * 0.25;
@@ -1894,8 +1920,8 @@ let shutterMix = 0;
     }
     const definition = ITEMS[o.t];
     if (!definition) return;
-    const bob = Math.sin(view.clock * 6 + o.id) * 3 * S;
-    const sz = definition.displaySize;
+    const bob = o.foxEvent?0:Math.sin(view.clock * 6 + o.id) * 3 * S;
+    const sz = o.foxEvent?16:definition.displaySize;
     const loaded = itemImages[o.t];
     const pic = loaded && loaded.ready ? loaded : SP[definition.fallback];
     if (!pic) return;
@@ -2523,6 +2549,7 @@ function updateRain(dt, advancing) {
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
       for(let i=objs.length-1;i>=0;i--)if(!objs[i].d)drawObj(objs[i]);
+      if(!cutscenePlate)fox.draw(ctx,view.distance,view.alpha,view.clock);
       if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
       for(const f of fx){
         const k=f.t/f.life;
@@ -2734,3 +2761,4 @@ function updateRain(dt, advancing) {
   prepareStartup();
   requestAnimationFrame(loop);
 })();
+

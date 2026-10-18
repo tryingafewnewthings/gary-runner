@@ -98,3 +98,24 @@ in the final approach, before bench entry. Retain irregular small cobble gaps.
 V4 tests: 24 passing checks, including pre-entry coverage and bounded render
 work. Native mature renderer: 248 to 24 image draws/frame versus V3. This is
 not an on-device FPS claim. Physical iPhone Safari acceptance remains required.
+
+
+
+FOX ENCOUNTER V1 / FORGOTTEN ROAD — 18 October2026
+# Fox encounter implementation
+
+
+## Fox encounter V1 — 18 October 2026
+
+Applies after installing the Fox Encounter package. Adds a once-per-run, non-hazard fox event after the bench has passed off screen and dialogue has completed. Stops new hazard rows, waits at least3.5 active seconds and until all hazards clear, then reveals a small16px sausage-roll pickup in the left lane. Gary walks at72 design units/second through the safe encounter.
+
+The outcome is sampled once:90% fox theft,10% no fox and roll collectible. On theft the fox emerges from a left-verge bush, runs to the roll, lowers its head, grips/lifts it, pivots, and runs back behind that bush. The ground roll disappears on the exact first carrying frame. All later fox frames include the roll; no second mouth overlay is drawn. The food uses normal pooled collection and awards no points/discovery when stolen. Scripted theft is removed from the rating's obtainable-food denominator. Pause/hide/cutscenes stop its active clock. The event cannot retrigger until a new run. After departure a short caption reads “Fair enough. He was here first.”
+
+Both new foods are included: custard cream5pts/36px display box and half-eaten sausage roll10pts/42px display box, registered512px transparent PNGs. After the bench, normal kebab/fish slots alternate these foods. The event roll uses a smaller constant16px box, on ground and in mouth, to fit the fox. The fox is not a collision obstacle. Roast rewards, score multipliers, existing lane geometry, normal hazard patterns and installed cutscene source remain intact.
+
+Assets: fox-approach6frames, fox-snatch4frames, fox-turn3frames, fox-return6frames; equal256px square cells in horizontal sheets; bush512px. One uniform scale per clip, consistent body/ground registration and generous alpha padding. Source resolution is independent of runtime size. Generated key poses are played as a compact stylised animation, not claimed as fluid hand animation.
+
+The actual bridge/wilderness boundary remains future work. Do not imply the bridge itself was added. Keep this module constrained to the Forgotten Road when a formal biome boundary is introduced.
+
+
+Fox encounter V2 correction: enlarge bush from120px to224px canvas (about196px visible foliage), draw foliage in front with a shared ground anchor to conceal the80px fox at entry/exit. Target80% of score-adjusted normal running speed, enforce that floor during encounter instead of72px/s. Faster .55s approach, .36s snatch, .16s turn and .55s retreat keep the action visible.

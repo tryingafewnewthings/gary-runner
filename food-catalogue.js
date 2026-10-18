@@ -3,6 +3,8 @@
   'use strict';
   const STORAGE = 'gary-eats-discovered-food-v1';
   const LABELS = {
+    sausage_roll:{name:'Half-eaten Sausage Roll',icon:'🥐',description:'Golden pastry. Someone got here first.'},
+    custard_cream:{name:'Custard Cream',icon:'🍪',description:'A small comfort on a very quiet road.'},
     kebab: { name: 'Kebab', icon: '🥙', description: 'A proper high-street kebab.' },
     fish: { name: 'Fish & Chips', icon: '🐟', description: 'A British classic: golden and crispy.' },
     roast: { name: 'Roast Dinner', icon: '🍽️', description: 'The Sunday roast. Absolutely beautiful.' }
@@ -153,3 +155,4 @@
     count(){return Object.keys(found).length;}
   });
 })();
+
