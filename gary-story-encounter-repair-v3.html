@@ -1,0 +1,97 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Gary Eats! — Encounter Repair V3</title><style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{background:#0b1320;color:#f2f5fa;max-width:650px;margin:auto;padding:22px 16px 55px}h1{font-size:1.75rem;margin-bottom:12px}p,li{line-height:1.5;color:#cad6e5}.panel{background:#182638;border:1px solid #3b5066;border-radius:14px;padding:16px;margin:18px 0}button{background:#ffe55f;color:#141821;border:0;border-radius:10px;font-size:16px;font-weight:800;padding:14px;width:100%;margin:7px 0}button:disabled{opacity:.42}input{background:#071321;color:white;border:1px solid #8a9eb6;border-radius:9px;font-size:16px;padding:14px;width:100%}a{color:#ffe66e}pre{padding:12px;background:#09101d;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 Menlo,monospace;max-height:250px;overflow:auto}#status{font-weight:bold;color:#c8ddff}.small{font-size:12px;color:#9caec3}</style></head><body>
+<h1>Gary Eats! — Stranger & Fox Repair V3</h1><p><strong>Targeted repair for the Street Sequence V2 regression.</strong> V2 requires the road to be free of active hazards before it schedules the event that stops spawning those hazards. The sequence can therefore stall indefinitely.</p>
+<div class="panel"><strong>This repair changes only:</strong><ul><li>Schedules the stranger corridor as soon as the decay reaches its encounter-ready stage, even if hazards are still passing.</li><li>Stops new hazard rows during the approach and waits for existing hazards to leave before starting the cutscene.</li><li>Restores the fox trigger independently of difficulty-beat timing, after the bench encounter has passed.</li></ul><p><strong>It does not change</strong> barrier artwork or collision, shutters, decay graphics, shopkeeper placement, Gary's cheer, fox artwork or cutscene data.</p></div>
+<div class="panel"><p><strong>GitHub token</strong> — repository Contents read/write access; used only during this session.</p><input id="token" type="password" autocomplete="off" placeholder="github_pat_…"><button id="check">1. Check live V2 code</button><button id="install" disabled>2. Install encounter repair</button><p id="status">Run the preflight check first. Installation will stop if your live files differ from the checked V2 baseline.</p><pre id="log">Ready.</pre><div id="result"></div></div>
+<p class="small">This updates only <code>gary-difficulty-runtime.js</code> and the runtime cache key in <code>index.html</code>. Keep your <a href="https://tryingafewnewthings.github.io/gary-runner/gary-emergency-rollback-installer.html">Emergency Recovery Installer</a> available in case further problems appear.</p>
+<script> 'use strict';
+const REPO='tryingafewnewthings/gary-runner',BRANCH='main';
+const VERSION="GaryStoryEncounterRepair20261018V3",EXPECTED={"gary-difficulty-runtime.js": "2d1541a6f20b91d8e016a9e418e776e51828737f", "index.html": "1989cfc9cf666852bbc12e2b6af343489c11486f"};
+const $=id=>document.getElementById(id), token=$('token'), status=$('status'), log=$('log'), checkBtn=$('check'), installBtn=$('install');
+const enc=new TextEncoder(),dec=new TextDecoder();
+let staged=null;
+function say(s){log.textContent+='\n'+s;log.scrollTop=log.scrollHeight;}
+function insist(ok,s){if(!ok)throw Error(s);}
+function fromBase64(s){let b=atob(s.replace(/\s/g,'')),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return dec.decode(a);}
+function toBase64(s){const bytes=enc.encode(s);let b='';for(let i=0;i<bytes.length;i+=8192)b+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(b);}
+function change(s,oldText,newText,label){let first=s.indexOf(oldText);insist(first>=0,'Source anchor missing: '+label);insist(s.indexOf(oldText,first+oldText.length)===-1,'Duplicate source anchor: '+label);return s.slice(0,first)+newText+s.slice(first+oldText.length);}
+function repairRuntime(s){
+ insist(s.includes('GaryStreetSequence20261018V2'),'This repair applies ONLY to Street Sequence V2.');
+ // Critical fix: story readiness must be allowed to clear future hazards before hazard-free can be true.
+ s=change(s,`    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear,
+      storyGate && imgMystery.ready && (!ground || ground.encounterReady()));`,
+ `    // ${VERSION}: announce the encounter corridor as soon as weather and decay are ready.
+    // This reserves an empty, incoming stretch BEFORE waiting for visible hazards to clear.
+    // Never make mystery.quiet() contingent on hazardsClear or the difficulty story beat.
+    const encounterCorridorReady = imgMystery.ready && (!ground || ground.encounterReady());
+    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear, encounterCorridorReady);`,
+ 'Unblock encounter corridor');
+ s=change(s,`    if(storyGate && cutscenes.tryStart(cutsceneWorld)){transition('cutscene');return;}`,
+ `    // Encounter was scheduled independently; let it begin once existing hazards clear.
+    if((storyGate || (mystery.quiet() && hazardsClear && !dareActive)) && cutscenes.tryStart(cutsceneWorld)){
+      transition('cutscene');return;
+    }`,
+ 'Unblock first cutscene');
+ s=change(s,`    foxWorld.afterBench=storyGate && mystery.footAt(distance)>H+116;foxWorld.dialogueActive=sceneQuiet;`,
+ `    // Fox may activate only after the bench sequence is past, independently of
+    // procedural difficulty and hazard-free frames. Existing fox safety checks remain.
+    foxWorld.afterBench=mystery.snapshot().passed;foxWorld.dialogueActive=sceneQuiet;`,
+ 'Restore fox trigger');
+ // Gameplay modules not part of this incident remain byte-for-byte untouched.
+ for(const signature of [
+   'function drawPlayer(){', 'function drawShopShutters(){', 'function updateShopClosures(){',
+   'director.allowWide(', 'function drawObj(o){', 'fox.update(dt,foxWorld)',
+   'window.GaryFoodCatalogue?.tick?.(dt)', 'ground?.update(dt, distance, nightMix, imgMystery.ready && allShopsClosed());',
+   'if (grin) triggerGrin();', 'drawMysteriousBench();'
+ ]) insist(s.includes(signature),'Protected gameplay invariant absent: '+signature);
+ return s;
+}
+function repairIndex(s){return change(s,
+ 'gary-difficulty-runtime.js?v=GaryStreetSequence20261018V2',
+ 'gary-difficulty-runtime.js?v='+VERSION,
+ 'Load corrected runtime');}
+async function request(method,path,value){
+ const t=token.value.trim();insist(t,'Enter a token authorised to modify repository contents.');
+ const res=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{method,headers:{'Authorization':'Bearer '+t,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(value?{'Content-Type':'application/json'}:{})},body:value?JSON.stringify(value):undefined});
+ const payload=await res.json().catch(()=>({}));if(!res.ok)throw Error(path+' GitHub '+res.status+': '+(payload.message||res.statusText));return payload;
+}
+async function preflight(){
+ checkBtn.disabled=true;installBtn.disabled=true;staged=null;status.textContent='Reading live V2 versions…';
+ try{
+  const list=[];
+  for(const [path,fn] of [['gary-difficulty-runtime.js',repairRuntime],['index.html',repairIndex]]){
+   const remote=await request('GET',path);
+   insist(remote.sha===EXPECTED[path],path+' changed since this repair was built. No writes attempted.');
+   const original=fromBase64(remote.content),content=fn(original);
+   insist(content!==original,'No changes generated for '+path);
+   list.push({path,original,content,sha:remote.sha});
+   say('Verified '+path+' and calculated minimal patch.');
+  }
+  // Deliberately no edits to fox/stranger/cutscene/decay code, shop calibration or artwork.
+  staged=list;installBtn.disabled=false;status.textContent='Checks passed. Two-file repair ready.';
+ }catch(e){say('Preflight stopped: '+e.message);status.textContent=e.message;}
+ finally{checkBtn.disabled=false;}
+}
+async function install(){
+ insist(staged?.length===2,'Run preflight first.');
+ checkBtn.disabled=installBtn.disabled=true;status.textContent='Installing repaired encounter triggers…';
+ const completed=[];
+ try{
+  for(const file of staged){const fresh=await request('GET',file.path);insist(fresh.sha===file.sha,file.path+' changed during installation. No overwrite.');}
+  for(const f of staged){
+   const r=await request('PUT',f.path,{message:VERSION+': unblock story corridor - '+f.path,content:toBase64(f.content),sha:f.sha,branch:BRANCH});
+   completed.push({file:f,after:r.content.sha});say('Installed '+f.path);
+  }
+  status.textContent='Repair published to GitHub. Wait for GitHub Pages and refresh the game.';
+  $('result').innerHTML='<a href="https://tryingafewnewthings.github.io/gary-runner/?repair=v3" target="_blank" rel="noopener">Open corrected Gary Eats! game in Safari</a>';
+ }catch(e){
+  say('INSTALL ERROR: '+e.message);
+  status.textContent='An error occurred. Attempting automatic rollback…';
+  for(const item of completed.reverse()){
+   try{await request('PUT',item.file.path,{message:'Undo partial '+VERSION+' installation',content:toBase64(item.file.original),sha:item.after,branch:BRANCH});say('Restored '+item.file.path);}catch(f){say('Could not restore '+item.file.path+': '+f.message);}
+  }
+  status.textContent='Repair not complete. See log and use Emergency Recovery if required.';
+ }finally{staged=null;token.value='';checkBtn.disabled=true;installBtn.disabled=true;}
+}
+checkBtn.addEventListener('click',()=>preflight());installBtn.addEventListener('click',()=>install());
+</script></body></html>
