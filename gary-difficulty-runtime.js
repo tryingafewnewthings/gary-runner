@@ -74,6 +74,7 @@
   const STREAK_COUNT = 126;
   const SPLASH_COUNT = 34;
   let nightHeld = 0, rainMix = 0, rainSaid = false;
+// GaryStreetSequence20261018V2: guarded shop-state and scenery presentation.
 let shutterMix = 0;
   let rainGain = null;
   const streaks = [];
@@ -656,9 +657,11 @@ let shutterMix = 0;
       shopKeeperSpecs[b.name]={offsetX:d.offsetX,offsetY:d.offsetY,scale:d.scale,idleAmount:d.idleAmount,cheerAmount:d.cheerAmount,clip:rectIsValid(d.clip)?{...d.clip}:null};
     }
   }
-  function drawKeeper(index, x, y, w, h, phaseSeed) {
+  function drawKeeper(index, x, y, w, h, phaseSeed, segment, side) {
     const keeper = KEEPERS[index];
     if (!streetLoaded || !keeper) return;
+    const closure = closureProgress(BUILDINGS[index]?.name,segment,side,view.clock);
+    if(closure!==null && closure>=1)return;
 
     // Glass under the awning. Most fronts have the door on the right, so the
     // pane is left of centre. Red Lion is a wider glazed front.
@@ -669,10 +672,14 @@ let shutterMix = 0;
     const phase = view.clock * 2.1 + phaseSeed;
     const ahead = PLAYER_Y - (y + h * 0.72);
     const near = ahead > -40 && ahead < 150;
-    const cheer = (near ? Math.max(0, Math.sin(view.clock * 10)) : 0) * spec.cheerAmount;
-    const bob = Math.sin(phase) * 0.7 * spec.idleAmount - cheer * 5;
-    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 * spec.idleAmount + cheer * 0.06;
-    const shift = Math.sin(view.clock * 0.75 + phaseSeed * 1.7) * 0.6 * spec.idleAmount;
+    // Approach and pull: smoothly settle the old jumping/cheering motion
+    // before the shutter crosses the window; feet never translate vertically.
+    const settle = closure === null ? 0 : Math.min(1,Math.max(0,closure*3));
+    const cheer = (near ? Math.max(0, Math.sin(view.clock * 10)) : 0) * spec.cheerAmount * (1-settle);
+    const bob = (Math.sin(phase) * 0.7 * spec.idleAmount - cheer * 5) * (1-settle);
+    const breathe = 1 + Math.sin(phase * 0.9 + 0.8) * 0.012 * spec.idleAmount * (1-settle) + cheer * 0.06;
+    const shift = Math.sin(view.clock * 0.75 + phaseSeed * 1.7) * 0.6 * spec.idleAmount * (1-settle);
+    const pull = closure === null ? 0 : Math.sin(Math.PI*closure);
 
     // Other windows are large, so the keeper fills them. The pub glass is smaller,
     // so match the other keepers' size and let the frame crop him.
@@ -703,8 +710,10 @@ let shutterMix = 0;
     ctx.rect(visible.x + 1, visible.y + 1, Math.max(1, visible.w - 2), Math.max(1, visible.h - 2));
     ctx.clip();
 
-    ctx.translate(baseX, baseY);
-    ctx.scale(1, breathe);
+    // An anchored lean under the shutter, not an upward jump.
+    ctx.translate(baseX+(side==='L'?1:-1)*pull*1.6,baseY);
+    ctx.rotate((side==='L'?1:-1)*pull*0.035);
+    ctx.scale(1,breathe);
     ctx.drawImage(
       imgStreet,
       keeper.x, keeper.y, keeper.w, keeper.h,
@@ -780,9 +789,9 @@ let shutterMix = 0;
     if (!streetLoaded) return;
     forEachStreetFront((plan, segment, y) => {
       const left = shopByName(plan.left);
-      if (left >= 0) drawKeeper(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, false);
+      if (left >= 0) drawKeeper(BUILDINGS[left].keeper, 0, y, BUILDING_WIDTH, BUILDING_H, false, segment, 'L');
       const right = shopByName(plan.right);
-      if (right >= 0) drawKeeper(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true);
+      if (right >= 0) drawKeeper(BUILDINGS[right].keeper, ROAD_RIGHT + PAVEMENT_WIDTH, y, W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, segment, 'R');
     });
   }
 
@@ -916,6 +925,11 @@ let shutterMix = 0;
 
 
 
+  const blankStreetPlans = STREET.map(p=>Object.freeze({...p,
+    left:'none',right:'none',leftBack:'none',leftMiddle:'none',leftFront:'none',leftObject:'none',
+    rightBack:'none',rightMiddle:'none',rightFront:'none',rightObject:'none',
+    leftGround:'cracked',rightGround:'sparse'}));
+  let visualClearFrom=Infinity;
   function forEachStreetFront(cb, worldDistance = view.distance) {
     const peek = 56;
     const base = Math.floor((worldDistance + peek) / STREET_SEGMENT_H);
@@ -924,7 +938,7 @@ let shutterMix = 0;
       if (index < 0) continue;
       const y = worldDistance - index * STREET_SEGMENT_H + (STREET_SEGMENT_H - peek);
       const plan = STREET[((index % STREET.length) + STREET.length) % STREET.length];
-      cb(mystery.planFor(plan, index), index, y);
+      cb(index>=visualClearFrom ? blankStreetPlans[((index%STREET.length)+STREET.length)%STREET.length] : mystery.planFor(plan,index),index,y);
     }
   }
 
@@ -1109,6 +1123,7 @@ let shutterMix = 0;
     nightOn = false;
     rainSaid = false;
     shopClosureStarted.clear();
+    visualClearFrom=Infinity;
     itemPool.clear(); effectPool.clear(); starPool.clear();
     roadQueue = [];
     cap = lastHit = null;
@@ -1609,11 +1624,18 @@ let shutterMix = 0;
     updateRain(dt, true);
     const hazardsClear = !objs.some(o => !o.d && isHazard(o.t));
     const dareActive = objs.some(o => !o.d && o.dare);
-    const storyGate = director.storyAllowed(hazardsClear,dareActive);
-    const wasQuiet = mystery.quiet();
     const ground = window.GaryRoadEvolution;
-    ground?.update(dt, distance, nightMix, imgMystery.ready);
+    const storyGate = director.storyAllowed(hazardsClear,dareActive) ||
+      (hazardsClear && !dareActive && rainMix>=0.8 && shutterMix>=0.95 && !!ground && ground.encounterReady());
+    const wasQuiet = mystery.quiet();
+    ground?.update(dt, distance, nightMix, imgMystery.ready && allShopsClosed());
     ground?.recordDistance(distance);
+    const decline=ground?.progressAt(distance)||0;
+    // Only clear NEW off-screen segments as deterioration advances; the hooded
+    // reader and fox controllers still own their original encounter state.
+    if(!Number.isFinite(visualClearFrom) && decline>=0.18)
+      visualClearFrom=Math.ceil((distance+H)/STREET_SEGMENT_H)+1;
+    director.allowWide(allShopsClosed() && decline>=0.30 && !mystery.quiet());
     mystery.update(dt, distance, rainMix, shutterMix, hazardsClear,
       storyGate && imgMystery.ready && (!ground || ground.encounterReady()));
     if (mystery.quiet()) ground?.trigger(distance, mystery.footAt(distance));
@@ -1861,14 +1883,21 @@ let shutterMix = 0;
     }
     const definition = ITEMS[o.t];
     if (!definition) return;
-    if (definition.laneSpan===2){
-      const bx=lx(o.l)+LANE_WIDTH/2, by=y;
-      ctx.save();ctx.lineWidth=3;ctx.strokeStyle='#151b21';ctx.fillStyle='#f9b538';
-      rr(ctx,bx-45,by-24,90,48,7);ctx.fill();ctx.stroke();
-      ctx.fillStyle='#192733';ctx.fillRect(bx-39,by-8,78,16);
-      ctx.fillStyle='#fff0ce';for(let i=0;i<5;i++){ctx.fillRect(bx-37+i*18,by-6,10,12);}
-      ctx.restore();
-      return;
+    if(definition.laneSpan===2){
+      const bx=lx(o.l)+LANE_WIDTH/2,by=y;
+      ctx.save();ctx.fillStyle='rgba(10,14,20,.28)';
+      ctx.beginPath();ctx.ellipse(bx,by+20,46,5,0,0,Math.PI*2);ctx.fill();
+      const pic=itemImages[o.t];
+      if(pic && pic.ready){
+        // Source art stays perfectly horizontal, compressed toward road-camera height.
+        ctx.translate(bx,by+1);ctx.scale(1,.88);ctx.drawImage(pic,-50,-27,100,54);
+      }else{
+        ctx.lineWidth=3;ctx.strokeStyle='#151b21';ctx.fillStyle='#f9b538';
+        rr(ctx,bx-45,by-24,90,48,7);ctx.fill();ctx.stroke();
+        ctx.fillStyle='#192733';ctx.fillRect(bx-39,by-8,78,16);
+        ctx.fillStyle='#fff0ce';for(let i=0;i<5;i++)ctx.fillRect(bx-37+i*18,by-6,10,12);
+      }
+      ctx.restore();return;
     }
     const bob = o.foxEvent?0:Math.sin(view.clock * 6 + o.id) * 3 * S;
     const sz = o.foxEvent?16:definition.displaySize;
@@ -2178,9 +2207,9 @@ function updateRain(dt, advancing) {
     }
   }
 
-  // Activate shop closures once the storm intensifies.
-  if (advancing && rainMix >= 0.8) {
-    shutterMix = Math.min(1, shutterMix + dt / 6);
+  // Shops shut during the nightfall transition, before ground deterioration.
+  if (advancing && nightMix >= 0.35) {
+    shutterMix = Math.min(1, shutterMix + dt / 2.2);
   }
 
   if (rainMix < 0.012) {
@@ -2378,85 +2407,59 @@ function updateRain(dt, advancing) {
     })
     .catch(error => console.warn('Visual Studio settings:', error.message));
 
-  function updateShopClosures() {
-    // Presentation only. Never affect hazard, food, or lane logic.
-    if (shutterMix < 0.95 || !streetLoaded) return;
-
-    function startIfApproaching(name, segment, side, shopY) {
-      const spec = shopClosureSpecs[name];
-      if (!spec) return;
-      const id = segment + ':' + side;
-      if (shopClosureStarted.has(id)) return;
-      const windowBottom = shopY + spec.shutter.y + spec.shutter.h;
-      if (windowBottom >= PLAYER_Y - 230 && windowBottom <= PLAYER_Y + 60) {
-        shopClosureStarted.set(id, clock);
-      }
-    }
-
-    forEachStreetFront((plan, segment, y) => {
-      startIfApproaching(plan.left, segment, 'L', y);
-      startIfApproaching(plan.right, segment, 'R', y);
-    }, distance);
-
-    // Retain only nearby instances; the STREET plan may repeat forever.
-    const oldestVisible = Math.floor((distance + 56) / STREET_SEGMENT_H) - 2;
-    for (const id of shopClosureStarted.keys()) {
-      if (Number(id.split(':')[0]) < oldestVisible) shopClosureStarted.delete(id);
-    }
+  // Once per distinct shop name; repeating street instances retain closed shutters.
+  // The map holds at most six entries. Story controllers are not altered.
+  function closureProgress(name,segment,side,at){
+    const entry=shopClosureStarted.get(name);
+    if(!entry || segment<entry.segment)return null;
+    if(segment>entry.segment)return 1;
+    if(side!==entry.side)return null;
+    const duration=shopClosureSpecs[name]?.duration||1;
+    return Math.max(0,Math.min(1,(at-entry.time)/duration));
   }
-
-  function drawShopShutters() {
-    if (!shopClosureStarted.size || !streetLoaded) return;
-
-    function drawOne(name, segment, side, y) {
-      const spec = shopClosureSpecs[name];
-      const start = shopClosureStarted.get(segment + ':' + side);
-      if (!spec || start === undefined) return;
-
-      const t = Math.min(1, Math.max(0, (view.clock - start) / spec.duration));
-      const eased = t * t * (3 - 2 * t);
-      const s = spec.shutter;
-      const bx = side === 'L' ? 0 : ROAD_RIGHT + PAVEMENT_WIDTH;
-      const x = bx + s.x, top = y + s.y, h = s.h * eased;
-      if (h > 0.2) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x, top, s.w, s.h);
-        ctx.clip();
-        ctx.fillStyle = '#353b42';
-        ctx.fillRect(x, top, s.w, h);
-        ctx.strokeStyle = '#79838e';
-        ctx.lineWidth = 1;
-        for (let sy = top + 4; sy < top + h; sy += 5) {
-          ctx.beginPath();
-          ctx.moveTo(x + 1, sy);
-          ctx.lineTo(x + s.w - 1, sy);
-          ctx.stroke();
-        }
-        ctx.fillStyle = '#a1aab3';
-        ctx.fillRect(x, top + h - 2.5, s.w, 2.5);
-        ctx.fillStyle = '#242930';
-        ctx.fillRect(x, top, 1.6, h);
-        ctx.fillRect(x + s.w - 1.6, top, 1.6, h);
+  function allShopsClosed(){
+    if(shopClosureStarted.size<BUILDINGS.length)return false;
+    for(const shop of BUILDINGS){
+      const entry=shopClosureStarted.get(shop.name);
+      if(!entry || clock<entry.time+(shopClosureSpecs[shop.name]?.duration||1))return false;
+    }
+    return true;
+  }
+  function updateShopClosures(){
+    if(shutterMix<0.95 || !streetLoaded || allShopsClosed())return;
+    function start(name,segment,side,y){
+      if(!name || name==='none'||shopClosureStarted.has(name))return;
+      const spec=shopClosureSpecs[name];if(!spec)return;
+      const bottom=y+spec.shutter.y+spec.shutter.h;
+      if(bottom>=PLAYER_Y-230 && bottom<=PLAYER_Y+60)
+        shopClosureStarted.set(name,{segment,side,time:clock});
+    }
+    forEachStreetFront((plan,segment,y)=>{start(plan.left,segment,'L',y);start(plan.right,segment,'R',y);},distance);
+  }
+  function drawShopShutters(){
+    if(!shopClosureStarted.size||!streetLoaded)return;
+    function paint(name,segment,side,y){
+      const spec=shopClosureSpecs[name];if(!spec)return;
+      const t=closureProgress(name,segment,side,view.clock);if(t===null)return;
+      const eased=t*t*(3-2*t),s=spec.shutter;
+      const bx=side==='L'?0:ROAD_RIGHT+PAVEMENT_WIDTH;
+      const x=bx+s.x,top=y+s.y,h=s.h*eased;
+      if(h>0.2){
+        ctx.save();ctx.beginPath();ctx.rect(x,top,s.w,s.h);ctx.clip();
+        ctx.fillStyle='#353b42';ctx.fillRect(x,top,s.w,h);
+        ctx.strokeStyle='#79838e';ctx.lineWidth=1;
+        for(let sy=top+4;sy<top+h;sy+=5){ctx.beginPath();ctx.moveTo(x+1,sy);ctx.lineTo(x+s.w-1,sy);ctx.stroke();}
+        ctx.fillStyle='#a1aab3';ctx.fillRect(x,top+h-2.5,s.w,2.5);
+        ctx.fillStyle='#242930';ctx.fillRect(x,top,1.6,h);ctx.fillRect(x+s.w-1.6,top,1.6,h);
         ctx.restore();
       }
-
-      if (spec.doorLight && t > 0.7) {
-        const d = spec.doorLight;
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, (t - 0.7) / 0.3) * 0.94;
-        ctx.fillStyle = '#081019';
-        ctx.fillRect(bx + d.x, y + d.y, d.w, d.h);
-        ctx.restore();
+      if(spec.doorLight&&t>0.7){
+        const d=spec.doorLight;ctx.save();ctx.globalAlpha=Math.min(1,(t-0.7)/0.3)*0.94;
+        ctx.fillStyle='#081019';ctx.fillRect(bx+d.x,y+d.y,d.w,d.h);ctx.restore();
       }
     }
-
-    forEachStreetFront((plan, segment, y) => {
-      drawOne(plan.left, segment, 'L', y);
-      drawOne(plan.right, segment, 'R', y);
-    });
+    forEachStreetFront((plan,segment,y)=>{paint(plan.left,segment,'L',y);paint(plan.right,segment,'R',y);});
   }
-
 
   function drawMysteriousBench() {
     if (!imgMystery.ready || !mystery.visible(view.distance)) return;
