@@ -156,13 +156,3 @@ Both new foods are included: custard cream5pts/36px display box and half-eaten s
 Assets: fox-approach6frames, fox-snatch4frames, fox-turn3frames, fox-return6frames; equal256px square cells in horizontal sheets; bush512px. One uniform scale per clip, consistent body/ground registration and generous alpha padding. Source resolution is independent of runtime size. Generated key poses are played as a compact stylised animation, not claimed as fluid hand animation.
 
 The actual bridge/wilderness boundary remains future work. Do not imply the bridge itself was added. Keep this module constrained to the Forgotten Road when a formal biome boundary is introduced.
-
-
-## GaryStreetSequence20261018V1: one-time shutters and late-night barrier
-
-- Published Visual Studio geometry in gary-game-config.json is unchanged. Each named shop closes only once per run; repeating instances render closed.
-- Shopkeepers stop their high-amplitude cheer as shutters activate; a small anchored reach/pull animation plays behind the shutter. New bespoke hand/arm frames would be required for literal hand-to-handle contact.
-- Cobble decay progression cannot begin until all six shutters have completed. Rain/night triggers remain authored by WEATHER.
-- Night difficulty now begins alongside the visually established night phase (one STREET pass). The two-lane barrier unlocks only when all shops are closed and the decaying ground has reached 28%, before the hooded reader's approach when normal safe patterns allow. The reader itself is released when decay reaches the authored 80% pre-encounter threshold and active hazards are clear, independently of procedural difficulty beats.
-- art/obstacles/gary-service-charge-barrier.png is a 1024×512 transparent source asset; the collision uses the existing validated two-lane footprint and the gameplay draw is horizontal.
-- Runtime, difficulty data and core changes are installed together through the Safari installer. Baseline game.js and original source sprites were not modified.
