@@ -1636,13 +1636,21 @@ let shutterMix = 0;
     if(!Number.isFinite(visualClearFrom) && decline>=0.18)
       visualClearFrom=Math.ceil((distance+H)/STREET_SEGMENT_H)+1;
     director.allowWide(allShopsClosed() && decline>=0.30 && !mystery.quiet());
-    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear,
-      storyGate && imgMystery.ready && (!ground || ground.encounterReady()));
+    // GaryStoryEncounterRepair20261018V3: announce the encounter corridor as soon as weather and decay are ready.
+    // This reserves an empty, incoming stretch BEFORE waiting for visible hazards to clear.
+    // Never make mystery.quiet() contingent on hazardsClear or the difficulty story beat.
+    const encounterCorridorReady = imgMystery.ready && (!ground || ground.encounterReady());
+    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear, encounterCorridorReady);
     if (mystery.quiet()) ground?.trigger(distance, mystery.footAt(distance));
     sampleCutsceneWorld(hazardsClear);cutscenes.prewarm(cutsceneWorld);
-    if(storyGate && cutscenes.tryStart(cutsceneWorld)){transition('cutscene');return;}
+    // Encounter was scheduled independently; let it begin once existing hazards clear.
+    if((storyGate || (mystery.quiet() && hazardsClear && !dareActive)) && cutscenes.tryStart(cutsceneWorld)){
+      transition('cutscene');return;
+    }
     const sceneQuiet=cutscenes.quiet(cutsceneWorld);
-    foxWorld.afterBench=storyGate && mystery.footAt(distance)>H+116;foxWorld.dialogueActive=sceneQuiet;
+    // Fox may activate only after the bench sequence is past, independently of
+    // procedural difficulty and hazard-free frames. Existing fox safety checks remain.
+    foxWorld.afterBench=mystery.snapshot().passed;foxWorld.dialogueActive=sceneQuiet;
     foxWorld.hazardsClear=hazardsClear;foxWorld.distance=distance;fox.update(dt,foxWorld);
     if(state!=='play')return;
     const foxQuiet=fox.quiet();
