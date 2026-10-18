@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Gary Eats! — Difficulty Staging</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+    body {
+      margin: 0; padding: 0; background: #0a0c14; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; height: 100dvh; overflow: hidden;
+    }
+    #stage {
+      position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 850px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      background: #111; box-shadow: 0 12px 40px rgba(0,0,0,0.7); overflow: hidden;
+    }
+    canvas { display: block; width: 100%; height: auto; touch-action: none; background: #1a1e24; }
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10, 12, 20, 0.95); display: flex; flex-direction: column;
+      justify-content: center; align-items: center; opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease-in-out; z-index: 10; padding: 30px; text-align: center;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+    h1 { font-size: 2.2rem; margin: 0 0 12px; color: #ffe600; text-transform: uppercase; font-weight: 900; letter-spacing: -0.5px; }
+    p { font-size: 1rem; margin: 0 0 25px; color: #cfd6e0; line-height: 1.4; }
+    button {
+      background: #ffe600; color: #111; border: none; padding: 16px 42px;
+      font-size: 1.05rem; font-weight: 900; border-radius: 32px; cursor: pointer;
+      text-transform: uppercase; box-shadow: 0 6px 24px rgba(255,230,0,0.35);
+    }
+    button:disabled { opacity:.6;cursor:wait;box-shadow:none; }
+    button:active { transform: scale(0.96); background: #e5ce00; }
+    #pauseBtn { position:absolute;top:80px;right:12px;z-index:5;padding:9px 15px;font-size:.75rem;box-shadow:none; }
+    #pauseBtn[hidden] { display:none; }
+    #pauseOverlay { z-index:30;transition:none; }
+    #introOverlay { background: rgba(8, 10, 16, 0.98); }
+    .sub-btn {
+      background: transparent; color: #8a99ad; border: 2px solid #333c4d; padding: 12px 30px;
+      font-size: 0.85rem; margin-top: 16px; box-shadow: none; border-radius: 24px;
+    }
+    .sub-btn:active { background: #1a2230; color: #fff; }
+    .profile-img {
+      width: 90px; height: 90px; border-radius: 50%; object-fit: cover;
+      border: 4px solid #ffe600; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    }
+    #introAvatar { width: 180px; height: 180px; margin-bottom: 24px; border-radius: 50%; }
+    #fRatingLabel {
+      margin: 0 0 4px;
+      color: #cfd6e0;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    #fRating {
+      font-size: 3rem;
+      line-height: 1;
+      font-weight: 900;
+      color: #ffe600;
+      margin: 0 0 14px;
+      letter-spacing: -2px;
+    }
+    #overAvatar {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 8px;
+    }
+  
+    /* GaryCrashCinematic20261017V1: quiet handoff to the existing results. */
+    #over { transform:translateY(12px); transition:opacity .42s ease,transform .42s ease; }
+    #over.show { transform:translateY(0); }
+    @media (prefers-reduced-motion:reduce) { #over { transform:none;transition:opacity .2s ease; } }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div style="position:absolute;top:6px;left:8px;z-index:50;background:#111e;color:#ffe600;font:700 10px Arial;padding:4px 6px;pointer-events:none">DISTANCE DIFFICULTY TEST — NOT LIVE</div>
+    <canvas id="c"></canvas>
+    <button id="pauseBtn" type="button" hidden aria-label="Pause game">Pause</button>
+    <div id="pauseOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Game paused">
+      <h1>Paused</h1><p>Ready for another bite?</p>
+      <button id="resumeBtn" type="button">Resume</button>
+    </div>
+    <audio id="garyAudio" src="gary_audio.mp3" preload="auto"></audio>
+
+    <div id="menu" class="overlay show">
+      <img class="profile-img" src="gary_closed.png.PNG" alt="Gary" onerror="this.src='gary_open.png.PNG'">
+      <h1>Gary Eats!</h1>
+      <p>Navigate the high street, dodge hazards, and collect proper decent grub. Stay out after dark. The rain finds the street.</p>
+      <button id="startBtn" disabled>Loading Gary…</button>
+      <p id="startupStatus" role="status" aria-live="polite" style="font-size:.82rem;margin:14px 0 0;color:#b7c5d5">Getting the high street ready…</p>
+    </div>
+
+    <div id="introOverlay" class="overlay">
+      <canvas id="introAvatar" width="180" height="180"></canvas>
+      <p id="introCaption" style="font-weight:700;color:#ffe600;font-size:1.1rem;margin-bottom:15px;">"Right, let's get some proper decent grub!"</p>
+      <button id="skipIntroBtn" class="sub-btn">Skip</button>
+    </div>
+
+    <div id="over" class="overlay">
+      <canvas id="overAvatar" width="180" height="180"></canvas>
+      <h1>PROPER RUINED!</h1>
+      <p id="fRatingLabel">Marks I'm gonna give it?</p>
+      <div id="fRating">1/10</div>
+      <p id="fScore">Score: 0</p>
+      <p id="fTier">Tier: Absolute Rubbish</p>
+      <button id="againBtn">Try Again</button>
+    </div>
+  </div>
+
+<script src="gary-difficulty-data.js?v=dist20261018v1"></script>
+<script src="game-core.js?v=1"></script>
+<script src="food-catalogue.js?v=fox20261018v2"></script>
+<!-- GaryIntroOriginal=game.js?v=102 -->
+<script src="gary-intro-transition.js?v=2"></script>
+<!-- GarySidestepPrevious=game-intro-test.js?v=1 -->
+<!-- GarySidestepSmoothPrevious=game-sidestep-test.js?v=1 -->
+<!-- GarySidestepNoGhostPrevious=game-sidestep-smooth.js?v=1 -->
+<!-- GARY_PICKUP_SFX_INDEX_V1: game-sidestep-no-ghost.js -->
+<script src="gary-crash-config.js?v=crashaudio20261017v1-f90dcf41252f"></script>
+<script src="gary-street-mystery.js?v=roaddecay20261017v2"></script>
+<script src="gary-road-evolution.js?v=roaddecay20261017v4"></script>
+<script src="gary-cutscene-runtime.js?v=cutscenestudio6"></script>
+<script src="gary-fox-encounter.js?v=fox20261018v2"></script>
+<script src="gary-difficulty-core.js?v=dist20261018v1"></script>
+<script src="gary-difficulty-runtime.js?v=dist20261018v1"></script>
+</body>
+</html>
+
+
