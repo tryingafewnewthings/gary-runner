@@ -1867,7 +1867,7 @@ let shutterMix = 0;
       rr(ctx,bx-45,by-24,90,48,7);ctx.fill();ctx.stroke();
       ctx.fillStyle='#192733';ctx.fillRect(bx-39,by-8,78,16);
       ctx.fillStyle='#fff0ce';for(let i=0;i<5;i++){ctx.fillRect(bx-37+i*18,by-6,10,12);}
-      ctx.lineWidth=4;ctx.strokeStyle='#fff7ca';ctx.strokeRect(bx-46,by-25,92,50);ctx.restore();
+      ctx.restore();
       return;
     }
     const bob = o.foxEvent?0:Math.sin(view.clock * 6 + o.id) * 3 * S;
@@ -2521,14 +2521,6 @@ function updateRain(dt, advancing) {
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
       if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();}
       crashScene.screen();
-    }
-    if(state==='play'){
-      ctx.save();ctx.setTransform(K,0,0,K,0,0);
-      for(const o of objs){if(o.d||!isHazard(o.t))continue;
-        const y=lerp(o.previousY,o.y,view.alpha);if(y<0||y>H)continue;
-        const w=ITEMS[o.t].laneSpan===2?48:23;const x=lx(o.l)+(ITEMS[o.t].laneSpan===2?LANE_WIDTH/2:0);
-        ctx.lineWidth=2.5;ctx.strokeStyle='#fff4a1';ctx.strokeRect(x-w,y-25,w*2,50);
-      }ctx.restore();
     }
     if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
     drawDiagnostics();

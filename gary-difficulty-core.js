@@ -24,11 +24,20 @@ function reachableAfter(from,row,gap,budget){
 }
 function seeded(input){let x=(Number(input)>>>0)||0x6d2b79f5;return()=>((x^=x<<13,x^=x>>>17,x^=x<<5)>>>0)/4294967296;}
 function distanceLevel(distance,biomes){
-  const index=biomes.findIndex((b,i)=>distance<b.endDistance||i===biomes.length-1);
-  const biome=biomes[Math.max(0,index)],progress=clamp((distance-biome.startDistance)/(biome.endDistance-biome.startDistance),0,1);
-  return {level:clamp(Math.round(biome.levelFloor+(biome.levelCeiling-biome.levelFloor)*progress),0,100),
-    intensity:progress<.16?'teach':progress<.65?'build':progress<.81?'peak':'release',
-    biome,biomeIndex:Math.max(0,index),progress,chaos:clamp(.08+progress*.08+biome.levelFloor*.004+.006*biome.levelCeiling,0,1)};
+  const d=Math.max(0,distance), index=biomes.findIndex((b,i)=>d<b.endDistance||i===biomes.length-1);
+  const biome=biomes[Math.max(0,index)];
+  // Each biome takes about 3–4 minutes at the 200–300 px/s normal speed.
+  // After the final authored biome, repeat independent 36000px chapters forever.
+  const span=biome.endDistance-biome.startDistance;
+  const elapsed=Math.max(0,d-biome.startDistance);
+  const cycle=Math.floor(elapsed/span);
+  const progress=(elapsed%span)/span;
+  const floor=clamp(biome.levelFloor+cycle*5,0,88),ceiling=clamp(biome.levelCeiling+cycle*5,0,100);
+  const beat=progress<.16?'teach':progress<.65?'build':progress<.81?'peak':'release';
+  const local=beat==='teach'?.08:beat==='build'?(progress-.16)/.49*.75+.08:beat==='peak'?1:.88;
+  const level=clamp(Math.round(floor+(ceiling-floor)*local),0,100);
+  return {level,intensity:beat,biome,biomeIndex:Math.max(0,index),progress,cycle,
+    chaos:clamp(.07+level*.01,0,1)};
 }
 // Static rating of a newly sampled layout at the actual incoming row gap.
 function rate(row,from,gap,budget){
@@ -45,7 +54,7 @@ function create(settings,biomes,items,initialSeed){
   if(!Array.isArray(biomes)||biomes.length<2||biomes.length>10)throw Error('Expected between 2 and 10 authored biomes');
   let rng,seed=0,state=distanceLevel(0,biomes),distance=0,reachable=[0,1,2];
   let lastWasWide=false,lastDare=false,introducedWide=false,rows=0,nextLeadIn=false;
-  let layouts=[],sixgrams=new Set(),hazardRuns=[0,0,0],assist=0,cleanSeconds=0,crashes=[];
+  let layouts=[],sixgrams=new Set(),hazardRuns=[0,0,0],assist=0,cleanSeconds=0,crashes=[],wideWindow=[];
   const stats={attempted:0,procedural:0,setpieces:0,fallback:0,rejected:0,
     ratingRejected:0,reachRejected:0,repetitionRejected:0,validationFailures:0,
     wide:0,layoutRepeat:0,triples:0,sixgramRepeat:0,maxHazardStreak:0};
@@ -58,13 +67,13 @@ function create(settings,biomes,items,initialSeed){
   function reset(newValue){
     seed=((newValue??initialSeed??newSeed())>>>0)||1;rng=seeded(seed);
     state=distanceLevel(0,biomes);distance=0;reachable=[0,1,2];
-    lastWasWide=lastDare=introducedWide=nextLeadIn=false;rows=0;layouts=[];sixgrams=new Set();hazardRuns=[0,0,0];cleanSeconds=0;
-    // The assist and recent crash times intentionally persist across two consecutive runs.
+    lastWasWide=lastDare=introducedWide=nextLeadIn=false;rows=0;layouts=[];sixgrams=new Set();hazardRuns=[0,0,0];wideWindow=[];cleanSeconds=0;
+    // Assist and crash history persist briefly, but decay in clean play.
     for(const key of Object.keys(stats))stats[key]=0;
   }
   function progress(d,dt){
     distance=Math.max(0,d);state=distanceLevel(distance,biomes);
-    if(dt>0){cleanSeconds+=dt;if(cleanSeconds>=95)assist=-.08;}
+    if(dt>0){cleanSeconds+=dt;const delta=dt*(0.1/30);assist=assist>0?Math.max(0,assist-delta):Math.min(0,assist+delta);}
     return state;
   }
   function effectiveLevel(){return clamp(Math.round(state.level*(1-clamp(assist,-.1,.1))),0,100);}
@@ -79,7 +88,7 @@ function create(settings,biomes,items,initialSeed){
     let count=level<17?0:level<45?1:2;
     if(rng()<chaos*.30) count=clamp(count+(rng()<.5?-1:1),0,2);
     const lanes=['none','none','none'], wide=state.biomeIndex>=1 && level>=settings.wideIntroductionLevel &&
-      count===2 && !lastWasWide && !lastDare && rng()<(.20+.34*chaos);
+      count===2 && !lastWasWide && !lastDare && rng()<(.10+.15*chaos);
     if(wide){const anchor=rng()<.5?0:1;lanes[anchor]='hazard_wide';lanes[anchor+1]=null;}
     else if(count){
       const pool=[0,1,2];
@@ -95,7 +104,7 @@ function create(settings,biomes,items,initialSeed){
     if(!next.length){stats.reachRejected++;return null;}
     if(!roles.some((r,i)=>!mask[i]&&(r==='food_low'||r==='food_high'))){stats.validationFailures++;return null;}
     const wide=isWide(roles);
-    if(wide&&(state.biomeIndex<1||level<settings.wideIntroductionLevel||lastWasWide||lastDare||dare))return null;
+    if(wide&&(state.biomeIndex<1||level<settings.wideIntroductionLevel||lastWasWide||lastDare||dare||wideWindow.reduce((a,b)=>a+b,0)>=Math.floor(Math.max(1,wideWindow.length)*.15)))return null;
     if(dare&&(lastWasWide||lastDare||state.intensity!=='peak'))return null;
     for(let i=0;i<3;i++)if(mask[i]&&hazardRuns[i]>=3){stats.repetitionRejected++;return null;}
     const key=maskString(roles),n=layouts.length;
@@ -103,7 +112,7 @@ function create(settings,biomes,items,initialSeed){
     const six=n>=5?layouts.slice(-5).concat(key).join('|'):null;
     if(six&&sixgrams.has(six)){stats.repetitionRejected++;return null;}
     const rating=rate({roles,dare},reachable,gap,budget);
-    if(!lead&&Math.abs(rating-level)>10){stats.ratingRejected++;return null;}
+    if(!lead&&Math.abs(rating-level)>24){stats.ratingRejected++;return null;}
     return {next,mask,key,six,rating,wide};
   }
   function fallback(gap,level){
@@ -144,6 +153,7 @@ function create(settings,biomes,items,initialSeed){
     for(let i=0;i<3;i++){hazardRuns[i]=proof.mask[i]?hazardRuns[i]+1:0;stats.maxHazardStreak=Math.max(stats.maxHazardStreak,hazardRuns[i]);}
     reachable=proof.next;lastWasWide=proof.wide;lastDare=selected.dare;
     if(proof.wide){introducedWide=true;stats.wide++;}
+    wideWindow.push(proof.wide?1:0);if(wideWindow.length>100)wideWindow.shift();
     rows++;nextLeadIn=false;stats[kind==='setpiece'?'setpieces':kind]++;
     return {id:(kind==='setpiece'?'dare':kind==='fallback'?'fallback':'proc')+'-'+String(rows)+'-'+proof.key,
       lanes:mapped,roles:roles.slice(),safeLanes:safeLanesOf(roles),reachable:reachable.slice(),rating:proof.rating,

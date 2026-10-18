@@ -217,10 +217,10 @@ const DIFFICULTY=Object.freeze({
   gapFloor:0.67, approachGap:1.25, wideIntroductionLevel:46
 });
 const BIOMES=Object.freeze([
-  Object.freeze({id:'high_street_day',startDistance:0,endDistance:4320,levelFloor:0,levelCeiling:36,
+  Object.freeze({id:'high_street_day',startDistance:0,endDistance:48000,levelFloor:0,levelCeiling:36,
     newIdea:'Learn ordinary single-lane hazards and food paths',
     roles:Object.freeze({food_low:'kebab',food_high:'roast',hazard_basic:'fork',hazard_wide:'street_barrier'})}),
-  Object.freeze({id:'high_street_night',startDistance:4320,endDistance:18500,levelFloor:28,levelCeiling:65,
+  Object.freeze({id:'high_street_night',startDistance:48000,endDistance:106000,levelFloor:28,levelCeiling:65,
     newIdea:'Two-lane barrier with food in the clear lane; extra darkness never weakens hazard contrast',
     roles:Object.freeze({food_low:'fish',food_high:'roast',hazard_basic:'m',hazard_wide:'street_barrier'})})
 ]);
