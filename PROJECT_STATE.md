@@ -156,3 +156,14 @@ Both new foods are included: custard cream5pts/36px display box and half-eaten s
 Assets: fox-approach6frames, fox-snatch4frames, fox-turn3frames, fox-return6frames; equal256px square cells in horizontal sheets; bush512px. One uniform scale per clip, consistent body/ground registration and generous alpha padding. Source resolution is independent of runtime size. Generated key poses are played as a compact stylised animation, not claimed as fluid hand animation.
 
 The actual bridge/wilderness boundary remains future work. Do not imply the bridge itself was added. Keep this module constrained to the Forgotten Road when a formal biome boundary is introduced.
+
+
+## GaryStreetSequence20261018V2 — restored narrative compatibility / staged environment
+
+- Six distinct shop names close once per run. Repeat instances remain closed; studio shutter geometry is untouched.
+- Keeper closure is a restrained anchored lean and calming motion under the shutter (no new custom arm artwork). Gary’s own cheer and player animations are untouched.
+- Nightfall anticipates shutters; decay begins only once all six finish. New street segments beyond the viewport are emptied after decay reaches 18%; the cutscene and fox controller code is unchanged.
+- The original difficulty story gate remains available; a separate additive decay-ready gate can begin the encounter earlier, without preventing the existing route.
+- The two-lane service-charge barrier spawns from the safe wide-pattern generator after all shops close and 30% decay, subject to normal lane-validation rules.
+- The barrier is a transparent 1024×512 PNG, rendered horizontally in a 100-pixel-wide footprint. Existing laneSpan=2 collision is unchanged.
+- 2026-10-18 rollback baseline is 1fd2135. Do not change gary-game-config.json, gary-street-mystery.js, gary-fox-encounter.js, gary-cutscene-runtime.js, gary-road-evolution.js or Gary player animation methods.
