@@ -1,0 +1,66 @@
+{
+  "schema": "gary-camera-candidate-v1",
+  "approved": false,
+  "source": "gary-camera-contract.json",
+  "view": "approach",
+  "referenceMode": "engine",
+  "bridgeNear": 1494,
+  "fixedWorld": {
+    "canvas": [
+      360,
+      640
+    ],
+    "road": [
+      105,
+      255
+    ],
+    "lanes": [
+      130,
+      180,
+      230
+    ],
+    "bridgeDeck": [
+      138,
+      222
+    ]
+  },
+  "raisedArchitecture": {
+    "status": "PROVISIONAL_NEEDS_VISUAL_APPROVAL",
+    "heightProjection": 0.8,
+    "sampleHeight": 14,
+    "supportHeight": 80,
+    "artworkBlockout": true,
+    "artPack": "gary-bridge-art-review.json",
+    "sideFaceOutset": 26,
+    "sideFaceTop": [
+      112,
+      248
+    ],
+    "structureRevision": "supplied-rounded-arcade-v3",
+    "archSpans": [
+      [
+        270,
+        374
+      ],
+      [
+        450,
+        554
+      ],
+      [
+        630,
+        734
+      ]
+    ],
+    "soffitInset": null
+  },
+  "overlays": {
+    "footprints": false,
+    "volumes": false,
+    "opacity": 0.7
+  },
+  "review": {
+    "art": "NOT_APPROVED",
+    "geometry": "NEEDS_VISUAL_COMPARISON",
+    "iphone": "UNVERIFIED"
+  }
+}

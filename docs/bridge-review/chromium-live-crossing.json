@@ -1,0 +1,395 @@
+{
+  "performance": {
+    "samples": 285,
+    "medianMs": 16.699999999999818,
+    "p95Ms": 16.700000000000728,
+    "maxMs": 33.30000000000018,
+    "framesOver50ms": 0,
+    "presetCanvasAllocations": 16,
+    "liveStreetCropAllocations": 8,
+    "artworkFrameAllocations": 0,
+    "droppedSimulationSeconds": 0,
+    "scope": "Headless chromium cloud host, not physical iPhone"
+  },
+  "samples": [
+    {
+      "near": 223.5255224614084,
+      "phase": "approach",
+      "lane": 0.4687680844907408,
+      "target": 0,
+      "collapse": false
+    },
+    {
+      "near": 247.9013785369607,
+      "phase": "approach",
+      "lane": 0,
+      "target": 0,
+      "collapse": false
+    },
+    {
+      "near": 269.46439616776115,
+      "phase": "approach",
+      "lane": 0,
+      "target": 0,
+      "collapse": false
+    },
+    {
+      "near": 295.34347495726615,
+      "phase": "approach",
+      "lane": 0,
+      "target": 0,
+      "collapse": false
+    },
+    {
+      "near": 321.9418594018716,
+      "phase": "approach",
+      "lane": 0,
+      "target": 0,
+      "collapse": false
+    },
+    {
+      "near": 349.20282270683674,
+      "phase": "approach",
+      "lane": 0,
+      "target": 0,
+      "collapse": false
+    },
+    {
+      "near": 377.07411173782384,
+      "phase": "approach",
+      "lane": 0.819679542824074,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 405.5075942134572,
+      "phase": "approach",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 434.45893372135833,
+      "phase": "approach",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 463.88729036353834,
+      "phase": "approach",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 498.05568059582583,
+      "phase": "approach",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 524.0275452976093,
+      "phase": "approach",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 554.6728716628277,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 585.6616218225681,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        65,
+        95,
+        89,
+        255
+      ]
+    },
+    {
+      "near": 616.9667122540377,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        65,
+        96,
+        90,
+        255
+      ]
+    },
+    {
+      "near": 644.0324629529059,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        64,
+        95,
+        89,
+        255
+      ]
+    },
+    {
+      "near": 675.8603505178507,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        65,
+        96,
+        90,
+        255
+      ]
+    },
+    {
+      "near": 703.3412716275488,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        65,
+        95,
+        89,
+        255
+      ]
+    },
+    {
+      "near": 740.2468864245056,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        83,
+        113,
+        104,
+        255
+      ]
+    },
+    {
+      "near": 768.1094659249902,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        64,
+        95,
+        88,
+        255
+      ]
+    },
+    {
+      "near": 800.7987767334453,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        65,
+        96,
+        90,
+        255
+      ]
+    },
+    {
+      "near": 833.6703160432044,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        65,
+        96,
+        90,
+        255
+      ]
+    },
+    {
+      "near": 861.9800353537867,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        65,
+        96,
+        90,
+        255
+      ]
+    },
+    {
+      "near": 890.4046765374187,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        64,
+        96,
+        89,
+        255
+      ]
+    },
+    {
+      "near": 923.7016122173154,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        59,
+        88,
+        83,
+        255
+      ]
+    },
+    {
+      "near": 957.1328571153426,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false,
+      "water": [
+        53,
+        79,
+        76,
+        255
+      ]
+    },
+    {
+      "near": 985.8870570554936,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1014.7259587124754,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1048.4707366388902,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1077.4739234763838,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1106.5448834573726,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1140.5405313746014,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1169.742942328834,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1198.9995812155248,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1228.306761087526,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1257.6610456725466,
+      "phase": "crossing",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1291.9629857304099,
+      "phase": "exit",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1326.3199770766696,
+      "phase": "exit",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1355.8093427410095,
+      "phase": "exit",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1385.333426339872,
+      "phase": "exit",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1414.8898674072698,
+      "phase": "exit",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1449.4103516397336,
+      "phase": "exit",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    },
+    {
+      "near": 1479.0295523861496,
+      "phase": "done",
+      "lane": 1,
+      "target": 1,
+      "collapse": false
+    }
+  ]
+}

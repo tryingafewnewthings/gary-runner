@@ -11,8 +11,15 @@
   if(pack.approved!==false||p?.approved!==false||p?.status!=='PROVISIONAL_NEEDS_VISUAL_APPROVAL')throw Error('Candidate must remain unapproved');
   if(p.sideFaceTop?.join(',')!=='112,248')throw Error('Invalid provisional side-face placement');
   if(!Number.isFinite(p.sideFaceOutset)||p.sideFaceOutset<20||p.sideFaceOutset>44)throw Error('Invalid provisional side-face outset');
-  if(p.structureRevision!=='connected-arcade-v2'||JSON.stringify(p.archSpans)!=='[[236,384],[416,564],[596,744]]'||p.soffitInset!==8)throw Error('Invalid structural candidate metadata');
+  if(!['connected-arcade-v2','supplied-rounded-arcade-v3'].includes(p.structureRevision))throw Error('Invalid structural candidate metadata');
+  if(p.structureRevision==='connected-arcade-v2'&&(JSON.stringify(p.archSpans)!=='[[236,384],[416,564],[596,744]]'||p.soffitInset!==8))throw Error('Invalid blockout spans');
   if(!Number.isFinite(p.heightProjection)||p.heightProjection<.1||p.heightProjection>1.6||!Number.isFinite(p.supportHeight)||p.supportHeight<32||p.supportHeight>96||!Number.isFinite(p.parapetHeight)||p.parapetHeight<0||p.parapetHeight>28)throw Error('Invalid blockout projection');
+  if(p.structureRevision==='supplied-rounded-arcade-v3'){
+   if(JSON.stringify(p.archSpans)!=='[[270,374],[450,554],[630,734]]'||JSON.stringify(p.supportRanges)!=='[[175,270],[374,450],[554,630],[734,819]]'||!Array.isArray(p.waterContacts)||p.waterContacts.length!==4||p.waterContacts.some(v=>![v.x,v.y].every(Number.isFinite)))throw Error('Invalid calibrated support map');
+   for(const key of KEYS){const bands=p.silhouettes?.[key];if(!Array.isArray(bands)||!bands.length||bands.length>2000)throw Error('Missing calibrated silhouette: '+key);
+    for(const b of bands){if(b.length<4||b.length%2||!b.every(Number.isInteger)||b[0]<0||b[1]<1||b[0]+b[1]>2000)throw Error('Invalid silhouette band');for(let i=2;i<b.length;i+=2)if(b[i]<0||b[i+1]<1||b[i]+b[i+1]>720)throw Error('Invalid silhouette run');}
+   }
+  }
   for(const key of KEYS){const l=pack.layers?.[key];if(!l||l.sourceWidth!==720||l.sourceHeight!==2000||l.anchor?.join(',')!=='360,1600'||l.alpha!==true)throw Error('Layer registration mismatch: '+key);}
   return true;
  }
@@ -46,6 +53,10 @@
   validatePack(pack);if(!Number.isFinite(near))throw Error('Invalid world position');
   const offset=near-800,depth=pack.candidate.supportHeight*pack.candidate.heightProjection;
   const piers=[];
+  if(pack.candidate.structureRevision==='supplied-rounded-arcade-v3'){
+   for(const side of [-1,1])for(const [a,b] of pack.candidate.supportRanges){const x=side<0?67:220,y=a+offset,w=73,h=b-a;piers.push({side,start:a,end:b,x,y,w,h,points:[[x,y],[x+w,y],[x+w,y+h],[x,y+h]]});}
+   return {deck:{x:138,y:near-620,w:84,h:620},depth,piers,spans:pack.candidate.archSpans,returns:[],anchor:{x:180,y:near}};
+  }
   for(const side of [-1,1])for(const [a,b] of SUPPORTS){
    const points=[sidePoint(pack,side,a,0),sidePoint(pack,side,b,0),sidePoint(pack,side,b,depth),sidePoint(pack,side,a,depth)].map(([x,y])=>[x,y+offset]);
    piers.push({side,start:a,end:b,points,x:Math.min(...points.map(p=>p[0])),y:a+offset,w:pack.candidate.sideFaceOutset,h:b-a+depth});
@@ -60,16 +71,23 @@
   for(const points of f.returns){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.stroke();}
   ctx.strokeStyle='#8cf3da';ctx.beginPath();ctx.moveTo(174,f.anchor.y);ctx.lineTo(186,f.anchor.y);ctx.moveTo(180,f.anchor.y-6);ctx.lineTo(180,f.anchor.y+6);ctx.stroke();ctx.restore();
  }
- function create({makeCanvas,pack,images={},environment}){
+ function create({makeCanvas,pack,images={},environment,cacheScale=2}){
   validatePack(pack);
   for(const key of Object.keys(images))if(!KEYS.includes(key))throw Error('Unknown artwork layer: '+key);
   // Validate the entire pack before allocating; a bad partial replacement cannot shift geometry.
   for(const key of KEYS){const im=images[key];if(im&&((im.naturalWidth||im.width)!==720||(im.naturalHeight||im.height)!==2000||im.complete===false))throw Error('Undecoded or wrong-size artwork: '+key);}
+  if(cacheScale!==1&&cacheScale!==2)throw Error('Invalid cache scale');
+  const calibrated=pack.candidate.structureRevision==='supplied-rounded-arcade-v3';
   const canvases={},layers={},height=pack.candidate.supportHeight*pack.candidate.heightProjection,lift=pack.candidate.parapetHeight*pack.candidate.heightProjection;
-  const canvas=()=>{const c=makeCanvas();c.width=720;c.height=2000;return c;};
+  const canvas=()=>{const c=makeCanvas();c.width=360*cacheScale;c.height=1000*cacheScale;return c;};
   const poly=(c,points,color)=>{c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fillStyle=color;c.fill();};
-  for(const key of KEYS){const c=canvas();canvases[key]=c;const g=c.getContext('2d');g.scale(2,2);
-   if(key==='lower'){
+  for(const key of KEYS){const c=canvas();canvases[key]=c;const g=c.getContext('2d');g.scale(cacheScale,cacheScale);
+   if(calibrated){
+    // Conservative source-alpha containment. Paint is sampled once; no pixel
+    // processing occurs in gameplay. The guard preserves antialiased outlines.
+    g.fillStyle={lower:'#926553',deck:'#c3b69e',foreground:'#885547'}[key];
+    for(const [y,h,...runs] of pack.candidate.silhouettes[key])for(let i=0;i<runs.length;i+=2)g.fillRect((runs[i]-2)/2,(y-2)/2,(runs[i+1]+4)/2,(h+4)/2);
+   }else if(key==='lower'){
     // One continuous spandrel per side. Three true cut-through openings share
     // connected crowns and piers; no detached rectangles are stacked on the face.
     for(const side of [-1,1]){
@@ -111,14 +129,44 @@
      for(const y of [180,788]){g.fillStyle='#895746';g.fillRect(x-4,y-lift,25,lift+12);g.fillStyle='#ddceb2';g.fillRect(x-6,y-lift-5,29,7);}
     }
    }
-   if(images[key]){g.save();g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.drawImage(images[key],0,0);g.restore();}
+   if(images[key]){g.save();g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.drawImage(images[key],0,0,c.width,c.height);g.restore();}
+   if(calibrated&&key==='deck'){
+    // Join the untrimmed external paving to the existing road at both canvas
+    // boundaries. This is a compositing feather, never a source-image edit.
+    g.save();g.globalCompositeOperation='destination-out';
+    for(const [a,b,reverse] of [[0,36,false],[964,1000,true]]){
+     const fade=g.createLinearGradient(0,a,0,b);fade.addColorStop(0,reverse?'rgba(0,0,0,0)':'#000');fade.addColorStop(1,reverse?'#000':'rgba(0,0,0,0)');g.fillStyle=fade;g.fillRect(0,a,360,b-a);
+    }g.restore();
+   }
    layers[key]=c;
   }
   // Environment masks are NEVER delivered as structural artwork.
-  const water=canvas(),banks=canvas(),wc=water.getContext('2d'),bc=banks.getContext('2d');wc.scale(2,2);bc.scale(2,2);
-  for(const y of [285,685])for(const [x,w] of [[0,101],[259,101]]){bc.fillStyle='#56624a';bc.fillRect(x,y,w,22);}
+  const water=canvas(),banks=canvas(),wc=water.getContext('2d'),bc=banks.getContext('2d');wc.scale(cacheScale,cacheScale);bc.scale(cacheScale,cacheScale);
+  if(calibrated){
+   // Reuse the legacy bridge's independent bank contours, keeping vegetation
+   // out of all three structural PNGs.
+   for(const y of [285,685]){
+    poly(bc,[[0,y-18],[35,y-9],[66,y-15],[98,y],[101,y+27],[61,y+20],[32,y+28],[0,y+17]],'#59654b');
+    poly(bc,[[259,y],[291,y-15],[329,y-7],[360,y-20],[360,y+17],[321,y+25],[283,y+18],[259,y+27]],'#59654b');
+   }
+  }else for(const y of [285,685])for(const [x,w] of [[0,101],[259,101]]){bc.fillStyle='#56624a';bc.fillRect(x,y,w,22);}
   const contacts=[];
-  for(const side of [-1,1])for(const [a,b] of SUPPORTS){
+  if(calibrated){
+   // Water belongs to the environment. Follow the supplied outer foundations,
+   // not the previous affine-pier map, and never fill a transparent arch.
+   for(const side of [-1,1]){
+    const fade=wc.createLinearGradient(side<0?82:278,0,side<0?100:260,0);
+    fade.addColorStop(0,'rgba(0,0,0,1)');fade.addColorStop(1,'rgba(0,0,0,0)');
+    wc.fillStyle=fade;wc.fillRect(side<0?0:260,300,100,380);
+   }
+   wc.save();wc.globalCompositeOperation='destination-in';wc.drawImage(layers.lower,0,0,360,1000);wc.restore();
+   wc.save();wc.globalCompositeOperation='source-in';
+   const stream=wc.createLinearGradient(0,300,0,680);stream.addColorStop(0,'#314e4b');stream.addColorStop(.45,'#52766c');stream.addColorStop(1,'#2c4946');
+   wc.fillStyle=stream;wc.fillRect(0,300,360,380);wc.restore();
+   // Match the existing stream's central shadow, avoiding coloured mask patches.
+   wc.save();wc.globalCompositeOperation='source-atop';wc.fillStyle='rgba(15,29,27,.23)';wc.fillRect(94,300,178,380);wc.restore();
+   for(const p of pack.candidate.waterContacts)contacts.push(Object.freeze({side:p.side,sample:Object.freeze({x:p.x,y:p.y})}));
+  }else for(const side of [-1,1])for(const [a,b] of SUPPORTS){
    if(a+height<300||b+height>680)continue;
    const point=(u,z)=>sidePoint(pack,side,u,z),mid=(a+b)/2;
    // The waterline follows the sloping foundation instead of a rectangular wipe.
@@ -138,7 +186,7 @@
   }
   const blit=(ctx,image,near)=>ctx.drawImage(image,0,near-800,360,1000);
   return Object.freeze({
-   mode:'UNAPPROVED_BLOCKOUT',registration:REGISTRATION,order:ORDER,cacheCount:5,
+   mode:calibrated?'UNAPPROVED_ART_REVIEW':'UNAPPROVED_BLOCKOUT',registration:REGISTRATION,order:ORDER,cacheCount:5,cacheBytes:5*360*1000*cacheScale*cacheScale*4,
    templates:Object.freeze(canvases),waterMask:water,contacts:Object.freeze(contacts),
    drawWater(ctx,near,clock){environment.drawWater(ctx,near,clock);blit(ctx,banks,near);},
    drawLower(ctx,near){blit(ctx,layers.lower,near);},

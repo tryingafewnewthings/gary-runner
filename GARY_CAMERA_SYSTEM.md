@@ -1,5 +1,9 @@
 # Gary Eats! — Camera Lab and reusable visual calibration
 
+## Supplied artwork review — 20 October update
+
+Camera Lab now has **Review supplied bridge artwork** in addition to the v2 geometry comparison. It loads `gary-bridge-art-review.json` and the three unchanged `art/bridge/production/*.png` files into the actual isolated game engine. The new rounded silhouette is alpha-calibrated rather than clipped by v2 masks. Painted-source projection sliders are locked; all world/deck/camera contracts remain fixed and raised architecture remains provisional. See [the integration and QA record](BRIDGE_ARTWORK_PIPELINE.md) and [four current engine views](docs/bridge-review/QA.md). Normal Play and main/Pages are not promoted by this work.
+
 20 October 2026 · Initial system · **CODE-OBSERVED/IMPLEMENTED IN THIS BRANCH**; not deployed or artist-approved.
 
 This branch is **stacked on PR #4** (`feat/forgotten-bridge`). The current published GitHub Pages `main` does not contain PR #4 or this lab until their changes merge. Do not open an undeployed Pages URL and assume a 404 means the files were never created.

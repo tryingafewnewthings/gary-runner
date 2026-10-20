@@ -1,0 +1,12 @@
+{
+  "review": {
+    "samples": 33,
+    "medianMs": 56,
+    "p95Ms": 82
+  },
+  "legacy": {
+    "samples": 21,
+    "medianMs": 89,
+    "p95Ms": 144
+  }
+}

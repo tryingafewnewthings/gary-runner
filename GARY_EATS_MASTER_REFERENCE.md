@@ -1,5 +1,9 @@
 # GARY EATS! — Master game reference and developer handoff
 
+## 20 October supplied bridge artwork integration
+
+`CODE-OBSERVED` on stacked PR #5: the externally supplied lower/deck/foreground PNGs are now registered unchanged in the real engine through Camera Lab’s **Review supplied bridge artwork** control. Broader alpha-traced geometry, independent foundation water occlusion, four 360×640 captures and full-crossing QA are documented in [BRIDGE_ARTWORK_PIPELINE.md](BRIDGE_ARTWORK_PIPELINE.md). This is an unapproved visual-review candidate; normal Play still uses PR #4’s bridge. No merge, final-art activation or physical iPhone verification is implied.
+
 **Reference audit:** 19 October 2026 (main branch at `3790e4226992`, checked before this documentation package).  
 **Repository:** https://github.com/tryingafewnewthings/gary-runner  
 **Live:** https://tryingafewnewthings.github.io/gary-runner/  

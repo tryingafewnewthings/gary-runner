@@ -1,0 +1,166 @@
+{
+  "schema": "gary-bridge-review-registration-v1",
+  "approved": false,
+  "files": {
+    "lower": {
+      "path": "art/bridge/production/lower.png",
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ],
+      "sha256": "5c9088b5d37f6acb7b55b5d492fc77e93fabcdc2122b5bdb7d7ce494e61a7c28",
+      "nonzeroAlpha": 248695,
+      "transparentPixels": 1191305,
+      "boundsInclusive": [
+        134,
+        350,
+        586,
+        1639
+      ],
+      "status": "PASS_METADATA_ONLY_NOT_ART_APPROVAL"
+    },
+    "deck": {
+      "path": "art/bridge/production/deck.png",
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ],
+      "sha256": "2bdab595f6e9f6fd128fce89b76f1cafc865c73fdfe174143af31fe64bcfaef0",
+      "nonzeroAlpha": 390878,
+      "transparentPixels": 1049122,
+      "boundsInclusive": [
+        210,
+        0,
+        509,
+        1999
+      ],
+      "status": "PASS_METADATA_ONLY_NOT_ART_APPROVAL"
+    },
+    "foreground": {
+      "path": "art/bridge/production/foreground.png",
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ],
+      "sha256": "7eab9bf99a32db13956b7ebae0685a07adbd3cd6fc93b2157a07a2d9f62fb7af",
+      "nonzeroAlpha": 108071,
+      "transparentPixels": 1331929,
+      "boundsInclusive": [
+        221,
+        327,
+        497,
+        1599
+      ],
+      "status": "PASS_METADATA_ONLY_NOT_ART_APPROVAL"
+    },
+    "lowerMask": {
+      "path": "art/bridge/review-masks/lower.png",
+      "sha256": "663c4a2ed00790de1e1954678dbf79ea8f17a9188435e475a4356ba6b14008cc",
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ]
+    },
+    "deckMask": {
+      "path": "art/bridge/review-masks/deck.png",
+      "sha256": "ecac9d68180ca0e331a953f8f27c91126353122d6485c0ea99bfa22711d48e98",
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ]
+    },
+    "foregroundMask": {
+      "path": "art/bridge/review-masks/foreground.png",
+      "sha256": "ed42dd0f124b1a7e21142688dc7b7f7d5225ffe1aef0f205f32affa608e37509",
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ]
+    },
+    "water-occlusion-maskMask": {
+      "path": "art/bridge/review-masks/water-occlusion-mask.png",
+      "sha256": "9c0b2464c9fd0bff6b4d44ad3a074c018bf4b9a37effce9ffa881a55e73b2ab9",
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ]
+    }
+  },
+  "geometry": {
+    "revision": "supplied-rounded-arcade-v3",
+    "method": "nonzero-alpha row-band trace, conservative 2-source-pixel composition guard",
+    "archVoids": [
+      [
+        80,
+        310
+      ],
+      [
+        80,
+        490
+      ],
+      [
+        80,
+        670
+      ]
+    ],
+    "water": "independent clipped outer-foundation gradient; stream y300..680; contacts at y408/588",
+    "runtimeCacheBytes": 7200000,
+    "sourceDecodeBytes": 17280000
+  }
+}

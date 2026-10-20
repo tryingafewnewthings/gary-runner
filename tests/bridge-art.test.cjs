@@ -96,3 +96,62 @@ test('provisional projection slider extremes keep water outside the actor corrid
   for(const side of [-1,1])for(const [u,v] of candidate.candidate.archSpans){const points=art.archPoints(candidate,side,u,v,8);assert.ok(points.every(p=>p.every(Number.isFinite)));}
  }
 });
+
+test('supplied review PNGs are byte-identical to delivery, contained without clipping, and keep true arch voids',async()=>{
+ const review=require('../gary-bridge-art-review.json'),supplied=require('../art/bridge/production/supplied-qc.json');
+ const images={};for(const key of art.KEYS){
+  const bytes=fs.readFileSync(path.join(__dirname,'..',review.layers[key].path));
+  assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'),supplied.assets[key].sha256);
+  images[key]=await loadImage(bytes);
+ }
+ const r=art.create({makeCanvas,pack:review,images,environment:env,cacheScale:1});
+ assert.equal(r.mode,'UNAPPROVED_ART_REVIEW');assert.equal(r.cacheBytes,7200000);
+ for(const key of art.KEYS){
+  const c=createCanvas(360,1000),g=c.getContext('2d');g.drawImage(images[key],0,0,360,1000);
+  assert.deepEqual(r.templates[key].getContext('2d').getImageData(0,key==='deck'?36:0,360,key==='deck'?928:1000).data,g.getImageData(0,key==='deck'?36:0,360,key==='deck'?928:1000).data,'cached painting is identical to a single registered draw: '+key);
+ }
+ for(const x of [80,280])for(const y of [310,490,670]){
+  assert.equal(r.templates.lower.getContext('2d').getImageData(x,y,1,1).data[3],0);
+  assert.equal(r.waterMask.getContext('2d').getImageData(x,y,1,1).data[3],0,'water mask never fills arch interiors');
+ }
+ for(const [x,y] of [[120,280],[120,380],[120,460],[120,560],[240,280],[240,560]])assert.ok(r.templates.lower.getContext('2d').getImageData(x,y,1,1).data[3]>240,'connected inner spandrel/piers');
+});
+
+test('calibrated foundations are submerged at every crossing position, never across the playable corridor',async()=>{
+ const review=require('../gary-bridge-art-review.json'),images={};for(const key of art.KEYS)images[key]=await loadImage(path.join(__dirname,'..',review.layers[key].path));
+ let allocations=0;const r=art.create({makeCanvas:()=>{allocations++;return makeCanvas()},pack:review,images,environment:env,cacheScale:1});
+ const water=r.waterMask.getContext('2d').getImageData(138,0,84,1000).data;for(let i=3;i<water.length;i+=4)assert.equal(water[i],0);
+ const c=createCanvas(360,1000),g=c.getContext('2d');
+ for(const near of [210,350,560,700,850,1000,1210,1260,1450]){
+  g.clearRect(0,0,360,1000);r.drawLower(g,near);
+  for(const {sample:p} of r.contacts){const y=Math.round(p.y+near-800);if(y<0||y>999)continue;
+   const before=[...g.getImageData(p.x,y,1,1).data];assert.ok(before[0]>before[2],'painted pier before water');
+  }
+  r.drawWaterOcclusion(g,near,1);
+  for(const {sample:p} of r.contacts){const y=Math.round(p.y+near-800);if(y<0||y>999)continue;const after=g.getImageData(p.x,y,1,1).data;assert.ok(after[2]>after[0],'water replaces submerged foundation');}
+ }
+ assert.equal(allocations,5);
+});
+
+test('supplied review geometry and separate masks reproduce their committed exports',()=>{
+ const review=require('../gary-bridge-art-review.json'),report=require('../art/bridge/review-masks/registration-report.json');
+ const r=art.create({makeCanvas,pack:review,environment:env});
+ for(const [key,c] of [...Object.entries(r.templates),['water-occlusion-mask',r.waterMask]]){
+  const bytes=fs.readFileSync(path.join(__dirname,'..',report.files[key+'Mask'].path));assert.deepEqual(bytes,c.toBuffer('image/png'));
+ }
+ const invalid=structuredClone(review);invalid.candidate.silhouettes.lower[0][2]=-1;assert.throws(()=>art.validatePack(invalid),/silhouette/);
+ const approved=structuredClone(review);approved.approved=true;assert.throws(()=>art.validatePack(approved),/unapproved/);
+});
+
+test('actual engine accepts supplied draft atomically, preserves pause/saves, food and safe completion',async()=>{
+ const f=await boot({'garyBest':'123'},false,{urlSearch:'debug=1&bridgepreview=1&seed=12345'});try{
+  const {w}=f,review=w.JSON.parse(fs.readFileSync(path.join(__dirname,'../gary-bridge-art-review.json'),'utf8'));
+  const images=await w.GaryBridgeArt.loadImages(review,w.Image);w.GaryBridgePreview.start('middle');
+  const before=w.__test.snapshot();assert.equal(w.GaryBridgePreview.artwork(review,images),'UNAPPROVED_ART_REVIEW');assert.deepEqual(w.__test.snapshot(),before);
+  w.__test.add('roast',1);w.__test.advance(1/60);assert.ok(w.__test.snapshot().score>0);
+  w.__test.suspend();const paused=w.__test.snapshot();for(let i=0;i<60;i++)w.__test.advance(1/60);assert.deepEqual(w.__test.snapshot(),paused);
+  w.__test.resume();for(let i=0;i<300;i++)w.__test.advance(1/60);
+  assert.equal(w.__test.bridge().phase,'done');assert.equal(w.__test.bridge().collapse,false);assert.equal(f.store.get('garyBest'),'123');
+  w.__test.reset();assert.equal(w.__test.bridge().phase,'dormant');
+ }finally{f.close()}
+});

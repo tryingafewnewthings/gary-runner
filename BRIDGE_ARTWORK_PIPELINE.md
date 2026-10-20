@@ -1,90 +1,66 @@
-# Forgotten Bridge — registered artwork handoff
+# Forgotten Bridge — supplied artwork review candidate
 
-**Framework provisionally accepted; raised masonry and final illustration remain NOT APPROVED.** PR #5 remains stacked on bridge PR #4. Neither main nor either PR is merged by this work. The attached JPEG informs only reddish masonry, pale caps, broad slabs and repeated exterior arches. It is not imported, cut out or used as a camera reference. No material artwork has been generated.
+**20 October 2026 · CODE-OBSERVED on PR #5, stacked on unmerged PR #4. Artwork and raised architecture remain NOT APPROVED.** Normal Play keeps PR #4's procedural bridge. This integration is available in the actual game engine through the isolated Camera Lab session; it is not deployed to main/Pages or promoted as final production art.
 
 ## Review in Camera Lab
 
-Serve this checkout (`python3 -m http.server 8000`) and open `gary-camera-lab.html` (use the computer's LAN address on iPhone). Select **Real game**, then **Registered artwork blockout** or **Test registered PNG layers**. The latter decodes the three actual template files, validates their dimensions and composes them through the same replacement masks. Entry/Middle/Exit, play/freeze, guides, support height, parapet height, height projection and candidate JSON export all use the existing engine. Sliders update preview geometry only; the published camera contract stays provisional and unchanged. Slider input is debounced to avoid rebuilding caches every animation frame.
+Serve the checkout (`python3 -m http.server 8000`), open `gary-camera-lab.html`, then select **Review supplied bridge artwork**. Use Approach / Enter / Middle / Exit and **Play preview** to cross continuously into wilderness. **Freeze frame** pauses presentation. Untick the two guide checkboxes for a clean engine view. **Compare geometry templates** retains the earlier v2 blockout as a comparison; unticking registered artwork returns to the legacy bridge. The source artwork is registered, not deformed by sliders: height/projection controls are disabled for the painted candidate.
 
-Normal Play and the original bridge preview keep the existing PR #4 renderer. Candidate artwork is accepted only in the isolated `debug=1&bridgepreview=1` session. A failed pack leaves the previous renderer intact. A switch back to the legacy renderer is immediate. There is no change to the 60 Hz update loop, encounters, centre guidance, score, collisions, saves, lane centres or collapse gate.
+This is the existing `index.html` → `gary-difficulty-runtime.js` engine, not a standalone illustrated mock-up. Candidate selection requires `debug=1&bridgepreview=1`; ordinary debug and normal gameplay reject candidate activation. Preview saves remain isolated. No physics, lane, scoring, narrative, audio, fixed-timestep or collapse policy changed.
 
-### Actual 360×640 candidate captures
+## Actual 360×640 engine captures
 
-These were generated through Camera Lab's **real-engine** iframe, not the geometry overlay or a standalone scene. Opened and inspected: entry shows the near supports descending beneath the deck; middle shows repeated recesses, deep piers and submerged bases; exit shows Gary on the widening path and the remaining end supports. Flat colours and hard edges deliberately identify a geometric blockout. The existing captures in `docs/bridge/` are the before comparison.
-
-| Entry, near=560 | Middle, near=850 | Exit, near=1210 |
-| --- | --- | --- |
-| ![Entry blockout](docs/bridge-art/enter.png) | ![Middle blockout](docs/bridge-art/middle.png) | ![Exit blockout](docs/bridge-art/exit.png) |
-
-[Exported Camera Lab candidate](docs/bridge-art/camera-candidate.json) · [Authoring pack](gary-bridge-art-contract.json) · [Actual alpha/bounds/hash report](art/bridge/templates/registration-report.json)
-
-The revised **connected-arcade-v2 candidate**, not a recommendation for approval, uses the existing provisional height factor 0.80, an 80-unit support descent (64 screen units), and a 14-unit parapet height (11.2 screen units). Deck and actors remain on the original screen plane. Raising Gary or changing collision/world geometry is outside this calibration. Review the side-face convention, entrance/exit massing, arch rhythm and waterline in motion before locking any silhouette. The angular banks, simple slab outlines, abutment returns and caps are diagnostic geometry rather than art acceptance. The structural side-face convention is explicitly provisional: for local longitudinal coordinate u and downward depth z, left=(112−26z/64,u+z), right=(248+26z/64,u+z) at the default depth64. This is a local masonry projection only; it never transforms the road, Gary, water or world camera. The deck-to-side ledge connects these exterior elevations to the unchanged x138/222 deck edges so that arch crowns remain visible outside the parapets.
-
-## Exact artist specification
-
-All three structural files are **720×2000 RGBA PNG**, one untrimmed cell, 2 source pixels per design unit, true transparent background. Each draws at **360×1000 design units**, at **x=0, y=bridgeNear−800**. Common source anchor **(360,1600)** maps to design anchor **(180,bridgeNear)**. Far deck edge: source y360 / design y180; near deck edge: source y1600 / design y800. Do not trim, rescale individual layers, rotate, change the camera, or move this anchor. Main gameplay remains 360×640, deck x138..222 (84), bridge length620; approaches x105..255 (150), lanes130/180/230.
-
-| Order | Pass / source | Exact destination and anchor | Content and exclusions |
+| Approaching, near210 | Entering, near560 | Halfway, near850 | Exiting, near1210 |
 | --- | --- | --- | --- |
-| 1 | Terrain/stream/banks — existing engine environment and independent blockout bank cache | Existing world distance; all local bridge masks use the common anchor above | Water, vegetation, rocks, ground and bank shapes belong ONLY here. The normal legacy environment stays separate. |
-| 2 | [lower.png](art/bridge/templates/lower.png) | 360×1000 at (0,near−800); source anchor (360,1600) | Connected side elevations have top edges x112/248 and base edges x86/274 at depth64. Three arch spans u236..384,416..564,596..744 are genuine transparent openings; each has an 8-unit inset soffit band and a continuous upper spandrel/string course. Supports occupy u180..236,384..416,564..596,744..800 and end in battered plinths and pointed cutwaters. Near/far abutment returns flare 44 units along the approach, without changing the 620-unit deck. Flat face colours are geometry guides only. |
-| 2b | [water-occlusion-mask.png](art/bridge/templates/water-occlusion-mask.png) — ENVIRONMENT ONLY | Same 720×2000 source / 360×1000 draw and anchor | Eight cached depth bands follow each submerged sloping plinth from z51..75 at default depth64. The two interior supports (u384..416 and564..596) have separate masks on both sides, not rectangular wipes through the arch voids. Independent stream-colour overlap and small horizontal contact ripples embed the cutwater bases. Never include this water in the masonry image. |
-| 3 | [deck.png](art/bridge/templates/deck.png) | Same registration | x138..222 y180..800; broad 52-unit slab guide intervals. 150-unit-long taper at each end returns to x105..255. The untrimmed source extends through the approach/exit to y0/1000. Paving only, no characters, water or vegetation. |
-| 4 | Existing gameplay actors/items | Original engine foot anchors; Gary y546 | No new sprite, projection, apparent scale or collision proxy. |
-| 5 | [foreground.png](art/bridge/templates/foreground.png) | Same registration | Raised parapets on original x117/x223 footprints, top/side coping and end posts. Current candidate projects 14×.8=11.2 units upward. Keep the playable centre clear. No rocks, grass, water, floor or background. |
+| ![Approach](docs/bridge-review/approach.png) | ![Enter](docs/bridge-review/enter.png) | ![Middle](docs/bridge-review/middle.png) | ![Exit](docs/bridge-review/exit.png) |
 
-The template alpha channels ARE the candidate geometry masks. After geometry approval, an artist paints inside these registered layers; replace each independently through `GaryBridgeArt.loadImages(pack, Image)` and `create({makeCanvas,pack,images,environment})`. `images` accepts `lower`, `deck`, and/or `foreground`; omitted layers retain blockout geometry. The engine API `GaryBridgePreview.artwork(pack, images)` is intentionally preview-only. Each supplied image is decoded, checked for exact size and composited once with `source-in` against its geometry mask. This prevents a full opaque background or shifted canvas from replacing the world footprint. Alpha/registration checks do not detect painted trees or photographic content inside an allowed mask: artistic review remains mandatory.
+These four captures were exported from the active Chromium engine canvas and opened for visual inspection. They are **review evidence, not visual approval**. The original PR #4 views remain in `docs/bridge/`; v2 blockout captures remain in `docs/bridge-art/`. WebKit independently produces the same four views and moving waterline samples under ignored `test-results/bridge-review-webkit/`.
 
-Five fixed 720×2000 caches are prepared on pack selection: three structure layers, independent bank cache and water mask (about 27.5 MiB RGBA). Existing legacy caches are reused as the environment provider. Draw calls use the common anchor, never distance scaling. No image decoding, pixel scans, template construction or canvas allocations occur in active per-frame rendering. At most four contact ripple curves animate using the engine clock. Masks are NOT automatically promoted as production assets; candidate approval flags are required to remain false. A future reviewed promotion must explicitly update approval policy and bind the human-approved geometry/art, not bypass it by renaming these templates.
+## Registration and geometry
+
+The supplied ZIP's three `production/*.png` files are installed unchanged under `art/bridge/production/`. Their SHA-256 hashes match the delivery report in `supplied-qc.json`; `SUPPLIED_README.txt` is preserved as provenance, including its pre-integration warnings. No painted pixels were generated, redrawn, cleaned, recoloured, cropped or rescaled in the source files.
+
+- Each source is **720×2000 RGBA**, source anchor **(360,1600)**, runtime draw **360×1000** at **(0,bridgeNear−800)**. The design anchor remains **(180,bridgeNear)**.
+- Canvas **360×640**; road **x105..255 / 150 units**; walking deck **x138..222 / 84 units**, length **620**. The existing centre guidance, lane lock and return to three lanes remain authoritative.
+- `gary-bridge-art-review.json` is the separate **unapproved** supplied-art pack. The old `gary-bridge-art-contract.json` and `art/bridge/templates/` remain unchanged as the v2 blockout comparison. They do not clip the new artwork.
+- The broader rounded lower masonry is registered by a deterministic row-band trace of its actual nonzero alpha. The same method registers deck/parapets. Source trace bands are lossless geometry, not a second illustration. A conservative two-source-pixel containment guard prevents antialiased outlines from being cut off or alpha-multiplied during cache composition. Tests compare the composited painting with a single original-image draw, pixel for pixel.
+- Calibrated opening longitudinal envelopes are approximately **y270..374,450..554,630..734**; heavier support envelopes **y175..270,374..450,554..630,734..819**. Actual rounded boundaries are owned by the traced alpha, not the old affine v2 arch equation. The measured masks and guides follow this candidate. Historical height80/projection.8 fields remain a provisional comparison profile, not a claim that these PNGs were mathematically generated at that projection.
+- Both untrimmed paving canvas boundaries feather over **36 design units** into the existing road. This cached compositing transition changes neither the central deck nor the source painting. The rest of the rendered artwork is unclipped. The supplied asymmetric approach taper is retained for review.
+
+### Exact render order
+
+1. Existing terrain, stream and independent bank contours.
+2. Painted lower masonry, connected spans and supports.
+3. Independent water mask over the outer submerged foundations.
+4. Painted stone deck.
+5. Existing Gary, food and gameplay objects.
+6. Painted foreground parapets.
+7. Existing rain, vignettes, HUD and captions.
+
+Water is never in a structural PNG. The separate mask follows the new outer foundations, uses the existing stream colours/central shadow, and intersects structural alpha so it cannot fill an opening. The interior supports have contact ripples at local **(78/282,408/588)**. The mask remains entirely outside x138..222. Existing bank contours replace the v2 diagnostic rectangular bank strips; grass, rocks and vegetation stay in the environment provider. Nine-position native checks and continuous browser samples exercise registration as the bridge scrolls. Centre-deck roast visibility is checked before pickup; the existing actor/item ordering remains unchanged.
 
 ## Reproduce and validate
 
-- `node tools/export-bridge-templates.cjs` deterministically exports geometric templates, separate water mask, candidate registration and measured alpha report. It creates no illustration. Register newly painted replacements separately in `asset-quality-manifest.json` and retain exact source sizes/anchors.
-- `npm test`: complete existing tests plus eight pipeline regressions and the Camera Lab registered-art browser check. Existing camera contract tests still enforce the unchanged PR #4 dimensions/profile status. Pipeline regressions cover alpha/registration, mask clipping and independent replacement, bad-pack rejection, allocation bounds, submerged water overlap, active engine layer order, opt-in isolation, pause/reset and crossing progression, connected spandrels, true arch openings and soffit thickness, and base/occlusion registration through seven scroll positions. The actual browser also checks water-coloured bases over six consecutive live scrolling samples and verifies freeze afterward. Projection slider limits are also checked to keep the water mask outside the actor corridor.
-- Browser captures: `node tests/bridge-art-browser.cjs` (also runs in npm browser checks and Chromium/WebKit CI); artifacts in ignored `test-results/bridge-art-<engine>/`. Asset gate checks all templates and committed screenshots.
+`node tools/export-bridge-review.cjs` deterministically traces **alpha only**, exports `gary-bridge-art-review.json`, three containment templates and the independent water mask under `art/bridge/review-masks/`, and writes its measured hash/alpha/bounds report. It does not write the supplied production PNGs. `node tools/export-bridge-templates.cjs` still reproduces the original v2 comparison masks. All new PNGs, masks and four committed screenshots are registered in `asset-quality-manifest.json`.
 
-| Assessment | Status / evidence | Remaining action |
-| --- | --- | --- |
-| Dimensions, registration, pass order, true alpha | PASS in executable tests and measured report | Revalidate every professional replacement and changed camera mask |
-| 360×640 depth, occlusion and Gary position | Visually inspected three engine captures; candidate, NOT APPROVED | User chooses/adjusts the projection, arch silhouette, supports and caps in Camera Lab |
-| Illustration | NOT PRODUCED / NOT APPROVED | After geometry sign-off: professional reddish brick/soffit material, pale stone caps and paving, with matching upper-left light; no environmental bake-in |
-| Physical iPhone Safari and performance | UNVERIFIED-ON-DEVICE | Inspect first pack load, memory/frame pacing, waterline motion, scrolling and export on phone |
+Run `npm test` for unit/controller, all registered assets, native/active-runtime integration and Chromium checks. Run `GARY_TEST_ENGINE=webkit npm run test:browser` for all four existing browser suites in WebKit. `tests/bridge-art.test.cjs` also verifies original-delivery hashes, exact painting containment, genuine holes/connected masonry, separate water, deterministic exports, bounded cache allocation, atomic review activation, roast pickup, pause/reset, saves and safe completion. `tests/bridge-art-browser.cjs` exercises both the earlier blockout and supplied candidate, exports all four views, checks food visibility, plays the entire approach-to-wilderness sequence and records timing/allocation diagnostics. No automated artistic or physical-device approval is implied.
 
-No camera projection, geometry or artwork is approved by these tests or this implementation. To roll back this preparation, revert its commit on PR #5; PR #4's playable default bridge remains separate.
+## Performance and review findings
 
-## Structural refinement review
+The candidate precomposes five **360×1000** caches once on selection: **7,200,000 bytes / 6.87 MiB**, versus 27.47 MiB for five 720×2000 blockout caches. The three original decoded sources cost approximately **16.48 MiB**; combined candidate sources/caches are approximately **23.35 MiB**, excluding browser/GPU duplication, legacy environment caches (about 5.49 MiB), and other game resources. These are RGBA storage estimates, not measured phone resident memory. The logical draw scale remains 360×1000; the review caches use design resolution, so physical high-DPI sharpness still needs inspection.
 
-The rectangular overlay piers were removed. One affine side elevation now joins each set of arch crowns to its piers; opening interiors are genuinely transparent, with a separate dark soffit band and a restrained edge value to expose thickness. Foundation silhouettes continue from the same side-face map and taper into cutwaters. Water overlap is an environment-only mask following those foundation edges; no water, banks, rain, grass or rocks were added to the three structural images. The deck and foreground PNGs remain byte-for-byte unchanged from the prior preparation. Entry/middle/exit captures were reopened and inspected after the revision. At exit the stream has naturally scrolled below the camera; the far abutment returns remain visible at the bottom edge. Final paint and raised-geometry approval remain pending.
+Preset changes reuse prepared artwork rather than rebuilding five canvases. There is no artwork decode, tracing, image readback, pixel processing or canvas allocation in gameplay frames. Eight small existing street crop caches warmed during the early moving approach in the measured run; they are not artwork caches. Once the existing terrain covers the entire viewport (near≥500), the engine now skips the hidden street/shops/lighting passes underneath it. No gameplay update is skipped. This removes meaningful overdraw and late hidden cobble-cache work.
+
+See [QA results](docs/bridge-review/QA.md) and the committed Chromium/WebKit crossing and comparison reports for measured host timing and limitations.
+
+### Significant artwork review issues / ChatGPT handoff
+
+The delivery has pale extraction fringe/speck pixels along parts of the lower arch cut-outs and parapet/post silhouettes; small flat brown cutout/patch shapes are also present around some support edges. These are visible in the original source on contrasting backgrounds and faintly in engine views. The engine adds no white background, checkerboard, dark extraction halo or opaque source rectangle. **Final edge cleanup belongs to the source artist/ChatGPT**, retaining registration and the original painting; Codex has deliberately not repainted or eroded the approved outlines to hide it.
+
+The deck's taper paving was an inferred continuation in the delivery and still needs approval. The engine boundary feather removes its hard canvas join, but does not make the inferred paving or raised masonry camera approved. The existing wilderness terrain remains procedural and simpler than the supplied bridge; full wilderness art/encounters are outside this task. No new illustration was made.
+
+Final acceptance requires human visual approval of the supplied masonry, parapets, inferred approach paving, water contact and raised-architecture perspective, followed by physical iPhone Safari checks of first load, sharpness, scrolling/frame pacing, memory, pause/resume and export/share. These are **UNVERIFIED-ON-DEVICE**. Collapse stays disabled because the underwater/cave destination has not shipped. PR #4 and PR #5 require explicit merge approval; neither is merged by this work.
 
 ## External PNG delivery — engineering handoff
 
-The engineering interface is ready for external PNGs. No additional artwork is produced by this handoff. Raised masonry and final illustration still require visual approval; the fixed source sizes and world registration below are the import contract, not a camera/art approval.
-
-Deliver **three separate, untrimmed, true-alpha RGBA PNGs**, each **720×2000 pixels**, one cell with no animation or atlas. Use these production destinations when the supplied files are imported:
-
-| Renderer key | External PNG destination | Existing geometry/alpha reference — preserve this file | Paint content only |
-| --- | --- | --- | --- |
-| `lower` | `art/bridge/production/lower.png` | `art/bridge/templates/lower.png` | Reddish lower masonry, connected spans, arch soffits, piers, foundations and abutments; opening interiors stay transparent |
-| `deck` | `art/bridge/production/deck.png` | `art/bridge/templates/deck.png` | Broad stone deck slabs and the registered entrance/exit paving |
-| `foreground` | `art/bridge/production/foreground.png` | `art/bridge/templates/foreground.png` | Raised parapet faces, pale coping stones and foreground end posts |
-
-The production PNGs are **not supplied, registered in the executable asset manifest, or activated yet**. Do not replace files under `templates/`: regression tests compare those files with the generated geometry masks. Keep `art/bridge/templates/water-occlusion-mask.png` independent and unchanged during the art import.
-
-All three images share source anchor **(360,1600)** and scale **2 source px : 1 design unit**. Their complete 720×2000 canvas draws at **360×1000**, origin **(0, bridgeNear−800)**, placing the anchor at **(180,bridgeNear)**. The central deck rectangle has source coordinate edges **x276..444, y360..1600** → design **x138..222, y180..800**: **84×620 units**. Approaches/exit retain 150-unit width. Preserve the full canvas, alpha silhouette, openings, registration, camera and scale; do not crop to the masonry or to the 84-unit deck. The source bounds and alpha/hash report remain in `art/bridge/templates/registration-report.json`. Match the actual engine captures and supplied masks; do not infer a new camera from the reference JPEG.
-
-Do not include water, reflections, stream foam, banks, vegetation, rocks, sky, ground outside the registered paving, rain, HUD, Gary or other actors in these structural PNGs. No white background, checkerboard background, baked night filter, artificial zoom or vanishing-point distortion. Material paint must fit the reviewed masks; runtime clipping is not a substitute for accurate alpha and registration.
-
-### Registration when the PNGs arrive
-
-1. Keep the three mask/template PNGs and the independent water mask unchanged. Place supplied artwork at the three `production/` destinations above. Those files are deliberately absent until provided.
-2. Copy the current `gary-bridge-art-contract.json` for the external preview pack. Preserve `schema`, `registration`, every candidate geometry field, dimensions/anchors and `approved:false`. Change only `layers.lower.path`, `layers.deck.path`, and `layers.foreground.path` to the corresponding production destinations. The existing default pack continues to reference blockouts until a reviewed integration changes it.
-3. Add these exact entries to `asset-quality-manifest.json` **when the files exist** (not before):
-
-```json
-"art/bridge/production/lower.png": { "width": 720, "height": 2000, "alpha": true },
-"art/bridge/production/deck.png": { "width": 720, "height": 2000, "alpha": true },
-"art/bridge/production/foreground.png": { "width": 720, "height": 2000, "alpha": true }
-```
-
-4. Decode the supplied pack with `GaryBridgeArt.loadImages(pack, Image)`; pass the returned `images` to the actual engine's `GaryBridgePreview.artwork(pack, images)` in the isolated Camera Lab iframe. This interface already accepts independent layers, checks dimensions and composites them once against the registered geometry masks. The PNG import does not require camera, deck, timing, collision, scrolling or gameplay changes.
-5. Run the unchanged complete regression suite and asset gate, inspect entry/middle/exit and moving waterlines, then obtain final visual approval before any production activation or merge. Both PRs remain unmerged until separately authorised.
+The original three-layer delivery has now been imported and reviewed as a candidate, superseding the previous "not supplied" handoff. Any corrected artwork must retain the same full canvases, anchors, alpha backgrounds, source paths and walking deck. Re-run the alpha exporter, full tests, captures and visual review after replacement. Normal Play must not activate it automatically. A future final-art promotion needs explicit visual approval and a separately reviewed activation change.

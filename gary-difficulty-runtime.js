@@ -2505,19 +2505,24 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
-    drawHighStreet();drawPavements();drawRoad();
-    pigeons.draw();
-    if (nightOn) {
-      drawNightAmbient();
-      drawNightRoadLight();
-      drawNightShopWindows();
+    // At near>=500 the existing terrain provider covers all 640 rows opaquely.
+    // Avoid drawing (and lazily caching) the entire hidden street underneath it.
+    const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
+    if(!bridgeCoversWorld){
+      drawHighStreet();drawPavements();drawRoad();
+      pigeons.draw();
+      if (nightOn) {
+        drawNightAmbient();
+        drawNightRoadLight();
+        drawNightShopWindows();
+      }
+      drawStormWindowLift();
+      drawStreetLight();
+      drawKeepersAboveWindowLighting();
+      drawShopShutters();
+      if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
+      drawRainSplashes();
     }
-    drawStormWindowLift();
-    drawStreetLight();
-    drawKeepersAboveWindowLighting();
-    drawShopShutters();
-    if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
-    drawRainSplashes();
     if(bridge.visible()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);}
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
@@ -2675,10 +2680,10 @@ function updateRain(dt, advancing) {
       artwork:(pack,images={})=>{
         if(!bridgePreviewSession)throw Error('Artwork candidates require isolated bridge preview');
         if(pack===null){bridgePaint=legacyBridgePaint;}
-        else{const candidate=window.GaryBridgeArt.create({makeCanvas:()=>document.createElement('canvas'),pack,images,environment:legacyBridgePaint});bridgePaint=candidate;}
-        prepareView(1);render();return bridgePaint===legacyBridgePaint?'legacy':'UNAPPROVED_BLOCKOUT';
+        else{const candidate=window.GaryBridgeArt.create({makeCanvas:()=>document.createElement('canvas'),pack,images,environment:legacyBridgePaint,cacheScale:pack.candidate.structureRevision==='supplied-rounded-arcade-v3'?1:2});bridgePaint=candidate;}
+        prepareView(1);render();return bridgePaint===legacyBridgePaint?'legacy':bridgePaint.mode;
       },
-      artworkMode:()=>bridgePaint===legacyBridgePaint?'legacy':'UNAPPROVED_BLOCKOUT',
+      artworkMode:()=>bridgePaint===legacyBridgePaint?'legacy':bridgePaint.mode,
       snapshot:()=>bridge.snapshot(),pause:suspend,
       freeze:()=>{bridgePreviewFrozen=true;simulation.reset();},
       resume:()=>{bridgePreviewFrozen=false;simulation.reset();resume();},
