@@ -79,6 +79,11 @@ input[type=file]{display:block;max-width:100%;margin-top:7px}
 </div>
 <div class="panel">
 <h2>2. Ground and raised geometry</h2>
+<label class="row"><span>Registered artwork blockout (NOT APPROVED)</span><input id="artwork" type="checkbox"></label>
+<label class="range">Candidate support height <output id="supportValue">80</output> units
+<input id="support" type="range" min="32" max="96" step="4" value="80"></label>
+<button id="loadArtwork">Test registered PNG layers</button>
+<p style="font-size:12px">Flat geometry templates only. Deep supports and a separate water mask are previewed in the real engine. Legacy bridge stays the default.</p>
 <label class="row"><span>Footprints and lane guides</span><input id="footprints" type="checkbox" checked></label>
 <label class="row"><span>Raised volumes and supports</span><input id="volumes" type="checkbox" checked></label>
 <label class="range">Raised-height projection <output id="elevationValue">0.80</output> pixels per design unit
@@ -106,13 +111,14 @@ input[type=file]{display:block;max-width:100%;margin-top:7px}
 </div>
 </main>
 <script src="gary-camera-model.js"></script>
+<script src="gary-bridge-art.js?v=artpipeline1"></script>
 <script>
 (async()=>{
 'use strict';
 const $=id=>document.getElementById(id);
 const stage=$('stage'),frame=$('engine'),ref=$('reference'),canvas=$('overlay'),ctx=canvas.getContext('2d');
 const views=['approach','enter','middle','exit'],images=Object.fromEntries(views.map(v=>[v,'docs/bridge/'+(v==='approach'?'approach':v==='enter'?'enter':v==='middle'?'middle':'exit')+'.png']));
-let contract,source='reference',view='enter',near=560,localImage=null,live=false,engineStarted=false,lastStatus='';
+let artworkTimer=null,artImages=null,artPack,contract,source='reference',view='enter',near=560,localImage=null,live=false,engineStarted=false,lastStatus='';
 function status(s){if(s!==lastStatus){$('status').textContent=s;lastStatus=s;}}
 function api(){try{return frame.contentWindow?.GaryBridgePreview || null;}catch(_){return null;}}
 function choose(viewName){
@@ -122,11 +128,13 @@ function choose(viewName){
  if(source==='engine')startGame();
  draw();
 }
+function artworkPack(){return {...artPack,candidate:{...artPack.candidate,heightProjection:Number($('elevation').value),parapetHeight:Number($('height').value),supportHeight:Number($('support').value)}};}
+function applyArtwork(){if(source==='engine'&&engineStarted)api()?.artwork($('artwork').checked?artworkPack():null,artImages||{});}
 function startGame(){
  const game=api();if(!game){status('Waiting for bridge preview engine to initialise…');return false;}
  try{if(!game.start(view)){status('Game assets still loading; retry the Real game button.');return false;}
-  game.freeze();engineStarted=true;live=false;
-  status('Real engine frame frozen at '+view+'. Tap Play preview to animate.');
+  frame.contentDocument.querySelector('#pauseBtn').style.display='none';game.freeze();engineStarted=true;live=false;applyArtwork();
+  status('Real engine frame frozen at '+view+($('artwork').checked?' · UNAPPROVED structural blockout.':'. Tap Play preview to animate.'));
   return true;
  }catch(e){status('Real-engine preview unavailable: '+e.message);return false;}
 }
@@ -152,6 +160,8 @@ function draw(){
  GaryCameraModel.draw(ctx,contract,n,{footprints:$('footprints').checked,volumes:$('volumes').checked,
    elevation:Number($('elevation').value),height:Number($('height').value),
    opacity:Number($('opacity').value)/100});
+ if($('artwork').checked)GaryBridgeArt.drawGuides(ctx,artworkPack(),n);
+ $('supportValue').textContent=$('support').value;
  $('nearValue').textContent=String(Math.round(n));
  $('elevationValue').textContent=Number($('elevation').value).toFixed(2);
  $('heightValue').textContent=$('height').value;
@@ -186,7 +196,7 @@ function candidate(){
    road:[contract.world.roadLeft,contract.world.roadRight],
    lanes:contract.world.laneCentres,bridgeDeck:[contract.bridge.deck.left,contract.bridge.deck.right]},
   raisedArchitecture:{status:'PROVISIONAL_NEEDS_VISUAL_APPROVAL',
-   heightProjection:Number($('elevation').value),sampleHeight:Number($('height').value)},
+   heightProjection:Number($('elevation').value),sampleHeight:Number($('height').value),supportHeight:Number($('support').value),artworkBlockout:$('artwork').checked},
   overlays:{footprints:$('footprints').checked,volumes:$('volumes').checked,opacity:Number($('opacity').value)/100},
   review:{art:'NOT_APPROVED',geometry:'NEEDS_VISUAL_COMPARISON',iphone:'UNVERIFIED'}
  },null,2);
@@ -199,13 +209,16 @@ async function copyJSON(){
 try{
  const response=await fetch('gary-camera-contract.json',{cache:'no-store'});
  if(!response.ok)throw Error('Contract unavailable ('+response.status+')');
- contract=await response.json();const report=GaryCameraModel.validate(contract);
+ contract=await response.json();
+ artPack=await (await fetch('gary-bridge-art-contract.json',{cache:'no-store'})).json();GaryBridgeArt.validatePack(artPack);
+ const report=GaryCameraModel.validate(contract);
  if(!report.ok)throw Error(report.errors.join('; '));
  ref.onerror=()=>status('Reference screenshot missing. Select Real game after assets load.');
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.view)));
  document.querySelectorAll('[data-source]').forEach(b=>b.addEventListener('click',()=>setSource(b.dataset.source)));
- for(const id of ['footprints','volumes','elevation','height','opacity'])$(id).addEventListener('input',draw);
+ for(const id of ['footprints','volumes','elevation','height','opacity','support','artwork'])$(id).addEventListener('input',()=>{if(['elevation','height','support'].includes(id)){artImages=null;clearTimeout(artworkTimer);artworkTimer=setTimeout(applyArtwork,180);}if(id==='artwork')applyArtwork();draw();});
  $('near').addEventListener('input',()=>{near=Number($('near').value);draw();});
+ $('loadArtwork').addEventListener('click',async()=>{try{artImages=await GaryBridgeArt.loadImages(artPack,Image);$('elevation').value=artPack.candidate.heightProjection;$('height').value=artPack.candidate.parapetHeight;$('support').value=artPack.candidate.supportHeight;$('artwork').checked=true;setSource('engine');status('Registered transparent PNG templates · UNAPPROVED projection and artwork.');}catch(e){status('Artwork pack rejected: '+e.message);}});
  $('freeze').addEventListener('click',()=>{api()?.freeze();live=false;draw();status('Frame frozen for geometric comparison.');});
  $('resume').addEventListener('click',()=>{if(source!=='engine'){status('Select Real game to animate the preview.');return;}
   if(!engineStarted&&!startGame())return;

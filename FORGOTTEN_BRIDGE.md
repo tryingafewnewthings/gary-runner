@@ -2,6 +2,10 @@
 
 20 October 2026 — implemented in this checkout; deployment requires the PR to be merged separately. Revert this feature commit to roll back. Historical engines/installers are untouched.
 
+## Artwork preparation on stacked PR #5
+
+[Registered artwork pipeline](BRIDGE_ARTWORK_PIPELINE.md) adds opt-in Camera Lab blockouts, deeper supports and separate water occlusion, replaceable transparent templates and an exact artist specification. The original bridge below remains the default. Candidate projection and artwork are unapproved.
+
 ## Play and review
 
 Serve the repository (`python3 -m http.server 8000`) and open [gary-bridge-preview.html](gary-bridge-preview.html). It embeds the **actual index.html and active difficulty engine**, without duplicated gameplay code. Approach / Enter / Halfway / Exit restart at exact world positions. Tap either half to steer; Pause/Resume, Replay and Freeze view work on touch. The full 360×640 camera scales to fit compact phones. Debug discoveries and best scores use separate save keys; preview crashes do not write normal difficulty telemetry.

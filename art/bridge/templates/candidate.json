@@ -1,0 +1,25 @@
+{
+  "schema": "gary-camera-candidate-v1",
+  "approved": false,
+  "source": "gary-camera-contract.json",
+  "artPack": "gary-bridge-art-contract.json",
+  "raisedArchitecture": {
+    "approved": false,
+    "status": "PROVISIONAL_NEEDS_VISUAL_APPROVAL",
+    "heightProjection": 0.8,
+    "supportHeight": 80,
+    "parapetHeight": 14
+  },
+  "registration": {
+    "width": 720,
+    "height": 2000,
+    "drawWidth": 360,
+    "drawHeight": 1000,
+    "anchorX": 180,
+    "anchorY": 800,
+    "far": 180,
+    "length": 620,
+    "deckLeft": 138,
+    "deckRight": 222
+  }
+}

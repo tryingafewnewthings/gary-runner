@@ -49,3 +49,7 @@ Status at creation: source code and PR #4 geometry **CODE-OBSERVED**; Safari pla
 ## Next production step once calibration is approved
 
 Create bridge masks/silhouettes based on the locked profile, with unchanged 84-unit deck and existing traffic progression. Produce only transparent structure layers: lower masonry/piers, independent deck surface, front parapets (with caps). Do not generate the river, rocks, banks or vegetation inside the bridge structure image. Ensure the structural bases extend under water that occludes the bases; the water is an independent runtime plane. A later PR should replace procedural paint with these layered assets after asset-gate + iPhone checks.
+
+## Registered artwork preparation (PR #5 continuation)
+
+Camera Lab now offers an explicit unapproved structural blockout and a **Test registered PNG layers** path in its real-engine view. See [BRIDGE_ARTWORK_PIPELINE.md](BRIDGE_ARTWORK_PIPELINE.md) for three inspected captures, exact source/draw/anchor specification and alpha report. The 80-unit support descent is an adjustable review candidate, not a locked profile. Terrain/water, deeper masonry, water occlusion, deck, actors and foreground structure have separate passes. The existing bridge stays the default; normal game geometry and the camera contract are unchanged. Templates are flat geometric guides, not final art derived from the supplied JPEG. User visual sign-off still precedes any material-art production or promotion.

@@ -3,6 +3,13 @@
   "description": "Current approved/observed asset export contracts. Actual gameplay-scale review still required. Source: STYLE.txt + art/fox/registration.json + active data.",
   "defaults": { "maxBytes": 6291456, "requirePngCrc": true },
   "assets": {
+    "art/bridge/templates/lower.png": { "width": 720, "height": 2000, "alpha": true },
+    "art/bridge/templates/deck.png": { "width": 720, "height": 2000, "alpha": true },
+    "art/bridge/templates/foreground.png": { "width": 720, "height": 2000, "alpha": true },
+    "art/bridge/templates/water-occlusion-mask.png": { "width": 720, "height": 2000, "alpha": true },
+    "docs/bridge-art/enter.png": { "width": 360, "height": 640, "alpha": false },
+    "docs/bridge-art/middle.png": { "width": 360, "height": 640, "alpha": false },
+    "docs/bridge-art/exit.png": { "width": 360, "height": 640, "alpha": false },
     "docs/bridge/approach.png": { "width": 360, "height": 640, "alpha": false },
     "docs/bridge/enter.png": { "width": 360, "height": 640, "alpha": false },
     "docs/bridge/middle.png": { "width": 360, "height": 640, "alpha": false },

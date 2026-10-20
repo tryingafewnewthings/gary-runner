@@ -1053,7 +1053,8 @@ let shutterMix = 0;
     turn:loadGary('art/fox/fox-turn.png?v=fox2',im=>validateSheet(im,'Fox turn',3,1,256,256)),return:loadGary('art/fox/fox-return.png?v=fox2',im=>validateSheet(im,'Fox return',6,1,256,256)),bush:loadGary('art/fox/fox-bush.png?v=fox2')};
   const bridge=window.GaryBridge.create();
   let bridgePreviewFrozen=false;
-  const bridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
+  const legacyBridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
+  let bridgePaint=legacyBridgePaint;
   const foxWorld={afterBench:false,dialogueActive:false,hazardsClear:false,distance:0};
   const fox=window.GaryFoxEncounter.create({images:foxImages,spawnFood:spawnFoxFood,
     onTheft(){performance.foodSpawned=Math.max(0,performance.foodSpawned-1);},
@@ -2517,7 +2518,7 @@ function updateRain(dt, advancing) {
     drawShopShutters();
     if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
     drawRainSplashes();
-    if(bridge.visible()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);bridgePaint.drawDeck(ctx,n);}
+    if(bridge.visible()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);}
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
@@ -2671,6 +2672,13 @@ function updateRain(dt, advancing) {
         bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
         rememberPositions();prepareView(1);render();return true;
       },
+      artwork:(pack,images={})=>{
+        if(!bridgePreviewSession)throw Error('Artwork candidates require isolated bridge preview');
+        if(pack===null){bridgePaint=legacyBridgePaint;}
+        else{const candidate=window.GaryBridgeArt.create({makeCanvas:()=>document.createElement('canvas'),pack,images,environment:legacyBridgePaint});bridgePaint=candidate;}
+        prepareView(1);render();return bridgePaint===legacyBridgePaint?'legacy':'UNAPPROVED_BLOCKOUT';
+      },
+      artworkMode:()=>bridgePaint===legacyBridgePaint?'legacy':'UNAPPROVED_BLOCKOUT',
       snapshot:()=>bridge.snapshot(),pause:suspend,
       freeze:()=>{bridgePreviewFrozen=true;simulation.reset();},
       resume:()=>{bridgePreviewFrozen=false;simulation.reset();resume();},

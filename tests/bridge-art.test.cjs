@@ -1,0 +1,60 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {createCanvas,loadImage}=require('@napi-rs/canvas'),art=require('../gary-bridge-art.js'),pack=require('../gary-bridge-art-contract.json'),camera=require('../gary-camera-contract.json'),boot=require('./helpers/headless.cjs');
+const makeCanvas=()=>createCanvas(1,1),env={drawWater(){}};
+test('art registration preserves the measured camera footprint and explicit unapproved projection',()=>{
+ assert.equal(art.validatePack(pack),true);assert.equal(pack.candidate.heightProjection,-camera.profiles['raised-architecture'].heightAxis[1]);
+ for(const near of [560,850,1210]){const f=art.layout(pack,near);assert.deepEqual(f.deck,{x:138,y:near-620,w:84,h:620});assert.equal(f.depth,64);assert.deepEqual(f.anchor,{x:180,y:near});}
+ for(const key of Object.keys(art.REGISTRATION)){const bad=structuredClone(pack);bad.registration[key]++;assert.throws(()=>art.validatePack(bad),/registration/);}
+ const shifted=structuredClone(pack);shifted.layers.deck.anchor[1]--;assert.throws(()=>art.validatePack(shifted),/registration/);
+ const wrongSource=structuredClone(pack);wrongSource.layers.lower.sourceWidth--;assert.throws(()=>art.validatePack(wrongSource),/registration/);
+ const approved=structuredClone(pack);approved.approved=true;assert.throws(()=>art.validatePack(approved),/unapproved/);
+});
+test('registered transparent templates have stable alpha, empty backgrounds and unchanged export bytes',async()=>{
+ const r=art.create({makeCanvas,pack,environment:env});
+ const report=require('../art/bridge/templates/registration-report.json');
+ for(const key of [...art.KEYS,'water-occlusion-mask']){
+  const file=path.join(__dirname,'..',key==='water-occlusion-mask'?'art/bridge/templates/water-occlusion-mask.png':pack.layers[key].path);
+  const bytes=fs.readFileSync(file);assert.deepEqual(bytes,(key==='water-occlusion-mask'?r.waterMask:r.templates[key]).toBuffer('image/png'));
+  assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'),report.files[key].sha256);
+  const im=await loadImage(file),c=createCanvas(720,2000),g=c.getContext('2d');g.drawImage(im,0,0);
+  const px=g.getImageData(0,0,720,2000).data;let clear=0,solid=0;
+  for(let i=3;i<px.length;i+=4){if(px[i]===0)clear++;if(px[i]>0)solid++;}
+  assert.ok(clear>720*2000*.6);assert.ok(solid>1000);
+  for(const [x,y] of [[0,0],[719,1999],[30,900],[690,900]])assert.equal(px[(y*720+x)*4+3],0,'no environment baked into structural layer');
+  if(key!=='deck')assert.equal(px[(900*720+360)*4+3],0,'actor corridor remains empty');
+ }
+});
+test('professional layers replace independently, reject bad registration, and are clipped to masks once',()=>{
+ let alloc=0;const solid=createCanvas(720,2000),s=solid.getContext('2d');s.fillStyle='#ff00ff';s.fillRect(0,0,720,2000);
+ const r=art.create({makeCanvas:()=>{alloc++;return makeCanvas()},pack,images:{lower:solid},environment:env});
+ const c=createCanvas(360,1000),g=c.getContext('2d');r.drawLower(g,800);
+ assert.equal(g.getImageData(0,450,1,1).data[3],0);assert.equal(g.getImageData(100,400,1,1).data[0],255);
+ const original=art.create({makeCanvas,pack,environment:env});assert.deepEqual(r.templates.deck.toBuffer('image/png'),original.templates.deck.toBuffer('image/png'));
+ for(let i=0;i<100;i++){r.drawLower(g,850);r.drawWaterOcclusion(g,850,i/60);r.drawDeck(g,850);r.drawForeground(g,850)}
+ assert.equal(alloc,5);assert.throws(()=>art.create({makeCanvas,pack,images:{lower:createCanvas(2,2)},environment:env}),/wrong-size/);
+ assert.throws(()=>art.create({makeCanvas,pack,images:{water:solid},environment:env}),/Unknown/);
+});
+test('water occludes the submerged pier feet and stays outside the playable deck',()=>{
+ const r=art.create({makeCanvas,pack,environment:env}),c=createCanvas(360,1000),g=c.getContext('2d');
+ r.drawLower(g,800);const p=r.contacts[0],before=g.getImageData(p.x+10,p.y+2,1,1).data.slice();
+ r.drawWaterOcclusion(g,800,0);const after=g.getImageData(p.x+10,p.y+2,1,1).data;
+ assert.notDeepEqual(after,before);assert.ok(after[2]/after[0]>before[2]/before[0],'water colour replaces the warm brick base');
+ assert.equal(g.getImageData(180,450,1,1).data[3],0);assert.deepEqual(art.ORDER,['terrain-stream-banks','lower','water-occlusion','deck','actors-items','foreground']);
+ const runtime=fs.readFileSync(path.join(__dirname,'../gary-difficulty-runtime.js'),'utf8');
+ const pos=['bridgePaint.drawWater(ctx','bridgePaint.drawLower(ctx','bridgePaint.drawWaterOcclusion?.(ctx','bridgePaint.drawDeck(ctx','drawPlayer();','bridgePaint.drawForeground(ctx'].map(s=>runtime.indexOf(s,runtime.indexOf('function render(')));
+ assert.ok(pos.every((n,i)=>n>=0&&(i===0||n>pos[i-1])));
+});
+test('real engine artwork preview is opt-in, atomic, and cannot change story, lanes or saves',async()=>{
+ const f=await boot({},false,{urlSearch:'debug=1&bridgepreview=1&seed=12345'});try{
+  const w=f.w;w.GaryBridgePreview.start('middle');const before=w.__test.snapshot();assert.equal(w.GaryBridgePreview.artworkMode(),'legacy');
+  const p=w.JSON.parse(JSON.stringify(pack));w.GaryBridgePreview.artwork(p);assert.equal(w.GaryBridgePreview.artworkMode(),'UNAPPROVED_BLOCKOUT');
+  assert.deepEqual(w.__test.snapshot(),before);w.__test.move(-1);assert.equal(w.__test.snapshot().target,1);
+  assert.throws(()=>w.GaryBridgePreview.artwork(p,{deck:makeCanvas()}),/wrong-size/);assert.equal(w.GaryBridgePreview.artworkMode(),'UNAPPROVED_BLOCKOUT');
+  w.GaryBridgePreview.artwork(null);assert.equal(w.GaryBridgePreview.artworkMode(),'legacy');
+  w.GaryBridgePreview.artwork(p);w.__test.suspend();const paused=w.__test.snapshot();for(let i=0;i<90;i++)w.__test.advance(1/60);assert.deepEqual(w.__test.snapshot(),paused);
+  w.__test.resume();for(let i=0;i<300;i++)w.__test.advance(1/60);assert.equal(w.__test.bridge().phase,'done');assert.equal(w.__test.bridge().collapse,false);
+  w.__test.reset();assert.equal(w.__test.bridge().phase,'dormant');assert.equal(f.store.size,0);
+ }finally{f.close()}
+ const normal=await boot();try{assert.throws(()=>normal.w.GaryBridgePreview.artwork(pack),/isolated/)}finally{normal.close()}
+});

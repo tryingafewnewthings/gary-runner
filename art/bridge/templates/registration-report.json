@@ -1,0 +1,102 @@
+{
+  "schema": "gary-bridge-registration-report-v1",
+  "approved": false,
+  "files": {
+    "lower": {
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ],
+      "nonzeroAlpha": 203793,
+      "transparentPixels": 1236207,
+      "boundsInclusive": [
+        196,
+        348,
+        523,
+        1727
+      ],
+      "sha256": "2f372c0566b9850f6ee29f26616e1995014c2528807b053d738476e1da86d0c2",
+      "status": "PASS_GEOMETRY_AND_ALPHA_ONLY"
+    },
+    "deck": {
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ],
+      "nonzeroAlpha": 397372,
+      "transparentPixels": 1042628,
+      "boundsInclusive": [
+        210,
+        0,
+        509,
+        1999
+      ],
+      "sha256": "33b7be6d2b4aa8ef96dbd194bb745d84d346ba8636cd57c7ab3f56b491bec584",
+      "status": "PASS_GEOMETRY_AND_ALPHA_ONLY"
+    },
+    "foreground": {
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ],
+      "nonzeroAlpha": 113872,
+      "transparentPixels": 1326128,
+      "boundsInclusive": [
+        222,
+        327,
+        491,
+        1599
+      ],
+      "sha256": "b2463ad9e0cf7e5421f29737448a5435c1251d3c09f9c05b99231079c5b6d452",
+      "status": "PASS_GEOMETRY_AND_ALPHA_ONLY"
+    },
+    "water-occlusion-mask": {
+      "source": [
+        720,
+        2000
+      ],
+      "draw": [
+        360,
+        1000
+      ],
+      "anchor": [
+        360,
+        1600
+      ],
+      "nonzeroAlpha": 13760,
+      "transparentPixels": 1426240,
+      "boundsInclusive": [
+        196,
+        836,
+        523,
+        1187
+      ],
+      "sha256": "b1fc32e832e06301360424fcbaa03cea7ca11004712a2fd3f567381992513cea",
+      "status": "PASS_GEOMETRY_AND_ALPHA_ONLY"
+    }
+  }
+}
