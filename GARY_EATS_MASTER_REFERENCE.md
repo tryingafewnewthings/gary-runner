@@ -7,6 +7,10 @@
 
 > This file is a current navigation and decision reference, not a replacement for the real engine or calibrated source data. After any commit, re-check `index.html`, the loaded scripts and runtime configuration. Code observed on 19 October may have changed. An uploaded asset is not necessarily wired into the live runner, and passing synthetic tests does not prove physical iPhone behaviour.
 
+## 20 October implementation amendment — Forgotten Bridge
+
+`CODE-OBSERVED`: this checkout's `index.html` loads `gary-bridge.js` into the active difficulty engine. After the reader and completed fox, a once-per-run raised brick crossing narrows the 150-unit road to an 84-unit centre deck, then widens into procedural wilderness ground. Four cached Canvas layers, safe guided centre travel and a disabled, biome-gated collapse hook are implemented. See [FORGOTTEN_BRIDGE.md](FORGOTTEN_BRIDGE.md) for the real-engine preview, inspected screenshots and verification limits. This supersedes the dated bridge-as-future statements below; it does not establish deployment to main/Pages. Full wilderness encounters, historical biomes and underwater/cave gameplay remain `PLANNED`. Physical iPhone performance remains `UNVERIFIED-ON-DEVICE`.
+
 ## 1. Creative thesis and player experience
 
 Gary Eats! is a **professional-quality, mobile-first, 2D HTML5 Canvas three-lane food-review runner** set initially on an affectionate, recognisable British high street. The protagonist, Gary, is recognisable by his microphone, blue/navy clothing, hair and rear three-quarter silhouette. The humour is dry, British and character-led, not random internet-surrealist content. Food pickups, recognisable shops, shopkeepers, the Food Catalogue and Gary's 1–10 end-of-run review establish a warm, accessible introduction.

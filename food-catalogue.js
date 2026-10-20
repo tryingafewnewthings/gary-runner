@@ -1,7 +1,8 @@
 /* Gary Eats! — Food Catalogue v2: first discoveries, unread highlights and pause-aware notices. */
 (function () {
   'use strict';
-  const STORAGE = 'gary-eats-discovered-food-v1';
+  const STORAGE = new URLSearchParams(location.search).get('debug')==='1' && new URLSearchParams(location.search).get('bridgepreview')==='1'
+    ? 'gary-eats-bridge-preview-food-v1' : 'gary-eats-discovered-food-v1';
   const LABELS = {
     sausage_roll:{name:'Half-eaten Sausage Roll',icon:'🥐',description:'Golden pastry. Someone got here first.'},
     custard_cream:{name:'Custard Cream',icon:'🍪',description:'A small comfort on a very quiet road.'},

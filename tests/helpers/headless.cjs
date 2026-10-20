@@ -9,11 +9,11 @@ const LEGACY_PREVIEW_SCRIPTS=['game-data.js','game-core.js','food-last-orders-pr
   'gary-intro-transition.js','gary-crash-config.js','gary-street-mystery.js',
   'game-last-orders-preview.js'];
 
-module.exports=async function boot(saved={},preview=false,{foxRandom}={}){
+module.exports=async function boot(saved={},preview=false,{foxRandom,urlSearch='debug=1&seed=12345'}={}){
  const root=path.join(__dirname,'../..');
  const entry=preview?'gary-last-orders-preview.html':'index.html';
  const dom=new JSDOM(fs.readFileSync(path.join(root,entry),'utf8'),{
-  url:'https://game.test/'+entry+'?debug=1&seed=12345',runScripts:'outside-only',pretendToBeVisual:true
+  url:'https://game.test/'+entry+'?'+urlSearch,runScripts:'outside-only',pretendToBeVisual:true
  });
  const w=dom.window,context=dom.getInternalVMContext(),errors=[],pending=[],native=new WeakMap();
  const store=new Map(Object.entries(saved));
