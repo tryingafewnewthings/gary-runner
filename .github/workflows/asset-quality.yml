@@ -1,0 +1,55 @@
+name: Gary Eats Asset Quality Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'art/**'
+      - '*.png'
+      - '*.PNG'
+      - '*.webp'
+      - 'asset-quality-manifest.json'
+      - 'tests/asset-quality-gate*.cjs'
+      - '.github/workflows/asset-quality.yml'
+  pull_request:
+    paths:
+      - 'art/**'
+      - '*.png'
+      - '*.PNG'
+      - '*.webp'
+      - 'asset-quality-manifest.json'
+      - 'tests/asset-quality-gate*.cjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  asset-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run quality gate unit tests
+        run: node --test tests/asset-quality-gate.test.cjs
+      - name: Validate changed assets
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            node tests/asset-quality-gate.cjs --all
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
+            node tests/asset-quality-gate.cjs --base "$PR_BASE_SHA"
+          elif [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            node tests/asset-quality-gate.cjs --all
+          else
+            node tests/asset-quality-gate.cjs --base "$BASE_SHA"
+          fi
