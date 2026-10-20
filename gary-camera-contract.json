@@ -1,0 +1,130 @@
+{
+  "schema": "gary-eats-visual-camera-v1",
+  "version": 1,
+  "baseline": "feat/forgotten-bridge (PR #4, unmerged on 2026-10-20)",
+  "principles": {
+    "projection": "fixed-screen-parallel-2.5d",
+    "cameraMovement": false,
+    "vanishingPoint": false,
+    "scalingWithDistance": false,
+    "worldScrolling": "vertical",
+    "lighting": "soft painted upper-left light",
+    "status": "STRUCTURAL_BASELINE_NOT_ART_APPROVAL"
+  },
+  "world": {
+    "width": 360,
+    "height": 640,
+    "roadLeft": 105,
+    "roadRight": 255,
+    "roadWidth": 150,
+    "pavementWidth": 16,
+    "laneCentres": [
+      130,
+      180,
+      230
+    ],
+    "playerY": 540,
+    "playerFootOffset": 6,
+    "playerHeight": 142,
+    "cobbleCell": 60
+  },
+  "bridge": {
+    "length": 620,
+    "cacheHeight": 1000,
+    "cacheFar": 180,
+    "cacheEnd": 800,
+    "deck": {
+      "left": 138,
+      "right": 222,
+      "width": 84
+    },
+    "approach": {
+      "left": 105,
+      "right": 255
+    },
+    "masonry": [
+      {
+        "left": 101,
+        "width": 32
+      },
+      {
+        "left": 227,
+        "width": 32
+      }
+    ],
+    "parapets": [
+      {
+        "left": 117,
+        "width": 17
+      },
+      {
+        "left": 223,
+        "width": 17
+      }
+    ],
+    "viewNear": {
+      "approach": 210,
+      "enter": 560,
+      "middle": 850,
+      "exit": 1210
+    },
+    "surroundings": [
+      "water",
+      "banks",
+      "grass",
+      "rocks"
+    ],
+    "separateLayerOrder": [
+      "terrain-and-water",
+      "lower-masonry",
+      "deck",
+      "actor",
+      "foreground-parapets"
+    ]
+  },
+  "profiles": {
+    "ground-plane": {
+      "status": "CODE_LOCKED",
+      "horizontalAxis": [
+        1,
+        0
+      ],
+      "scrollAxis": [
+        0,
+        1
+      ],
+      "heightAxis": [
+        0,
+        0
+      ],
+      "description": "Exact screen-aligned playing surface; tiles never inherit a 3D tilt."
+    },
+    "raised-architecture": {
+      "status": "PROVISIONAL_NEEDS_VISUAL_APPROVAL",
+      "horizontalAxis": [
+        1,
+        0
+      ],
+      "scrollAxis": [
+        0,
+        1
+      ],
+      "heightAxis": [
+        0,
+        -0.8
+      ],
+      "faceDepthPx": 12,
+      "description": "Candidate extrusion only. Pitch/height scale are NOT inferred from gameplay code. Must be calibrated visually and signed off."
+    },
+    "characters": {
+      "status": "REFERENCE_ART_REQUIRED",
+      "description": "Existing approved sprite identity and camera; preserve source registration. Not generated from architecture projection."
+    }
+  },
+  "approvals": {
+    "geometry": "UNVERIFIED_VISUAL",
+    "art": "NOT_APPLICABLE",
+    "iphone": "UNVERIFIED_ON_DEVICE",
+    "lockedProfile": null
+  }
+}
