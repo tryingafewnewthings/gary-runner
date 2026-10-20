@@ -1,0 +1,27 @@
+name: Gary Eats Node Unit and Controller Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  node-unit-controller-tests:
+    name: Node unit/controller tests (not full gameplay regression)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run dependency-free unit/controller tests
+        run: >-
+          node --test
+          tests/core.test.cjs
+          tests/mystery.test.cjs
+          tests/asset-quality-gate.test.cjs
