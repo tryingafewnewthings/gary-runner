@@ -1,0 +1,50 @@
+name: Gary Eats Active Engine Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: active-engine-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  active-engine:
+    name: Active engine integration and browser checks (simulated devices)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - name: Install locked test dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install browsers and operating system dependencies
+        run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Unit and controller checks
+        run: npm run test:unit
+      - name: Registered asset metadata checks
+        run: npm run test:assets
+      - name: Native Canvas and active engine integration checks
+        run: npm run test:integration
+      - name: Chromium smoke
+        run: npm run test:browser
+      - name: WebKit smoke (not physical iPhone Safari)
+        env:
+          GARY_TEST_ENGINE: webkit
+        run: npm run test:browser
+      - name: Upload browser and integration failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: active-engine-diagnostics
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

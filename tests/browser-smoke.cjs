@@ -1,117 +1,145 @@
 'use strict';
 const {chromium,webkit}=require('playwright');
 const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const url=process.env.GARY_TEST_URL||'http://127.0.0.1:8765/gary-runtime-preview.html';
-const engine=process.env.GARY_TEST_ENGINE==='webkit'?webkit:chromium;
-(async()=>{
- const server=require('node:http').createServer((req,res)=>{const path=require('node:path');const target=path.join(__dirname,'..',new URL(req.url,'http://local').pathname.replace(/^\//,'')||'index.html');try{const data=fs.readFileSync(target);res.setHeader('Content-Type',target.endsWith('.js')?'text/javascript':target.endsWith('.html')?'text/html':target.endsWith('.json')?'application/json':target.endsWith('.png')||target.endsWith('.PNG')?'image/png':target.endsWith('.webp')?'image/webp':'application/octet-stream');res.end(data);}catch(e){res.statusCode=404;res.end();}});
- await new Promise(resolve=>server.listen(8765,'127.0.0.1',resolve));
- const browser=await engine.launch({headless:true,...(engine===chromium?{executablePath:process.env.GARY_CHROMIUM_PATH||chromium.executablePath(),args:['--no-sandbox','--no-zygote','--single-process','--in-process-gpu','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}: {})});
- const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
- const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE ERROR',e.message)});
- // Test-only access to closure internals. These controls are never in published code.
- await page.route('**/game-runtime.js*',async route=>{
-   const source=fs.readFileSync(require.resolve('../game-runtime.js'),'utf8');
-   await route.fulfill({contentType:'text/javascript',body:source.replaceAll('requestAnimationFrame(loop)','window.__gameRaf(loop)').replace(/\}\)\(\);\s*$/,`window.__test={
-     advance:fixedUpdate,render:()=>{prepareView(.5);render();},reset,move,transition,suspend,resume,
-     add:(kind,l,y)=>{const o=itemPool.acquire();Object.assign(o,{t:kind,l,y,previousY:y,id:uid++,d:0,dare:0,near:0,refused:0,cleared:0});return o;},
-     probe:(kind,dx,dy)=>touchesPlayer({l:lane+dx/LANE_WIDTH,y:PLAYER_Y+dy,previousY:PLAYER_Y+dy},ITEMS[kind]),
-     empty:()=>itemPool.clear(),grin:triggerGrin,pools:()=>[itemPool,effectPool,starPool],
-     snapshot:()=>({state,lane,target,score,distance,nightMix,rainMix,shutterMix,clock,objs:objs.length}),
-     storm:()=>{nightMix=rainMix=shutterMix=1;nightOn=true;},
-     view:()=>view, previous:()=>previous
-   };})();`)});
- });
- await page.addInitScript(()=>{
-   let id=0;const frames=new Map();
-   window.__gameRaf=fn=>{frames.set(++id,fn);return id;};
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const instrumentActiveRuntime=require('./helpers/active-runtime-test-api.cjs');
+const engineName=process.env.GARY_TEST_ENGINE||'chromium';
+assert.ok(['chromium','webkit'].includes(engineName),'Unsupported GARY_TEST_ENGINE');
+const engine=engineName==='webkit'?webkit:chromium;
+const root=path.join(__dirname,'..');
+const artifacts=path.join(root,'test-results',engineName);
+const types={'.html':'text/html','.js':'text/javascript','.json':'application/json',
+ '.png':'image/png','.PNG':'image/png','.webp':'image/webp','.mp3':'audio/mpeg'};
 
+async function main(){
+ const server=http.createServer((req,res)=>{
+  const pathname=decodeURIComponent(new URL(req.url,'http://local').pathname);
+  if(pathname==='/favicon.ico'){res.writeHead(204).end();return;}
+  const target=path.resolve(root,'.'+pathname);
+  if(!target.startsWith(root+path.sep)){res.writeHead(403).end();return;}
+  try{res.setHeader('Content-Type',types[path.extname(target)]||'application/octet-stream');res.end(fs.readFileSync(target));}
+  catch(_){res.writeHead(404).end('Not found');}
+ });
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+ let browser,context,page,phase='launch';
+ const errors=[],consoleMessages=[],networkFailures=[],loadedScripts=[];
+ try{
+  browser=await engine.launch({headless:true,...(engine===chromium&&process.env.GARY_CHROMIUM_PATH?
+   {executablePath:process.env.GARY_CHROMIUM_PATH}: {})});
+  context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
+  await context.tracing.start({screenshots:true,snapshots:true,sources:true});
+  page=await context.newPage();page.setDefaultTimeout(15000);
+  page.on('pageerror',error=>errors.push(error.message));
+  page.on('console',message=>consoleMessages.push({type:message.type(),text:message.text()}));
+  page.on('requestfailed',request=>networkFailures.push({url:request.url(),error:request.failure()?.errorText}));
+  page.on('response',response=>{
+   if(response.status()>=400)networkFailures.push({url:response.url(),status:response.status()});
+   if(new URL(response.url()).pathname.endsWith('.js')&&response.ok())loadedScripts.push(new URL(response.url()).pathname.slice(1));
+  });
+  await page.route('**/gary-difficulty-runtime.js*',async route=>{
+   try{
+    const source=instrumentActiveRuntime(fs.readFileSync(path.join(root,'gary-difficulty-runtime.js'),'utf8'));
+    assert.equal(source.split('requestAnimationFrame(loop);').length-1,2,'Active frame scheduler changed');
+    await route.fulfill({contentType:'text/javascript',body:source.replaceAll('requestAnimationFrame(loop);','window.__gameRaf(loop);')});
+   }catch(error){errors.push(error.stack);await route.abort();}
+  });
+  await page.addInitScript(()=>{
+   let id=0,seed=12345;const frames=new Map();
+   Math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+   window.__gameRaf=fn=>{frames.set(++id,fn);return id;};
    window.__frame=t=>{const work=[...frames.values()];frames.clear();for(const fn of work)fn(t);};
- });
- console.log('browser launched');
- await page.goto(url+'?debug=1&rain=1');
- console.log('loaded');
- await page.waitForFunction(()=>window.GaryRuntimeStats&&window.__test);
- await page.waitForFunction(()=>[...document.images].every(i=>i.complete));
- console.log('assets ready');
- await page.waitForTimeout(700);
- await page.evaluate(()=>{window.__frame(0);for(let i=1;i<=120;i++)window.__frame(i*1000/120);});
- assert.equal(await page.evaluate(()=>GaryRuntimeStats.snapshot().ticks),60);
- assert.deepEqual(await page.evaluate(()=>GaryRuntimeStats.snapshot().errors),[]);
- assert.equal(await page.locator('#c').getAttribute('width'),'1170');
- console.log('start');
- await page.locator('#startBtn').click({force:true});
- await page.locator('#skipIntroBtn').click({force:true});
- await page.evaluate(()=>{for(let i=0;i<100;i++)__test.advance(1/60);__test.render();});
- assert.equal((await page.evaluate(()=>__test.snapshot())).state,'play');
- // No lane input during a paused state; resume preserves the exact road position.
- await page.locator('#pauseBtn').click({force:true});
- const paused=await page.evaluate(()=>__test.snapshot());
- await page.keyboard.press('ArrowLeft');
- await page.evaluate(()=>{for(let i=0;i<300;i++)__test.advance(1/60);});
- assert.deepEqual(await page.evaluate(()=>__test.snapshot()),paused);
- await page.locator('#resumeBtn').click({force:true});
- // Inward lane reversal stays continuous and ends precisely at its target.
- const move=await page.evaluate(()=>{
-   __test.move(-1);for(let i=0;i<6;i++)__test.advance(1/60);
-   const before=__test.snapshot().lane;__test.move(1);const after=__test.snapshot().lane;
-   for(let i=0;i<30;i++)__test.advance(1/60);
-   return {before,after,end:__test.snapshot().lane};
- });assert.equal(move.before,move.after);assert.equal(move.end,1);
- const generosity=await page.evaluate(()=>({m25:__test.probe('m',25,0),m19:__test.probe('m',19,0),fork17:__test.probe('fork',17,0),food26:__test.probe('kebab',26,0),illegal:__test.transition('over')}));
- assert.deepEqual(generosity,{m25:false,m19:true,fork17:false,food26:true,illegal:false});
- // Exercise actual collection, a distant hazard and a direct crash.
- const contact=await page.evaluate(()=>{
-   __test.empty();__test.add('kebab',1,540);__test.advance(1/60);
-   const collected=__test.snapshot().score;__test.empty();
-   __test.add('m',1,480);__test.advance(1/60);
-   const distant=__test.snapshot().state;__test.empty();
-   __test.add('m',1,538);__test.advance(1/60);
-   const hit=__test.snapshot().state;
-   __test.advance(.56);return {collected,distant,hit,over:__test.snapshot().state};
- });assert.ok(contact.collected>0);assert.equal(contact.distant,'play');assert.equal(contact.hit,'crash_m');assert.equal(contact.over,'over');
- await page.locator('#againBtn').click({force:true});
- assert.equal((await page.evaluate(()=>__test.snapshot())).state,'menu');
- assert.equal(await page.locator('#pauseBtn').isHidden(),true);
- console.log('start');
- await page.locator('#startBtn').click({force:true});
- // Pausing during narration must not let a delayed onended start gameplay.
- await page.evaluate(()=>__test.suspend());
- await page.evaluate(()=>document.querySelector('#garyAudio').dispatchEvent(new Event('ended')));
- assert.equal((await page.evaluate(()=>__test.snapshot())).state,'paused');
- await page.locator('#resumeBtn').click({force:true});
- assert.equal((await page.evaluate(()=>__test.snapshot())).state,'intro');
- await page.locator('#skipIntroBtn').click({force:true});
- await page.evaluate(()=>{for(let i=0;i<100;i++)__test.advance(1/60);});
- // Long soak without changing authored spawning: move to an empty lane each
- // tick; clear only imminent hazards to keep the renderer running through biomes.
- const soak=await page.evaluate(()=>{
-   __test.storm();
-   for(let i=0;i<18000;i++){
-     const pool=__test.pools()[0];
-     for(const o of pool.active)if((o.t==='m'||o.t==='fork')&&o.y>490)o.d=1;
-     if(i%30===0)__test.grin();
-     __test.advance(1/60);
-     if(i%300===0)__test.render();
-   }
-   __test.render();return {game:__test.snapshot(),stats:GaryRuntimeStats.snapshot(),pools:__test.pools().map(p=>({active:p.active.length,free:p.free.length,capacity:p.capacity,peak:p.peak}))};
- });
- assert.equal(soak.game.state,'play');assert.ok(soak.game.distance>50000);
- assert.equal(soak.stats.itemMisses,0);assert.ok(soak.stats.cacheEntries<=64);
- for(const p of soak.pools)assert.equal(p.active+p.free,p.capacity);
- console.log('soak finished');
- console.log('capturing canvas');
- const png=await page.locator('#c').evaluate(c=>c.toDataURL('image/png').split(',')[1]);
- fs.writeFileSync(process.env.GARY_TEST_IMAGE||require('node:path').join(require('node:os').tmpdir(),'gary-runtime-smoke.png'),Buffer.from(png,'base64'));
- console.log('canvas captured');
- await page.locator('#stage').evaluate(stage=>{stage.style.width='360px';});
- await page.evaluate(()=>window.dispatchEvent(new Event('resize')));
- const size=await page.evaluate(()=>({canvas:document.querySelector('#c').width,stage:document.querySelector('#stage').clientWidth,dpr:devicePixelRatio}));
- console.log({size});
- await page.evaluate(()=>__test.render());
- assert.equal(size.canvas,Math.round(size.stage*Math.min(3,size.dpr)));
- assert.deepEqual(errors,[]);
- console.log(JSON.stringify({engine:process.env.GARY_TEST_ENGINE||'chromium',contact,move,soak,errors},null,2));
- await browser.close();await new Promise(resolve=>server.close(resolve));
-})().catch(e=>{console.error(e);process.exit(1);});
+  });
+  phase='startup';
+  await page.goto(`http://127.0.0.1:${server.address().port}/index.html?debug=1&seed=12345`,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.GaryRuntimeStats&&window.__test?.ready(),null,{timeout:60000});
+  const scripts=await page.evaluate(()=>[...document.scripts].filter(s=>s.src).map(s=>new URL(s.src).pathname.slice(1)));
+  assert.equal(scripts.filter(file=>file==='gary-difficulty-runtime.js').length,1);
+  assert.ok(!scripts.includes('game-runtime.js'),'Archived runtime must not be loaded');
+  assert.deepEqual([...loadedScripts].sort(),[...scripts].sort(),'All index.html scripts must load successfully');
+  assert.equal(await page.locator('#startBtn').isEnabled(),true);
+  await page.evaluate(()=>{__frame(0);for(let i=1;i<=120;i++)__frame(i*1000/120);});
+  assert.equal(await page.evaluate(()=>GaryRuntimeStats.snapshot().ticks),60);
+
+  phase='play and skip intro';
+  await page.locator('#startBtn').click();
+  assert.equal(await page.evaluate(()=>__test.snapshot().state),'intro');
+  await page.locator('#skipIntroBtn').click();
+  await page.evaluate(()=>{for(let i=0;i<600&&__test.snapshot().state==='intro_transition';i++)__test.advance(1/60);__test.render();});
+  assert.equal(await page.evaluate(()=>__test.snapshot().state),'play');
+
+  phase='left and right movement';
+  await page.keyboard.press('ArrowLeft');
+  await page.evaluate(()=>{for(let i=0;i<30;i++)__test.advance(1/60);});
+  assert.equal(await page.evaluate(()=>__test.snapshot().lane),0);
+  await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');
+  await page.evaluate(()=>{for(let i=0;i<30;i++)__test.advance(1/60);});
+  assert.equal(await page.evaluate(()=>__test.snapshot().lane),2);
+  await page.keyboard.press('ArrowLeft');
+  await page.evaluate(()=>{for(let i=0;i<30;i++)__test.advance(1/60);});
+
+  phase='touch lane input';
+  const bounds=await page.locator('#c').boundingBox();
+  for(const [fraction,lane] of [[.25,0],[.75,1]]){
+   await page.touchscreen.tap(bounds.x+bounds.width*fraction,bounds.y+bounds.height*.5);
+   await page.evaluate(()=>{for(let i=0;i<30;i++)__test.advance(1/60);});
+   assert.equal(await page.evaluate(()=>__test.snapshot().lane),lane);
+  }
+
+  phase='pause and resume';
+  await page.locator('#pauseBtn').click();
+  const paused=await page.evaluate(()=>__test.snapshot());
+  await page.keyboard.press('ArrowRight');
+  await page.evaluate(()=>{for(let i=0;i<300;i++)__test.advance(1/60);});
+  assert.deepEqual(await page.evaluate(()=>__test.snapshot()),paused);
+  await page.locator('#resumeBtn').click();
+  assert.equal(await page.evaluate(()=>__test.snapshot().state),'play');
+
+  phase='roast collision, scoring and discovery';
+  const roast=await page.evaluate(()=>{__test.clear();__test.add('roast',1);__test.advance(1/60);return __test.snapshot().score;});
+  assert.equal(roast,25);
+  assert.equal(await page.locator('#garyDiscoveryToast').evaluate(el=>el.hidden),false);
+  await page.locator('#stage').evaluate(el=>{el.style.width='360px';});
+  await page.evaluate(()=>window.dispatchEvent(new Event('resize')));
+  const size=await page.evaluate(()=>({canvas:document.querySelector('#c').width,stage:document.querySelector('#stage').clientWidth,dpr:devicePixelRatio}));
+  assert.equal(size.canvas,Math.round(size.stage*Math.min(3,size.dpr)));
+
+  phase='crash and restart';
+  await page.evaluate(()=>{__test.clear();__test.add('fork',1);__test.advance(1/60);});
+  assert.equal(await page.evaluate(()=>__test.snapshot().state),'crash_fork');
+  await page.evaluate(()=>{for(let i=0;i<600&&__test.snapshot().state!=='over';i++)__test.advance(1/60);__test.render();});
+  assert.equal(await page.evaluate(()=>__test.snapshot().state),'over');
+  await page.locator('#againBtn').click();
+  const reset=await page.evaluate(()=>__test.snapshot());
+  assert.equal(reset.state,'menu');assert.equal(reset.score,0);assert.equal(reset.fox.phase,'dormant');
+  assert.equal(reset.shops.entries.length,0);assert.deepEqual(reset.cutscene.played,[]);
+  await page.locator('#garyCatalogueBtn').click();
+  assert.equal(await page.locator('.garyFoodTile:not(.locked)').count(),1);
+  assert.match(await page.locator('.garyFoodTile:not(.locked)').innerText(),/Roast/);
+  await page.locator('#garyCatalogueClose').click();
+  await page.locator('#startBtn').click();await page.locator('#skipIntroBtn').click();
+  await page.evaluate(()=>{for(let i=0;i<600&&__test.snapshot().state==='intro_transition';i++)__test.advance(1/60);__test.render();});
+  assert.equal(await page.evaluate(()=>__test.snapshot().state),'play');
+  assert.deepEqual(await page.evaluate(()=>__test.snapshot().errors),[]);
+  assert.deepEqual(errors,[]);
+  assert.deepEqual(networkFailures.filter(f=>!f.error?.includes('ERR_ABORTED')&&!f.error?.includes('cancelled')),[]);
+  console.log(JSON.stringify({engine:engineName,scripts,ticks:60,roastScore:roast,size,state:'play',errors},null,2));
+  // Optional temporary failure probe exercises the same diagnostic path in CI.
+  assert.notEqual(process.env.GARY_SMOKE_FORCE_FAILURE,'1','Intentional browser failure probe');
+  await context.tracing.stop();
+ }catch(error){
+  fs.mkdirSync(artifacts,{recursive:true});
+  const snapshot=page?await page.evaluate(()=>window.__test?.snapshot()).catch(()=>null):null;
+  fs.writeFileSync(path.join(artifacts,'failure.json'),JSON.stringify({engine:engineName,phase,error:error.stack,snapshot,errors,consoleMessages,networkFailures,loadedScripts},null,2));
+  if(page){
+   await page.screenshot({path:path.join(artifacts,'failure.png')}).catch(()=>{});
+   await page.content().then(html=>fs.writeFileSync(path.join(artifacts,'failure.html'),html)).catch(()=>{});
+  }
+  if(context)await context.tracing.stop({path:path.join(artifacts,'trace.zip')}).catch(()=>{});
+  throw error;
+ }finally{
+  if(browser)await browser.close();
+  server.closeAllConnections();
+  await new Promise(resolve=>server.close(resolve));
+ }
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});
