@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — Camera Lab</title>
+<style>
+:root{color-scheme:dark;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111c1d;color:#eceddc}
+*{box-sizing:border-box}
+body{margin:0;padding:12px max(12px,env(safe-area-inset-left)) max(20px,env(safe-area-inset-bottom))}
+main{max-width:1000px;margin:auto}
+h1{font-size:22px;margin:0 0 5px}h2{font-size:15px;margin:0 0 12px}
+p{color:#bfd0ca;line-height:1.45;margin:7px 0 10px}
+small,.muted{color:#b1c2bc}
+a{color:#e8cf8f}
+.layout{display:grid;grid-template-columns:minmax(0,360px) minmax(260px,1fr);gap:16px;align-items:start}
+.stage{position:relative;width:100%;max-width:360px;aspect-ratio:9/16;overflow:hidden;border:2px solid #8ea7a0;background:#1d2b2c;border-radius:7px;margin:auto}
+.stage iframe,.stage img,.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;border:0}
+.stage iframe{z-index:0;background:#111}
+.stage img{z-index:1;object-fit:fill}
+.stage canvas{z-index:2;pointer-events:none}
+.panel{border:1px solid #3e5651;background:#1b2928;padding:12px;border-radius:9px;margin-bottom:12px}
+button,select,input[type=file]{font:inherit}
+button,select{border:1px solid #718a81;border-radius:6px;background:#334c46;color:#fff;min-height:44px;padding:9px}
+button[aria-pressed=true]{background:#ccad6e;color:#1d241c;border-color:#e7ce93;font-weight:700}
+button:disabled{opacity:.45}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #ebc776}
+button{cursor:pointer}
+.group{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.group.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:9px 0}
+label{display:block;line-height:1.4}
+label.range{margin:12px 0}
+input[type=range]{display:block;width:100%;min-height:32px;accent-color:#efca87}
+input[type=file]{display:block;max-width:100%;margin-top:7px}
+.controls button{font-size:12px;padding:8px 3px}
+#status{padding:9px;background:#243c36;border-radius:5px;min-height:38px;color:#dce4ce}
+#exportText{display:none;width:100%;height:150px;background:#101b1c;color:#fff;border:1px solid #87958b;padding:9px;font:12px monospace;margin-top:10px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:10px 0;color:#d3e2da}
+.dot{display:inline-block;width:10px;height:10px;margin-right:4px;border-radius:2px}
+.warning{color:#f6d49d}
+@media(max-width:710px){.layout{grid-template-columns:1fr}.stage{width:min(100%,calc((100dvh - 385px)*.5625),360px);min-width:210px}h1{font-size:19px}.panel{margin-bottom:10px}}
+@media(max-height:660px) and (max-width:710px){.stage{width:min(82vw,275px);min-width:200px}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>Gary Eats! — Visual Camera Lab</h1><p>Bridge PR #4 calibration · real 360 × 640 game coordinates · no changes to live gameplay</p></header>
+<div class="layout">
+<section aria-label="Camera reference stage">
+<div class="stage" id="stage">
+<iframe id="engine" title="Real Gary Eats! engine bridge preview" src="index.html?debug=1&amp;bridgepreview=1&amp;seed=12345"></iframe>
+<img id="reference" alt="PR #4 real-engine bridge screenshot, not an approved art master" src="docs/bridge/enter.png">
+<canvas id="overlay" width="360" height="640" aria-label="Camera geometry overlay"></canvas>
+</div>
+<div class="legend"><span><span class="dot" style="background:#ffe18b"></span>84-unit deck</span><span><span class="dot" style="background:#d8a476"></span>Lower masonry</span><span><span class="dot" style="background:#ff718c"></span>Parapets</span><span><span class="dot" style="background:#43d9f7"></span>Road</span></div>
+<div id="status" role="status" aria-live="polite">Reading camera contract…</div>
+<p class="muted" style="font-size:12px">The overlays are measured geometry. They are <strong>not</strong> production art. Refine projection values against the actual scene before approving any asset.</p>
+</section>
+<section class="controls" aria-label="Calibration controls">
+<div class="panel">
+<h2>1. Source and bridge position</h2>
+<div class="group two" id="sources">
+<button data-source="reference" aria-pressed="true">PR screenshot</button>
+<button data-source="engine" aria-pressed="false">Real game</button>
+</div>
+<p style="font-size:12px">Screenshots are captured from PR #4, not an art sign-off. The game option runs its own actual engine in a debug session.</p>
+<div class="group" id="views">
+<button data-view="approach" aria-pressed="false">Approach</button>
+<button data-view="enter" aria-pressed="true">Enter</button>
+<button data-view="middle" aria-pressed="false">Middle</button>
+<button data-view="exit" aria-pressed="false">Exit</button>
+</div>
+<div class="group two" style="margin-top:7px">
+<button id="freeze">Freeze frame</button><button id="resume">Play preview</button>
+</div>
+<label class="range">Bridge position <output id="nearValue">560</output> design units (screenshot alignment only)
+<input id="near" type="range" min="0" max="1450" step="1" value="560"></label>
+</div>
+<div class="panel">
+<h2>2. Ground and raised geometry</h2>
+<label class="row"><span>Footprints and lane guides</span><input id="footprints" type="checkbox" checked></label>
+<label class="row"><span>Raised volumes and supports</span><input id="volumes" type="checkbox" checked></label>
+<label class="range">Raised-height projection <output id="elevationValue">0.80</output> pixels per design unit
+<input id="elevation" type="range" min="0.10" max="1.60" step="0.05" value="0.80"></label>
+<label class="range">Sample parapet height <output id="heightValue">14</output> units
+<input id="height" type="range" min="0" max="28" step="1" value="14"></label>
+<label class="range">Overlay opacity <output id="opacityValue">70%</output>
+<input id="opacity" type="range" min="10" max="95" step="5" value="70"></label>
+<p class="warning" style="font-size:12px">Projection parameters are provisional. Moving the sliders does not alter the game or the measured 84-unit bridge footprint.</p>
+</div>
+<div class="panel">
+<h2>3. Compare and export</h2>
+<label>Optional: load your own exact gameplay screenshot
+<input id="upload" type="file" accept="image/png,image/jpeg,image/webp"></label>
+<p style="font-size:12px">The image stays on this device. Match a 360 × 640 crop without letterboxing and adjust the position slider if needed.</p>
+<div class="group two">
+<button id="saveImage">Export overlay PNG</button>
+<button id="copyJson">Copy calibration JSON</button>
+</div>
+<textarea id="exportText" readonly aria-label="Select and copy calibration JSON"></textarea>
+<p style="font-size:12px">Exports are <strong>candidates</strong>, never automatic approvals. An artist must confirm the preview before locking a profile.</p>
+</div>
+<div class="panel"><h2>Current source</h2><p style="font-size:12px"><a href="GARY_CAMERA_SYSTEM.md">Camera system instructions</a> · <a href="gary-camera-contract.json">Machine-readable contract</a> · <a href="gary-bridge-preview.html">Original PR #4 bridge preview</a></p></div>
+</section>
+</div>
+</main>
+<script src="gary-camera-model.js"></script>
+<script>
+(async()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const stage=$('stage'),frame=$('engine'),ref=$('reference'),canvas=$('overlay'),ctx=canvas.getContext('2d');
+const views=['approach','enter','middle','exit'],images=Object.fromEntries(views.map(v=>[v,'docs/bridge/'+(v==='approach'?'approach':v==='enter'?'enter':v==='middle'?'middle':'exit')+'.png']));
+let contract,source='reference',view='enter',near=560,localImage=null,live=false,engineStarted=false,lastStatus='';
+function status(s){if(s!==lastStatus){$('status').textContent=s;lastStatus=s;}}
+function api(){try{return frame.contentWindow?.GaryBridgePreview || null;}catch(_){return null;}}
+function choose(viewName){
+ view=viewName;near=contract.bridge.viewNear[viewName];$('near').value=near;
+ document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===viewName)));
+ if(!localImage)ref.src=images[viewName];
+ if(source==='engine')startGame();
+ draw();
+}
+function startGame(){
+ const game=api();if(!game){status('Waiting for bridge preview engine to initialise…');return false;}
+ try{if(!game.start(view)){status('Game assets still loading; retry the Real game button.');return false;}
+  game.freeze();engineStarted=true;live=false;
+  status('Real engine frame frozen at '+view+'. Tap Play preview to animate.');
+  return true;
+ }catch(e){status('Real-engine preview unavailable: '+e.message);return false;}
+}
+function setSource(s){
+ source=s;const game=s==='engine';
+ frame.style.visibility=game?'visible':'hidden';ref.style.visibility=game?'hidden':'visible';
+ document.querySelectorAll('[data-source]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.source===s)));
+ if(game){if(!engineStarted)startGame();else status('Real engine view. Freeze or play the bridge preview.');}
+ else {live=false;api()?.freeze();status('PR #4 screenshot reference. Geometry overlay is editable; artwork is not approved.');}
+ draw();
+}
+function currentNear(){
+ if(source==='engine'){
+  const v=api()?.snapshot()?.near;
+  if(Number.isFinite(v)&&engineStarted)return v;
+ }
+ return near;
+}
+function draw(){
+ if(!contract)return;
+ const n=currentNear();
+ ctx.clearRect(0,0,360,640);
+ GaryCameraModel.draw(ctx,contract,n,{footprints:$('footprints').checked,volumes:$('volumes').checked,
+   elevation:Number($('elevation').value),height:Number($('height').value),
+   opacity:Number($('opacity').value)/100});
+ $('nearValue').textContent=String(Math.round(n));
+ $('elevationValue').textContent=Number($('elevation').value).toFixed(2);
+ $('heightValue').textContent=$('height').value;
+ $('opacityValue').textContent=$('opacity').value+'%';
+}
+function tick(){if(source==='engine'&&live)draw();requestAnimationFrame(tick);}
+function imageBlob(){
+ return new Promise(async(resolve,reject)=>{
+  try{
+   const out=document.createElement('canvas');out.width=360;out.height=640;
+   const dest=out.getContext('2d');
+   if(source==='reference'){if(!ref.complete||!ref.naturalWidth)throw Error('Reference screenshot not loaded');dest.drawImage(ref,0,0,360,640);}
+   else{const gameCanvas=frame.contentDocument?.getElementById('c');if(!gameCanvas)throw Error('Game canvas not ready');dest.drawImage(gameCanvas,0,0,360,640);}
+   dest.drawImage(canvas,0,0);
+   out.toBlob(blob=>blob?resolve(blob):reject(Error('PNG export unavailable')),'image/png');
+  }catch(err){reject(err);}
+ });
+}
+async function exportImage(){
+ try{
+  const blob=await imageBlob(),file=new File([blob],'gary-camera-'+view+'-candidate.png',{type:'image/png'});
+  if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Gary Eats! camera candidate'});status('Reference sent to the iOS Share sheet. Not yet approved.');return;}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);status('Candidate PNG exported. Verify the result on your device.');
+ }catch(e){if(e.name!=='AbortError')status('Export failed: '+e.message);}
+}
+function candidate(){
+ return JSON.stringify({
+  schema:'gary-camera-candidate-v1',approved:false,source:'gary-camera-contract.json',
+  view,referenceMode:source,bridgeNear:Math.round(currentNear()),
+  fixedWorld:{canvas:[contract.world.width,contract.world.height],
+   road:[contract.world.roadLeft,contract.world.roadRight],
+   lanes:contract.world.laneCentres,bridgeDeck:[contract.bridge.deck.left,contract.bridge.deck.right]},
+  raisedArchitecture:{status:'PROVISIONAL_NEEDS_VISUAL_APPROVAL',
+   heightProjection:Number($('elevation').value),sampleHeight:Number($('height').value)},
+  overlays:{footprints:$('footprints').checked,volumes:$('volumes').checked,opacity:Number($('opacity').value)/100},
+  review:{art:'NOT_APPROVED',geometry:'NEEDS_VISUAL_COMPARISON',iphone:'UNVERIFIED'}
+ },null,2);
+}
+async function copyJSON(){
+ const result=candidate();$('exportText').style.display='block';$('exportText').value=result;
+ try{await navigator.clipboard.writeText(result);status('Candidate JSON copied. Projection is NOT approved.');}
+ catch(_){$('exportText').focus();$('exportText').select();status('Select the visible JSON and copy manually.');}
+}
+try{
+ const response=await fetch('gary-camera-contract.json',{cache:'no-store'});
+ if(!response.ok)throw Error('Contract unavailable ('+response.status+')');
+ contract=await response.json();const report=GaryCameraModel.validate(contract);
+ if(!report.ok)throw Error(report.errors.join('; '));
+ ref.onerror=()=>status('Reference screenshot missing. Select Real game after assets load.');
+ document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.view)));
+ document.querySelectorAll('[data-source]').forEach(b=>b.addEventListener('click',()=>setSource(b.dataset.source)));
+ for(const id of ['footprints','volumes','elevation','height','opacity'])$(id).addEventListener('input',draw);
+ $('near').addEventListener('input',()=>{near=Number($('near').value);draw();});
+ $('freeze').addEventListener('click',()=>{api()?.freeze();live=false;draw();status('Frame frozen for geometric comparison.');});
+ $('resume').addEventListener('click',()=>{if(source!=='engine'){status('Select Real game to animate the preview.');return;}
+  if(!engineStarted&&!startGame())return;
+  api()?.resume();live=true;status('Real bridge preview playing; geometry tracks the engine position.');});
+ $('saveImage').addEventListener('click',exportImage);$('copyJson').addEventListener('click',copyJSON);
+ $('upload').addEventListener('change',e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(!/^image\/(png|jpeg|webp)$/.test(file.type)){status('Select a PNG, JPEG or WebP screenshot.');return;}
+  if(localImage)URL.revokeObjectURL(localImage);
+  localImage=URL.createObjectURL(file);ref.src=localImage;setSource('reference');status('Local screenshot loaded. File stays on this device.');
+ });
+ frame.addEventListener('load',()=>{engineStarted=false;if(source==='engine')startGame();});
+ choose('enter');setSource('reference');requestAnimationFrame(tick);
+}catch(e){status('Camera Lab could not start: '+e.message);}
+})();
+</script>
+</body>
+</html>
