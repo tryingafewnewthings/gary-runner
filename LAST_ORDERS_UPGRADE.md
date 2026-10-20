@@ -1,3 +1,9 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 October 2026 — integration status
+The eight-frame rainy bench cameo is integrated with the first authored alignment cutscene in gary-cutscene-project.json (`first-bench-meeting`) and gary-cutscene-runtime.js; current index.html loads both bench and cutscene systems. Trigger eligibility depends on rain/shutters and cleared hazards, plus the scene's stage. The actor is hooded-reader on the LEFT pavement, face obscured, full character stable on the ground; dialogue begins only on first meeting.
+The fox controller is sequenced AFTER this scene and must not run first. Do not mistake the planned lantern reward or wilderness progression for a delivered gameplay implementation. Verify physical iPhone screen crop, button input, bench idle loop, pause/resume, dialogue return and subsequent fox after any release. Current history includes user-reported missing encounter regressions, hence CODE-OBSERVED rather than guaranteed PHONE-TESTED.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 # Last Orders bench and discovery upgrade — 17 October 2026
 
 ## Implemented

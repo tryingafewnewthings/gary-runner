@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "description": "Current approved/observed asset export contracts. Actual gameplay-scale review still required. Source: STYLE.txt + art/fox/registration.json + active data.",
+  "defaults": { "maxBytes": 6291456, "requirePngCrc": true },
+  "assets": {
+    "gary_intro_sheet.PNG": { "width": 1536, "height": 1024, "alpha": true, "grid": {"cols": 4, "rows": 2, "cellWidth": 384, "cellHeight": 512} },
+    "gary_transition_sheet.png": { "width": 1536, "height": 512, "alpha": true, "grid": {"cols": 4, "rows": 1, "cellWidth": 384, "cellHeight": 512} },
+    "art/fox/fox-approach.png": { "width": 1536, "height": 256, "alpha": true, "grid": {"cols": 6, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
+    "art/fox/fox-return.png": { "width": 1536, "height": 256, "alpha": true, "grid": {"cols": 6, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
+    "art/fox/fox-snatch.png": { "width": 1024, "height": 256, "alpha": true, "grid": {"cols": 4, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
+    "art/fox/fox-turn.png": { "width": 768, "height": 256, "alpha": true, "grid": {"cols": 3, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
+    "art/fox/fox-bush.png": { "width": 512, "height": 512, "alpha": true },
+    "art/food/half-eaten-sausage-roll.png": { "width": 512, "height": 512, "alpha": true },
+    "art/food/custard-cream.png": { "width": 512, "height": 512, "alpha": true },
+    "art/obstacles/gary-service-charge-barrier.png": { "width": 1024, "height": 512, "alpha": true },
+    "art/forgotten-road/decay-light.png": { "width": 512, "height": 512, "alpha": true },
+    "art/forgotten-road/decay-medium.png": { "width": 512, "height": 512, "alpha": true },
+    "art/forgotten-road/decay-heavy.png": { "width": 512, "height": 512, "alpha": true },
+    "art/forgotten-road/decay-kerb.png": { "width": 512, "height": 512, "alpha": true }
+  }
+}

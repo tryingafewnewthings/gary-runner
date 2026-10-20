@@ -1,3 +1,11 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 October 2026 — authoritative update
+The master current-state document is GARY_EATS_MASTER_REFERENCE.md, reviewed against 19 Oct main 3790e4226992. In this historical file, any prose that lists game-runtime.js or game-data.js as the current production route is superseded by the verified index.html script order. In current main, gary-difficulty-data.js is the loaded data module, gary-difficulty-core.js the procedural pattern validator and gary-difficulty-runtime.js the active engine. WORLD.cobbleCell = 60. Archive engines and original files are rollback material, not safe cleanup candidates.
+Confirmed repositories / assets: gary-cutscene-project.json has enabled first-bench-meeting (16 beats; alignment trigger, forgotten-road stage, hooded-reader). Runtime loads cutscene and fox controller, plus gary-road-evolution V4, street mystery bench, roadworks barrier and new foods. No code observed yet for bridge/underpass, wilderness or historical eras. The actual story corridor MUST be phone-tested after the 18 Oct repair commits, especially cutscene, fox, roast dinner, late decay, safe lane collision and intro.
+Art/camera/asset specifications: see STYLE.txt and ASSET_GRID_PROMPT.txt. Technical check and metadata contracts: ASSET_QUALITY_GATE.md + asset-quality-manifest.json. The gate is not a replacement for approved screenshot references and 360x640 day/night/rain gameplay-scale review. Future AI agents: read AGENTS.md first.
+Do not overstate reported 24 native decay checks or synthetic render savings as actual 120Hz iPhone performance. No unrequested game code changes, destructive repository cleanup or unforced untested deployment. Each release requires SHA-safe atomic commit, fallback, tests and real-phone acceptance.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 # Gary Eats! — Project State and Developer Handoff
 
 **Verified against the public `main` repository:** 17 October 2026

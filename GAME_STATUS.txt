@@ -1,3 +1,11 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 OCTOBER 2026 — LIVE HANDOFF REFRESH
+START HERE: AGENTS.md -> GARY_EATS_MASTER_REFERENCE.md -> index.html -> gary-difficulty-data.js / gary-difficulty-runtime.js -> relevant subsystems. Historical first-page statements elsewhere in this file describing game-runtime.js as active are OBSOLETE. Main index currently loads gary-difficulty-data.js, game-core.js, food-catalogue.js, gary-intro-transition.js, gary-crash-config.js, gary-street-mystery.js, gary-road-evolution.js, gary-cutscene-runtime.js, gary-fox-encounter.js, gary-difficulty-core.js, gary-difficulty-runtime.js.
+Current added content: 60-unit cobble quadrant grid; fair seeded distance/biome patterns with a two-lane street barrier; once-only calibrated shop shutters; 30-active-second decay at the road edges; live authoring data for 16-line first-bench-meeting scene; 90% fox theft encounter and new collectible foods; intro border cleanup on 18 Oct. For confirmed details see master reference and actual source. Recent story/fox and roast pickup regressions must be explicitly phone-tested; code presence alone is not a successful on-device test.
+PLANNED, NOT LIVE: new bridge crossing all three lanes, underpass, wilderness, Victorian reveal, Rome, random event catalogue expansion, rare foods, jump/slide, rewarded continuation, functional lantern inventory.
+New quality control: AGENTS.md + ASSET_QUALITY_GATE.md, asset-quality-manifest.json, tests/asset-quality-gate.cjs and optional GitHub Actions workflow. Gate checks objective pixels/geometry; visual director still inspects perspective, animation and lighting. Documentation/tools installer must not touch gameplay code or delete backups.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 GARY EATS! — DEVELOPER START HERE
 Status verified against main: 17 October 2026
 Repository: https://github.com/tryingafewnewthings/gary-runner

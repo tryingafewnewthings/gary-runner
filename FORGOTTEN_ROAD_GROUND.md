@@ -1,3 +1,9 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 October 2026 — interaction / render contract
+V4 decay remains a 30-active-second, pre-baked atlas transition with near-total side-cobble occlusion before the hooded reader. Current game uses 60-unit cobble source quadrant sampling, not a new tile set. Decay must not begin on initial Play, block the road, render giant 512px sprites, create canvases when the event starts or displace buildings. Shop closures should finish first; later emptying of off-screen segments and cutscene/fox event eligibility must not be broken by decoder/rain gates. Service-charge barrier should appear only after closure/decay readiness and remains a separate fair wide obstacle.
+Check latest index.html -> gary-difficulty-runtime.js and gary-road-evolution.js for actual stage gating. Phone testing of the first transition spike and bench arrival is still unverified by synthetic source checks alone. Bridge/underpass/wilderness art and terrain are future work, not part of V4. New assets and ground-overlay revisions must pass ASSET_QUALITY_GATE.md plus visual review.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 # Forgotten Road ground — V4 performance and coverage repair
 17 October 2026. Replaces the installed V3 overlay renderer.
 

@@ -1,3 +1,9 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 October 2026 — supersession notice and current engine
+This document describes the original 16 Oct runtime upgrade, not the final live engine. As of current index.html audit, the active engine is gary-difficulty-runtime.js, alongside gary-difficulty-data.js, gary-difficulty-core.js, game-core.js, road decay, street mystery, cutscene and fox modules. The latest route retains fixed 60Hz simulation and interpolation/pooling; never blindly switch back to game-runtime.js, game-intro-test.js or game.js.
+Current runtime smoke requirements: initial load visibly progresses (no 10s blank), skip and intro transition have no white border, side-step scale/ground line stable, item pickup SFX and roast remain, shutters close once without keeper jumps, 30s gradual decay stays cached, bench/cutscene triggers, fox triggers afterwards, wide barrier leaves a safe lane, pause/resume and rating work. Physically measure iPhone frame pacing before making FPS claims. See GARY_EATS_MASTER_REFERENCE.md for current dependency map.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 # Mobile runtime upgrade — 16 October 2026
 
 Status: implementation tested locally; publishing was blocked by GitHub integration permissions. The Safari preview is

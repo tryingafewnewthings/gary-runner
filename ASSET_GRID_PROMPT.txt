@@ -1,3 +1,11 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 OCTOBER 2026 — CURRENT REVIEW PREFLIGHT
+Before each new asset request in any Gary Eats! chat, fetch current repo AGENTS.md, GARY_EATS_MASTER_REFERENCE.md, STYLE.txt, this file, index.html, gary-difficulty-data.js and relevant art registration. The ACTUAL current code route uses gary-difficulty-runtime.js; legacy game-data.js / game-runtime.js and historical asset grids may be outdated. Actual WORLD.cobbleCell is 60.
+Specify SOURCE WIDTH x HEIGHT, grid ROWS x COLS, design-unit DRAW SIZE, cell foot baseline, safe padding, collision lane span, shade/layer, and whether PNG alpha is required. An AI-generated approximate camera is not accepted without matching approved gameplay. Do not use a horizontal sprite source for a diagonally shown service-charge barrier.
+Run node --test tests/asset-quality-gate.test.cjs and node tests/asset-quality-gate.cjs --all for current registered assets. For newly added images, add exact measured manifest entry, then run changed-file gate. Require actual non-opaque transparent pixels, not merely an alpha channel. Source-to-runtime sprite-scale alignment, white edges and full-sheet motion still need visual checking.
+Retest intro white border, Gary sidestep scale, roast pickup, cutscene after reader, fox after dialogue, close-once shutters and late cobble decay as separate regression scenes. Document CODE-OBSERVED vs PHONE-TESTED vs UNVERIFIED. No image generation can automatically prove the bridge gameplay perspective without a world-scale preview.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 GARY EATS! — ASSET REVIEW / GENERATION ACCEPTANCE PROMPT
 Revision: 15 October 2026
 Purpose: examine actual assets AND their in-game rendering. Not permission to

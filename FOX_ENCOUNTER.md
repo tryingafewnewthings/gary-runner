@@ -1,3 +1,9 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 October 2026 — cross-system handoff
+The 18 Oct fox is present in current index.html via gary-fox-encounter.js; it is scheduled AFTER the first hooded-reader bench dialogue and safe corridor. SPEC in active source: probability .9, 3.5s lead-in threshold, minSpeedRatio .8, bush draw 224, fox draw 80, 256px registered cells and baseline y220. Art/fox/registration.json is the exact export source; do not mirror/resize individually. Fox stays on verge and is NOT a collision obstacle. The stolen 16-unit roll must disappear from ground exactly when carried; theft must not count toward attainable food/rating.
+The first bench meeting must remain the game's first cutscene, even if encounter pacing changes. New foods: half-eaten sausage roll and custard cream. Preserve roast and ordinary hazard patterns. The eventual bridge/underpass boundary remains planned and needs independent art, logic and quality acceptance. New sprite corrections should update asset-quality-manifest.json and pass visual in-game animation review.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 # Fox encounter implementation
 
 

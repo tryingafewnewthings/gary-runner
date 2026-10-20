@@ -1,3 +1,9 @@
+<!-- GARY_EATS_REFERENCE_20261019_START -->
+19 October 2026 — active cutscene / storyline authority
+Current enabled project file gary-cutscene-project.json contains one scene, first-bench-meeting, with 16 authored dialogue beats, triggered on actor alignment (hooded-reader) in forgotten-road; left actor stranger, right actor Gary. Code loads gary-cutscene-runtime.js from index.html. This is the first interaction with the mysterious newspaper reader. Preserve the published scene text when regenerating portraits, editing studio or revising environmental beats: brainstorm scripts are not automatically production scripts. The world is dimmed with a horizontal cinematic banner and must remain understandable at portrait iPhone size. The hood and face concealment, Gary microphone/clothing/angle, light direction and stable actor registration remain the aesthetic authority.
+Paused hazard-free transition, mouth flaps, typing/page pagination, source registration, viewport clipping and return-to-play require full scene playback. No lantern inventory or item handoff should be declared shipped merely because story mentions it. Future scenes must reuse the JSON/studio/runtime workflow rather than duplicating a custom cutscene engine per biome. See master reference and asset gate.
+<!-- GARY_EATS_REFERENCE_20261019_END -->
+
 # Gary Eats! Cutscene Studio V3
 
 The narrative UI is a horizontal banner covering one third of the 360 × 640 game view. It slides in sideways while the remaining world is dimmed by 20%. The game stops safely; the bench animation completes and Gary's foot position reaches the reader before the first scene begins. Closing or skipping returns to the same world and clears any queued obstacle backlog.
