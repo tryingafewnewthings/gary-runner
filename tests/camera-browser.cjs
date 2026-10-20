@@ -20,6 +20,7 @@ async function main(){
   assert.equal(await page.locator('[data-view="enter"]').getAttribute('aria-pressed'),'true');
   const bounds=await page.locator('#stage').boundingBox();
   assert.ok(Math.abs(bounds.width/bounds.height-9/16)<.012,'whole stage matches 360x640 camera');
+  await page.waitForFunction(()=>{const img=document.querySelector('#reference');return img.complete&&img.naturalWidth>0;},null,{timeout:20000});
   const loaded=await page.locator('#reference').evaluate(img=>img.complete&&img.naturalWidth>0);
   assert.equal(loaded,true,'reference screenshot must exist on PR branch');
 
@@ -35,7 +36,7 @@ async function main(){
   assert.equal(await page.locator('#overlay').evaluate(c=>{const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return d.some((v,i)=>i%4===3&&v>0)}),true);
 
   // Switching to actual engine uses the PR #4 API, not a fake scene.
-  await page.waitForFunction(()=>!!document.querySelector('#engine').contentWindow?.GaryBridgePreview,null,{timeout:60000});
+  await page.waitForFunction(()=>{const w=document.querySelector('#engine').contentWindow;return !!w?.GaryBridgePreview && !!w.document.querySelector('#startBtn') && !w.document.querySelector('#startBtn').disabled;},null,{timeout:60000});
   await page.locator('[data-source="engine"]').click();
   await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('frozen at middle'),null,{timeout:60000}).catch(async()=>{
    await page.locator('[data-source="engine"]').click();
