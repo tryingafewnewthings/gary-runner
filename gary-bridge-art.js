@@ -9,6 +9,9 @@
   for(const key of Object.keys(REGISTRATION))if(r?.[key]!==REGISTRATION[key])throw Error('Bridge registration mismatch: '+key);
   const p=pack.candidate;
   if(pack.approved!==false||p?.approved!==false||p?.status!=='PROVISIONAL_NEEDS_VISUAL_APPROVAL')throw Error('Candidate must remain unapproved');
+  if(p.sideFaceTop?.join(',')!=='112,248')throw Error('Invalid provisional side-face placement');
+  if(!Number.isFinite(p.sideFaceOutset)||p.sideFaceOutset<20||p.sideFaceOutset>44)throw Error('Invalid provisional side-face outset');
+  if(p.structureRevision!=='connected-arcade-v2'||JSON.stringify(p.archSpans)!=='[[236,384],[416,564],[596,744]]'||p.soffitInset!==8)throw Error('Invalid structural candidate metadata');
   if(!Number.isFinite(p.heightProjection)||p.heightProjection<.1||p.heightProjection>1.6||!Number.isFinite(p.supportHeight)||p.supportHeight<32||p.supportHeight>96||!Number.isFinite(p.parapetHeight)||p.parapetHeight<0||p.parapetHeight>28)throw Error('Invalid blockout projection');
   for(const key of KEYS){const l=pack.layers?.[key];if(!l||l.sourceWidth!==720||l.sourceHeight!==2000||l.anchor?.join(',')!=='360,1600'||l.alpha!==true)throw Error('Layer registration mismatch: '+key);}
   return true;
@@ -21,18 +24,40 @@
   })));
   return images;
  }
+ // Side elevations share a single affine face map. No lane or ground projection changes.
+ const SPANS=Object.freeze([[236,384],[416,564],[596,744]].map(Object.freeze));
+ const SUPPORTS=Object.freeze([[180,236],[384,416],[564,596],[744,800]].map(Object.freeze));
+ function sidePoint(pack,side,u,z){
+  const depth=pack.candidate.supportHeight*pack.candidate.heightProjection;
+  return [side<0?pack.candidate.sideFaceTop[0]-z/depth*pack.candidate.sideFaceOutset:pack.candidate.sideFaceTop[1]+z/depth*pack.candidate.sideFaceOutset,u+z];
+ }
+ function archPoints(pack,side,start,end,inset=0){
+  const h=pack.candidate.supportHeight*pack.candidate.heightProjection,a=start+inset,b=end-inset;
+  const spring=h*.72+inset*.25,crown=h*.24+inset;
+  const pts=[sidePoint(pack,side,a,h+1),sidePoint(pack,side,a,spring)];
+  for(let i=0;i<=32;i++){const angle=Math.PI*i/32,u=(a+b)/2-(b-a)/2*Math.cos(angle),z=spring-(spring-crown)*Math.sin(angle);pts.push(sidePoint(pack,side,u,z));}
+  pts.push(sidePoint(pack,side,b,h+1));return pts;
+ }
+ function wingPoints(pack,side,u,direction){
+  const height=pack.candidate.supportHeight*pack.candidate.heightProjection,inner=side<0?138:222;
+  return [[inner,u],[inner+side*17,u+direction*44],sidePoint(pack,side,u+direction*36,height*.65),sidePoint(pack,side,u,height)];
+ }
  function layout(pack,near=800){
   validatePack(pack);if(!Number.isFinite(near))throw Error('Invalid world position');
   const offset=near-800,depth=pack.candidate.supportHeight*pack.candidate.heightProjection;
-  return {deck:{x:138,y:near-620,w:84,h:620},depth,
-   piers:[180,370,526,682,800].flatMap(y=>[{x:98,y:y+offset,w:43,h:depth},{x:219,y:y+offset,w:43,h:depth}]),
-   fascia:{x:138,y:near,w:84,h:depth},anchor:{x:180,y:near}};
+  const piers=[];
+  for(const side of [-1,1])for(const [a,b] of SUPPORTS){
+   const points=[sidePoint(pack,side,a,0),sidePoint(pack,side,b,0),sidePoint(pack,side,b,depth),sidePoint(pack,side,a,depth)].map(([x,y])=>[x,y+offset]);
+   piers.push({side,start:a,end:b,points,x:Math.min(...points.map(p=>p[0])),y:a+offset,w:pack.candidate.sideFaceOutset,h:b-a+depth});
+  }
+  return {deck:{x:138,y:near-620,w:84,h:620},depth,piers,spans:SPANS,
+   returns:[-1,1].flatMap(side=>[[180,-1],[800,1]].map(([u,direction])=>wingPoints(pack,side,u,direction).map(([x,y])=>[x,y+offset]))),anchor:{x:180,y:near}};
  }
  function drawGuides(ctx,pack,near){
   const f=layout(pack,near);ctx.save();ctx.lineWidth=1;ctx.setLineDash([3,3]);
   ctx.strokeStyle='#f8d082';ctx.strokeRect(f.deck.x,f.deck.y,f.deck.w,f.deck.h);
-  ctx.strokeStyle='#f7a08b';for(const p of f.piers)ctx.strokeRect(p.x,p.y,p.w,p.h);
-  ctx.strokeRect(f.fascia.x,f.fascia.y,f.fascia.w,f.fascia.h);
+  ctx.strokeStyle='#f7a08b';for(const p of f.piers){ctx.beginPath();p.points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.stroke();}
+  for(const points of f.returns){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.stroke();}
   ctx.strokeStyle='#8cf3da';ctx.beginPath();ctx.moveTo(174,f.anchor.y);ctx.lineTo(186,f.anchor.y);ctx.moveTo(180,f.anchor.y-6);ctx.lineTo(180,f.anchor.y+6);ctx.stroke();ctx.restore();
  }
  function create({makeCanvas,pack,images={},environment}){
@@ -45,23 +70,33 @@
   const poly=(c,points,color)=>{c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fillStyle=color;c.fill();};
   for(const key of KEYS){const c=canvas();canvases[key]=c;const g=c.getContext('2d');g.scale(2,2);
    if(key==='lower'){
-    // Deep side faces and repeated piers. Flat diagnostic colours, no brick texture.
-    for(const [x,w] of [[101,37],[222,37]]){
-     g.fillStyle='#785248';g.fillRect(x,180,w,620+height);
-     // Exterior arch recesses are cut from the side silhouette, not filled with scenery.
-     for(let y=214;y<750;y+=156){
-      const outer=x<180?x:x+w,inner=x<180?x+w-7:x+7;
-      g.save();g.globalCompositeOperation='destination-out';g.beginPath();g.moveTo(outer,y+height);g.lineTo(outer,y+114+height);g.bezierCurveTo(inner,y+100+height,inner,y+14+height,outer,y+height);g.closePath();g.fill();g.restore();
-      g.strokeStyle='#bc8b70';g.lineWidth=5;g.beginPath();g.moveTo(outer,y+height);g.bezierCurveTo(inner,y+14+height,inner,y+100+height,outer,y+114+height);g.stroke();
+    // One continuous spandrel per side. Three true cut-through openings share
+    // connected crowns and piers; no detached rectangles are stacked on the face.
+    for(const side of [-1,1]){
+     const point=(u,z)=>sidePoint(pack,side,u,z);
+     poly(g,[point(180,0),point(800,0),point(800,height),point(180,height)],side<0?'#926553':'#785247');
+     for(const [a,b] of SPANS){
+      const outer=archPoints(pack,side,a,b),inner=archPoints(pack,side,a,b,8);
+      // Recess band is actual soffit area, with a transparent interior behind it.
+      poly(g,outer,'#3e3431');
+      g.save();g.globalCompositeOperation='destination-out';poly(g,inner,'#000');g.restore();
+      g.beginPath();outer.slice(1,-1).forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.strokeStyle='#bd9275';g.lineWidth=2.5;g.stroke();
      }
-     for(const y of [180,370,526,682,800]){
-      g.fillStyle='#4d3934';g.fillRect(x-3,y,w+6,height);
-      poly(g,[[x-3,y],[x+w+3,y],[x+w,y-6],[x,y-6]],'#b88c72');
-      g.fillStyle='#91634f';g.fillRect(x-3,y,7,height);
+     const deckEdge=side<0?138:222,facadeEdge=side<0?112:248;
+     poly(g,[[deckEdge,180],[deckEdge,800],[facadeEdge,800],[facadeEdge,180]],'#9c7c63');
+     // Continuous string course joins the arch crowns immediately under the deck.
+     poly(g,[point(180,0),point(800,0),point(800,7),point(180,7)],'#b18b70');
+     // Battered foundations and pointed cutwaters grow from the same pier map.
+     for(const [a,b] of SUPPORTS){
+      const topA=point(a,height-7),topB=point(b,height-7),baseB=point(b+3,height+8),nose=point((a+b)/2,height+11),baseA=point(a-3,height+8);
+      nose[0]+=side*5;poly(g,[topA,topB,baseB,nose,baseA],side<0?'#745446':'#5e453d');
+      poly(g,[topA,topB,point(b,height-3),point(a,height-3)],'#a17c60');
+     }
+     // End abutment returns flare into the banks, connecting the wing to the span.
+     for(const [u,direction] of [[180,-1],[800,1]]){
+      poly(g,wingPoints(pack,side,u,direction),side<0?'#89634f':'#6c4e42');
      }
     }
-    // Exposed near fascia extends BELOW the deck; its outline remains a candidate.
-    g.fillStyle='#63473f';g.fillRect(138,800,84,height);g.fillStyle='#98705a';g.fillRect(138,800,84,8);
    }else if(key==='deck'){
     poly(g,[[105,0],[255,0],[255,30],[222,180],[222,800],[255,950],[255,1000],[105,1000],[105,950],[138,800],[138,180],[105,30]],'#9a9282');
     g.fillStyle='#c3b69e';g.fillRect(138,180,84,620);
@@ -83,14 +118,23 @@
   const water=canvas(),banks=canvas(),wc=water.getContext('2d'),bc=banks.getContext('2d');wc.scale(2,2);bc.scale(2,2);
   for(const y of [285,685])for(const [x,w] of [[0,101],[259,101]]){bc.fillStyle='#56624a';bc.fillRect(x,y,w,22);}
   const contacts=[];
-  for(const y of [180,370,526,682,800]){
-   const foot=y+height;if(foot<300||foot>680)continue;
-   for(const [x,w] of [[98,43],[219,43]]){
-    const t=(foot-300)/380,first=t<=.45,f=first?t/.45:(t-.45)/.55;
-    const a=first?[49,78,75]:[82,118,108],b=first?[82,118,108]:[44,73,70];
-    const rgb=a.map((v,i)=>Math.round((v+(b[i]-v)*f)*.77+[15,29,27][i]*.23)).join(',');
-    const fade=wc.createLinearGradient(0,foot-16,0,foot+4);fade.addColorStop(0,'rgba('+rgb+',0)');fade.addColorStop(.65,'rgba('+rgb+',.85)');fade.addColorStop(1,'rgb('+rgb+')');wc.fillStyle=fade;wc.fillRect(x,foot-16,w,20);contacts.push(Object.freeze({x,y:foot,w}));
+  for(const side of [-1,1])for(const [a,b] of SUPPORTS){
+   if(a+height<300||b+height>680)continue;
+   const point=(u,z)=>sidePoint(pack,side,u,z),mid=(a+b)/2;
+   // The waterline follows the sloping foundation instead of a rectangular wipe.
+   // Cached depth bands cover the submerged plinth; contact highlights stay outside.
+   for(let i=0;i<8;i++){
+    const z0=height-13+i*3,z1=z0+3,at=mid+(z0+z1)/2;
+    const t=(at-300)/380,first=t<=.45,f=first?t/.45:(t-.45)/.55;
+    const colA=first?[49,78,75]:[82,118,108],colB=first?[82,118,108]:[44,73,70];
+    const rgb=colA.map((v,k)=>Math.round(v+(colB[k]-v)*f)).join(',');
+    const p0=point(a-5,z0),p1=point(b+5,z0),p2=point(b+5,z1),p3=point(a-5,z1);
+    p0[0]+=side*5;p1[0]+=side*5;p2[0]+=side*5;p3[0]+=side*5;
+    poly(wc,[p0,p1,p2,p3],'rgba('+rgb+','+Math.min(1,(i+1)/4)+')');
    }
+   const sample=point(mid,height+4);sample[0]+=side*2;
+   const p=point(a,height-4),q=point(b,height-4);p[0]+=side*3;q[0]+=side*3;
+   contacts.push(Object.freeze({side,start:a,end:b,x:sample[0]-10,y:sample[1]-2,w:22,sample:Object.freeze({x:sample[0],y:sample[1]}),edge:Object.freeze([p,q])}));
   }
   const blit=(ctx,image,near)=>ctx.drawImage(image,0,near-800,360,1000);
   return Object.freeze({
@@ -98,10 +142,10 @@
    templates:Object.freeze(canvases),waterMask:water,contacts:Object.freeze(contacts),
    drawWater(ctx,near,clock){environment.drawWater(ctx,near,clock);blit(ctx,banks,near);},
    drawLower(ctx,near){blit(ctx,layers.lower,near);},
-   drawWaterOcclusion(ctx,near,clock){blit(ctx,water,near);ctx.save();ctx.strokeStyle='#9cb9a7';ctx.lineWidth=1;const shift=Math.sin(clock*2)*2;for(const p of contacts){const y=near-800+p.y;ctx.beginPath();ctx.moveTo(p.x+4+shift,y);ctx.quadraticCurveTo(p.x+p.w/2,y+2,p.x+p.w-4+shift,y);ctx.stroke();}ctx.restore();},
+   drawWaterOcclusion(ctx,near,clock){blit(ctx,water,near);ctx.save();ctx.strokeStyle='rgba(156,185,167,.5)';ctx.lineWidth=1;const shift=Math.sin(clock*2)*1.5;for(const p of contacts){const x=p.sample.x+shift,y=p.sample.y+near-800;ctx.beginPath();ctx.moveTo(x-6,y);ctx.quadraticCurveTo(x,y+2,x+6,y);ctx.stroke();}ctx.restore();},
    drawDeck(ctx,near){blit(ctx,layers.deck,near);},
    drawForeground(ctx,near){blit(ctx,layers.foreground,near);}
   });
  }
- const api=Object.freeze({REGISTRATION,KEYS,ORDER,validatePack,loadImages,layout,drawGuides,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryBridgeArt=api;
+ const api=Object.freeze({REGISTRATION,KEYS,ORDER,validatePack,loadImages,layout,sidePoint,archPoints,drawGuides,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryBridgeArt=api;
 })(typeof window==='object'?window:globalThis);

@@ -29,7 +29,7 @@ test('professional layers replace independently, reject bad registration, and ar
  let alloc=0;const solid=createCanvas(720,2000),s=solid.getContext('2d');s.fillStyle='#ff00ff';s.fillRect(0,0,720,2000);
  const r=art.create({makeCanvas:()=>{alloc++;return makeCanvas()},pack,images:{lower:solid},environment:env});
  const c=createCanvas(360,1000),g=c.getContext('2d');r.drawLower(g,800);
- assert.equal(g.getImageData(0,450,1,1).data[3],0);assert.equal(g.getImageData(100,400,1,1).data[0],255);
+ assert.equal(g.getImageData(0,450,1,1).data[3],0);assert.equal(g.getImageData(110,400,1,1).data[0],255);
  const original=art.create({makeCanvas,pack,environment:env});assert.deepEqual(r.templates.deck.toBuffer('image/png'),original.templates.deck.toBuffer('image/png'));
  for(let i=0;i<100;i++){r.drawLower(g,850);r.drawWaterOcclusion(g,850,i/60);r.drawDeck(g,850);r.drawForeground(g,850)}
  assert.equal(alloc,5);assert.throws(()=>art.create({makeCanvas,pack,images:{lower:createCanvas(2,2)},environment:env}),/wrong-size/);
@@ -57,4 +57,33 @@ test('real engine artwork preview is opt-in, atomic, and cannot change story, la
   w.__test.reset();assert.equal(w.__test.bridge().phase,'dormant');assert.equal(f.store.size,0);
  }finally{f.close()}
  const normal=await boot();try{assert.throws(()=>normal.w.GaryBridgePreview.artwork(pack),/isolated/)}finally{normal.close()}
+});
+
+test('arcade has transparent openings, solid soffit thickness and continuous connected spandrels',()=>{
+ const r=art.create({makeCanvas,pack,environment:env}),g=r.templates.lower.getContext('2d');
+ const alpha=(side,u,z)=>{const [x,y]=art.sidePoint(pack,side,u,z);return g.getImageData(Math.round(x*2),Math.round(y*2),1,1).data[3];};
+ for(const side of [-1,1]){
+  for(const [a,b] of [[236,384],[416,564],[596,744]]){
+   const middle=(a+b)/2;
+   assert.equal(alpha(side,middle,40),0,'water is genuinely visible through the opening');
+   assert.ok(alpha(side,middle,20)>240,'separate soffit band has visible thickness');
+  }
+  for(let u=190;u<790;u+=4)assert.ok(alpha(side,u,3)>240,'spandrel joins every span without a detached stub');
+  for(const u of [208,400,580,772])assert.ok(alpha(side,u,40)>240,'solid pier joins the span to its foundation');
+ }
+});
+test('submerged support and water mask stay registered through scrolling without filling arch voids',()=>{
+ const r=art.create({makeCanvas,pack,environment:env});
+ for(const near of [560,650,740,850,960,1100,1210]){
+  const c=createCanvas(360,1000),g=c.getContext('2d');r.drawLower(g,near);
+  for(const p of r.contacts){const x=Math.round(p.sample.x),y=Math.round(p.sample.y+near-800);if(y<0||y>999)continue;
+   assert.ok(g.getImageData(x,y,1,1).data[3]>200,'solid submerged base before water pass');
+  }
+  r.drawWaterOcclusion(g,near,1);
+  for(const p of r.contacts){const x=Math.round(p.sample.x),y=Math.round(p.sample.y+near-800);if(y<0||y>999)continue;
+   const px=g.getImageData(x,y,1,1).data;assert.ok(px[2]>px[0],'water overlaps the same world-registered base at every scroll position');
+  }
+  const [x,y]=art.sidePoint(pack,-1,490,40),screenY=y+near-800;
+  if(screenY>=0&&screenY<1000)assert.equal(g.getImageData(Math.round(x),Math.round(screenY),1,1).data[3],0,'opening never receives a rectangular water/brick wipe');
+ }
 });

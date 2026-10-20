@@ -15,15 +15,15 @@
         360,
         1600
       ],
-      "nonzeroAlpha": 203793,
-      "transparentPixels": 1236207,
+      "nonzeroAlpha": 245581,
+      "transparentPixels": 1194419,
       "boundsInclusive": [
-        196,
-        348,
-        523,
-        1727
+        153,
+        272,
+        566,
+        1755
       ],
-      "sha256": "2f372c0566b9850f6ee29f26616e1995014c2528807b053d738476e1da86d0c2",
+      "sha256": "b5cf049cb7a07c9cf5158c8e71428b3f6e005f6c15e8b4e61ba3664407cf9221",
       "status": "PASS_GEOMETRY_AND_ALPHA_ONLY"
     },
     "deck": {
@@ -87,15 +87,15 @@
         360,
         1600
       ],
-      "nonzeroAlpha": 13760,
-      "transparentPixels": 1426240,
+      "nonzeroAlpha": 6980,
+      "transparentPixels": 1433020,
       "boundsInclusive": [
-        196,
-        836,
-        523,
-        1187
+        153,
+        860,
+        566,
+        1351
       ],
-      "sha256": "b1fc32e832e06301360424fcbaa03cea7ca11004712a2fd3f567381992513cea",
+      "sha256": "d1e206d02bef6015006db464b3766f2c71093d448c6a35562d25d3e827490654",
       "status": "PASS_GEOMETRY_AND_ALPHA_ONLY"
     }
   }

@@ -29,7 +29,28 @@
     "heightProjection": 0.8,
     "sampleHeight": 14,
     "supportHeight": 80,
-    "artworkBlockout": true
+    "artworkBlockout": true,
+    "sideFaceOutset": 26,
+    "sideFaceTop": [
+      112,
+      248
+    ],
+    "structureRevision": "connected-arcade-v2",
+    "archSpans": [
+      [
+        236,
+        384
+      ],
+      [
+        416,
+        564
+      ],
+      [
+        596,
+        744
+      ]
+    ],
+    "soffitInset": 8
   },
   "overlays": {
     "footprints": false,

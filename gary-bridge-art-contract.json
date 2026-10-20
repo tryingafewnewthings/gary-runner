@@ -19,7 +19,28 @@
     "status": "PROVISIONAL_NEEDS_VISUAL_APPROVAL",
     "heightProjection": 0.8,
     "supportHeight": 80,
-    "parapetHeight": 14
+    "parapetHeight": 14,
+    "sideFaceOutset": 26,
+    "structureRevision": "connected-arcade-v2",
+    "archSpans": [
+      [
+        236,
+        384
+      ],
+      [
+        416,
+        564
+      ],
+      [
+        596,
+        744
+      ]
+    ],
+    "soffitInset": 8,
+    "sideFaceTop": [
+      112,
+      248
+    ]
   },
   "layers": {
     "lower": {

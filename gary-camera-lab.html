@@ -111,7 +111,7 @@ input[type=file]{display:block;max-width:100%;margin-top:7px}
 </div>
 </main>
 <script src="gary-camera-model.js"></script>
-<script src="gary-bridge-art.js?v=artpipeline1"></script>
+<script src="gary-bridge-art.js?v=arcade2"></script>
 <script>
 (async()=>{
 'use strict';
@@ -196,7 +196,7 @@ function candidate(){
    road:[contract.world.roadLeft,contract.world.roadRight],
    lanes:contract.world.laneCentres,bridgeDeck:[contract.bridge.deck.left,contract.bridge.deck.right]},
   raisedArchitecture:{status:'PROVISIONAL_NEEDS_VISUAL_APPROVAL',
-   heightProjection:Number($('elevation').value),sampleHeight:Number($('height').value),supportHeight:Number($('support').value),artworkBlockout:$('artwork').checked},
+   heightProjection:Number($('elevation').value),sampleHeight:Number($('height').value),supportHeight:Number($('support').value),artworkBlockout:$('artwork').checked,sideFaceOutset:artPack.candidate.sideFaceOutset,sideFaceTop:artPack.candidate.sideFaceTop,structureRevision:artPack.candidate.structureRevision,archSpans:artPack.candidate.archSpans,soffitInset:artPack.candidate.soffitInset},
   overlays:{footprints:$('footprints').checked,volumes:$('volumes').checked,opacity:Number($('opacity').value)/100},
   review:{art:'NOT_APPROVED',geometry:'NEEDS_VISUAL_COMPARISON',iphone:'UNVERIFIED'}
  },null,2);

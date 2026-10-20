@@ -53,3 +53,7 @@ Create bridge masks/silhouettes based on the locked profile, with unchanged 84-u
 ## Registered artwork preparation (PR #5 continuation)
 
 Camera Lab now offers an explicit unapproved structural blockout and a **Test registered PNG layers** path in its real-engine view. See [BRIDGE_ARTWORK_PIPELINE.md](BRIDGE_ARTWORK_PIPELINE.md) for three inspected captures, exact source/draw/anchor specification and alpha report. The 80-unit support descent is an adjustable review candidate, not a locked profile. Terrain/water, deeper masonry, water occlusion, deck, actors and foreground structure have separate passes. The existing bridge stays the default; normal game geometry and the camera contract are unchanged. Templates are flat geometric guides, not final art derived from the supplied JPEG. User visual sign-off still precedes any material-art production or promotion.
+
+### Connected arcade candidate
+
+The current opt-in blockout is `connected-arcade-v2`: continuous spandrels, three actual alpha-cut openings with visible inset soffits, battered foundations/cutwaters, and flared end abutments. Its exterior side-face top edges x112/248 and 26-unit outward depth are structural review parameters, explicitly provisional. The ground camera and original deck/foreground registration are unchanged. Updated captures, local face equations and waterline scrolling checks are documented in BRIDGE_ARTWORK_PIPELINE.md.

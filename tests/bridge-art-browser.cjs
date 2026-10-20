@@ -24,14 +24,22 @@ async function main(){
    fs.writeFileSync(path.join(dir,view+'.png'),Buffer.from(data.split(',')[1],'base64'));
   }
   await page.locator('#copyJson').click();const candidate=JSON.parse(await page.locator('#exportText').inputValue());
-  assert.equal(candidate.approved,false);assert.equal(candidate.raisedArchitecture.supportHeight,80);assert.equal(candidate.raisedArchitecture.artworkBlockout,true);
+  assert.equal(candidate.approved,false);assert.equal(candidate.raisedArchitecture.structureRevision,'connected-arcade-v2');assert.deepEqual(candidate.raisedArchitecture.sideFaceTop,[112,248]);assert.equal(candidate.raisedArchitecture.supportHeight,80);assert.equal(candidate.raisedArchitecture.artworkBlockout,true);
   fs.writeFileSync(path.join(dir,'camera-candidate.json'),JSON.stringify(candidate,null,2)+'\n');
   await page.locator('[data-view="middle"]').click();await page.locator('#footprints').check();await page.locator('#volumes').check();
   await page.screenshot({path:path.join(dir,'camera-lab.png'),fullPage:true});
   const before=await frame.evaluate(()=>GaryRuntimeStats.snapshot());await page.locator('#artwork').uncheck();
   assert.equal(await frame.evaluate(()=>GaryBridgePreview.artworkMode()),'legacy');assert.deepEqual(await frame.evaluate(()=>GaryRuntimeStats.snapshot()),before);
-  await page.locator('#artwork').check();await page.locator('#resume').click();await page.waitForTimeout(250);await page.locator('#freeze').click();
-  assert.ok(await frame.evaluate(()=>GaryBridgePreview.snapshot().near>850));assert.deepEqual(errors,[]);
+  await page.locator('#artwork').check();await page.locator('[data-view="enter"]').click();await page.locator('#resume').click();
+  const pack=require('../gary-bridge-art-contract.json'),art=require('../gary-bridge-art.js');
+  const base=art.sidePoint(pack,-1,400,pack.candidate.supportHeight*pack.candidate.heightProjection+4);base[0]-=2;
+  let previousNear=560;
+  for(let i=0;i<6;i++){
+   await page.waitForTimeout(150);
+   const sample=await frame.evaluate(base=>{const near=GaryBridgePreview.snapshot().near,c=document.querySelector('#c'),scale=c.width/360,y=base[1]+near-800;return {near,pixel:[...c.getContext('2d').getImageData(Math.round(base[0]*scale),Math.round(y*scale),1,1).data]};},base);
+   assert.ok(sample.near>previousNear);assert.ok(sample.pixel[2]>sample.pixel[0],'submerged base stays water-coloured while the real engine scrolls');previousNear=sample.near;
+  }
+  await page.locator('#freeze').click();const frozen=await frame.evaluate(()=>GaryBridgePreview.snapshot().near);await page.waitForTimeout(100);assert.equal(await frame.evaluate(()=>GaryBridgePreview.snapshot().near),frozen);assert.deepEqual(errors,[]);
   console.log(engineName+': Camera Lab registered artwork, three real-engine captures, projection export, layer switching and scrolling PASS');
  }finally{await browser?.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
 }
