@@ -1,23 +1,33 @@
-# Node unit and controller tests
+# Test coverage and limits
 
-This workflow runs dependency-free Node unit/controller tests. **These checks are not complete gameplay regression coverage.** They do not load the active browser game or prove rendered gameplay, iPhone Safari compatibility, or device performance.
+## Node-only unit/controller checks
 
-Run locally with Node.js 22:
+The repository's Node built-in workflow runs:
 
 ```sh
 node --test tests/core.test.cjs tests/mystery.test.cjs tests/asset-quality-gate.test.cjs
 ```
 
-Included checks:
+These are dependency-free unit/controller checks. They are **not complete gameplay regression coverage** and do not validate browser layout, rendered active-engine gameplay, iPhone Safari, or real-device performance. The asset-quality unit test exercises parsers and metadata contracts; the separate asset-quality workflow validates repository assets.
 
-- `core.test.cjs`: fixed-step clock behavior, object pool behavior, and swept-contact primitives from `game-core.js`.
-- `mystery.test.cjs`: the independent bench-reader controller in `gary-street-mystery.js`, including rain/readiness gates, sequence animation, safe slowdown, and reset.
-- `asset-quality-gate.test.cjs`: synthetic PNG/WebP parser and metadata-contract checks. This does not validate all registered repository assets; use the separate asset-quality workflow for that.
+## Active-engine integration harnesses
 
-Not included in this Node-only workflow:
+`tests/helpers/headless.cjs` now reads the `script[src]` list from `index.html` and loads those files in page order. Test-only hooks are injected into an in-memory copy of `gary-difficulty-runtime.js`; the shipped runtime is not edited. `tests/last-orders-integration.test.cjs` has active-engine cases for save migration/discovery, pause/resume, bench animation and ground decay, cutscene skip, and natural cobble decay/reset. Run the active-engine subset with:
 
-- `last-orders-integration.test.cjs` and `tests/helpers/headless.cjs` require `jsdom` and `@napi-rs/canvas`. The helper currently loads archived `game-data.js` / `game-runtime.js`, not the active engine in `index.html`; its results must not be represented as active-engine coverage.
-- `road-decay.test.cjs` requires `@napi-rs/canvas`.
-- `browser-smoke.cjs` requires Playwright and targets the retired `gary-runtime-preview.html` / `game-runtime.js` path.
+```sh
+node --test --test-name-pattern='active engine' tests/last-orders-integration.test.cjs
+```
 
-The headless/browser integration harnesses need a separate migration to the active engine before they can support active-gameplay coverage. This workflow intentionally does not claim coverage of cutscene playback, fox encounter integration, roast pickup in the live engine, shop closure rendering, cobble decay in the live engine, animations as rendered, or physical iPhone behavior.
+This harness requires `jsdom` and `@napi-rs/canvas`, which are not declared in a root `package.json`; it is not part of dependency-free CI. The integration cases are controller/render-harness checks, not full manual gameplay coverage.
+
+`tests/browser-smoke.cjs` serves `index.html`, controls the active runtime's animation frames, and checks 120 Hz frame delivery, start/transition, lane input, pause/resume, roast pickup, canvas sizing, and browser errors. It requires Playwright plus a browser installation and is run separately:
+
+```sh
+node tests/browser-smoke.cjs
+```
+
+It is Chromium/WebKit automation, not a physical iPhone Safari test. Do not claim real-device performance from this check.
+
+## Legacy preview boundary
+
+The explicitly named `legacy preview` case in `last-orders-integration.test.cjs` still targets the archived `gary-last-orders-preview.html` and its preview scripts. It is not active-game coverage and must not be reported as such. The sparse checkout used while preparing this migration omitted those archived files, so that single case was not run here.
