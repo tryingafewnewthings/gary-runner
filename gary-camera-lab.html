@@ -134,7 +134,7 @@ function setSource(s){
  source=s;const game=s==='engine';
  frame.style.visibility=game?'visible':'hidden';ref.style.visibility=game?'hidden':'visible';
  document.querySelectorAll('[data-source]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.source===s)));
- if(game){if(!engineStarted)startGame();else status('Real engine view. Freeze or play the bridge preview.');}
+ if(game){startGame();}
  else {live=false;api()?.freeze();status('PR #4 screenshot reference. Geometry overlay is editable; artwork is not approved.');}
  draw();
 }
