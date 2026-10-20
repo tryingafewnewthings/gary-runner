@@ -55,3 +55,36 @@ No camera projection, geometry or artwork is approved by these tests or this imp
 ## Structural refinement review
 
 The rectangular overlay piers were removed. One affine side elevation now joins each set of arch crowns to its piers; opening interiors are genuinely transparent, with a separate dark soffit band and a restrained edge value to expose thickness. Foundation silhouettes continue from the same side-face map and taper into cutwaters. Water overlap is an environment-only mask following those foundation edges; no water, banks, rain, grass or rocks were added to the three structural images. The deck and foreground PNGs remain byte-for-byte unchanged from the prior preparation. Entry/middle/exit captures were reopened and inspected after the revision. At exit the stream has naturally scrolled below the camera; the far abutment returns remain visible at the bottom edge. Final paint and raised-geometry approval remain pending.
+
+## External PNG delivery — engineering handoff
+
+The engineering interface is ready for external PNGs. No additional artwork is produced by this handoff. Raised masonry and final illustration still require visual approval; the fixed source sizes and world registration below are the import contract, not a camera/art approval.
+
+Deliver **three separate, untrimmed, true-alpha RGBA PNGs**, each **720×2000 pixels**, one cell with no animation or atlas. Use these production destinations when the supplied files are imported:
+
+| Renderer key | External PNG destination | Existing geometry/alpha reference — preserve this file | Paint content only |
+| --- | --- | --- | --- |
+| `lower` | `art/bridge/production/lower.png` | `art/bridge/templates/lower.png` | Reddish lower masonry, connected spans, arch soffits, piers, foundations and abutments; opening interiors stay transparent |
+| `deck` | `art/bridge/production/deck.png` | `art/bridge/templates/deck.png` | Broad stone deck slabs and the registered entrance/exit paving |
+| `foreground` | `art/bridge/production/foreground.png` | `art/bridge/templates/foreground.png` | Raised parapet faces, pale coping stones and foreground end posts |
+
+The production PNGs are **not supplied, registered in the executable asset manifest, or activated yet**. Do not replace files under `templates/`: regression tests compare those files with the generated geometry masks. Keep `art/bridge/templates/water-occlusion-mask.png` independent and unchanged during the art import.
+
+All three images share source anchor **(360,1600)** and scale **2 source px : 1 design unit**. Their complete 720×2000 canvas draws at **360×1000**, origin **(0, bridgeNear−800)**, placing the anchor at **(180,bridgeNear)**. The central deck rectangle has source coordinate edges **x276..444, y360..1600** → design **x138..222, y180..800**: **84×620 units**. Approaches/exit retain 150-unit width. Preserve the full canvas, alpha silhouette, openings, registration, camera and scale; do not crop to the masonry or to the 84-unit deck. The source bounds and alpha/hash report remain in `art/bridge/templates/registration-report.json`. Match the actual engine captures and supplied masks; do not infer a new camera from the reference JPEG.
+
+Do not include water, reflections, stream foam, banks, vegetation, rocks, sky, ground outside the registered paving, rain, HUD, Gary or other actors in these structural PNGs. No white background, checkerboard background, baked night filter, artificial zoom or vanishing-point distortion. Material paint must fit the reviewed masks; runtime clipping is not a substitute for accurate alpha and registration.
+
+### Registration when the PNGs arrive
+
+1. Keep the three mask/template PNGs and the independent water mask unchanged. Place supplied artwork at the three `production/` destinations above. Those files are deliberately absent until provided.
+2. Copy the current `gary-bridge-art-contract.json` for the external preview pack. Preserve `schema`, `registration`, every candidate geometry field, dimensions/anchors and `approved:false`. Change only `layers.lower.path`, `layers.deck.path`, and `layers.foreground.path` to the corresponding production destinations. The existing default pack continues to reference blockouts until a reviewed integration changes it.
+3. Add these exact entries to `asset-quality-manifest.json` **when the files exist** (not before):
+
+```json
+"art/bridge/production/lower.png": { "width": 720, "height": 2000, "alpha": true },
+"art/bridge/production/deck.png": { "width": 720, "height": 2000, "alpha": true },
+"art/bridge/production/foreground.png": { "width": 720, "height": 2000, "alpha": true }
+```
+
+4. Decode the supplied pack with `GaryBridgeArt.loadImages(pack, Image)`; pass the returned `images` to the actual engine's `GaryBridgePreview.artwork(pack, images)` in the isolated Camera Lab iframe. This interface already accepts independent layers, checks dimensions and composites them once against the registered geometry masks. The PNG import does not require camera, deck, timing, collision, scrolling or gameplay changes.
+5. Run the unchanged complete regression suite and asset gate, inspect entry/middle/exit and moving waterlines, then obtain final visual approval before any production activation or merge. Both PRs remain unmerged until separately authorised.
