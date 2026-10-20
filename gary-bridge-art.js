@@ -33,7 +33,7 @@
  }
  function archPoints(pack,side,start,end,inset=0){
   const h=pack.candidate.supportHeight*pack.candidate.heightProjection,a=start+inset,b=end-inset;
-  const spring=h*.72+inset*.25,crown=h*.24+inset;
+  const spring=h*.72+Math.min(inset*.25,h/32),crown=h*.24+Math.min(inset,h/8);
   const pts=[sidePoint(pack,side,a,h+1),sidePoint(pack,side,a,spring)];
   for(let i=0;i<=32;i++){const angle=Math.PI*i/32,u=(a+b)/2-(b-a)/2*Math.cos(angle),z=spring-(spring-crown)*Math.sin(angle);pts.push(sidePoint(pack,side,u,z));}
   pts.push(sidePoint(pack,side,b,h+1));return pts;
@@ -88,9 +88,9 @@
      poly(g,[point(180,0),point(800,0),point(800,7),point(180,7)],'#b18b70');
      // Battered foundations and pointed cutwaters grow from the same pier map.
      for(const [a,b] of SUPPORTS){
-      const topA=point(a,height-7),topB=point(b,height-7),baseB=point(b+3,height+8),nose=point((a+b)/2,height+11),baseA=point(a-3,height+8);
+      const topA=point(a,height*57/64),topB=point(b,height*57/64),baseB=point(b+3,height*72/64),nose=point((a+b)/2,height*75/64),baseA=point(a-3,height*72/64);
       nose[0]+=side*5;poly(g,[topA,topB,baseB,nose,baseA],side<0?'#745446':'#5e453d');
-      poly(g,[topA,topB,point(b,height-3),point(a,height-3)],'#a17c60');
+      poly(g,[topA,topB,point(b,height*61/64),point(a,height*61/64)],'#a17c60');
      }
      // End abutment returns flare into the banks, connecting the wing to the span.
      for(const [u,direction] of [[180,-1],[800,1]]){
@@ -124,7 +124,7 @@
    // The waterline follows the sloping foundation instead of a rectangular wipe.
    // Cached depth bands cover the submerged plinth; contact highlights stay outside.
    for(let i=0;i<8;i++){
-    const z0=height-13+i*3,z1=z0+3,at=mid+(z0+z1)/2;
+    const z0=height*(51+i*3)/64,z1=z0+height*3/64,at=mid+(z0+z1)/2;
     const t=(at-300)/380,first=t<=.45,f=first?t/.45:(t-.45)/.55;
     const colA=first?[49,78,75]:[82,118,108],colB=first?[82,118,108]:[44,73,70];
     const rgb=colA.map((v,k)=>Math.round(v+(colB[k]-v)*f)).join(',');
@@ -132,8 +132,8 @@
     p0[0]+=side*5;p1[0]+=side*5;p2[0]+=side*5;p3[0]+=side*5;
     poly(wc,[p0,p1,p2,p3],'rgba('+rgb+','+Math.min(1,(i+1)/4)+')');
    }
-   const sample=point(mid,height+4);sample[0]+=side*2;
-   const p=point(a,height-4),q=point(b,height-4);p[0]+=side*3;q[0]+=side*3;
+   const sample=point(mid,height*68/64);sample[0]+=side*2;
+   const p=point(a,height*60/64),q=point(b,height*60/64);p[0]+=side*3;q[0]+=side*3;
    contacts.push(Object.freeze({side,start:a,end:b,x:sample[0]-10,y:sample[1]-2,w:22,sample:Object.freeze({x:sample[0],y:sample[1]}),edge:Object.freeze([p,q])}));
   }
   const blit=(ctx,image,near)=>ctx.drawImage(image,0,near-800,360,1000);

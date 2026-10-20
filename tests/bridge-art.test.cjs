@@ -87,3 +87,12 @@ test('submerged support and water mask stay registered through scrolling without
   if(screenY>=0&&screenY<1000)assert.equal(g.getImageData(Math.round(x),Math.round(screenY),1,1).data[3],0,'opening never receives a rectangular water/brick wipe');
  }
 });
+
+test('provisional projection slider extremes keep water outside the actor corridor',()=>{
+ for(const heightProjection of [.1,1.6])for(const supportHeight of [32,96]){
+  const candidate=structuredClone(pack);Object.assign(candidate.candidate,{heightProjection,supportHeight});
+  const r=art.create({makeCanvas,pack:candidate,environment:env}),data=r.waterMask.getContext('2d').getImageData(276,0,168,2000).data;
+  for(let i=3;i<data.length;i+=4)assert.equal(data[i],0,'water cannot cross the fixed deck even at the slider limits');
+  for(const side of [-1,1])for(const [u,v] of candidate.candidate.archSpans){const points=art.archPoints(candidate,side,u,v,8);assert.ok(points.every(p=>p.every(Number.isFinite)));}
+ }
+});
