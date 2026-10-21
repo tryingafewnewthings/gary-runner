@@ -139,7 +139,7 @@ function sourceLayer(key){
  // Preview-only deterministic outline; never exported as painted art.
  const c=loadCanvas(spec.source.width,spec.source.height),ctx=c.getContext('2d');
  ctx.scale(spec.source.width/spec.draw.width,spec.source.height/spec.draw.height);
- Factory.draw(ctx,spec,{mode:'template'});
+ Factory.draw(ctx,spec,{mode:'mask'});
  return {img:c,filename:null,bounds:P.boundsFromPixels(c.getContext('2d').getImageData(0,0,c.width,c.height)),demo:true};
 }
 function selected(){return state.mode==='whole'?'whole':state.selected;}
