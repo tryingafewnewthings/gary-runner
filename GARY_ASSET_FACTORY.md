@@ -45,3 +45,22 @@ GARY_TEST_ENGINE=webkit npm run test:browser
 ```
 
 After the repo's current branch has passed CI, inspect a sample Victorian frontage, bridge pier and lamppost **inside an actual game rendering layer**, not just this overlay, before allowing automatic registration. An approved camera screenshot and template version should remain alongside each actual production asset.
+
+
+## Manual Perspective Editor — review candidate (PR #7)
+
+Open [the manual perspective editor](gary-perspective-editor.html) from the Asset Factory's per-asset **Open Manual Perspective Editor** link, or use `gary-perspective-editor.html?asset=victorian-lamppost`. This page is served from the same checkout; the published Pages path will not exist until merged/deployed.
+
+**Quick correction:** Change apparent width, height, top skew and top-edge depth shift with bounded controls. These transform existing pixels, *not* the physical game camera. Source export stays exactly the original untrimmed PNG dimensions. The ground anchor remains locked unless the user explicitly disables it. World X/Y sliders change candidate draw-location metadata, not physics or game lanes.
+
+**Corners mode:** Touch/drag four visible numbered handles in the image at full source coordinates. Bottom corners cannot be dragged for the whole sprite when ground-anchor lock is on. Handles are limited to safe source bounds and convex non-self-crossing quads. Undo/redo, Reset, Before/After and a built-in QA warning are provided. A piecewise Canvas-2D texture map renders the image: no additional libraries or gameplay changes.
+
+**Separate faces mode:** For a genuine raised structure, select Front, Top/Roof or Side and import each as a *separate transparent PNG with the SAME full source dimensions*. Adjust each face's corners independently. Layer order is Side → Front → Roof. It intentionally does not guess which pixels of a flattened JPEG constitute a hidden face, and cannot reconstruct genuinely unseen walls, roofs, back sides or underside geometry. Faces are optionally combined into one composite candidate PNG only after all imported layers are in the same drawing space. Complex bridge layers still use the real renderer's named occlusion passes; this studio does not replace that layering.
+
+**Gameplay preview:** Shows the actual 360×640 coordinate system, a review screenshot (not camera approval) or a user-supplied *exact 360×640 local screenshot*, and the candidate at its intended world rectangle. The original PNGs never leave the user's browser or get overwritten. Browser file-import cannot silently write to GitHub or make a new runtime asset registration.
+
+**Exports:** A candidate PNG at exact source dimensions; an editable `gary-eats-perspective-edit-v1` JSON containing every quad, quick control, original filenames, profile reference, and world placement; and a composited game preview PNG. Importing JSON checks asset ID, profile and safety limits; original PNGs must be selected again on another visit/device. Exports explicitly state `UNVERIFIED_VISUAL`, `registered:false` and iPhone unverified. Neither camera calibration nor user-approved style is silently modified; preserve native originals for reversibility.
+
+**QA:** `node --test tests/perspective-editor.test.cjs`, `node tests/perspective-editor-browser.cjs`, `GARY_TEST_ENGINE=webkit node tests/perspective-editor-browser.cjs`, plus `npm test` and the existing asset registration gate. A candidate that exceeds safe transparent padding or loses foot registration is rejected at export. Real-face perspective, shading consistency, alpha-fringe quality, multi-layer occlusion and frame pacing on a physical iPhone still require art review. The underlying camera contract's raised profile remains provisional.
+
+**Recommended use:** Quick correct small sprite deviations; use independent face PNGs for substantial architecture corrections. Save successful face/corner settings with each individual asset and do **not** overwrite global camera defaults without explicitly approved comparative screenshots across several assets.
