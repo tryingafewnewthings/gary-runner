@@ -68,6 +68,8 @@ input[type=checkbox]{accent-color:#d9b879}
 <button id="clear">Clear imported art</button>
 </div>
 <p style="font-size:12px">Validates size, actual alpha, outside-mask pixels, foot baseline and safe padding. It cannot independently certify artistic projection, material fidelity or iPhone performance.</p>
+<p style="margin:12px 0 6px"><a id="perspectiveLink" href="gary-perspective-editor.html" style="display:block;text-align:center;background:#415b50;color:#fff;text-decoration:none;border:1px solid #aac4a9;border-radius:7px;padding:12px;font-weight:700">Open Manual Perspective Editor →</a></p>
+<p style="font-size:12px">Adjust imported artwork's apparent height, skew or individual face corners. You will need to select the PNG again in the editor; originals stay on your device.</p>
 </div>
 <div class="panel">
 <h2>4. Preview / evidence</h2>
@@ -123,6 +125,7 @@ function switchAsset(id){
  art=null;valid=false;uploadName='';$('upload').value='';$('final').disabled=true;
  $('report').textContent='No artwork imported.';
  setScene();picture();
+ $('perspectiveLink').href='gary-perspective-editor.html?asset='+encodeURIComponent(spec.id);
  $('spec').textContent=spec.source.width+'×'+spec.source.height+' source pixels · '+spec.draw.width+'×'+spec.draw.height+
   ' design units · x'+spec.draw.x+' y'+spec.draw.y+' · anchor ('+spec.anchor.x+','+spec.anchor.y+') · '+contract.profiles[spec.profile].status;
 }
