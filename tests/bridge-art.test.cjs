@@ -155,3 +155,20 @@ test('actual engine accepts supplied draft atomically, preserves pause/saves, fo
   w.__test.reset();assert.equal(w.__test.bridge().phase,'dormant');
  }finally{f.close()}
 });
+
+test('normal-play painted bridge loads the exact registered artwork without changing its lane geometry',async()=>{
+ const f=await boot({},false,{urlSearch:'seed=12345'});
+ try{
+  let status=f.w.__test.bridgeArtwork();
+  for(let i=0;i<160&&status.status==='procedural';i++){
+   await new Promise(resolve=>setTimeout(resolve,20));
+   status=f.w.__test.bridgeArtwork();
+  }
+  assert.deepEqual(status,{status:'painted-review',mode:'UNAPPROVED_ART_REVIEW'});
+  f.w.document.getElementById('startBtn').click();f.w.document.getElementById('skipIntroBtn').click();f.w.__test.skipEntrance();
+  assert.equal(f.w.__test.bridge().phase,'dormant');
+  f.w.__test.reset();
+  assert.equal(f.w.__test.bridgeArtwork().mode,'UNAPPROVED_ART_REVIEW');
+  assert.equal(f.w.__test.snapshot().lane,1);
+ }finally{f.close();}
+});
