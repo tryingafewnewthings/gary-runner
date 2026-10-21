@@ -363,7 +363,7 @@ let shutterMix = 0;
       await wilderness.prepare();wilderness.warm(ctx);
       startupReady = true;
       // Load optional bridge art after the Play button is ready; never block startup.
-      if(!bridgePreviewSession)void prepareLiveBridgeArt();
+      if(!bridgePreviewSession && !/(?:\?|&)debug=1(?:&|$)/.test(location.search))void prepareLiveBridgeArt();
       simulation.reset();
       button.textContent = 'Play Game';
       status.textContent = 'Ready. Let’s give it a go.';
