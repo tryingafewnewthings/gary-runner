@@ -1,0 +1,45 @@
+/* Supplied DRAFT01 pixels. Measured registration: art/wilderness/registration.json. */
+(function(root){
+ const data={assets:{
+  "verge_grass_dense_olive_01":{"path":"verge/verge_grass_dense_olive_01.png","width":256,"height":512,"drawWidth":64,"drawHeight":128.0,"anchor":[128.0,469],"role":"verge"},
+  "verge_grass_wind_left_01":{"path":"verge/verge_grass_wind_left_01.png","width":256,"height":512,"drawWidth":58,"drawHeight":116.0,"anchor":[128.0,468],"role":"verge"},
+  "verge_grass_tall_wet_01":{"path":"verge/verge_grass_tall_wet_01.png","width":256,"height":512,"drawWidth":54,"drawHeight":108.0,"anchor":[128.0,470],"role":"verge"},
+  "verge_grass_seedheads_01":{"path":"verge/verge_grass_seedheads_01.png","width":256,"height":512,"drawWidth":49,"drawHeight":98.0,"anchor":[128.0,471],"role":"verge"},
+  "verge_grass_short_mixed_01":{"path":"verge/verge_grass_short_mixed_01.png","width":256,"height":512,"drawWidth":60,"drawHeight":120.0,"anchor":[128.0,471],"role":"verge"},
+  "verge_grass_sparse_01":{"path":"verge/verge_grass_sparse_01.png","width":256,"height":512,"drawWidth":45,"drawHeight":90.0,"anchor":[128.0,470],"role":"verge"},
+  "rock_cluster_small_01":{"path":"props/rock_cluster_small_01.png","width":366,"height":239,"drawWidth":60,"drawHeight":39.18,"anchor":[183.0,231],"role":"decoration"},
+  "rock_cluster_large_01":{"path":"props/rock_cluster_large_01.png","width":428,"height":323,"drawWidth":80,"drawHeight":60.37,"anchor":[214.0,315],"role":"decoration"},
+  "rotten_posts_cluster_01":{"path":"props/rotten_posts_cluster_01.png","width":264,"height":424,"drawWidth":60,"drawHeight":96.36,"anchor":[132.0,416],"role":"decoration"},
+  "broken_fence_cluster_01":{"path":"props/broken_fence_cluster_01.png","width":406,"height":316,"drawWidth":60,"drawHeight":46.7,"anchor":[203.0,308],"role":"decoration"},
+  "blackberry_bramble_patch_01":{"path":"props/blackberry_bramble_patch_01.png","width":386,"height":399,"drawWidth":60,"drawHeight":62.02,"anchor":[193.0,391],"role":"decoration"},
+  "thistle_patch_01":{"path":"props/thistle_patch_01.png","width":351,"height":409,"drawWidth":60,"drawHeight":69.91,"anchor":[175.5,401],"role":"decoration"},
+  "leaf_litter_twigs_patch_01":{"path":"props/leaf_litter_twigs_patch_01.png","width":365,"height":215,"drawWidth":60,"drawHeight":35.34,"anchor":[182.5,207],"role":"decoration"},
+  "deadfall_twig_pile_01":{"path":"props/deadfall_twig_pile_01.png","width":466,"height":325,"drawWidth":60,"drawHeight":41.85,"anchor":[233.0,317],"role":"decoration"},
+  "fallen_branch_small_01":{"path":"hazards/fallen_branch_small_01.png","width":411,"height":217,"drawWidth":44,"drawHeight":23.23,"anchor":[205.5,209],"role":"hazard"},
+  "fallen_log_large_01":{"path":"hazards/fallen_log_large_01.png","width":684,"height":361,"drawWidth":92,"drawHeight":48.56,"anchor":[342.0,353],"role":"decoration"},
+  "boulder_cluster_hazard_01":{"path":"hazards/boulder_cluster_hazard_01.png","width":379,"height":368,"drawWidth":44,"drawHeight":42.72,"anchor":[189.5,360],"role":"hazard"},
+  "muddy_ruts_hazard_01":{"path":"hazards/muddy_ruts_hazard_01.png","width":386,"height":487,"drawWidth":43,"drawHeight":54.25,"anchor":[193.0,479],"role":"decal"},
+  "puddle_hazard_large_01":{"path":"hazards/puddle_hazard_large_01.png","width":498,"height":437,"drawWidth":50,"drawHeight":43.88,"anchor":[249.0,429],"role":"decal"},
+  "thorn_bramble_hazard_01":{"path":"hazards/thorn_bramble_hazard_01.png","width":397,"height":463,"drawWidth":44,"drawHeight":51.31,"anchor":[198.5,455],"role":"hazard"},
+  "ruined_wall_low_01":{"path":"ruins/ruined_wall_low_01.png","width":572,"height":372,"drawWidth":88,"drawHeight":57.23,"anchor":[286.0,364],"role":"decoration"},
+  "stone_arch_ruin_01":{"path":"ruins/stone_arch_ruin_01.png","width":542,"height":389,"drawWidth":88,"drawHeight":63.16,"anchor":[271.0,381],"role":"decoration"},
+  "standing_stone_marker_01":{"path":"ruins/standing_stone_marker_01.png","width":317,"height":352,"drawWidth":64,"drawHeight":71.07,"anchor":[158.5,344],"role":"decoration"},
+  "wooden_signpost_broken_01":{"path":"ruins/wooden_signpost_broken_01.png","width":358,"height":459,"drawWidth":64,"drawHeight":82.06,"anchor":[179.0,451],"role":"decoration"},
+  "broken_gate_section_01":{"path":"ruins/broken_gate_section_01.png","width":538,"height":379,"drawWidth":88,"drawHeight":61.99,"anchor":[269.0,371],"role":"decoration"},
+  "cairn_stone_stack_01":{"path":"ruins/cairn_stone_stack_01.png","width":346,"height":329,"drawWidth":64,"drawHeight":60.86,"anchor":[173.0,321],"role":"decoration"},
+  "puddle_decal_large_01":{"path":"decals/puddle_decal_large_01.png","width":506,"height":497,"drawWidth":50,"drawHeight":49.11,"anchor":[253.0,489],"role":"decal"},
+  "puddle_decal_small_01":{"path":"decals/puddle_decal_small_01.png","width":329,"height":366,"drawWidth":50,"drawHeight":55.62,"anchor":[164.5,358],"role":"decal"},
+  "mud_splash_decal_01":{"path":"decals/mud_splash_decal_01.png","width":309,"height":437,"drawWidth":43,"drawHeight":60.81,"anchor":[154.5,429],"role":"decal"},
+  "leaf_scatter_decal_01":{"path":"decals/leaf_scatter_decal_01.png","width":329,"height":412,"drawWidth":43,"drawHeight":53.85,"anchor":[164.5,404],"role":"decal"},
+  "cracked_asphalt_patch_01":{"path":"decals/cracked_asphalt_patch_01.png","width":466,"height":503,"drawWidth":43,"drawHeight":46.41,"anchor":[233.0,495],"role":"decal"},
+  "loose_stones_scatter_01":{"path":"decals/loose_stones_scatter_01.png","width":355,"height":398,"drawWidth":43,"drawHeight":48.21,"anchor":[177.5,390],"role":"decal"},
+  "grass_patch_small_01":{"path":"decals/grass_patch_small_01.png","width":356,"height":504,"drawWidth":43,"drawHeight":60.88,"anchor":[178.0,496],"role":"decal"},
+  "damp_grime_patch_01":{"path":"decals/damp_grime_patch_01.png","width":336,"height":418,"drawWidth":43,"drawHeight":53.49,"anchor":[168.0,410],"role":"decal"},
+  "road_surface_wilderness_base_300x1024":{"path":"road/road_surface_wilderness_base_300x1024.png","width":300,"height":1024,"drawWidth":150,"drawHeight":512,"anchor":[150.0,1024],"role":"surface"},
+  "road_surface_variant_01":{"path":"road/road_surface_variant_01.png","width":248,"height":948,"drawWidth":150,"drawHeight":512,"anchor":[124.0,948],"role":"surface"},
+  "road_surface_variant_02":{"path":"road/road_surface_variant_02.png","width":242,"height":948,"drawWidth":150,"drawHeight":512,"anchor":[121.0,948],"role":"surface"},
+  "road_surface_variant_03":{"path":"road/road_surface_variant_03.png","width":265,"height":948,"drawWidth":150,"drawHeight":512,"anchor":[132.5,948],"role":"surface"}
+ },stages:[{"name":"Bridge exit","start":0},{"name":"Beautiful reveal","start":1500},{"name":"Deep wilderness","start":4000},{"name":"Growing mystery","start":8500}]};
+ if(typeof module==="object"&&module.exports)module.exports=data;
+ else root.GaryWildernessData=Object.freeze(data);
+})(typeof window==="object"?window:globalThis);

@@ -1,0 +1,88 @@
+{
+  "schema": "gary-bridge-art-pack-v1",
+  "approved": false,
+  "cameraContract": "gary-camera-contract.json",
+  "registration": {
+    "width": 720,
+    "height": 2000,
+    "drawWidth": 360,
+    "drawHeight": 1000,
+    "anchorX": 180,
+    "anchorY": 800,
+    "far": 180,
+    "length": 620,
+    "deckLeft": 138,
+    "deckRight": 222
+  },
+  "candidate": {
+    "approved": false,
+    "status": "PROVISIONAL_NEEDS_VISUAL_APPROVAL",
+    "heightProjection": 0.8,
+    "supportHeight": 80,
+    "parapetHeight": 14,
+    "sideFaceOutset": 26,
+    "structureRevision": "connected-arcade-v2",
+    "archSpans": [
+      [
+        236,
+        384
+      ],
+      [
+        416,
+        564
+      ],
+      [
+        596,
+        744
+      ]
+    ],
+    "soffitInset": 8,
+    "sideFaceTop": [
+      112,
+      248
+    ]
+  },
+  "layers": {
+    "lower": {
+      "path": "art/bridge/templates/lower.png",
+      "sourceWidth": 720,
+      "sourceHeight": 2000,
+      "anchor": [
+        360,
+        1600
+      ],
+      "alpha": true,
+      "approved": false
+    },
+    "deck": {
+      "path": "art/bridge/templates/deck.png",
+      "sourceWidth": 720,
+      "sourceHeight": 2000,
+      "anchor": [
+        360,
+        1600
+      ],
+      "alpha": true,
+      "approved": false
+    },
+    "foreground": {
+      "path": "art/bridge/templates/foreground.png",
+      "sourceWidth": 720,
+      "sourceHeight": 2000,
+      "anchor": [
+        360,
+        1600
+      ],
+      "alpha": true,
+      "approved": false
+    }
+  },
+  "order": [
+    "terrain-stream-banks",
+    "lower",
+    "water-occlusion",
+    "deck",
+    "actors-items",
+    "foreground"
+  ]
+}

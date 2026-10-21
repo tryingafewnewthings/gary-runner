@@ -1,0 +1,22 @@
+{
+  "bridge": {
+    "samples": 120,
+    "medianMs": 0.10000000149011612,
+    "p95Ms": 0.3999999985098839
+  },
+  "wilderness": {
+    "samples": 120,
+    "medianMs": 0.10000000149011612,
+    "p95Ms": 0.3999999985098839
+  },
+  "cacheCount": 11,
+  "frameCanvasAllocations": 0,
+  "scope": "Headless cloud Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36; warmed synchronous render CPU, not physical iPhone or GPU frame time",
+  "liveRustle": {
+    "samples": 108,
+    "medianMs": 16.699999999999818,
+    "p95Ms": 16.800000000000182,
+    "framesOver50ms": 0,
+    "droppedSimulationSeconds": 0
+  }
+}

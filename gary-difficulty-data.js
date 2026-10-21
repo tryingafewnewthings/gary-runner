@@ -101,6 +101,11 @@ const ITEMS = {
     collision: { verticalRadius: 32 * 150 / 189, laneRadius: 0.55 } }
 };
 
+// Wilderness uses the existing single-lane mushroom contact footprint unchanged.
+for(const name of ['fallen_branch_small_01','boulder_cluster_hazard_01','thorn_bramble_hazard_01'])
+  ITEMS[name]={kind:'hazard',points:0,file:'art/wilderness/hazards/'+name+'.png',fallback:null,displaySize:44,
+    wilderness:true,contact:{halfWidth:12,halfDepth:12},collision:{verticalRadius:32*150/189,laneRadius:.55}};
+
 // Wide barrier uses a SINGLE pooled entity with a two-lane ground footprint. No artwork dependency.
 ITEMS.street_barrier={kind:'hazard',points:0,file:'art/obstacles/gary-service-charge-barrier.png?v=sequenceV2',fallback:null,displaySize:98,
   laneSpan:2,contact:{halfWidth:43,halfDepth:17},collision:{verticalRadius:32*150/189,laneRadius:1}};

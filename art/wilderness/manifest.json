@@ -1,0 +1,149 @@
+{
+  "pack_name": "Gary Eats Wilderness Asset Pack",
+  "version": "draft-01",
+  "world_section": "Forgotten Bridge -> Early Wilderness / The Other Side",
+  "camera_contract": "Use existing Gary Eats fixed gameplay camera; preserve parallel road edges and no vanishing point.",
+  "runtime_canvas": "360x640",
+  "intended_root": "art/wilderness/",
+  "render_order": [
+    "terrain/background",
+    "road surface",
+    "terrain decals",
+    "verge grass",
+    "props and ruins",
+    "hazards",
+    "weather/effects",
+    "HUD"
+  ],
+  "files": [
+    {
+      "path": "verge/verge_grass_dense_olive_01.png",
+      "type": "sprite",
+      "size": "256x512",
+      "role": "left/right verge vegetation clump"
+    },
+    {
+      "path": "verge/verge_grass_wind_left_01.png",
+      "type": "sprite",
+      "size": "256x512",
+      "role": "angled verge grass for variation"
+    },
+    {
+      "path": "verge/verge_grass_tall_wet_01.png",
+      "type": "sprite",
+      "size": "256x512",
+      "role": "tall wet grass clump"
+    },
+    {
+      "path": "verge/verge_grass_seedheads_01.png",
+      "type": "sprite",
+      "size": "256x512",
+      "role": "seed-headed grass clump"
+    },
+    {
+      "path": "verge/verge_grass_short_mixed_01.png",
+      "type": "sprite",
+      "size": "256x512",
+      "role": "shorter mixed verge clump"
+    },
+    {
+      "path": "verge/verge_grass_sparse_01.png",
+      "type": "sprite",
+      "size": "256x512",
+      "role": "sparse verge filler clump"
+    },
+    {
+      "path": "verge/verge_grass_clumps_atlas_3x2_256x512.png",
+      "type": "atlas",
+      "size": "768x1024",
+      "grid": "3x2 cells 256x512",
+      "role": "all six grass variants in one atlas"
+    },
+    {
+      "path": "road/road_surface_wilderness_base_300x1024.png",
+      "type": "tile",
+      "size": "300x1024",
+      "role": "primary seamless road base for early wilderness"
+    },
+    {
+      "path": "road/road_tile_variants_wet_wilderness_atlas.png",
+      "type": "atlas",
+      "size": "1536x1024",
+      "role": "road variant reference/secondary atlas; use for richer surface variants if needed"
+    },
+    {
+      "path": "props/props_mossy_woodland_atlas.png",
+      "type": "atlas",
+      "size": "1536x1024",
+      "grid": "4x2 cells 384x512",
+      "role": "ambient verge props"
+    },
+    {
+      "path": "hazards/hazards_wilderness_road_atlas.png",
+      "type": "atlas",
+      "size": "1536x1024",
+      "grid": "3x2 cells 512x512",
+      "role": "gameplay obstacles/hazards"
+    },
+    {
+      "path": "decals/decals_wet_wilderness_atlas.png",
+      "type": "atlas",
+      "size": "1536x1024",
+      "grid": "4x2 cells 384x512",
+      "role": "road decals and overlays"
+    },
+    {
+      "path": "ruins/ruins_mossy_wilderness_atlas.png",
+      "type": "atlas",
+      "size": "1536x1024",
+      "grid": "3x2 cells 512x512",
+      "role": "mystery/story props and roadside structures"
+    }
+  ],
+  "atlas_cell_names": {
+    "props/props_mossy_woodland_atlas.png": [
+      "r1c1 rock_cluster_small_01",
+      "r1c2 rock_cluster_large_01",
+      "r1c3 rotten_posts_cluster_01",
+      "r1c4 broken_fence_cluster_01",
+      "r2c1 blackberry_bramble_patch_01",
+      "r2c2 thistle_patch_01",
+      "r2c3 leaf_litter_twigs_patch_01",
+      "r2c4 deadfall_twig_pile_01"
+    ],
+    "hazards/hazards_wilderness_road_atlas.png": [
+      "r1c1 fallen_branch_small_01",
+      "r1c2 fallen_log_large_01",
+      "r1c3 boulder_cluster_hazard_01",
+      "r2c1 muddy_ruts_hazard_01",
+      "r2c2 puddle_hazard_large_01",
+      "r2c3 thorn_bramble_hazard_01"
+    ],
+    "decals/decals_wet_wilderness_atlas.png": [
+      "r1c1 puddle_decal_large_01",
+      "r1c2 puddle_decal_small_01",
+      "r1c3 mud_splash_decal_01",
+      "r1c4 leaf_scatter_decal_01",
+      "r2c1 cracked_asphalt_patch_01",
+      "r2c2 loose_stones_scatter_01",
+      "r2c3 grass_patch_small_01",
+      "r2c4 damp_grime_patch_01"
+    ],
+    "ruins/ruins_mossy_wilderness_atlas.png": [
+      "r1c1 ruined_wall_low_01",
+      "r1c2 stone_arch_ruin_01",
+      "r1c3 standing_stone_marker_01",
+      "r2c1 wooden_signpost_broken_01",
+      "r2c2 broken_gate_section_01",
+      "r2c3 cairn_stone_stack_01"
+    ]
+  },
+  "placement_rules": [
+    "Do not bake grass, rocks, props or ruins into the road base texture.",
+    "Keep all assets in the approved Gary Eats gameplay perspective with parallel edges and no new vanishing point.",
+    "Verge grass and ambient props belong primarily off-road, along left/right shoulders and edges.",
+    "Hazards must remain readable and fair; do not conceal unavoidable collisions inside tall grass.",
+    "Ruins and mystery props should be occasional set-dressing and encounter markers, not dense clutter every segment.",
+    "Use the reference concept board and preview images for atmosphere and placement only, not as runtime art layers."
+  ]
+}

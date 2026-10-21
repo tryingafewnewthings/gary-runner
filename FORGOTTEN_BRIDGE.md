@@ -1,6 +1,14 @@
 # The Forgotten Bridge
 
+## Supplied artwork candidate — 20 October update
+
+PR #5 now integrates the externally produced three-layer painted bridge as a **NOT APPROVED** Camera Lab review candidate in the active engine. Its own calibrated masks and independent water occlusion replace the earlier masks for this candidate only. The legacy renderer remains normal Play’s default. See [BRIDGE_ARTWORK_PIPELINE.md](BRIDGE_ARTWORK_PIPELINE.md) for exact registration, four inspected views, full crossing QA, source-art defects and physical-iPhone limits. PR #4 and PR #5 remain unmerged.
+
 20 October 2026 — implemented in this checkout; deployment requires the PR to be merged separately. Revert this feature commit to roll back. Historical engines/installers are untouched.
+
+## Artwork preparation on stacked PR #5
+
+[Registered artwork pipeline](BRIDGE_ARTWORK_PIPELINE.md) adds opt-in Camera Lab blockouts, deeper supports and separate water occlusion, replaceable transparent templates and an exact artist specification. The original bridge below remains the default. Candidate projection and artwork are unapproved.
 
 ## Play and review
 

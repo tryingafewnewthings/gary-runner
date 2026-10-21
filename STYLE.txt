@@ -181,3 +181,14 @@ Both new foods are included: custard cream5pts/36px display box and half-eaten s
 Assets: fox-approach6frames, fox-snatch4frames, fox-turn3frames, fox-return6frames; equal256px square cells in horizontal sheets; bush512px. One uniform scale per clip, consistent body/ground registration and generous alpha padding. Source resolution is independent of runtime size. Generated key poses are played as a compact stylised animation, not claimed as fluid hand animation.
 
 The actual bridge/wilderness boundary remains future work. Do not imply the bridge itself was added. Keep this module constrained to the Forgotten Road when a formal biome boundary is introduced.
+
+THE OTHER SIDE — 21 October 2026
+Supersedes the older statement that the bridge/wilderness boundary is future work.
+The first wilderness is implemented on stacked PR #5; see WILDERNESS.md. Keep
+360x640, parallel x105–255 road edges and lane centres130/180/230. Preserve
+Gary and the84x620 bridge. Use supplied DRAFT01 canonical sprites, measured
+alpha crops and constant world sizes. Keep road, decals, vegetation, props,
+hazards and foreground separate. Wet decals never damage. No distance scaling,
+new animals or generated replacement art. Grass ground-cutout repetition and
+the olive draft palette require artist review; raised projection and final
+bridge illustration remain provisional. Tests do not approve art or iPhone FPS.

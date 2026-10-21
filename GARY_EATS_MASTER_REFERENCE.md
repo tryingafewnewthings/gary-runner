@@ -1,5 +1,9 @@
 # GARY EATS! — Master game reference and developer handoff
 
+## 20 October supplied bridge artwork integration
+
+`CODE-OBSERVED` on stacked PR #5: the externally supplied lower/deck/foreground PNGs are now registered unchanged in the real engine through Camera Lab’s **Review supplied bridge artwork** control. Broader alpha-traced geometry, independent foundation water occlusion, four 360×640 captures and full-crossing QA are documented in [BRIDGE_ARTWORK_PIPELINE.md](BRIDGE_ARTWORK_PIPELINE.md). This is an unapproved visual-review candidate; normal Play still uses PR #4’s bridge. No merge, final-art activation or physical iPhone verification is implied.
+
 **Reference audit:** 19 October 2026 (main branch at `3790e4226992`, checked before this documentation package).  
 **Repository:** https://github.com/tryingafewnewthings/gary-runner  
 **Live:** https://tryingafewnewthings.github.io/gary-runner/  
@@ -81,7 +85,7 @@ These contracts document expected exports and code references. The automated gat
 4. Later roadworks hazard: wide horizontal **5000% SERVICE CHARGE AHEAD** barrier enters after shop/decay gates and only in the fair wide-hazard generator, preserving an available lane.
 5. Hooded newspaper reader bench is first real narrative encounter. The once-per-run cutscene uses a cinematic side-to-side composition: stranger on left, Gary on right, world still visible/dimmed beneath the horizontal UI banner. First meeting must not reveal the time travel premise.
 6. After that scene/corridor, a comic fox emergence and sausage-roll theft/spared outcome; no prior fox encounter should steal focus from the first bench meeting.
-7. Future environmental boundary: bridge / railway underpass → vegetation → wilderness and glowing eyes → an unexpectedly lively **Victorian England**. Later Rome, thematic foods, rarities and returning mystery anchors remain proposals.
+7. Forgotten Bridge → first wilderness is implemented on stacked PR #5: four environmental stages, supplied DRAFT01 vegetation/ruins, fair natural hazards and seeded rustling-grass encounters. See `WILDERNESS.md` for measured registration, real-engine captures, tests and outstanding artwork/device review. The fixed camera, 84×620 bridge and separate structural/water passes remain intact; bridge final-art approval and merge are pending. Later historical environments, new wildlife, jump/slide and collapse remain proposals.
 
 **Release uncertainty:** The currently loaded scripts and assets prove code wiring, not that each scripted event definitely fires on every phone or that all artwork is polished. There were recent user reports of missing cutscene/fox and missing roast pickup after regressions. Preserve explicit smoke checks for all three before declaring a release sound.
 
@@ -128,3 +132,7 @@ The iconic gift/lantern is **story design** until a runtime pickup, catalogue/in
 When asked for *any* Gary Eats! image or edited sprite, retrieve the **latest repository** `AGENTS.md`, `STYLE.txt`, `ASSET_GRID_PROMPT.txt`, this master reference, relevant live source and approved gameplay/art references **before generation**. Where direct retrieval or visual reference is unavailable, label checks UNVERIFIED rather than guessing. New character/prop art must fit exactly the existing 360×640 road camera and registered source-to-world scale. After creating/editing, run the executable gate where available, inspect full sheet and runtime preview, and record which tests actually ran. The `AGENTS.md` prompt supplements but does not guarantee retrieval in a separate ChatGPT chat; place the same trigger in ChatGPT Project instructions.
 
 For coding tasks: fetch current `index.html` script ordering and main branch SHA, preserve all existing encounters and user saves, stage, verify with tests and provide a rollback, never pretend a repository file was updated if GitHub refused write access. Prefer one narrow change per revision and one atomic commit.
+
+## The Other Side implementation — 21 October 2026
+
+`gary-wilderness-data.js`, `gary-wilderness.js` and `gary-wilderness-encounters.js` extend the active engine after the full-width bridge exit. The existing director, contact geometry, controls, food/catalogue, crash states and fixed-step simulation remain authoritative. Supplied artwork is extracted by actual alpha content, not assumed atlas cells; `art/wilderness/registration.json` and `WILDERNESS.md` own the asset audit and runtime specification. Open `gary-wilderness-preview.html` for six isolated real-engine presets. DRAFT01 art and physical-iPhone performance require review; no new art, wildlife or historical story reveal is approved by implementation tests.
