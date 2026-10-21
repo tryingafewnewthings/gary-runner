@@ -362,6 +362,8 @@ let shutterMix = 0;
       status.textContent='Preparing the other side…';
       await wilderness.prepare();wilderness.warm(ctx);
       startupReady = true;
+      // Load optional bridge art after the Play button is ready; never block startup.
+      if(!bridgePreviewSession)void prepareLiveBridgeArt();
       simulation.reset();
       button.textContent = 'Play Game';
       status.textContent = 'Ready. Let’s give it a go.';
@@ -1057,6 +1059,27 @@ let shutterMix = 0;
   let bridgePreviewFrozen=false;
   const legacyBridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
   let bridgePaint=legacyBridgePaint;
+  let liveBridgePaint=null,bridgeArtStatus='procedural';
+  async function prepareLiveBridgeArt(){
+    try{
+      if(typeof fetch!=='function'||!window.GaryBridgeArt)return;
+      const response=await fetch('gary-bridge-art-review.json?v=painted20261021',{cache:'no-store'});
+      if(!response.ok)throw Error('Bridge pack HTTP '+response.status);
+      const pack=await response.json();window.GaryBridgeArt.validatePack(pack);
+      const images=await window.GaryBridgeArt.loadImages(pack,Image);
+      // Precompose unchanged registered PNGs at the measured fixed-camera scale.
+      const candidate=window.GaryBridgeArt.create({
+        makeCanvas:()=>document.createElement('canvas'),pack,images,
+        environment:legacyBridgePaint,cacheScale:1
+      });
+      if(candidate.mode!=='UNAPPROVED_ART_REVIEW')throw Error('Unexpected artwork registration');
+      liveBridgePaint=candidate;bridgeArtStatus='painted-review';
+      if(!bridge.visible())bridgePaint=candidate; // No renderer pop mid-crossing.
+    }catch(error){
+      bridgeArtStatus='procedural-fallback';
+      loadErrorLog.push('Optional bridge artwork: '+String(error?.message||error));
+    }
+  }
   const wildernessImages=Object.fromEntries(Object.entries(window.GaryWildernessData.assets).map(([key,def])=>[key,itemImages[key]||loadGary('art/wilderness/'+def.path)]));
   const wildernessEncounters=window.GaryWildernessEncounters.create({spawnFood:spawnWildernessItem,onStart(){cap={s:'Hang on… that grass moved.',t:0};},onCue(){cap={s:'Something moved beyond the grass.',t:0};}});
   const wilderness=window.GaryWilderness.create({data:window.GaryWildernessData,images:wildernessImages,makeCanvas:()=>document.createElement('canvas'),encounters:wildernessEncounters});
@@ -1120,6 +1143,7 @@ let shutterMix = 0;
     mystery.reset();
     cutscenes.reset();
     fox.reset();bridge.reset();wilderness.reset(director.seed);bridgePreviewFrozen=false;barrenFoodSpawns=0;
+    if(!bridgePreviewSession&&liveBridgePaint)bridgePaint=liveBridgePaint;
     window.GaryRoadEvolution?.reset();
     window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
@@ -2734,7 +2758,7 @@ function updateRain(dt, advancing) {
       ticks:simulation.ticks,droppedSeconds:simulation.droppedSeconds,
       items:objs.length,itemPeak:itemPool.peak,itemMisses:itemPool.misses,
       effects:fx.length,effectPeak:effectPool.peak,stars:stars.length,starPeak:starPool.peak,
-      cacheEntries:rasterCacheEntries,errors:loadErrorLog.slice()})});
+      cacheEntries:rasterCacheEntries,bridgeArtwork:bridgeArtStatus,errors:loadErrorLog.slice()})});
   }
 
   /* -------------------------------------------------------------------------- */
