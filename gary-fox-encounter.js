@@ -21,7 +21,7 @@
    if(s.phase==='cooldown'){if(s.time>=SPEC.cooldown){go('done');s.finished=true;onComplete(s.outcome);}return;}
    // A collected/passed pickup is never removed or awarded for a second time.
    if(s.food?.d&&!s.taken){s.outcome='collected';go('cooldown');return;}
-   if(!s.theft){if(s.food?.y>700){s.outcome='missed';go('cooldown');}return;}
+   if(!s.theft){if(s.food?.y>=700){s.outcome='missed';go('cooldown');}return;}
    if(s.phase==='lead'&&s.time>=SPEC.lead&&s.food.y>=100)go('approach');
    else if(s.phase==='approach'&&s.time>=SPEC.approach)go('snatch');
    else if(s.phase==='snatch'){

@@ -12,6 +12,8 @@
    * update() owns animation time. render() must never grant items or advance play.
    */
   const {FixedStepClock, ObjectPool, sweptContact, lerp} = window.GaryCore;
+  const bridgePreviewSession=new URLSearchParams(location.search).get('debug')==='1'&&new URLSearchParams(location.search).get('bridgepreview')==='1';
+  const bestStorageKey=bridgePreviewSession?'gary-bridge-preview-best':'garyBest';
   const simulation = new FixedStepClock(60, 6);
   const director = window.GaryDifficulty.create(DIFFICULTY, BIOMES, ITEMS);
   const scoreEvents = EVENTS.slice().sort((a, b) => a.at - b.at);
@@ -1049,6 +1051,9 @@ let shutterMix = 0;
   // GaryFoxEncounterV1: authored, non-hazard encounter on the Forgotten Road.
   const foxImages={approach:loadGary('art/fox/fox-approach.png?v=fox2',im=>validateSheet(im,'Fox approach',6,1,256,256)),snatch:loadGary('art/fox/fox-snatch.png?v=fox2',im=>validateSheet(im,'Fox snatch',4,1,256,256)),
     turn:loadGary('art/fox/fox-turn.png?v=fox2',im=>validateSheet(im,'Fox turn',3,1,256,256)),return:loadGary('art/fox/fox-return.png?v=fox2',im=>validateSheet(im,'Fox return',6,1,256,256)),bush:loadGary('art/fox/fox-bush.png?v=fox2')};
+  const bridge=window.GaryBridge.create();
+  let bridgePreviewFrozen=false;
+  const bridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
   const foxWorld={afterBench:false,dialogueActive:false,hazardsClear:false,distance:0};
   const fox=window.GaryFoxEncounter.create({images:foxImages,spawnFood:spawnFoxFood,
     onTheft(){performance.foodSpawned=Math.max(0,performance.foodSpawned-1);},
@@ -1103,7 +1108,7 @@ let shutterMix = 0;
     crashScene.reset();
     mystery.reset();
     cutscenes.reset();
-    fox.reset();barrenFoodSpawns=0;
+    fox.reset();bridge.reset();bridgePreviewFrozen=false;barrenFoodSpawns=0;
     window.GaryRoadEvolution?.reset();
     window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
@@ -1146,7 +1151,7 @@ let shutterMix = 0;
   }
   function move(direction) {
     if (state !== 'play') return;
-    const next = Math.max(0, Math.min(WORLD.laneCount - 1, target + direction));
+    const next = bridge.locked() ? 1 : Math.max(0, Math.min(WORLD.laneCount - 1, target + direction));
     if (next === target) return;
     const travelDirection = Math.sign(next - lane);
     const continuing = sideAnimDir === travelDirection && sideAnimTime < SIDE_ANIM_SECONDS;
@@ -1354,7 +1359,7 @@ let shutterMix = 0;
     }
   }
   function crash(hitType, patternId){
-    director.recordCrash(hitType,patternId,distance);
+    if(!bridgePreviewSession)director.recordCrash(hitType,patternId,distance);
     if(state!=='play')return;
     performance.collisions++;
     crashT=0;lastHit=hitType;cap=null;crashScene.begin();transition(hitType==='street_barrier'?'crash_fork':'crash_'+hitType);
@@ -1440,7 +1445,7 @@ let shutterMix = 0;
     if (!transition('over')) return;
     crashScene.finish();
     cap=null;
-    if(score>best){best=score;try{localStorage.setItem('garyBest',best);}catch(e){}}
+    if(score>best){best=score;try{localStorage.setItem(bestStorageKey,best);}catch(e){}}
     try{
       finalRating = calculatePerformanceRating();
       const fRating = document.getElementById("fRating");
@@ -1581,7 +1586,7 @@ let shutterMix = 0;
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
   addEventListener('pagehide', suspend);
-  try{best=+localStorage.getItem('garyBest')||0;}catch(e){}
+  try{best=+localStorage.getItem(bestStorageKey)||0;}catch(e){}
   function tierOf(s){if(s<=50)return 0;if(s<=150)return 1;if(s<=300)return 2;if(s<=500)return 3;return 4;}
 
   function isTalkingAudio(){
@@ -1640,7 +1645,7 @@ let shutterMix = 0;
     // This reserves an empty, incoming stretch BEFORE waiting for visible hazards to clear.
     // Never make mystery.quiet() contingent on hazardsClear or the difficulty story beat.
     const encounterCorridorReady = imgMystery.ready && (!ground || ground.encounterReady());
-    mystery.update(dt, distance, rainMix, shutterMix, hazardsClear, encounterCorridorReady);
+    if(!bridge.visible())mystery.update(dt, distance, rainMix, shutterMix, hazardsClear, encounterCorridorReady);
     if (mystery.quiet()) ground?.trigger(distance, mystery.footAt(distance));
     sampleCutsceneWorld(hazardsClear);cutscenes.prewarm(cutsceneWorld);
     // Encounter was scheduled independently; let it begin once existing hazards clear.
@@ -1651,9 +1656,14 @@ let shutterMix = 0;
     // Fox may activate only after the bench sequence is past, independently of
     // procedural difficulty and hazard-free frames. Existing fox safety checks remain.
     foxWorld.afterBench=mystery.snapshot().passed;foxWorld.dialogueActive=sceneQuiet;
-    foxWorld.hazardsClear=hazardsClear;foxWorld.distance=distance;fox.update(dt,foxWorld);
+    foxWorld.hazardsClear=hazardsClear;foxWorld.distance=distance;if(!bridge.visible())fox.update(dt,foxWorld);
     if(state!=='play')return;
     const foxQuiet=fox.quiet();
+    const bridgeWasQuiet=bridge.quiet();
+    bridge.update(dt,{distance,foxFinished:fox.snapshot().finished,hazardsClear,dialogueActive:sceneQuiet});
+    if(bridge.locked() && target!==1)move(1-target);
+    const bridgeQuiet=bridge.quiet();
+    if(bridgeWasQuiet&&!bridgeQuiet){director.fullApproach();acc=0;lastLanes=['none','none','none'];}
     const waitForBenchIntro=mystery.quiet()&&hazardsClear&&mystery.footAt(distance)>=cutsceneWorld.playerY&&!cutsceneWorld.actors[0].introComplete;
     if (wasQuiet && !mystery.quiet()) {
       // Fresh, safe lead-in after the cameo; never release a backlog of rows.
@@ -1696,10 +1706,11 @@ let shutterMix = 0;
     pigeons.update(dt);
     updateShopClosures();
     performance.distance = distance;
-    if (mystery.quiet() || sceneQuiet || foxQuiet) acc = 0;
+    if(bridgeQuiet){roadQueue=[];pendingRow=null;}
+    if (mystery.quiet() || sceneQuiet || foxQuiet || bridgeQuiet) acc = 0;
     else acc += dt * (speed / DIFFICULTY.speedCap);
     let spawned = 0;
-    while (!mystery.quiet() && !sceneQuiet && !foxQuiet && acc >= gap && spawned < 3) {
+    while (!mystery.quiet() && !sceneQuiet && !foxQuiet && !bridgeQuiet && acc >= gap && spawned < 3) {
       const elapsedGap = gap;
       if (!spawnRow()) break;
       acc -= elapsedGap;
@@ -2506,6 +2517,7 @@ function updateRain(dt, advancing) {
     drawShopShutters();
     if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
     drawRainSplashes();
+    if(bridge.visible()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);bridgePaint.drawDeck(ctx,n);}
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
@@ -2525,12 +2537,13 @@ function updateRain(dt, advancing) {
         txt('Proper. x'+reviewMul, lx(view.lane), PLAYER_Y+22, 11, (TIERS[tierOf(score)]||TIERS[0]).c, 'center');
       }
     }
+    if(bridge.visible())bridgePaint.drawForeground(ctx,bridge.nearAt(view.distance));
     drawRainStreaks();
     ctx.restore();drawVignette();
     if (nightOn) drawNightVignette();
 
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
-      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();}
+      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.quiet()){ctx.save();ctx.fillStyle="rgba(24,36,31,.92)";ctx.fillRect(35,109,290,43);txt(bridge.warning()?"NARROW BRIDGE AHEAD":"THE FORGOTTEN BRIDGE",180,127,12,"#e6d2ab","center");txt(bridge.warning()?"Keep centre · Gary will follow the path":"Centre path · Stream below",180,144,10,"#c5cfba","center");ctx.restore();}}
       crashScene.screen();
     }
     if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
@@ -2638,6 +2651,31 @@ function updateRain(dt, advancing) {
   $('pauseBtn').addEventListener('click',suspend);
   $('resumeBtn').addEventListener('click',resume);
   if (/(?:\?|&)debug=1(?:&|$)/.test(location.search)) {
+    window.GaryBridgePreview=Object.freeze({
+      start:(position='approach')=>{
+        if(!startupReady)return false;
+        if(state==='paused')resume();
+        if(state.startsWith('crash'))transition('over');
+        if(state==='over')transition('menu');
+        if(state==='cutscene')transition('play');
+        reset();$('menu').classList.remove('show');$('introOverlay').classList.remove('show');
+        if(state==='menu')transition('intro');
+        if(state==='intro')transition('intro_transition');
+        if(state==='intro_transition'){window.GaryIntroTransition?.cancel();transition('play');}
+        if(state!=='play')return false;
+        distance=scrollY=20000;nightOn=true;nightMix=rainMix=shutterMix=1;rainSaid=true;playTime=60;
+        visualClearFrom=0;
+        bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+        const n={approach:210,enter:560,middle:850,exit:1210}[position]??210;
+        distance=scrollY=bridge.snapshot().anchor+n;
+        bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+        rememberPositions();prepareView(1);render();return true;
+      },
+      snapshot:()=>bridge.snapshot(),pause:suspend,
+      freeze:()=>{bridgePreviewFrozen=true;simulation.reset();},
+      resume:()=>{bridgePreviewFrozen=false;simulation.reset();resume();},
+      reset:()=>{if(state==='paused')resume();window.GaryBridgePreview.start('approach');}
+    });
     window.GaryRuntimeStats=Object.freeze({snapshot:()=>({state,distance,lane,target,
       ticks:simulation.ticks,droppedSeconds:simulation.droppedSeconds,
       items:objs.length,itemPeak:itemPool.peak,itemMisses:itemPool.misses,
@@ -2708,10 +2746,11 @@ function updateRain(dt, advancing) {
     cv.width=Math.round(w*dpr);cv.height=Math.round(w*16/9*dpr);K=cv.width/W;
     ctx.imageSmoothingEnabled=true;
     ctx.imageSmoothingQuality='high';
+    if(bridgePreviewFrozen){prepareView(1);render();}
   }
 
   function loop(ts) {
-    if (!document.hidden && startupReady) {
+    if (!document.hidden && startupReady && !bridgePreviewFrozen) {
       const alpha = simulation.frame(ts, fixedUpdate);
       prepareView(alpha);
       handlers[state].render();

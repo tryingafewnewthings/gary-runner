@@ -11,6 +11,7 @@ module.exports = function instrumentActiveRuntime(source) {
   const testApi = `
   window.__test = Object.freeze({
     ready: () => startupReady,
+    bridge: () => bridge.snapshot(),
     advance: fixedUpdate,
     render: () => { prepareView(1); render(); },
     reset, move, suspend, resume, transition,
@@ -53,7 +54,7 @@ module.exports = function instrumentActiveRuntime(source) {
     skipDialogue: () => stage.querySelector('.gc-skip')?.click(),
     bench: () => ({foot:mystery.footAt(distance),frame:mystery.frame(),...mystery.snapshot()}),
     snapshot: () => ({state,distance,lane,target,score,speed:shownSpeed,rain:rainMix,
-      mystery:mystery.snapshot(),fox:fox.snapshot(),cutscene:cutscenes.snapshot(),
+      mystery:mystery.snapshot(),fox:fox.snapshot(),bridge:bridge.snapshot(),cutscene:cutscenes.snapshot(),
       objects:objs.length,items:objs.filter(item=>!item.d).map(item=>({
         kind:item.t,lane:item.l,y:item.y,foxEvent:item.foxEvent})),
       performance:{...performance},
