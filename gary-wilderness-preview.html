@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Gary Eats! — Wilderness preview</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#18231f;color:#eadfc8;font:14px system-ui;text-align:center}main{max-width:420px;margin:auto}header{padding:8px}h1{font-size:16px;margin:0 0 3px}p{margin:0;font-size:12px;color:#bcc9b8}iframe{display:block;border:0;width:min(100%,calc((100dvh - 270px) * .5625));height:auto;aspect-ratio:9/16;margin:auto;background:#111}nav{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:7px}button{min-height:44px;border:1px solid #788670;border-radius:8px;background:#33473a;color:#fff;font:600 12px system-ui;touch-action:manipulation}button:active{background:#72533c}footer{font-size:11px;padding:0 10px max(8px,env(safe-area-inset-bottom))}</style></head>
+<body><main><header><h1>The Other Side</h1><p>Real engine · Isolated debug preview · Tap either half to steer</p></header>
+<iframe id="game" src="index.html?debug=1&amp;bridgepreview=1&amp;seed=12345" title="Playable wilderness"></iframe>
+<nav aria-label="Wilderness views"><button data-view="bridge">Bridge exit</button><button data-view="reveal">Reveal</button><button data-view="dense">Dense grass</button><button data-view="obstacles">Obstacles</button><button data-view="rustle">Rustling grass</button><button data-view="ruins">Ancient markers</button><button id="pause">Pause</button><button id="resume">Resume</button><button id="replay">Replay</button><button id="still">Freeze view</button></nav><footer id="status" role="status">Loading artwork…</footer></main>
+<script>
+const frame=document.querySelector('#game'),status=document.querySelector('#status');
+function api(){return frame.contentWindow.GaryWildernessPreview}
+function start(view){if(api()?.start(view)){frame.contentDocument.querySelector('#pauseBtn').style.display='none';status.textContent='The other side · Supplied wilderness artwork';return true}return false}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{api()?.resume();start(b.dataset.view)});
+document.querySelector('#pause').onclick=()=>api()?.pause();document.querySelector('#resume').onclick=()=>api()?.resume();document.querySelector('#replay').onclick=()=>{api()?.resume();start('bridge')};document.querySelector('#still').onclick=()=>{api()?.freeze();status.textContent='View frozen · Resume to play'};
+const ready=setInterval(()=>{if(start('bridge'))clearInterval(ready)},250);
+</script></body></html>

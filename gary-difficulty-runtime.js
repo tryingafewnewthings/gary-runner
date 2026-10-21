@@ -341,7 +341,7 @@ let shutterMix = 0;
       const images = [...new Set([
         imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery,
         imgCheer, imgCrash, ...imgRun, ...(window.GaryRoadEvolution?.images || []), ...Object.values(cobbleImgs),
-        ...PROPS.map(prop => prop.img), ...Object.values(itemImages), ...Object.values(foxImages)
+        ...PROPS.map(prop => prop.img), ...Object.values(itemImages), ...Object.values(foxImages), ...Object.values(wildernessImages)
       ].filter(Boolean))];
       let loaded = 0;
       const results = await Promise.allSettled(images.map(async image => {
@@ -359,6 +359,8 @@ let shutterMix = 0;
       window.GaryRoadEvolution?.warm(ctx);
       status.textContent = 'Preparing the story…';
       await cutscenes.prepare();
+      status.textContent='Preparing the other side…';
+      await wilderness.prepare();wilderness.warm(ctx);
       startupReady = true;
       simulation.reset();
       button.textContent = 'Play Game';
@@ -1055,6 +1057,14 @@ let shutterMix = 0;
   let bridgePreviewFrozen=false;
   const legacyBridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
   let bridgePaint=legacyBridgePaint;
+  const wildernessImages=Object.fromEntries(Object.entries(window.GaryWildernessData.assets).map(([key,def])=>[key,itemImages[key]||loadGary('art/wilderness/'+def.path)]));
+  const wildernessEncounters=window.GaryWildernessEncounters.create({spawnFood:spawnWildernessItem,onStart(){cap={s:'Hang on… that grass moved.',t:0};},onCue(){cap={s:'Something moved beyond the grass.',t:0};}});
+  const wilderness=window.GaryWilderness.create({data:window.GaryWildernessData,images:wildernessImages,makeCanvas:()=>document.createElement('canvas'),encounters:wildernessEncounters});
+  function spawnWildernessItem(kind,laneIndex,y){
+    const item=itemPool.acquire();if(!item)return false;
+    Object.assign(item,{t:kind,l:laneIndex,y,previousY:y,id:uid++,patternId:'wilderness-rustle',d:0,dare:0,refused:0,near:0,cleared:0,foxEvent:0});
+    if(isFood(kind))performance.foodSpawned++;return true;
+  }
   const foxWorld={afterBench:false,dialogueActive:false,hazardsClear:false,distance:0};
   const fox=window.GaryFoxEncounter.create({images:foxImages,spawnFood:spawnFoxFood,
     onTheft(){performance.foodSpawned=Math.max(0,performance.foodSpawned-1);},
@@ -1109,7 +1119,7 @@ let shutterMix = 0;
     crashScene.reset();
     mystery.reset();
     cutscenes.reset();
-    fox.reset();bridge.reset();bridgePreviewFrozen=false;barrenFoodSpawns=0;
+    fox.reset();bridge.reset();wilderness.reset(director.seed);bridgePreviewFrozen=false;barrenFoodSpawns=0;
     window.GaryRoadEvolution?.reset();
     window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
@@ -1275,6 +1285,10 @@ let shutterMix = 0;
       if(!kind||kind==='none')return;
       if(!ITEMS[kind])throw Error('Unregistered biome item '+kind);
       kind=barrenFoodKind(kind);
+      if(wilderness.active()&&wilderness.progress()>=0&&isHazard(kind)){
+        if(wilderness.progress()<900)return; // Empty, incoming breathing room after the crossing.
+        kind=wilderness.hazard(uid);
+      }
       const item=itemPool.acquire();
       if(!item)throw Error('Pooled row capacity violated');
       item.t=kind;item.l=laneIndex;item.y=item.previousY=-60;item.id=uid++;
@@ -1363,7 +1377,7 @@ let shutterMix = 0;
     if(!bridgePreviewSession)director.recordCrash(hitType,patternId,distance);
     if(state!=='play')return;
     performance.collisions++;
-    crashT=0;lastHit=hitType;cap=null;crashScene.begin();transition(hitType==='street_barrier'?'crash_fork':'crash_'+hitType);
+    crashT=0;lastHit=hitType;cap=null;crashScene.begin();transition(ITEMS[hitType]?.wilderness?'crash_m':hitType==='street_barrier'?'crash_fork':'crash_'+hitType);
   }
   function calculatePerformanceRating() {
     const survivalScore =
@@ -1641,7 +1655,7 @@ let shutterMix = 0;
     // reader and fox controllers still own their original encounter state.
     if(!Number.isFinite(visualClearFrom) && decline>=0.18)
       visualClearFrom=Math.ceil((distance+H)/STREET_SEGMENT_H)+1;
-    director.allowWide(allShopsClosed() && decline>=0.30 && !mystery.quiet());
+    director.allowWide(!wilderness.known() && allShopsClosed() && decline>=0.30 && !mystery.quiet());
     // GaryStoryEncounterRepair20261018V3: announce the encounter corridor as soon as weather and decay are ready.
     // This reserves an empty, incoming stretch BEFORE waiting for visible hazards to clear.
     // Never make mystery.quiet() contingent on hazardsClear or the difficulty story beat.
@@ -1664,6 +1678,12 @@ let shutterMix = 0;
     bridge.update(dt,{distance,foxFinished:fox.snapshot().finished,hazardsClear,dialogueActive:sceneQuiet});
     if(bridge.locked() && target!==1)move(1-target);
     const bridgeQuiet=bridge.quiet();
+    const wasWildernessQuiet=wilderness.quiet(),previousWildernessStage=wilderness.stage();
+    wilderness.update(dt,{distance,bridge:bridge.snapshot(),hazardsClear,blocked:mystery.quiet()||sceneQuiet||foxQuiet});
+    const wildernessQuiet=wilderness.quiet();
+    if(wilderness.progress()>=0){nightMix=1-.86*wilderness.warmth();nightOn=nightMix>.001;}
+    if(wasWildernessQuiet&&!wildernessQuiet){director.fullApproach();pendingRow=null;roadQueue=[];acc=0;}
+    if(wilderness.stage()>previousWildernessStage&&!cap)cap={s:wilderness.stage()===1?'The other side. Beautiful.':wilderness.stage()===3?'These stones look older than the path.':'A long way from the high street.',t:0};
     if(bridgeWasQuiet&&!bridgeQuiet){director.fullApproach();acc=0;lastLanes=['none','none','none'];}
     const waitForBenchIntro=mystery.quiet()&&hazardsClear&&mystery.footAt(distance)>=cutsceneWorld.playerY&&!cutsceneWorld.actors[0].introComplete;
     if (wasQuiet && !mystery.quiet()) {
@@ -1707,11 +1727,11 @@ let shutterMix = 0;
     pigeons.update(dt);
     updateShopClosures();
     performance.distance = distance;
-    if(bridgeQuiet){roadQueue=[];pendingRow=null;}
-    if (mystery.quiet() || sceneQuiet || foxQuiet || bridgeQuiet) acc = 0;
+    if(bridgeQuiet||wildernessQuiet){roadQueue=[];pendingRow=null;}
+    if (mystery.quiet() || sceneQuiet || foxQuiet || bridgeQuiet || wildernessQuiet) acc = 0;
     else acc += dt * (speed / DIFFICULTY.speedCap);
     let spawned = 0;
-    while (!mystery.quiet() && !sceneQuiet && !foxQuiet && !bridgeQuiet && acc >= gap && spawned < 3) {
+    while (!mystery.quiet() && !sceneQuiet && !foxQuiet && !bridgeQuiet && !wildernessQuiet && acc >= gap && spawned < 3) {
       const elapsedGap = gap;
       if (!spawnRow()) break;
       acc -= elapsedGap;
@@ -1919,6 +1939,7 @@ let shutterMix = 0;
       }
       ctx.restore();return;
     }
+    if(definition.wilderness){wilderness.drawHazard(ctx,o.t,x,y);return;}
     const bob = o.foxEvent?0:Math.sin(view.clock * 6 + o.id) * 3 * S;
     const sz = o.foxEvent?16:definition.displaySize;
     const loaded = itemImages[o.t];
@@ -2206,7 +2227,8 @@ function updateRain(dt, advancing) {
   }
 
   if (advancing) {
-    if (RAIN_PREVIEW) {
+    if(wilderness.active()&&wilderness.progress()>=0){rainMix+=(wilderness.weather()-rainMix)*Math.min(1,dt*.8);}
+    else if (RAIN_PREVIEW) {
       rainMix = Math.min(1, rainMix + dt / 1.4);
     } else if (nightMix >= 0.98) {
       nightHeld += dt;
@@ -2347,12 +2369,14 @@ function updateRain(dt, advancing) {
     48 * shutterMix
   ))
 );
+    const wildRain=wilderness.active()&&wilderness.progress()>=0;
+    const effectiveCount=Math.ceil(count*(wildRain?rainMix:1));
     ctx.save();
     ctx.lineCap = 'round';
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < effectiveCount; i++) {
       const s = streaks[i];
       const lean = s.drift * (s.len / s.speed);
-      ctx.globalAlpha = s.a * (0.28 + 0.72 * rainMix);
+      ctx.globalAlpha = s.a * (0.28 + 0.72 * rainMix)*(wildRain?rainMix:1);
       ctx.strokeStyle = s.far ? '#a9bdd2' : '#e8f2fb';
       ctx.lineWidth = s.w;
       ctx.beginPath();
@@ -2508,7 +2532,7 @@ function updateRain(dt, advancing) {
     // At near>=500 the existing terrain provider covers all 640 rows opaquely.
     // Avoid drawing (and lazily caching) the entire hidden street underneath it.
     const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
-    if(!bridgeCoversWorld){
+    if(!bridgeCoversWorld&&!wilderness.covers(view.distance)){
       drawHighStreet();drawPavements();drawRoad();
       pigeons.draw();
       if (nightOn) {
@@ -2523,7 +2547,9 @@ function updateRain(dt, advancing) {
       if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
       drawRainSplashes();
     }
-    if(bridge.visible()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);}
+    if(bridge.visible()&&!wilderness.covers(view.distance)){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);}
+
+    wilderness.drawGround(ctx,view.distance,view.clock);wilderness.drawDecor(ctx,view.distance,view.clock,false);
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
@@ -2543,7 +2569,8 @@ function updateRain(dt, advancing) {
         txt('Proper. x'+reviewMul, lx(view.lane), PLAYER_Y+22, 11, (TIERS[tierOf(score)]||TIERS[0]).c, 'center');
       }
     }
-    if(bridge.visible())bridgePaint.drawForeground(ctx,bridge.nearAt(view.distance));
+    wilderness.drawDecor(ctx,view.distance,view.clock,true);
+    if(bridge.visible()&&!wilderness.covers(view.distance))bridgePaint.drawForeground(ctx,bridge.nearAt(view.distance));
     drawRainStreaks();
     ctx.restore();drawVignette();
     if (nightOn) drawNightVignette();
@@ -2688,6 +2715,20 @@ function updateRain(dt, advancing) {
       freeze:()=>{bridgePreviewFrozen=true;simulation.reset();},
       resume:()=>{bridgePreviewFrozen=false;simulation.reset();resume();},
       reset:()=>{if(state==='paused')resume();window.GaryBridgePreview.start('approach');}
+    });
+    window.GaryWildernessPreview=Object.freeze({
+      start:(viewName='reveal')=>{
+        if(!bridgePreviewSession)return false;
+        if(!window.GaryBridgePreview.start('exit'))return false;
+        const offsets={bridge:-90,reveal:2400,dense:5600,obstacles:6200,rustle:3400,ruins:10170};
+        const origin=bridge.snapshot().anchor+770;wilderness.begin(origin);distance=scrollY=origin+546+(offsets[viewName]??2400);
+        bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+        wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:false});
+        rainMix=wilderness.weather();nightMix=1-.86*wilderness.warmth();nightOn=true;
+        if(viewName==='obstacles'){spawnWildernessItem('fallen_branch_small_01',0,470);spawnWildernessItem('boulder_cluster_hazard_01',2,350);spawnWildernessItem('thorn_bramble_hazard_01',0,210);}
+        if(viewName==='rustle')wildernessEncounters.preview('cue',distance);
+        rememberPositions();prepareView(1);render();return true;
+      },snapshot:()=>wilderness.snapshot(),pause:()=>window.GaryBridgePreview.pause(),freeze:()=>window.GaryBridgePreview.freeze(),resume:()=>window.GaryBridgePreview.resume()
     });
     window.GaryRuntimeStats=Object.freeze({snapshot:()=>({state,distance,lane,target,
       ticks:simulation.ticks,droppedSeconds:simulation.droppedSeconds,

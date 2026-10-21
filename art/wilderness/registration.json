@@ -1,0 +1,859 @@
+{
+  "archiveSha256": "30d4485b3513b8e5cf1a0726b638a2bdc6956736140aae76b53d82316bb97d18",
+  "method": "Measured alpha components, not declared grids; RGB unchanged. Alpha <64 removed from generated atlas haze; nearest-component ownership isolates overlapping nominal cells.",
+  "assets": {
+    "verge/verge_grass_dense_olive_01.png": {
+      "source": "verge/verge_grass_dense_olive_01.png",
+      "sourceRect": null,
+      "width": 256,
+      "height": 512,
+      "alphaBounds": [
+        15,
+        112,
+        242,
+        469
+      ],
+      "anchor": [
+        128.0,
+        469
+      ],
+      "role": "verge",
+      "sha256": "47bc22b5a815b304e93a526d0e1ef489cba5d530217e485b4e87e41035a89118"
+    },
+    "verge/verge_grass_wind_left_01.png": {
+      "source": "verge/verge_grass_wind_left_01.png",
+      "sourceRect": null,
+      "width": 256,
+      "height": 512,
+      "alphaBounds": [
+        16,
+        114,
+        238,
+        468
+      ],
+      "anchor": [
+        128.0,
+        468
+      ],
+      "role": "verge",
+      "sha256": "808f04f48105dcd6fec49aa8bcef49a19aa18f777d57d3b00be9d8ddb3547fc7"
+    },
+    "verge/verge_grass_tall_wet_01.png": {
+      "source": "verge/verge_grass_tall_wet_01.png",
+      "sourceRect": null,
+      "width": 256,
+      "height": 512,
+      "alphaBounds": [
+        33,
+        74,
+        223,
+        470
+      ],
+      "anchor": [
+        128.0,
+        470
+      ],
+      "role": "verge",
+      "sha256": "4f508e4f2dd1f12d505ad1c757304f323eb89acf9c8e566601ae7a55ecc34a63"
+    },
+    "verge/verge_grass_seedheads_01.png": {
+      "source": "verge/verge_grass_seedheads_01.png",
+      "sourceRect": null,
+      "width": 256,
+      "height": 512,
+      "alphaBounds": [
+        61,
+        59,
+        202,
+        471
+      ],
+      "anchor": [
+        128.0,
+        471
+      ],
+      "role": "verge",
+      "sha256": "67042439c646cf75fbd5b8a4177903e45100449c13e3ab04e7d0b141d6f501b6"
+    },
+    "verge/verge_grass_short_mixed_01.png": {
+      "source": "verge/verge_grass_short_mixed_01.png",
+      "sourceRect": null,
+      "width": 256,
+      "height": 512,
+      "alphaBounds": [
+        26,
+        215,
+        230,
+        471
+      ],
+      "anchor": [
+        128.0,
+        471
+      ],
+      "role": "verge",
+      "sha256": "5377b01ef33dd0aff5d0a669ccd7f11c31d6d037927fb4f44c860fd0c19e78f4"
+    },
+    "verge/verge_grass_sparse_01.png": {
+      "source": "verge/verge_grass_sparse_01.png",
+      "sourceRect": null,
+      "width": 256,
+      "height": 512,
+      "alphaBounds": [
+        71,
+        153,
+        204,
+        470
+      ],
+      "anchor": [
+        128.0,
+        470
+      ],
+      "role": "verge",
+      "sha256": "f0c71095330d0d1fd9d8b0aae63281dad38f96e2fc24a8191932cb4fc8826364"
+    },
+    "props/rock_cluster_small_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        34,
+        233,
+        384,
+        456
+      ],
+      "width": 366,
+      "height": 239,
+      "alphaBounds": [
+        8,
+        8,
+        358,
+        231
+      ],
+      "anchor": [
+        183.0,
+        231
+      ],
+      "role": "decoration",
+      "sha256": "4e00213a661510cbc2d8725dc1966351ab6e5c458b1712e3403bf106f3530806"
+    },
+    "props/rock_cluster_large_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        406,
+        165,
+        818,
+        472
+      ],
+      "width": 428,
+      "height": 323,
+      "alphaBounds": [
+        8,
+        8,
+        420,
+        315
+      ],
+      "anchor": [
+        214.0,
+        315
+      ],
+      "role": "decoration",
+      "sha256": "c49a951eeb0d4adc60c5f2e1a462afa8ecc5eaef43c385d3e9fb13daacf17ada"
+    },
+    "props/rotten_posts_cluster_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        853,
+        98,
+        1101,
+        506
+      ],
+      "width": 264,
+      "height": 424,
+      "alphaBounds": [
+        8,
+        8,
+        256,
+        416
+      ],
+      "anchor": [
+        132.0,
+        416
+      ],
+      "role": "decoration",
+      "sha256": "93885d437761a8ba2e04209ac931155fedaa2fdff4fd698d9db769a93a7dca07"
+    },
+    "props/broken_fence_cluster_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        1132,
+        182,
+        1522,
+        482
+      ],
+      "width": 406,
+      "height": 316,
+      "alphaBounds": [
+        8,
+        8,
+        398,
+        308
+      ],
+      "anchor": [
+        203.0,
+        308
+      ],
+      "role": "decoration",
+      "sha256": "9946510cc1a0c6548c3dba9db53138d49190c8608841b73ef919492dab898c9e"
+    },
+    "props/blackberry_bramble_patch_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        18,
+        512,
+        388,
+        895
+      ],
+      "width": 386,
+      "height": 399,
+      "alphaBounds": [
+        8,
+        8,
+        378,
+        391
+      ],
+      "anchor": [
+        193.0,
+        391
+      ],
+      "role": "decoration",
+      "sha256": "09994027b13a4f2530cf4c64fd5f6d77e8265fb53d5b6fb3986a4899fc7b7860"
+    },
+    "props/thistle_patch_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        417,
+        527,
+        752,
+        920
+      ],
+      "width": 351,
+      "height": 409,
+      "alphaBounds": [
+        8,
+        8,
+        343,
+        401
+      ],
+      "anchor": [
+        175.5,
+        401
+      ],
+      "role": "decoration",
+      "sha256": "9c6c01a5182289a14838c34e7dcd4e098dc4d494e531fdee9f02d0d07718ca06"
+    },
+    "props/leaf_litter_twigs_patch_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        766,
+        706,
+        1115,
+        905
+      ],
+      "width": 365,
+      "height": 215,
+      "alphaBounds": [
+        8,
+        8,
+        357,
+        207
+      ],
+      "anchor": [
+        182.5,
+        207
+      ],
+      "role": "decoration",
+      "sha256": "87cb8823dea3b94a0cb894d12c1615dfb57c081d10e361f3c974d68d74e36ed6"
+    },
+    "props/deadfall_twig_pile_01.png": {
+      "source": "props/props_mossy_woodland_atlas.png",
+      "sourceRect": [
+        1071,
+        584,
+        1521,
+        893
+      ],
+      "width": 466,
+      "height": 325,
+      "alphaBounds": [
+        8,
+        8,
+        458,
+        317
+      ],
+      "anchor": [
+        233.0,
+        317
+      ],
+      "role": "decoration",
+      "sha256": "ac18b43e3fc6956fbabc3bd153f7cc6c98a1681e4318e83d0035578c087ebb99"
+    },
+    "hazards/fallen_branch_small_01.png": {
+      "source": "hazards/hazards_wilderness_road_atlas.png",
+      "sourceRect": [
+        31,
+        203,
+        426,
+        404
+      ],
+      "width": 411,
+      "height": 217,
+      "alphaBounds": [
+        8,
+        8,
+        403,
+        209
+      ],
+      "anchor": [
+        205.5,
+        209
+      ],
+      "role": "hazard",
+      "sha256": "0f9e80baa3b76e61ac10caa857f7ce0743d19f276584f29f762b248c17756d6a"
+    },
+    "hazards/fallen_log_large_01.png": {
+      "source": "hazards/hazards_wilderness_road_atlas.png",
+      "sourceRect": [
+        451,
+        128,
+        1119,
+        473
+      ],
+      "width": 684,
+      "height": 361,
+      "alphaBounds": [
+        8,
+        8,
+        676,
+        353
+      ],
+      "anchor": [
+        342.0,
+        353
+      ],
+      "role": "decoration",
+      "sha256": "abe7baadc781e7853bad9a07165b18103d9eaf7a51f1307735ff1ae679a5eef3"
+    },
+    "hazards/boulder_cluster_hazard_01.png": {
+      "source": "hazards/hazards_wilderness_road_atlas.png",
+      "sourceRect": [
+        1150,
+        111,
+        1513,
+        463
+      ],
+      "width": 379,
+      "height": 368,
+      "alphaBounds": [
+        8,
+        8,
+        371,
+        360
+      ],
+      "anchor": [
+        189.5,
+        360
+      ],
+      "role": "hazard",
+      "sha256": "9864de7d8afca01091425994758c08206c276ef3c586de0033a60d3f37da5cf2"
+    },
+    "hazards/muddy_ruts_hazard_01.png": {
+      "source": "hazards/hazards_wilderness_road_atlas.png",
+      "sourceRect": [
+        89,
+        506,
+        459,
+        977
+      ],
+      "width": 386,
+      "height": 487,
+      "alphaBounds": [
+        8,
+        8,
+        378,
+        479
+      ],
+      "anchor": [
+        193.0,
+        479
+      ],
+      "role": "decal",
+      "sha256": "bb8fa9243607b2def33167e8542e3847e8815e739c443988286e9ca2315fbb14"
+    },
+    "hazards/puddle_hazard_large_01.png": {
+      "source": "hazards/hazards_wilderness_road_atlas.png",
+      "sourceRect": [
+        530,
+        542,
+        1012,
+        963
+      ],
+      "width": 498,
+      "height": 437,
+      "alphaBounds": [
+        8,
+        8,
+        490,
+        429
+      ],
+      "anchor": [
+        249.0,
+        429
+      ],
+      "role": "decal",
+      "sha256": "69514acf95ae2eed024d90aa3e9adc638066856dc105a794ecc187ab0d90a89f"
+    },
+    "hazards/thorn_bramble_hazard_01.png": {
+      "source": "hazards/hazards_wilderness_road_atlas.png",
+      "sourceRect": [
+        1106,
+        523,
+        1487,
+        970
+      ],
+      "width": 397,
+      "height": 463,
+      "alphaBounds": [
+        8,
+        8,
+        389,
+        455
+      ],
+      "anchor": [
+        198.5,
+        455
+      ],
+      "role": "hazard",
+      "sha256": "26a2f8912f00693f3a2c28540883cbdd1fbecaa4ae026be5df1360b67d2b0acc"
+    },
+    "ruins/ruined_wall_low_01.png": {
+      "source": "ruins/ruins_mossy_wilderness_atlas.png",
+      "sourceRect": [
+        33,
+        109,
+        589,
+        465
+      ],
+      "width": 572,
+      "height": 372,
+      "alphaBounds": [
+        8,
+        8,
+        564,
+        364
+      ],
+      "anchor": [
+        286.0,
+        364
+      ],
+      "role": "decoration",
+      "sha256": "c9139e6f15a69b45a90d615c56bba0af6747cdbc82e3e3084368f0e0b6540fe3"
+    },
+    "ruins/stone_arch_ruin_01.png": {
+      "source": "ruins/ruins_mossy_wilderness_atlas.png",
+      "sourceRect": [
+        617,
+        90,
+        1143,
+        463
+      ],
+      "width": 542,
+      "height": 389,
+      "alphaBounds": [
+        8,
+        8,
+        534,
+        381
+      ],
+      "anchor": [
+        271.0,
+        381
+      ],
+      "role": "decoration",
+      "sha256": "61033fa006b7c76e06e5127eaaafc3c5dc724faeb554b7cc0f3ba5e087507222"
+    },
+    "ruins/standing_stone_marker_01.png": {
+      "source": "ruins/ruins_mossy_wilderness_atlas.png",
+      "sourceRect": [
+        1198,
+        149,
+        1499,
+        485
+      ],
+      "width": 317,
+      "height": 352,
+      "alphaBounds": [
+        8,
+        8,
+        309,
+        344
+      ],
+      "anchor": [
+        158.5,
+        344
+      ],
+      "role": "decoration",
+      "sha256": "9b9bf2d44e8d8b32040a0231eb1ac508488cc3bbca8880da94727180f36e4213"
+    },
+    "ruins/wooden_signpost_broken_01.png": {
+      "source": "ruins/ruins_mossy_wilderness_atlas.png",
+      "sourceRect": [
+        113,
+        497,
+        455,
+        940
+      ],
+      "width": 358,
+      "height": 459,
+      "alphaBounds": [
+        8,
+        8,
+        350,
+        451
+      ],
+      "anchor": [
+        179.0,
+        451
+      ],
+      "role": "decoration",
+      "sha256": "bc0c8f58c8f56f162ec2512ba0ec15281232dc707319caa61338866702e835bb"
+    },
+    "ruins/broken_gate_section_01.png": {
+      "source": "ruins/ruins_mossy_wilderness_atlas.png",
+      "sourceRect": [
+        566,
+        562,
+        1088,
+        925
+      ],
+      "width": 538,
+      "height": 379,
+      "alphaBounds": [
+        8,
+        8,
+        530,
+        371
+      ],
+      "anchor": [
+        269.0,
+        371
+      ],
+      "role": "decoration",
+      "sha256": "303efcd45c96fce84bc513191e46a509e2a15f7fa3b3d6a1e2e64cd3cce04fc4"
+    },
+    "ruins/cairn_stone_stack_01.png": {
+      "source": "ruins/ruins_mossy_wilderness_atlas.png",
+      "sourceRect": [
+        1159,
+        592,
+        1489,
+        905
+      ],
+      "width": 346,
+      "height": 329,
+      "alphaBounds": [
+        8,
+        8,
+        338,
+        321
+      ],
+      "anchor": [
+        173.0,
+        321
+      ],
+      "role": "decoration",
+      "sha256": "ae1de839ab13372cac775260c4335b9eeed809faa8668e35f37703fa0bebb746"
+    },
+    "decals/puddle_decal_large_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        0,
+        0,
+        515,
+        510
+      ],
+      "width": 506,
+      "height": 497,
+      "alphaBounds": [
+        8,
+        8,
+        498,
+        489
+      ],
+      "anchor": [
+        253.0,
+        489
+      ],
+      "role": "decal",
+      "sha256": "a38e361c5d8073f5bd5e150dd949e87e59737748b126917dc971c5dc6190795a"
+    },
+    "decals/puddle_decal_small_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        520,
+        60,
+        855,
+        480
+      ],
+      "width": 329,
+      "height": 366,
+      "alphaBounds": [
+        8,
+        8,
+        321,
+        358
+      ],
+      "anchor": [
+        164.5,
+        358
+      ],
+      "role": "decal",
+      "sha256": "9a7616422b0e2b07bc2dbeda9f7bce78d7c0bd03a7318b74692d0c9d778aa169"
+    },
+    "decals/mud_splash_decal_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        865,
+        60,
+        1160,
+        490
+      ],
+      "width": 309,
+      "height": 437,
+      "alphaBounds": [
+        8,
+        8,
+        301,
+        429
+      ],
+      "anchor": [
+        154.5,
+        429
+      ],
+      "role": "decal",
+      "sha256": "4b32bca79a0e56d4ae20256c8d07d1b13a21aca1a823aeefbad99ef7d2c0093c"
+    },
+    "decals/leaf_scatter_decal_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        1180,
+        55,
+        1536,
+        490
+      ],
+      "width": 329,
+      "height": 412,
+      "alphaBounds": [
+        8,
+        8,
+        321,
+        404
+      ],
+      "anchor": [
+        164.5,
+        404
+      ],
+      "role": "decal",
+      "sha256": "3879e9ef51207b2b2697330587e9ddaddfe7d768c633f02ea40bc68c9f7fe1f8"
+    },
+    "decals/cracked_asphalt_patch_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        0,
+        515,
+        500,
+        1024
+      ],
+      "width": 466,
+      "height": 503,
+      "alphaBounds": [
+        8,
+        8,
+        458,
+        495
+      ],
+      "anchor": [
+        233.0,
+        495
+      ],
+      "role": "decal",
+      "sha256": "562da36d4881ffcd257516298944fb705084d236d21f21d08709debe0a06eb77"
+    },
+    "decals/loose_stones_scatter_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        500,
+        515,
+        850,
+        1024
+      ],
+      "width": 355,
+      "height": 398,
+      "alphaBounds": [
+        8,
+        8,
+        347,
+        390
+      ],
+      "anchor": [
+        177.5,
+        390
+      ],
+      "role": "decal",
+      "sha256": "2b6c468b41df599fdd1f26f727d9e88c8981946b5ef2037806541d0cec81598c"
+    },
+    "decals/grass_patch_small_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        850,
+        515,
+        1190,
+        1024
+      ],
+      "width": 356,
+      "height": 504,
+      "alphaBounds": [
+        8,
+        8,
+        348,
+        496
+      ],
+      "anchor": [
+        178.0,
+        496
+      ],
+      "role": "decal",
+      "sha256": "af664581e293d3940b210423bdcfde13155eb19ce6d8d8ca6f70bd38815c5c3b"
+    },
+    "decals/damp_grime_patch_01.png": {
+      "source": "decals/decals_wet_wilderness_atlas.png",
+      "sourceRect": [
+        1190,
+        515,
+        1536,
+        1024
+      ],
+      "width": 336,
+      "height": 418,
+      "alphaBounds": [
+        8,
+        8,
+        328,
+        410
+      ],
+      "anchor": [
+        168.0,
+        410
+      ],
+      "role": "decal",
+      "sha256": "fd3a993200e63aabaf0dd0302b0e23c52d087b1d714d351a2bc772c1f4f60c33"
+    },
+    "road/road_surface_wilderness_base_300x1024.png": {
+      "source": "road/road_surface_wilderness_base_300x1024.png",
+      "sourceRect": null,
+      "width": 300,
+      "height": 1024,
+      "alphaBounds": [
+        0,
+        0,
+        300,
+        1024
+      ],
+      "anchor": [
+        150.0,
+        1024
+      ],
+      "role": "surface",
+      "sha256": "022f7574bd75767cc0dd683e7b6d35045aa26a9b7b02e57b275e33dcd6b81ba6"
+    },
+    "road/road_surface_variant_01.png": {
+      "source": "road/road_tile_variants_wet_wilderness_atlas.png",
+      "sourceRect": [
+        285,
+        36,
+        533,
+        984
+      ],
+      "width": 248,
+      "height": 948,
+      "alphaBounds": [
+        0,
+        0,
+        248,
+        948
+      ],
+      "anchor": [
+        124.0,
+        948
+      ],
+      "role": "surface",
+      "sha256": "b92e2f17c5af61bc1f0fda1f870793c1b2d5c8c3db8ed82ea4845a293a675e47"
+    },
+    "road/road_surface_variant_02.png": {
+      "source": "road/road_tile_variants_wet_wilderness_atlas.png",
+      "sourceRect": [
+        635,
+        36,
+        877,
+        984
+      ],
+      "width": 242,
+      "height": 948,
+      "alphaBounds": [
+        0,
+        0,
+        242,
+        948
+      ],
+      "anchor": [
+        121.0,
+        948
+      ],
+      "role": "surface",
+      "sha256": "3cf503225b5369fec8de555a3b72aee74a3143a18b09f0874b6bc7632ef397c7"
+    },
+    "road/road_surface_variant_03.png": {
+      "source": "road/road_tile_variants_wet_wilderness_atlas.png",
+      "sourceRect": [
+        976,
+        36,
+        1241,
+        984
+      ],
+      "width": 265,
+      "height": 948,
+      "alphaBounds": [
+        0,
+        0,
+        265,
+        948
+      ],
+      "anchor": [
+        132.5,
+        948
+      ],
+      "role": "surface",
+      "sha256": "c899bd043ca6965272838eb17b8ad0b81b7bffd4aa5352939bb282a222a607c7"
+    }
+  },
+  "excluded": [
+    {
+      "source": "reference/*",
+      "reason": "Concept boards, mockups and QA images are references, not runtime artwork."
+    },
+    {
+      "source": "verge/verge_grass_clumps_atlas_3x2_256x512.png",
+      "reason": "Redundant atlas; all six separately registered sprites used."
+    },
+    {
+      "source": "road/road_tile_variants_wet_wilderness_atlas.png: outer strips",
+      "reason": "Narrow gravel edge strips omitted to preserve the fixed 150-unit road footprint."
+    }
+  ]
+}

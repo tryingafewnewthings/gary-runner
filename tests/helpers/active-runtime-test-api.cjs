@@ -12,6 +12,8 @@ module.exports = function instrumentActiveRuntime(source) {
   window.__test = Object.freeze({
     ready: () => startupReady,
     bridge: () => bridge.snapshot(),
+    wilderness: () => wilderness.snapshot(),
+    rustle: outcome => wildernessEncounters.preview(outcome,distance),
     advance: fixedUpdate,
     render: () => { prepareView(1); render(); },
     reset, move, suspend, resume, transition,
@@ -54,9 +56,9 @@ module.exports = function instrumentActiveRuntime(source) {
     skipDialogue: () => stage.querySelector('.gc-skip')?.click(),
     bench: () => ({foot:mystery.footAt(distance),frame:mystery.frame(),...mystery.snapshot()}),
     snapshot: () => ({state,distance,lane,target,score,speed:shownSpeed,rain:rainMix,
-      mystery:mystery.snapshot(),fox:fox.snapshot(),bridge:bridge.snapshot(),cutscene:cutscenes.snapshot(),
+      mystery:mystery.snapshot(),fox:fox.snapshot(),bridge:bridge.snapshot(),wilderness:wilderness.snapshot(),cutscene:cutscenes.snapshot(),
       objects:objs.length,items:objs.filter(item=>!item.d).map(item=>({
-        kind:item.t,lane:item.l,y:item.y,foxEvent:item.foxEvent})),
+        kind:item.t,lane:item.l,y:item.y,foxEvent:item.foxEvent,patternId:item.patternId})),
       performance:{...performance},
       shops:{closed:allShopsClosed(),entries:[...shopClosureStarted].map(([name,entry])=>({
         name,...entry,progress:closureProgress(name,entry.segment,entry.side,clock)}))},
