@@ -47,6 +47,7 @@ test('renderer stays deterministic and bounded; foliage never covers the three l
  g.clearRect(0,0,360,640);world.drawDecor(g,10546,8,false);world.drawDecor(g,10546,8,true);const road=g.getImageData(105,0,150,640).data;for(let i=3;i<road.length;i+=4)assert.equal(road[i],0);
  const snapshot=world.snapshot();for(let i=0;i<2;i++){world.drawGround(g,10546,8);world.drawDecor(g,10546,8,false);world.drawDecor(g,10546,8,true);g.getImageData(0,0,1,1)}assert.deepEqual(world.snapshot(),snapshot);assert.equal(allocations(),count);assert.equal(world.snapshot().cacheCount,11);
  g.clearRect(0,0,360,640);world.drawGround(g,400,8);assert.ok(g.getImageData(0,399,1,1).data[3]<4,'entrance banks feather over the old terrain');assert.equal(g.getImageData(0,100,1,1).data[3],255);
+ assert.equal(world.covers(800),false,'old terrain remains behind the translucent entrance');assert.equal(world.covers(900),true);
  const registered=[...g.getImageData(0,180,1,1).data];g.clearRect(0,0,360,640);world.drawGround(g,480,8);assert.deepEqual([...g.getImageData(0,260,1,1).data],registered,'the same entrance world point moves exactly80 screen units');
 });
 test('real engine: natural hazard rows retain safe lanes and reaction budgets without urban barriers',async()=>{

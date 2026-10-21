@@ -106,7 +106,7 @@
   return Object.freeze({prepare,reset,begin,update,drawGround,drawDecor,active,
    origin:()=>origin,progress:()=>progress,stage:()=>stageAt(Math.max(0,progress)),weather:()=>weather,
    warmth:()=>smooth((progress-600)/3200),quiet:encounters.quiet,
-   ready:()=>ready,known:active,covers:distance=>origin!==null&&distance-origin>=640,
+   ready:()=>ready,known:active,covers:distance=>origin!==null&&distance-origin>=860,
    hazard:(id)=>HAZARDS[hash(id,runSeed)%HAZARDS.length],
    drawHazard(ctx,key,x,y){sprite(ctx,key,x,y+14);},
    encounter:encounters,

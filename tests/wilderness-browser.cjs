@@ -24,6 +24,15 @@ async function main(){
   await page.locator('#pause').click();const paused=await frame.evaluate(()=>GaryWildernessPreview.snapshot());await page.waitForTimeout(150);assert.deepEqual(await frame.evaluate(()=>GaryWildernessPreview.snapshot()),paused);await page.locator('#resume').click();await page.waitForTimeout(150);assert.ok(await frame.evaluate(()=>GaryWildernessPreview.snapshot().progress)>paused.progress);assert.equal(await frame.evaluate(()=>__canvases),0);
   await page.locator('[data-view="obstacles"]').click();await frame.evaluate(()=>GaryWildernessPreview.freeze());
   const fixture=await frame.evaluate(()=>__test.snapshot());assert.deepEqual(fixture.items.map(x=>x.lane),[0,2,0]);assert.equal(fixture.bridge.collapse,false);
+  // Rebuild fresh frames while crossing the feather: retained old pixels must not hide missing terrain.
+  const entrance=await frame.evaluate(()=>{
+   GaryWildernessPreview.start('bridge');GaryWildernessPreview.freeze();const samples=[];
+   for(const target of [150,400]){
+    for(let i=0;i<400&&GaryWildernessPreview.snapshot().progress<target;i++){__test.advance(1/60);__test.render()}
+    const c=document.querySelector('#c'),g=c.getContext('2d');g.save();g.resetTransform();g.clearRect(0,0,c.width,c.height);g.restore();__test.render();const k=c.width/360;
+    samples.push({progress:GaryWildernessPreview.snapshot().progress,alpha:g.getImageData(20*k,620*k,1,1).data[3]});
+   }return samples;
+  });for(const s of entrance){assert.ok(s.progress>=150);assert.equal(s.alpha,255,'underlying terrain survives the translucent entrance')}
   // Render CPU timing: same engine/host, frozen simulation, warmed caches; no FPS assertion.
   const performance=await frame.evaluate(()=>{
    function bench(view){view();for(let i=0;i<20;i++)__test.render();const ms=[];for(let i=0;i<120;i++){const t=performance.now();__test.render();ms.push(performance.now()-t)}ms.sort((a,b)=>a-b);return {samples:ms.length,medianMs:ms[60],p95Ms:ms[114]}}

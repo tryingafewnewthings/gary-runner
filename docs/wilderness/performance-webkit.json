@@ -1,0 +1,25 @@
+{
+  "bridge": {
+    "samples": 120,
+    "medianMs": 0,
+    "p95Ms": 1
+  },
+  "wilderness": {
+    "samples": 120,
+    "medianMs": 0,
+    "p95Ms": 1
+  },
+  "cacheCount": 11,
+  "frameCanvasAllocations": 0,
+  "scope": "Headless cloud Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15; warmed synchronous render CPU, not physical iPhone or GPU frame time",
+  "liveRustle": {
+    "samples": 110,
+    "medianMs": 16,
+    "p95Ms": 17,
+    "framesOver50ms": 0,
+    "droppedSimulationSeconds": 0
+  },
+  "measuredCommit": "f3a059007efca70d3fe9a2161bdee123e45048cf",
+  "ciRun": "https://github.com/tryingafewnewthings/gary-runner/actions/runs/39524656238",
+  "note": "Pre-occlusion-threshold-fix measurements; dense and rustle scene rendering is unchanged by that fix. WebKit timer resolution is coarser than Chromium; zero median CPU is below timer precision, not zero work."
+}
