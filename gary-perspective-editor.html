@@ -129,7 +129,7 @@ function snapshot(){return P.copy(state);}
 function commit(before){
  if(JSON.stringify(before)===JSON.stringify(state))return;
  history.push(before);if(history.length>40)history.shift();future.length=0;
- state.hasChanges=true;queue();
+ state.hasChanges=true;renderReport=null;queue();
 }
 function sourceLayer(key){
  const imported=layers[key];if(imported)return imported;
@@ -220,8 +220,8 @@ function setControls(){
  $('anchorLock').checked=state.anchorLock;
  $('widthScale').value=state.quick.widthScale;
  $('heightScale').value=state.quick.heightScale;
- $('skew').value=state.quick.skew;
- $('topDepth').value=state.quick.topDepth;
+ $('skew').value=100*state.quick.skew/spec.source.width;
+ $('topDepth').value=100*state.quick.topDepth/spec.source.height;
  $('offsetX').value=state.placement.dx;$('offsetY').value=state.placement.dy;
  for(const b of document.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===state.tool));
  queue();
