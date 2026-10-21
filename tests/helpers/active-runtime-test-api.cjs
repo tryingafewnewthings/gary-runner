@@ -13,6 +13,7 @@ module.exports = function instrumentActiveRuntime(source) {
     ready: () => startupReady,
     bridge: () => bridge.snapshot(),
     wilderness: () => wilderness.snapshot(),
+    bridgeArtwork: () => ({status:bridgeArtStatus,mode:bridgePaint===legacyBridgePaint?'legacy':bridgePaint.mode}),
     rustle: outcome => wildernessEncounters.preview(outcome,distance),
     advance: fixedUpdate,
     render: () => { prepareView(1); render(); },
