@@ -1,0 +1,145 @@
+{
+  "schema": "gary-eats-asset-factory-v1",
+  "version": 1,
+  "cameraContract": "gary-camera-contract.json",
+  "reference": "Source draw dimensions and anchors are gameplay design units; image dimensions are pixels. All geometry renders screen-parallel without vanishing points.",
+  "defaultApproval": "UNVERIFIED_VISUAL",
+  "profiles": {
+    "ground": {
+      "camera": "ground-plane",
+      "status": "CODE_LOCKED_FOR_WORLD_PLANE",
+      "notes": "Flat terrain decal; no height/parallax invented."
+    },
+    "frontage": {
+      "camera": "raised-architecture",
+      "status": "PROVISIONAL_ART_VIEW",
+      "notes": "Existing shop screen rect 89x236 is code-verified. Roof/top face styling requires visual approval."
+    },
+    "bridge": {
+      "camera": "raised-architecture",
+      "status": "PROVISIONAL_HEIGHT",
+      "notes": "Footprints from PR4 are fixed; masonry projected height requires sign-off."
+    },
+    "freestanding": {
+      "camera": "raised-architecture",
+      "status": "REFERENCE_ART_REQUIRED",
+      "notes": "Ground anchored vertical prop; silhouette only, no approved physical camera pitch."
+    }
+  },
+  "templates": [
+    {
+      "id": "victorian-frontage",
+      "name": "Victorian frontage",
+      "profile": "frontage",
+      "source": {
+        "width": 356,
+        "height": 944
+      },
+      "draw": {
+        "x": 0,
+        "y": 190,
+        "width": 89,
+        "height": 236
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "layer": "shops-and-props",
+      "paddingPx": 12,
+      "footTolerancePx": 16,
+      "style": "Victorian British brick shop frontage, clean hand-painted dark outlines, gentle elevation, no dramatic perspective.",
+      "approval": "CANDIDATE",
+      "scene": "street"
+    },
+    {
+      "id": "stone-bridge-pier",
+      "name": "Stone bridge pier",
+      "profile": "bridge",
+      "source": {
+        "width": 256,
+        "height": 1024
+      },
+      "draw": {
+        "x": 101,
+        "y": 265,
+        "width": 32,
+        "height": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "layer": "lower-masonry-under-water",
+      "paddingPx": 12,
+      "footTolerancePx": 18,
+      "style": "Rounded red-brown brick pier with light stone cap; no water, grass, deck or baked ground.",
+      "approval": "CANDIDATE",
+      "scene": "bridge"
+    },
+    {
+      "id": "victorian-lamppost",
+      "name": "Victorian lamppost",
+      "profile": "freestanding",
+      "source": {
+        "width": 288,
+        "height": 864
+      },
+      "draw": {
+        "x": 68,
+        "y": 425,
+        "width": 36,
+        "height": 108
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "layer": "foreground-props",
+      "paddingPx": 12,
+      "footTolerancePx": 18,
+      "style": "Black cast iron Victorian street lamp, gently elevated painted cartoon view, no street or opaque backdrop.",
+      "approval": "CANDIDATE",
+      "scene": "street"
+    },
+    {
+      "id": "ground-decay-patch",
+      "name": "Ground surface decal",
+      "profile": "ground",
+      "source": {
+        "width": 256,
+        "height": 256
+      },
+      "draw": {
+        "x": 284,
+        "y": 330,
+        "width": 60,
+        "height": 60
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "layer": "ground-overlays",
+      "paddingPx": 12,
+      "footTolerancePx": 18,
+      "style": "Ground plane painted moss and small stones, no extrusion or environment background.",
+      "approval": "CANDIDATE",
+      "scene": "wilderness"
+    }
+  ],
+  "scenes": {
+    "street": {
+      "image": "docs/bridge/approach.png",
+      "description": "Temporary street/bridge approach screenshot. Replace with approved high-street screenshot when available."
+    },
+    "bridge": {
+      "image": "docs/bridge-review/middle.png",
+      "description": "Chromium real-engine bridge review capture, not approved art."
+    },
+    "wilderness": {
+      "image": "docs/wilderness/reveal.png",
+      "description": "Real-engine wilderness review capture, not approved art."
+    }
+  }
+}
