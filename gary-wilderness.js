@@ -23,9 +23,28 @@
     const image=images[key];if(!image?.ready)throw Error('Wilderness image not decoded: '+key);
     c.drawImage(image,x,y,w,h);
     if(def.role==='verge'){
-     c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.globalCompositeOperation='destination-in';
-     const foot=y+def.anchor[1]/def.height*h;const blend=c.createLinearGradient(0,foot-24,0,foot+1);blend.addColorStop(0,'#fff');blend.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=blend;c.fillRect(x,y,w,h);
-     const edge=c.createLinearGradient(x,0,x+w,0);edge.addColorStop(0,'rgba(255,255,255,0)');edge.addColorStop(.22,'#fff');edge.addColorStop(.78,'#fff');edge.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=edge;c.fillRect(x,y,w,h);c.restore();
+     // One-time organic alpha matting. The delivered grass is a tall rectangular
+    // cutout: irregular, soft blade boundaries prevent repeated vertical ribbons.
+    // Preserve the original painted pixels, direction and registered foot anchor.
+    const mask=canvas(w,h),m=mask.getContext('2d');
+    for(let py=0;py<h;py+=2){
+     const wave=Math.sin((py+key.length*11)*.089)*w*.046;
+     const left=w*(.12+.045*Math.sin(py*.18+key.length))+wave;
+     const right=w*(.88-.046*Math.cos(py*.14+key.length))+wave;
+     const edge=m.createLinearGradient(left,0,right,0);
+     edge.addColorStop(0,'rgba(255,255,255,0)');
+     edge.addColorStop(.16,'rgba(255,255,255,1)');
+     edge.addColorStop(.84,'rgba(255,255,255,1)');
+     edge.addColorStop(1,'rgba(255,255,255,0)');
+     m.fillStyle=edge;m.fillRect(0,py,w,Math.min(2,h-py));
+    }
+    const foot=def.anchor[1]/def.height*h;
+    m.globalCompositeOperation='destination-in';
+    const blend=m.createLinearGradient(0,foot-25,0,foot+2);
+    blend.addColorStop(0,'#fff');blend.addColorStop(1,'rgba(255,255,255,0)');
+    m.fillStyle=blend;m.fillRect(0,0,w,h);
+    c.save();c.beginPath();c.rect(x,y,w,h);c.clip();
+    c.globalCompositeOperation='destination-in';c.drawImage(mask,x,y);c.restore();
     }
     sprites[key]=Object.freeze({x,y,w,h,ax:def.anchor[0]/def.width*w,ay:def.anchor[1]/def.height*h});x+=w+4;row=Math.max(row,h);
    }
@@ -33,8 +52,11 @@
     const tile=canvas(150,512),g=tile.getContext('2d');g.fillStyle='#828878';g.fillRect(0,0,150,512);g.drawImage(images[road[0]],0,0,150,512);
     if(i>0){
      const overlay=canvas(150,512),v=overlay.getContext('2d');v.drawImage(images[road[i]],0,0,150,512);
-     const fade=v.createLinearGradient(0,0,0,512);fade.addColorStop(0,'rgba(255,255,255,0)');fade.addColorStop(.18,'#fff');fade.addColorStop(.82,'#fff');fade.addColorStop(1,'rgba(255,255,255,0)');v.globalCompositeOperation='destination-in';v.fillStyle=fade;v.fillRect(0,0,150,512);g.globalAlpha=.2;g.drawImage(overlay,0,0);g.globalAlpha=1;
+     const fade=v.createLinearGradient(0,0,0,512);fade.addColorStop(0,'rgba(255,255,255,0)');fade.addColorStop(.18,'#fff');fade.addColorStop(.82,'#fff');fade.addColorStop(1,'rgba(255,255,255,0)');v.globalCompositeOperation='destination-in';v.fillStyle=fade;v.fillRect(0,0,150,512);g.globalAlpha=.31;g.drawImage(overlay,0,0);g.globalAlpha=1;
     }
+    // The source is very pale beside the game's stormy brick bridge.
+    // A subtle shared cool-grey glaze ties it to the existing cobble palette.
+    g.fillStyle='rgba(42,49,51,.14)';g.fillRect(0,0,150,512);
     surfaces.push(tile);
     const floor=canvas(360,512),f=floor.getContext('2d');const grad=f.createLinearGradient(0,0,360,0);grad.addColorStop(0,['#34442e','#394c30','#32472c','#2d402d'][i]);grad.addColorStop(.5,['#4a583c','#526340','#475c37','#405335'][i]);grad.addColorStop(1,['#30452f','#3e5232','#344a2e','#2e432e'][i]);f.fillStyle=grad;f.fillRect(0,0,360,512);
     // Supplied ground decals remain in a separate verge cache, never in the road surface.
@@ -77,28 +99,62 @@
    }
    ctx.restore();
   }
+  // Explicit physical locations: every foliage/prop foot is off-road.
+  // Hash-based distribution is invariant under render rate, pause and replay.
   function drawDecor(ctx,distance,clock,foreground=false){
-   if(!ready||origin===null)return;const enter=distance-origin;if(enter<=0)return;
+   if(!ready||origin===null)return;
+   const enter=distance-origin;if(enter<=0)return;
    ctx.save();ctx.beginPath();ctx.rect(0,0,103,Math.min(640,enter));ctx.rect(257,0,103,Math.min(640,enter));ctx.clip();
    const base=Math.floor(enter/64);
-   // Render far-to-near; each decoration is derived from a bounded world slot.
-   for(let i=base+3;i>=base-12;i--){const z=i*64;if(z<0)continue;const y=enter-z,stage=stageAt(z);if(y< -140||y>790||(y>546)!==foreground)continue;
+   for(let i=base+3;i>=base-12;i--){
+    const z=i*64;if(z<0)continue;
+    const y=enter-z,stage=stageAt(z);
+    if(y< -145||y>795||(y>546)!==foreground)continue;
     for(let side=0;side<2;side++){
-     const h=hash(i*2+side,runSeed),x=side?274:86;
-     if(stage>0||i%3===side){
-      ctx.globalAlpha=smooth(z/220);const sway=Math.sin(clock*1.15+(h%100)*.06)*.8,drift=(h%39)-19;sprite(ctx,grasses[h%grasses.length],x+(side?1:-1)*(h%13),y+drift,sway);
-      if(stage>=2||stage===1&&i%2===0)sprite(ctx,grasses[(h>>>5)%grasses.length],side?332:28,y-21,-sway*.5);
+     const h=hash(i*2+side,runSeed),another=hash(i*5+side,runSeed^0x41c6);
+     // x is the ground contact, not sprite left. No arbitrary mirroring,
+     // rotation, perspective scaling or placement on the 150-unit road.
+     const vergeX=side?269+(h%24):91-(h%24),drift=(h%33)-16;
+     const cover=stage===0?((i+side)%3===0):stage===1?(h%7<4):stage===2?(h%7<5):(h%8<6);
+     if(cover){
+      const grass=grasses[(h>>>7)%grasses.length];
+      ctx.globalAlpha=.72+.09*(h%3);
+      sprite(ctx,grass,vergeX,y+drift,Math.sin(clock*1.15+(h%100)*.06)*.65);
+      // Occasional displaced secondary growth breaks the repeating strip rhythm.
+      if(stage>=2&&another%11<2){
+       ctx.globalAlpha=.48;
+       sprite(ctx,grasses[(another>>>5)%grasses.length],side?322:38,y-28+((another>>>12)%24),-Math.sin(clock*1.15+(h%100)*.06)*.3);
+      }
      }
-     ctx.globalAlpha=smooth(z/220);if(stage>=2&&i%6===side)sprite(ctx,props[(h>>>16)%props.length],side?324:35,y-9);
-     if(i%3===side&&stage>=1){
-      const key=(stage>=3&&i%9===side||stage>=2&&i%15===side)?ruins[(h>>>8)%ruins.length]:i%7===side?'fallen_log_large_01':props[(h>>>8)%props.length];
-      ctx.fillStyle='rgba(24,36,24,.22)';ctx.beginPath();ctx.ellipse(side?311:49,y+1,27,5,0,0,7);ctx.fill();sprite(ctx,key,side?314:46,y);
+     // Low props appear mainly inside the verge, with anchored contact shadow.
+     const smallProp=stage>=1&&h%11===side+1;
+     if(smallProp){
+      const key=props[(h>>>16)%props.length],foot=y-7+((another>>>10)%16);
+      const px=side?315-(h%27):45+(h%27);
+      ctx.globalAlpha=.92;
+      ctx.fillStyle='rgba(22,30,24,.2)';ctx.beginPath();ctx.ellipse(px,foot+2,16,3.3,0,0,Math.PI*2);ctx.fill();
+      sprite(ctx,key,px,foot);
+     }
+     // Big wood and ruins must be rare, coherent landmarks, not repeated clutter.
+     const ruin=stage>=3&&i%29===side&&another%3===0;
+     const deepProp=stage>=2&&i%17===side+2;
+     const fallen=stage>=1&&i%23===side+3;
+     if(ruin||deepProp||fallen){
+      const key=ruin?ruins[(h>>>8)%ruins.length]:fallen?'fallen_log_large_01':props[(h>>>8)%props.length];
+      const px=side?310-(another%10):50+(another%10),foot=y-9;
+      ctx.globalAlpha=.88;
+      ctx.fillStyle='rgba(22,30,24,.2)';ctx.beginPath();ctx.ellipse(px,foot+2,23,4.5,0,0,Math.PI*2);ctx.fill();
+      sprite(ctx,key,px,foot);
      }
     }
    }
    const s=encounters.state;
    if(s.phase==='rustling'||s.phase==='recovery'){
-    const foot=distance-s.depth;if((foot>546)===foreground&&foot>-100&&foot<780){const shake=s.phase==='rustling'?Math.sin(s.time*27)*3:Math.sin(s.time*13)*Math.max(0,1-s.time)*1.5;sprite(ctx,'verge_grass_tall_wet_01',s.side<0?91:269,foot,shake);}
+    const foot=distance-s.depth;
+    if((foot>546)===foreground&&foot>-100&&foot<780){
+     const shake=s.phase==='rustling'?Math.sin(s.time*27)*3:Math.sin(s.time*13)*Math.max(0,1-s.time)*1.5;
+     ctx.globalAlpha=1;sprite(ctx,'verge_grass_tall_wet_01',s.side<0?91:269,foot,shake);
+    }
    }
    ctx.restore();
   }
