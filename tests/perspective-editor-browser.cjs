@@ -30,7 +30,15 @@ async function main(){
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,acceptDownloads:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/gary-perspective-editor.html?asset=victorian-lamppost',{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>document.querySelector('#message')?.textContent.includes('Editor ready'),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector('#message')?.textContent.includes('Editor ready'),null,{timeout:7000}).catch(async()=>{
+   const state=await page.evaluate(()=>({
+     message:document.querySelector('#message')?.textContent,
+     ready:document.readyState,
+     scripts:[...document.scripts].map(x=>({src:x.src})),
+     loadedAssets:document.querySelector('#asset')?.options?.length
+   }));
+   throw Error('Editor did not initialize: '+JSON.stringify({state,errors}));
+  });
   assert.equal(await page.locator('#asset').inputValue(),'victorian-lamppost');
   const specimen=definitions.templates.find(t=>t.id==='victorian-lamppost');
   assert.equal(await page.locator('#edit').evaluate(c=>c.width),specimen.source.width);
