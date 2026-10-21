@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — Asset Factory</title>
+<style>
+:root{color-scheme:dark;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#101b1d;color:#ecf1e9}
+*{box-sizing:border-box}body{margin:0;padding:13px max(12px,env(safe-area-inset-left)) max(18px,env(safe-area-inset-bottom))}
+main{max-width:1000px;margin:auto}h1{font-size:23px;margin:0 0 4px}h2{font-size:16px;margin:0 0 9px}
+p{margin:7px 0 11px;line-height:1.44;color:#bfcbc3}a{color:#e5cf9b}
+.layout{display:grid;grid-template-columns:minmax(0,360px) minmax(260px,1fr);gap:18px;align-items:start}
+.stage{position:relative;width:100%;aspect-ratio:9/16;background:#232c29;border:2px solid #71877f;border-radius:8px;overflow:hidden}
+.stage img,.stage iframe,.stage canvas{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.stage img{object-fit:fill;z-index:1}.stage iframe{z-index:0}.stage canvas{z-index:2;pointer-events:none}
+.panel{background:#1b2929;border:1px solid #405a53;border-radius:9px;padding:12px;margin-bottom:10px}
+label{display:block;margin:9px 0}select,button,input[type=file]{font:inherit}
+select,button{background:#314b46;border:1px solid #79968a;border-radius:6px;color:white;min-height:44px;padding:9px}
+select{width:100%}button{cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.4;cursor:not-allowed}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #f6d086}
+.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.controls button{font-size:12px;padding:8px 3px}
+#result{background:#1d3b35;color:#e5f1df;min-height:43px;padding:10px;border-radius:7px;white-space:pre-line}
+#report{font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0;color:#d4dfd4}
+.tag{color:#f6d5a4;font-weight:700}small{color:#abbeb4}
+input[type=file]{width:100%;max-width:100%;min-height:44px}
+input[type=checkbox]{accent-color:#d9b879}
+#copyField{width:100%;min-height:140px;margin-top:9px;display:none;font:12px/1.4 monospace;color:#f4f1e9;background:#111e1d;border:1px solid #60776d}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.stage{width:min(100%,310px);margin:auto}h1{font-size:20px}}
+</style></head><body><main>
+<h1>Gary Eats! — Asset Factory</h1>
+<p>Reusable geometry masks, camera profiles and transparent-art handoff. <span class="tag">Review workspace, not automatic art approval or live asset registration.</span></p>
+<div class="layout">
+<section>
+<div class="stage" id="stage">
+<iframe id="game" src="about:blank" title="Isolated real-engine reference"></iframe>
+<img id="reference" src="docs/bridge/approach.png" alt="Actual-game review screenshot used as scale reference">
+<canvas id="preview" width="360" height="640" aria-label="Game coordinate asset preview"></canvas>
+</div>
+<p style="font-size:12px">Exactly 360 × 640 game units. All placement rectangles are screen-parallel. Imported artwork stays local to this browser.</p>
+<div id="result" role="status" aria-live="polite">Loading geometry contracts…</div>
+</section>
+<section>
+<div class="panel">
+<h2>1. Choose the asset</h2>
+<label for="asset">Asset template</label>
+<select id="asset"></select>
+<label for="scene">Scene reference</label>
+<select id="scene"></select>
+<label><input id="guides" type="checkbox" checked> Show geometry and lane guides</label>
+<p id="spec" style="font-size:12px"></p>
+</div>
+<div class="panel">
+<h2>2. Export controlled geometry</h2>
+<div class="controls">
+<button id="template">Transparent template PNG</button>
+<button id="mask">Solid silhouette mask</button>
+<button id="brief">Copy ChatGPT art brief</button>
+<button id="registration">Copy registration JSON</button>
+</div>
+<p style="font-size:12px">Attach the transparent template when generating art. The geometry must not be repainted or perspective-warped.</p>
+</div>
+<div class="panel">
+<h2>3. Import and validate ChatGPT artwork</h2>
+<label for="upload">PNG source with real transparency</label>
+<input id="upload" type="file" accept="image/png">
+<div id="report">No artwork imported.</div>
+<div class="controls">
+<button id="final" disabled>Export masked PNG</button>
+<button id="clear">Clear imported art</button>
+</div>
+<p style="font-size:12px">Validates size, actual alpha, outside-mask pixels, foot baseline and safe padding. It cannot independently certify artistic projection, material fidelity or iPhone performance.</p>
+<p style="margin:12px 0 6px"><a id="perspectiveLink" href="gary-perspective-editor.html" style="display:block;text-align:center;background:#415b50;color:#fff;text-decoration:none;border:1px solid #aac4a9;border-radius:7px;padding:12px;font-weight:700">Open Manual Perspective Editor →</a></p>
+<p style="font-size:12px">Adjust imported artwork's apparent height, skew or individual face corners. You will need to select the PNG again in the editor; originals stay on your device.</p>
+</div>
+<div class="panel">
+<h2>4. Preview / evidence</h2>
+<div class="controls">
+<button id="still">Game screenshot</button>
+<button id="real">Real engine (bridge debug)</button>
+<button id="pause">Freeze engine</button>
+<button id="resume">Play engine</button>
+<button id="screenshot">Export annotated preview</button>
+<button id="instructions">Copy handoff</button>
+</div>
+<p style="font-size:12px">Real engine is shown behind the overlay in its own isolated debug session. Imported art is NOT inserted into gameplay render passes or assigned collisions until integrated separately.</p>
+</div>
+<textarea id="copyField" readonly aria-label="Copyable prompt and registration output"></textarea>
+<p style="font-size:12px"><a href="GARY_ASSET_FACTORY.md">Implementation and QA status</a> · <a href="gary-camera-lab.html">Existing Camera Lab</a></p>
+</section></div></main>
+<script src="gary-asset-factory.js"></script>
+<script>
+(async function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let camera,contract,spec,mode='screenshot',art=null,valid=false,uploadName='';
+let artworkUrl=null,customScreenshot=null;
+const view=$('preview'),ctx=view.getContext('2d');
+const frame=$('game'),reference=$('reference');
+const status=s=>$('result').textContent=s;
+function current(){return spec;}
+function picture(){
+ ctx.clearRect(0,0,360,640);
+ if($('guides').checked){
+  ctx.save();ctx.strokeStyle='rgba(126,218,240,.7)';ctx.lineWidth=1;
+  for(const x of [105,130,180,230,255]){ctx.setLineDash([4,6]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,640);ctx.stroke();}
+  ctx.restore();
+ }
+ if(!spec)return;
+ const d=spec.draw;
+ ctx.save();ctx.translate(d.x,d.y);
+ if(art){
+  GaryAssetFactory.draw(ctx,spec,{mode:'clip',image:art});
+  if($('guides').checked)GaryAssetFactory.draw(ctx,spec,{mode:'outline'});
+ }else GaryAssetFactory.draw(ctx,spec,{mode:'template'});
+ ctx.restore();
+ ctx.save();ctx.strokeStyle='#e8b67c';ctx.setLineDash([4,3]);ctx.lineWidth=1.1;ctx.strokeRect(d.x,d.y,d.width,d.height);
+ ctx.fillStyle='#f4d49e';ctx.beginPath();
+ ctx.arc(d.x+d.width*spec.anchor.x,d.y+d.height*spec.anchor.y,2.3,0,2*Math.PI);ctx.fill();ctx.restore();
+}
+function switchAsset(id){
+ spec=contract.templates.find(t=>t.id===id);
+ if(!spec)throw Error('Unknown template '+id);
+ const prevScene=$('scene').value;
+ if(prevScene!==spec.scene)$('scene').value=spec.scene;
+ if(artworkUrl){URL.revokeObjectURL(artworkUrl);artworkUrl=null;}
+ art=null;valid=false;uploadName='';$('upload').value='';$('final').disabled=true;
+ $('report').textContent='No artwork imported.';
+ setScene();picture();
+ $('perspectiveLink').href='gary-perspective-editor.html?asset='+encodeURIComponent(spec.id);
+ $('spec').textContent=spec.source.width+'×'+spec.source.height+' source pixels · '+spec.draw.width+'×'+spec.draw.height+
+  ' design units · x'+spec.draw.x+' y'+spec.draw.y+' · anchor ('+spec.anchor.x+','+spec.anchor.y+') · '+contract.profiles[spec.profile].status;
+}
+function setScene(){
+ if(customScreenshot)return;
+ reference.src=contract.scenes[$('scene').value].image;
+ reference.alt=contract.scenes[$('scene').value].description;
+}
+function artCanvas(type,maskImage=false){
+ const c=document.createElement('canvas');c.width=spec.source.width;c.height=spec.source.height;
+ const g=c.getContext('2d',{willReadFrequently:true});
+ g.save();g.scale(c.width/spec.draw.width,c.height/spec.draw.height);
+ if(type==='art'&&art){
+  GaryAssetFactory.draw(g,spec,{mode:'clip',image:art});
+ }else{
+  GaryAssetFactory.draw(g,spec,{mode:type==='mask'?'mask':'template'});
+ }
+ g.restore();return c;
+}
+async function shareCanvas(c,name){
+ const blob=await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('PNG unavailable')),'image/png'));
+ const file=new File([blob],name,{type:'image/png'});
+ if(navigator.canShare?.({files:[file]})){
+  try{await navigator.share({files:[file],title:'Gary Eats Asset Factory'});return;}
+  catch(e){if(e.name==='AbortError')return;}
+ }
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),20000);
+}
+function copy(text){
+ $('copyField').style.display='block';$('copyField').value=text;
+ if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(()=>status('Copied to clipboard.')).catch(()=>{
+ $('copyField').focus();$('copyField').select();status('Select and copy the text displayed below.');});}
+ else{$('copyField').focus();$('copyField').select();status('Select and copy the text displayed below.');}
+}
+function brief(){
+ const cameraProfile=contract.profiles[spec.profile];
+ return [
+ 'GARY EATS! — ART GENERATION BRIEF (CANDIDATE, NOT CAMERA-APPROVED)',
+ 'Generate ONE transparent PNG of: '+spec.name+'.',
+ 'ATTACH the exported template PNG; preserve its full silhouette, proportions, angle, viewpoint, padding and base placement. Do not invent 3D foreshortening or another vanishing point.',
+ 'Source dimensions: '+spec.source.width+'×'+spec.source.height+' px. No sprite-sheet grid: single 1×1 cell.',
+ 'Gameplay draw rectangle (360×640 design canvas): x='+spec.draw.x+', y='+spec.draw.y+', width='+spec.draw.width+', height='+spec.draw.height+'.',
+ 'Registration anchor (normalised): x='+spec.anchor.x+', y='+spec.anchor.y+'. Transparent safe padding: '+spec.paddingPx+' source pixels.',
+ 'Camera family: '+spec.profile+' ('+cameraProfile.status+'). Existing game uses fixed, parallel screen coordinates with no receding vanishing point.',
+ 'Art treatment: '+spec.style,
+ 'One image, no road, people, water, scenery, cast background, checkerboard, border or embedded UI. Preserve truly transparent RGBA background.',
+ 'Do NOT crop, resize, rotate, mirror, or change the protected template geometry. Keep all visible pixels within the silhouette mask.',
+ 'Final artistic camera/style matching requires comparison to the approved game screenshot in Camera Lab; this prompt does not certify approval.'
+ ].join('\n');
+}
+async function importArt(file){
+ valid=false;art=null;$('final').disabled=true;
+ if(!file)return;
+ if(file.type!=='image/png'){$('report').textContent='FAIL: PNG required, not '+file.type;return;}
+ if(artworkUrl)URL.revokeObjectURL(artworkUrl);
+ artworkUrl=URL.createObjectURL(file);uploadName=file.name;
+ const pic=new Image();
+ try{
+  await new Promise((resolve,reject)=>{pic.onload=resolve;pic.onerror=()=>reject(Error('Unreadable PNG'));pic.src=artworkUrl;});
+  const src=document.createElement('canvas');src.width=pic.naturalWidth;src.height=pic.naturalHeight;
+  const sctx=src.getContext('2d',{willReadFrequently:true});sctx.drawImage(pic,0,0);
+  const geom=artCanvas('mask'),mctx=geom.getContext('2d',{willReadFrequently:true});
+  const result=GaryAssetFactory.inspect(sctx.getImageData(0,0,src.width,src.height),
+    src.width===geom.width&&src.height===geom.height?mctx.getImageData(0,0,geom.width,geom.height):null,spec,file.type);
+  valid=result.pass;art=pic;$('final').disabled=!valid;
+  $('report').textContent=(valid?'STRUCTURAL PASS':'STRUCTURAL FAIL')+
+   '\n'+JSON.stringify(result,null,2)+'\nArtistic camera accuracy: UNVERIFIED.';
+  status(valid?'PNG structural checks pass; artistic approval and integration remain outstanding.':
+   'PNG failed structural checks. Keep artwork available for comparison; masked export disabled.');
+ }catch(e){$('report').textContent='FAIL: '+e.message;}
+ picture();
+}
+async function screenshot(){
+ const c=document.createElement('canvas');c.width=360;c.height=640;const d=c.getContext('2d');
+ try{
+  if(mode==='live'){const gameCanvas=frame.contentDocument?.getElementById('c');
+   if(!gameCanvas)throw Error('Game image not loaded');
+   d.drawImage(gameCanvas,0,0,360,640);
+  }else{
+   if(!reference.complete||!reference.naturalWidth)throw Error('Reference screenshot not loaded');
+   d.drawImage(reference,0,0,360,640);
+  }
+  d.drawImage(view,0,0,360,640);
+  await shareCanvas(c,'gary-factory-'+spec.id+'-candidate-preview.png');
+ }catch(e){status('Preview export failed: '+e.message);}
+}
+function gameAPI(){
+ try{return frame.contentWindow?.GaryBridgePreview;}catch(_){return null;}
+}
+function gameStart(){
+ const api=gameAPI();
+ if(!api)return false;
+ try{
+  const scene=spec.scene==='bridge'?'middle':'approach';
+  if(!api.start(scene))return false;
+  api.freeze();return true;
+ }catch(_){return false;}
+}
+function showMode(next){
+ mode=next;
+ frame.style.visibility=mode==='live'?'visible':'hidden';
+ reference.style.visibility=mode==='live'?'hidden':'visible';
+ if(next==='live'){
+  if(frame.src==='about:blank')frame.src='index.html?debug=1&bridgepreview=1&seed=12345';
+  if(!gameStart())status('Waiting for isolated game startup. Retry Real engine after loading.');
+  else status('Real-engine background with design overlay; NOT registered in the game render pass.');
+ }else{gameAPI()?.freeze();status('Gameplay screenshot composite · candidate silhouette; no runtime registration.');}
+ picture();
+}
+try{
+ const [a,b]=await Promise.all([fetch('gary-asset-factory-contract.json',{cache:'no-store'}),fetch('gary-camera-contract.json',{cache:'no-store'})]);
+ if(!a.ok||!b.ok)throw Error('Required camera/asset contracts cannot be loaded');
+ contract=await a.json();camera=await b.json();
+ const v=GaryAssetFactory.validate(contract,camera);
+ if(!v.ok)throw Error(v.errors.join('; '));
+ for(const entry of contract.templates){const option=document.createElement('option');option.value=entry.id;option.textContent=entry.name;$('asset').append(option);}
+ for(const id of Object.keys(contract.scenes)){const option=document.createElement('option');option.value=id;option.textContent=id;$('scene').append(option);}
+ $('asset').addEventListener('change',()=>switchAsset($('asset').value));
+ $('scene').addEventListener('change',()=>{customScreenshot=null;setScene();picture();});
+ $('guides').addEventListener('change',picture);
+ $('upload').addEventListener('change',async e=>importArt(e.target.files?.[0]));
+ $('template').addEventListener('click',()=>shareCanvas(artCanvas('template'),spec.id+'-template.png'));
+ $('mask').addEventListener('click',()=>shareCanvas(artCanvas('mask'),spec.id+'-mask.png'));
+ $('final').addEventListener('click',()=>{if(valid&&art)shareCanvas(artCanvas('art'),spec.id+'-masked-candidate.png');});
+ $('brief').addEventListener('click',()=>copy(brief()));
+ $('registration').addEventListener('click',()=>copy(JSON.stringify(GaryAssetFactory.registration(spec,camera),null,2)));
+ $('clear').addEventListener('click',()=>switchAsset(spec.id));
+ $('still').addEventListener('click',()=>showMode('screenshot'));
+ $('real').addEventListener('click',()=>showMode('live'));
+ $('pause').addEventListener('click',()=>{gameAPI()?.freeze();status('Debug engine frozen.');});
+ $('resume').addEventListener('click',()=>{gameAPI()?.resume();status('Debug engine playing; candidate overlay still not integrated.');});
+ $('screenshot').addEventListener('click',screenshot);
+ $('instructions').addEventListener('click',()=>copy('Review '+spec.id+' using source PNG '+uploadName+'.\n'+
+  'Camera profile: '+contract.profiles[spec.profile].status+'.\n'+
+  'World position: '+JSON.stringify(spec.draw)+'; anchor: '+JSON.stringify(spec.anchor)+'.\n'+
+  'Run asset-quality gate and check layered render order, visual camera and iPhone playback. Never auto-register unapproved work.'));
+ frame.addEventListener('load',()=>{if(mode==='live'&&gameAPI()&&!gameStart())status('Engine loading assets; retry Real engine.');});
+ $('scene').value=contract.templates[0].scene;switchAsset(contract.templates[0].id);status('Four deterministic templates ready. Camera geometry is not artistic approval.');
+}catch(e){status('Factory initialization failed: '+e.message);}
+})();
+</script></body></html>
