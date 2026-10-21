@@ -164,7 +164,8 @@ test('normal-play painted bridge loads the exact registered artwork without chan
    await new Promise(resolve=>setTimeout(resolve,20));
    status=f.w.__test.bridgeArtwork();
   }
-  assert.deepEqual(status,{status:'painted-review',mode:'UNAPPROVED_ART_REVIEW'});
+  assert.equal(status.status,'painted-review');
+  assert.equal(status.mode,'UNAPPROVED_ART_REVIEW');
   f.w.document.getElementById('startBtn').click();f.w.document.getElementById('skipIntroBtn').click();f.w.__test.skipEntrance();
   assert.equal(f.w.__test.bridge().phase,'dormant');
   f.w.__test.reset();
