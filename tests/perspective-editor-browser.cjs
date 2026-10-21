@@ -67,7 +67,9 @@ async function main(){
     y:rect.y+q[0].y*rect.height/specimen.source.height};
   await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+6,p.y+4,{steps:4});await page.mouse.up();
   edit=await settings(page);
-  assert.ok(edit.settings.quadrilaterals.whole[0].x>q[0].x,'touch-handle equivalent mouse drag changed geometry');
+  assert.ok(edit.settings.quadrilaterals.whole[0].x>q[0].x,
+    'drag did not change corner: '+JSON.stringify({before:q[0],after:edit.settings.quadrilaterals.whole[0],
+    rect,p,stageMessage:await page.locator('#message').textContent()}));
   const afterX=edit.settings.quadrilaterals.whole[0].x;
   await page.locator('#undo').click();
   edit=await settings(page);assert.ok(edit.settings.quadrilaterals.whole[0].x<afterX);
