@@ -53,8 +53,8 @@
     return {x:q[0].x*w0+q[1].x*w1+q[2].x*w2+q[3].x*w3,
             y:q[0].y*w0+q[1].y*w1+q[2].y*w2+q[3].y*w3};
   }
-  function paintTriangle(ctx,img,s,d){
-    const A=s[0],B=s[1],C=s[2],X=d[0],Y=d[1],Z=d[2];
+  function paintTriangle(ctx,img,s,target){
+    const A=s[0],B=s[1],C=s[2],X=target[0],Y=target[1],Z=target[2];
     const dx1=B.x-A.x,dy1=B.y-A.y,dx2=C.x-A.x,dy2=C.y-A.y;
     const det=dx1*dy2-dy1*dx2;
     if(Math.abs(det)<1e-9)return;
