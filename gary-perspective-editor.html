@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — Perspective Editor</title>
+<style>
+:root{color-scheme:dark;background:#131e20;color:#edf1e6;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;padding:12px max(12px,env(safe-area-inset-left)) max(20px,env(safe-area-inset-bottom))}
+main{max-width:1050px;margin:auto}h1{margin:0 0 6px;font-size:22px}h2{font-size:15px;margin:0 0 9px}
+p{color:#b8c7bf;line-height:1.42;margin:8px 0}small{color:#a8b9b3}
+a{color:#f2d28f}label{display:block;margin:9px 0}input,select,button{font:inherit}
+button,select{border:1px solid #778f85;background:#314a45;border-radius:8px;color:#fff;min-height:44px;padding:8px}
+button{cursor:pointer;touch-action:manipulation}button:disabled{opacity:.4;cursor:not-allowed}
+button[aria-pressed=true]{background:#bfa16c;color:#17221b;font-weight:700}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #f9d080}
+select{width:100%}
+.layout{display:grid;grid-template-columns:minmax(250px,420px) minmax(260px,1fr);gap:14px}
+.card{border:1px solid #3b524c;background:#1b2929;border-radius:10px;padding:12px;margin-bottom:12px}
+.center{display:flex;justify-content:center;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.canvasHolder{display:flex;justify-content:center;align-items:center;min-height:160px;max-height:410px;overflow:hidden;background:repeating-conic-gradient(#384643 0 25%,#233430 0 50%) 50%/24px 24px;border-radius:8px}
+.artStage{position:relative;display:inline-block;line-height:0;max-height:400px;max-width:100%}
+.artStage canvas{display:block;width:auto;height:auto;max-width:100%;max-height:400px}
+.artStage #handles{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.worldStage{position:relative;width:min(100%,225px);aspect-ratio:9/16;margin:auto;overflow:hidden;border:1px solid #708780;border-radius:7px}
+.worldStage img,.worldStage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+#world{pointer-events:none}
+#message{white-space:pre-line;padding:10px;background:#254037;border-radius:6px;min-height:44px}
+.warning{color:#f4d299}input[type=range]{width:100%;accent-color:#e4be7e;min-height:28px;display:block}
+.range{margin:8px 0;display:block}.range .between{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.range output{font-variant-numeric:tabular-nums;color:#f3daab}
+.upload{display:block;width:100%;padding:8px 0;min-height:44px}
+#facesGroup[hidden],#cornersHelp[hidden],#quickGroup[hidden]{display:none}
+#report{white-space:pre-wrap;font:12px/1.55 ui-monospace,monospace;color:#cbd8ce}
+#copyField{width:100%;height:120px;background:#111c1b;color:#e8f2e9;border:1px solid #658075;display:none;margin-top:7px}
+@media(max-width:750px){.layout{grid-template-columns:1fr}h1{font-size:19px}.artStage canvas,.artStage{max-height:360px}.canvasHolder{max-height:375px}.worldStage{width:min(100%,200px)}}
+</style></head><body><main>
+<header><h1>Gary Eats! — Manual Perspective Editor</h1>
+<p><a href="gary-asset-factory.html">← Asset Factory</a> · Non-destructive sprite correction · <span class="warning">Camera/art still require approval</span></p></header>
+<div class="layout">
+<section>
+<div class="card">
+<h2>Original artwork / correction handles</h2>
+<div class="canvasHolder"><div class="artStage">
+<canvas id="edit" width="288" height="864" aria-label="Editable asset at exact source resolution"></canvas>
+<canvas id="handles" width="288" height="864" aria-label="Drag the numbered orange corner handles"></canvas>
+</div></div>
+<p><small>Drag the orange handles in Corners mode. Tap the Before / After button to compare the original. The original image is never overwritten.</small></p>
+<div class="grid2">
+<button id="compare" aria-pressed="false">Show before</button>
+<button id="reset">Reset adjustments</button>
+</div>
+</div>
+<div class="card">
+<h2>Game-scale preview</h2>
+<div class="worldStage"><img id="background" src="docs/bridge/approach.png" alt="Unapproved engine screenshot reference"><canvas id="world" width="360" height="640"></canvas></div>
+<p><small>World coordinates stay 360×640, unchanged camera, no distance-based scaling. This overlays an editor candidate; it is not a registered gameplay sprite.</small></p>
+</div>
+<div id="message" role="status" aria-live="polite">Loading camera and Asset Factory profiles…</div>
+</section>
+<section>
+<div class="card">
+<h2>1. Choose asset and input layers</h2>
+<label>Geometry template <select id="asset"></select></label>
+<label>Editor mode <select id="mode"><option value="whole">Whole sprite</option><option value="faces">Separate object faces (advanced)</option></select></label>
+<div class="grid2" id="toolGroup"><button data-tool="quick" aria-pressed="true">Quick correction</button><button data-tool="corners" aria-pressed="false">Corner handles</button></div>
+<div id="facesGroup" hidden>
+<label>Selected independent face <select id="face"><option value="front">Front</option><option value="roof">Top / roof</option><option value="side">Side</option></select></label>
+<p class="warning" style="font-size:12px">Each face must be painted/exported as a **separate full-size transparent PNG**. A flat single image cannot reveal genuinely hidden surfaces.</p>
+</div>
+<label>Import transparent PNG for <strong id="layerLabel">whole sprite</strong>
+<input class="upload" id="file" type="file" accept="image/png"></label>
+<p id="fileInfo" style="font-size:12px">No PNG loaded. The geometric reference can still be edited for layout testing.</p>
+<label><input id="anchorLock" type="checkbox" checked> Lock the bottom ground anchor (whole-sprite mode)</label>
+</div>
+<div id="quickGroup" class="card">
+<h2>2. Quick adjustment</h2>
+<label class="range"><span class="between">Width <output id="widthOut">100%</output></span>
+<input id="widthScale" type="range" min=".7" max="1.3" step=".01" value="1"></label>
+<label class="range"><span class="between">Apparent height <output id="heightOut">100%</output></span>
+<input id="heightScale" type="range" min=".7" max="1.3" step=".01" value="1"></label>
+<label class="range"><span class="between">Horizontal top skew <output id="skewOut">0</output></span>
+<input id="skew" type="range" min="-15" max="15" step=".5" value="0"></label>
+<label class="range"><span class="between">Visible top-face shift <output id="depthOut">0</output></span>
+<input id="topDepth" type="range" min="-16" max="16" step=".5" value="0"></label>
+<p style="font-size:12px">Skew and depth are measured as a percentage of source width/height. These controls change existing pixels; they do not generate unseen surfaces.</p>
+</div>
+<div class="card" id="cornersHelp" hidden>
+<h2>2. Corner editor</h2>
+<p>Drag handles 1–4 in the source canvas. Each face keeps its own corners. With ground-anchor lock on, the whole sprite's lower handles cannot move.</p>
+<div class="grid2"><button id="recenter">Rebuild selected quad from quick settings</button><button id="straighten">Straighten selected quad</button></div>
+</div>
+<div class="card">
+<h2>3. World placement (metadata only)</h2>
+<label class="range"><span class="between">X offset <output id="offsetXOut">0</output></span><input id="offsetX" type="range" min="-24" max="24" step="1" value="0"></label>
+<label class="range"><span class="between">Y offset <output id="offsetYOut">0</output></span><input id="offsetY" type="range" min="-24" max="24" step="1" value="0"></label>
+<p style="font-size:12px">Moving the object on-screen changes *candidate placement metadata*; it never moves world lanes, hitboxes or ground geometry.</p>
+<div class="grid2"><button id="undo">Undo</button><button id="redo">Redo</button></div>
+</div>
+<div class="card">
+<h2>4. Export candidate and settings</h2>
+<div class="grid2">
+<button id="exportPng">Export adjusted PNG</button>
+<button id="exportSettings">Export edit JSON</button>
+<button id="importSettings">Load edit JSON</button>
+<button id="copySettings">Copy edit settings</button>
+<button id="previewPng">Export game preview</button>
+<button id="resetFace">Reset selected face</button>
+</div>
+<input id="settingsFile" type="file" accept="application/json,.json" hidden>
+<p id="report">Awaiting input. Exports are review candidates only.</p>
+<textarea id="copyField" readonly aria-label="Editable copy fallback"></textarea>
+<p><small>Actual photo realism, correct hidden geometry and final raised camera accuracy cannot be validated automatically. Pixel padding and source dimensions are checked before export.</small></p>
+</div>
+</section></div></main>
+<script src="gary-asset-factory.js"></script>
+<script src="gary-perspective-editor.js"></script>
+<script>
+(async function(){
+'use strict';
+const $=id=>document.getElementById(id),P=GaryPerspectiveEditor,Factory=GaryAssetFactory;
+let contract,camera,spec,state,history=[],future=[],layers={},activeLayer='whole',showBefore=false,redrawQueued=false;
+let drag=null,renderReport=null;
+const edit=$('edit'),handles=$('handles'),world=$('world');
+const message=s=>$('message').textContent=s;
+const loadCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
+const files=()=>Object.fromEntries(Object.entries(layers).map(([k,v])=>[k,v.filename]));
+function snapshot(){return P.copy(state);}
+function commit(before){
+ if(JSON.stringify(before)===JSON.stringify(state))return;
+ history.push(before);if(history.length>40)history.shift();future.length=0;
+ state.hasChanges=true;queue();
+}
+function sourceLayer(key){
+ const imported=layers[key];if(imported)return imported;
+ if(key!=='whole')return null;
+ // Preview-only deterministic outline; never exported as painted art.
+ const c=loadCanvas(spec.source.width,spec.source.height),ctx=c.getContext('2d');
+ ctx.scale(spec.source.width/spec.draw.width,spec.source.height/spec.draw.height);
+ Factory.draw(ctx,spec,{mode:'template'});
+ return {img:c,filename:null,bounds:P.boundsFromPixels(c.getContext('2d').getImageData(0,0,c.width,c.height)),demo:true};
+}
+function selected(){return state.mode==='whole'?'whole':state.selected;}
+function currentBounds(key){return sourceLayer(key)?.bounds||null;}
+function baseQuad(key,bounds){
+ const center={x:spec.anchor.x*spec.source.width,y:spec.anchor.y*spec.source.height};
+ return P.quickQuad(bounds,state.quick,center);
+}
+function activeQuad(key,bounds){
+ if(state.tool==='corners'&&state.quadrilaterals[key])return state.quadrilaterals[key];
+ return baseQuad(key,bounds);
+}
+function renderCanvas(before=false,quality=8){
+ const c=loadCanvas(spec.source.width,spec.source.height),ctx=c.getContext('2d');
+ ctx.imageSmoothingEnabled=true;
+ const keys=state.mode==='whole'?['whole']:['side','front','roof'];
+ let count=0,rejected=[];
+ for(const key of keys){
+  const item=sourceLayer(key);if(!item?.bounds)continue;
+  const quad=before?P.corners(item.bounds):activeQuad(key,item.bounds);
+  if(!P.validQuad(quad,c.width,c.height,spec.paddingPx)){rejected.push(key);continue;}
+  try{P.warp(ctx,item.img,item.bounds,quad,quality);count++;}
+  catch(e){rejected.push(key+': '+e.message);}
+ }
+ return {canvas:c,count,rejected};
+}
+function geometryOverlay(){
+ const h=handles.getContext('2d');h.clearRect(0,0,handles.width,handles.height);
+ if(showBefore||state.tool!=='corners')return;
+ const item=sourceLayer(selected());if(!item?.bounds)return;
+ const q=activeQuad(selected(),item.bounds);
+ const displayRect=handles.getBoundingClientRect();
+ const factor=handles.width/Math.max(1,displayRect.width),radius=9*factor;
+ h.save();h.lineWidth=2*factor;h.strokeStyle='#f9d18b';h.setLineDash([6*factor,5*factor]);
+ h.beginPath();h.moveTo(q[0].x,q[0].y);for(let i=1;i<4;i++)h.lineTo(q[i].x,q[i].y);h.closePath();h.stroke();h.setLineDash([]);
+ q.forEach((p,i)=>{
+  const locked=state.anchorLock&&selected()==='whole'&&i>=2;
+  h.beginPath();h.arc(p.x,p.y,radius,0,Math.PI*2);h.fillStyle=locked?'#91e9bb':'#eec77c';h.fill();
+  h.lineWidth=1.5*factor;h.strokeStyle='#1f2926';h.stroke();
+  h.fillStyle='#152625';h.font='bold '+Math.round(radius*1.18)+'px system-ui';
+  h.textAlign='center';h.textBaseline='middle';h.fillText(String(i+1),p.x,p.y);
+ });
+ h.restore();
+}
+function worldPreview(c){
+ const ctx=world.getContext('2d');ctx.clearRect(0,0,360,640);
+ ctx.imageSmoothingEnabled=true;
+ const d=spec.draw;
+ ctx.drawImage(c,d.x+state.placement.dx,d.y+state.placement.dy,d.width,d.height);
+ ctx.strokeStyle='rgba(255,216,147,.90)';ctx.setLineDash([4,4]);
+ ctx.lineWidth=1;ctx.strokeRect(d.x+state.placement.dx,d.y+state.placement.dy,d.width,d.height);ctx.setLineDash([]);
+ const x=d.x+d.width*spec.anchor.x+state.placement.dx,y=d.y+d.height*spec.anchor.y+state.placement.dy;
+ ctx.strokeStyle='#a3f4c2';ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x+8,y);ctx.moveTo(x,y-8);ctx.lineTo(x,y+8);ctx.stroke();
+}
+function redraw(){
+ redrawQueued=false;if(!spec)return;
+ const composed=renderCanvas(showBefore,8);
+ edit.width=handles.width=spec.source.width;edit.height=handles.height=spec.source.height;
+ edit.getContext('2d').drawImage(composed.canvas,0,0);
+ worldPreview(composed.canvas);geometryOverlay();
+ $('layerLabel').textContent=state.mode==='whole'?'whole sprite':state.selected+' face';
+ $('facesGroup').hidden=state.mode!=='faces';
+ $('quickGroup').hidden=state.tool!=='quick';
+ $('cornersHelp').hidden=state.tool!=='corners';
+ $('fileInfo').textContent=selected() in layers?'Loaded '+layers[selected()].filename+' (original preserved).':
+   selected()==='whole'?'No artwork imported — visualising geometry only.':'No '+selected()+' layer imported; import a separate full-size transparent PNG.';
+ for(const [id,key,isPct] of [['widthOut','widthScale',true],['heightOut','heightScale',true],['skewOut','skew',false],['depthOut','topDepth',false]]){
+  $(id).textContent=isPct?Math.round(state.quick[key]*100)+'%':
+   Math.round(100*state.quick[key])/100+(key==='skew'?'% width':'% height');
+ }
+ $('offsetXOut').textContent=state.placement.dx;
+ $('offsetYOut').textContent=state.placement.dy;
+ $('undo').disabled=history.length===0;$('redo').disabled=future.length===0;
+ const mode=state.mode==='whole'?'whole raster':state.selected+' face';
+ if(composed.rejected.length)message('Invalid '+mode+' quad: '+composed.rejected.join(', ')+'. Revert with Undo or Reset.');
+}
+function queue(){if(redrawQueued)return;redrawQueued=true;requestAnimationFrame(redraw);}
+function setControls(){
+ $('mode').value=state.mode;$('face').value=state.selected;
+ $('anchorLock').checked=state.anchorLock;
+ $('widthScale').value=state.quick.widthScale;
+ $('heightScale').value=state.quick.heightScale;
+ $('skew').value=state.quick.skew;
+ $('topDepth').value=state.quick.topDepth;
+ $('offsetX').value=state.placement.dx;$('offsetY').value=state.placement.dy;
+ for(const b of document.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===state.tool));
+ queue();
+}
+function changeTemplate(id){
+ spec=contract.templates.find(t=>t.id===id);if(!spec)throw Error('Unknown asset');
+ state=P.initial(spec);history=[];future=[];layers={};showBefore=false;
+ $('file').value='';$('compare').setAttribute('aria-pressed','false');$('compare').textContent='Show before';
+ const ref=contract.scenes[spec.scene];$('background').src=ref.image;$('background').alt=ref.description;
+ $('report').textContent='No art imported. Preview uses a geometric guide.';
+ setControls();message('Ready: '+spec.id+' · source '+spec.source.width+'×'+spec.source.height+'. Camera projection remains unapproved.');
+}
+function pointerPoint(e){
+ const box=handles.getBoundingClientRect();
+ return {x:(e.clientX-box.left)*handles.width/box.width,
+  y:(e.clientY-box.top)*handles.height/box.height};
+}
+handles.addEventListener('pointerdown',e=>{
+ if(showBefore||state.tool!=='corners')return;
+ const key=selected(),item=sourceLayer(key);if(!item?.bounds)return;
+ const p=pointerPoint(e),q=activeQuad(key,item.bounds);
+ const rect=handles.getBoundingClientRect(),r=22*handles.width/rect.width;
+ let winner=-1,closest=r;
+ q.forEach((a,i)=>{const distance=Math.hypot(p.x-a.x,p.y-a.y);
+  if(distance<closest){closest=distance;winner=i;}});
+ if(winner<0||(state.anchorLock&&key==='whole'&&winner>=2))return;
+ const before=snapshot();
+ state.quadrilaterals[key]=P.copy(q);
+ drag={id:e.pointerId,key,corner:winner,before};
+ try{handles.setPointerCapture(e.pointerId);}catch(_){}
+ e.preventDefault();
+});
+handles.addEventListener('pointermove',e=>{
+ if(!drag||e.pointerId!==drag.id)return;
+ const point=pointerPoint(e),key=drag.key,q=P.copy(state.quadrilaterals[key]);
+ const pad=spec.paddingPx+1;
+ q[drag.corner]={x:P.clamp(point.x,pad,spec.source.width-pad),
+   y:P.clamp(point.y,pad,spec.source.height-pad)};
+ if(P.validQuad(q,spec.source.width,spec.source.height,spec.paddingPx)){
+  state.quadrilaterals[key]=q;queue();
+ }
+ e.preventDefault();
+});
+function endPointer(e){
+ if(!drag||e.pointerId!==drag.id)return;
+ const d=drag;drag=null;try{handles.releasePointerCapture(e.pointerId);}catch(_){}
+ commit(d.before);e.preventDefault();
+}
+handles.addEventListener('pointerup',endPointer);handles.addEventListener('pointercancel',endPointer);
+function updateFromSliders(){
+ const before=snapshot(),q=state.quick;
+ q.widthScale=Number($('widthScale').value);q.heightScale=Number($('heightScale').value);
+ q.skew=Number($('skew').value)*spec.source.width/100;
+ q.topDepth=Number($('topDepth').value)*spec.source.height/100;
+ // Keep every exported point within transparent image padding.
+ const bbox=currentBounds('whole')||currentBounds(selected());
+ if(bbox&&!P.validQuad(baseQuad('whole',bbox),spec.source.width,spec.source.height,spec.paddingPx)){
+  state=before;setControls();message('That transform would leave the safe canvas; adjustment rejected.');return;
+ }
+ commit(before);
+}
+function outputQA(c){
+ const image=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
+ const bounds=P.boundsFromPixels(image),p=spec.paddingPx;
+ if(!bounds)return {pass:false,errors:['No imported face artwork.'],bounds:null};
+ const errors=[];
+ if(bounds.x<p||bounds.y<p||bounds.x+bounds.w>c.width-p||bounds.y+bounds.h>c.height-p)
+  errors.push('Visible art touches reserved transparent padding.');
+ const footY=(spec.anchor.y*spec.source.height),left=spec.anchor.x*spec.source.width;
+ if(state.anchorLock&&state.mode==='whole'){
+  // Tolerant to small original illustration offsets; do not silently move the intended base.
+  let lastY=-1;
+  for(let y=0;y<c.height;y++)for(let x=Math.max(0,Math.floor(left-c.width*.12));x<=Math.min(c.width-1,Math.ceil(left+c.width*.12));x++){
+    if(image.data[(y*c.width+x)*4+3]>8)lastY=Math.max(lastY,y);
+  }
+  if(lastY>=0&&Math.abs(footY-lastY)>spec.footTolerancePx+spec.paddingPx+2)
+    errors.push('Artwork foot is no longer registered to the declared anchor.');
+ }
+ return {pass:errors.length===0,errors,bounds};
+}
+function importedCount(){return Object.keys(layers).filter(k=>state.mode==='whole'?k==='whole':k!=='whole').length;}
+function getExport(){
+ const out=renderCanvas(false,14);
+ if(out.rejected.length)throw Error('Invalid quad(s): '+out.rejected.join(', '));
+ if(!importedCount())throw Error('Import at least one original PNG first.');
+ const qa=outputQA(out.canvas);
+ if(!qa.pass)throw Error(qa.errors.join('; '));
+ return {canvas:out.canvas,qa};
+}
+async function share(c,filename,mime='image/png'){
+ const blob=await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('Export failed')),mime));
+ await shareBlob(blob,filename);
+}
+async function shareBlob(blob,filename){
+ const file=new File([blob],filename,{type:blob.type});
+ if(navigator.canShare?.({files:[file]})){
+  try{await navigator.share({files:[file],title:'Gary Eats! edit candidate'});return;}
+  catch(e){if(e.name==='AbortError')return;}
+ }
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),25000);
+}
+function settings(qa){
+ return P.exportState(spec,camera,state,files(),qa);
+}
+async function exportSettings(){
+ const json=JSON.stringify(settings(renderReport),null,2);
+ await shareBlob(new Blob([json],{type:'application/json'}),spec.id+'-perspective-candidate.json');
+ message('Edit settings exported with unapproved, unregistered status.');
+}
+function copySettings(){
+ const json=JSON.stringify(settings(renderReport),null,2);$('copyField').value=json;
+ $('copyField').style.display='block';
+ if(navigator.clipboard?.writeText)navigator.clipboard.writeText(json).then(()=>message('Edit settings copied.')).catch(()=>{
+  $('copyField').focus();$('copyField').select();message('Select and copy settings manually.');});
+ else{$('copyField').focus();$('copyField').select();message('Select and copy settings manually.');}
+}
+async function importPNG(file){
+ if(!file)return;
+ if(file.type!=='image/png'){message('Only PNG is supported; JPEG cannot preserve transparency.');return;}
+ const url=URL.createObjectURL(file),img=new Image();
+ try{
+  await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(Error('Unreadable PNG'));img.src=url;});
+  if(img.naturalWidth!==spec.source.width||img.naturalHeight!==spec.source.height)
+   throw Error('Expected '+spec.source.width+'×'+spec.source.height+', got '+img.naturalWidth+'×'+img.naturalHeight);
+  const canvas=loadCanvas(img.naturalWidth,img.naturalHeight),ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,0,0);const box=P.boundsFromPixels(ctx.getImageData(0,0,canvas.width,canvas.height));
+  if(!box)throw Error('PNG contains no visible pixels');
+  const key=selected(),before=snapshot();layers[key]={img:canvas,bounds:box,filename:file.name};
+  state.quadrilaterals[key]=null;commit(before);
+  $('report').textContent='Imported: '+file.name+' · '+img.naturalWidth+'×'+img.naturalHeight+' · alpha bounds '+JSON.stringify(box)+'\nNo camera/art approval assumed.';
+  message('PNG loaded into '+key+' without modifying its pixels.');queue();
+ }catch(e){message('Import failed: '+e.message);}
+ finally{URL.revokeObjectURL(url);$('file').value='';}
+}
+function chooseTool(tool){
+ const before=snapshot();
+ if(tool==='corners'&&state.tool!=='corners'){
+  const key=selected(),box=currentBounds(key);
+  if(box)state.quadrilaterals[key]=baseQuad(key,box);
+ }
+ state.tool=tool;commit(before);setControls();
+}
+function changeFace(face){
+ const before=snapshot();state.selected=face;commit(before);setControls();
+}
+function resetFace(){
+ const before=snapshot();state.quadrilaterals[selected()]=null;commit(before);setControls();
+}
+async function previewExport(){
+ const out=getExport(),result=loadCanvas(360,640),ctx=result.getContext('2d');
+ if(!$('background').complete||!$('background').naturalWidth)throw Error('Reference scene missing');
+ ctx.drawImage($('background'),0,0,360,640);
+ const d=spec.draw;
+ ctx.drawImage(out.canvas,d.x+state.placement.dx,d.y+state.placement.dy,d.width,d.height);
+ await share(result,spec.id+'-perspective-game-preview.png');
+}
+try{
+ const [ca,as]=await Promise.all([fetch('gary-camera-contract.json'),fetch('gary-asset-factory-contract.json')]);
+ if(!ca.ok||!as.ok)throw Error('Camera or asset contract unavailable');
+ camera=await ca.json();contract=await as.json();
+ const assessment=Factory.validate(contract,camera);
+ if(!assessment.ok)throw Error(assessment.errors.join('; '));
+ for(const template of contract.templates){
+  const option=document.createElement('option');option.value=template.id;option.textContent=template.name;$('asset').append(option);
+ }
+ const requested=new URLSearchParams(location.search).get('asset');
+ const first=contract.templates.find(t=>t.id===requested)||contract.templates[0];
+ $('asset').value=first.id;changeTemplate(first.id);
+ $('asset').addEventListener('change',()=>changeTemplate($('asset').value));
+ $('mode').addEventListener('change',e=>{
+  const before=snapshot();state.mode=e.target.value;
+  if(state.mode==='faces')state.tool='corners';
+  commit(before);setControls();
+ });
+ $('face').addEventListener('change',e=>changeFace(e.target.value));
+ document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>chooseTool(b.dataset.tool)));
+ $('anchorLock').addEventListener('change',e=>{const before=snapshot();state.anchorLock=e.target.checked;commit(before);});
+ for(const id of ['widthScale','heightScale','skew','topDepth']){
+  $(id).addEventListener('change',updateFromSliders);
+  $(id).addEventListener('input',()=>{ const output={'widthScale':'widthOut','heightScale':'heightOut','skew':'skewOut','topDepth':'depthOut'}[id];
+   $(output).textContent=id.includes('Scale')?Math.round(Number($(id).value)*100)+'%':$(id).value+(id==='skew'?'% width':'% height');});
+ }
+ for(const key of ['X','Y'])$('offset'+key).addEventListener('input',e=>{
+  const before=snapshot();state.placement[key==='X'?'dx':'dy']=Number(e.target.value);commit(before);queue();
+ });
+ $('file').addEventListener('change',e=>importPNG(e.target.files?.[0]));
+ $('compare').addEventListener('click',()=>{showBefore=!showBefore;$('compare').textContent=showBefore?'Show after':'Show before';
+  $('compare').setAttribute('aria-pressed',String(showBefore));queue();});
+ $('reset').addEventListener('click',()=>{const before=snapshot(),fresh=P.initial(spec);
+   fresh.mode=state.mode;fresh.selected=state.selected;state=fresh;commit(before);setControls();});
+ $('recenter').addEventListener('click',()=>{
+  const key=selected(),bounds=currentBounds(key);if(!bounds)return;
+  const before=snapshot();state.quadrilaterals[key]=baseQuad(key,bounds);commit(before);queue();
+ });
+ $('straighten').addEventListener('click',()=>{
+  const key=selected(),bounds=currentBounds(key);if(!bounds)return;
+  const before=snapshot();state.quadrilaterals[key]=P.corners(bounds);commit(before);queue();
+ });
+ $('resetFace').addEventListener('click',resetFace);
+ $('undo').addEventListener('click',()=>{if(!history.length)return;
+  future.push(snapshot());state=history.pop();setControls();});
+ $('redo').addEventListener('click',()=>{if(!future.length)return;
+  history.push(snapshot());state=future.pop();setControls();});
+ $('exportPng').addEventListener('click',async()=>{
+  try{const out=getExport();renderReport=out.qa;await share(out.canvas,spec.id+'-perspective-candidate.png');
+   $('report').textContent=JSON.stringify(out.qa,null,2)+'\nCAMERA: UNVERIFIED VISUAL · NOT REGISTERED';message('Candidate PNG exported. Original file unchanged.');}
+  catch(e){message('Cannot export: '+e.message);}
+ });
+ $('previewPng').addEventListener('click',async()=>{try{await previewExport();message('Annotated gameplay preview exported.');}
+  catch(e){message('Preview export failed: '+e.message);}});
+ $('exportSettings').addEventListener('click',async()=>{try{await exportSettings();}catch(e){message('Settings export failed: '+e.message);}});
+ $('copySettings').addEventListener('click',copySettings);
+ $('importSettings').addEventListener('click',()=>$('settingsFile').click());
+ $('settingsFile').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+   if(file.size>80000)throw Error('Edit JSON exceeds safe limit');
+   const document=JSON.parse(await file.text());
+   if(document.schema!=='gary-eats-perspective-edit-v1'||document.originalAsset!==spec.id)
+    throw Error('Wrong asset or unsupported settings file');
+   if(JSON.stringify(document.templateSourceSize)!==JSON.stringify(spec.source))throw Error('Wrong source dimensions');
+   if(!P.validateSettings(document.settings,spec))throw Error('Unsafe edited corners or incompatible profile');
+   const before=snapshot();state=P.copy(document.settings);
+   commit(before);setControls();
+   message('Edit geometry restored. Original source PNGs must be reimported separately.');
+  }catch(err){message('Cannot load settings: '+err.message);}
+  e.target.value='';
+ });
+ message('Editor ready. Import art or adjust the guide, then export a candidate.');
+}catch(e){message('Perspective editor failed to start: '+e.message);}
+})();
+</script></body></html>
