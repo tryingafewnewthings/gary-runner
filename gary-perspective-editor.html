@@ -20,7 +20,7 @@ select{width:100%}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .canvasHolder{display:flex;justify-content:center;align-items:center;min-height:160px;max-height:410px;overflow:hidden;background:repeating-conic-gradient(#384643 0 25%,#233430 0 50%) 50%/24px 24px;border-radius:8px}
 .artStage{position:relative;display:inline-block;line-height:0;max-height:400px;max-width:100%}
-.artStage canvas{display:block;width:auto;height:auto;max-width:100%;max-height:400px}
+.artStage canvas{display:block;width:100%;height:100%;max-width:100%;max-height:100%}
 .artStage #handles{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 .worldStage{position:relative;width:min(100%,225px);aspect-ratio:9/16;margin:auto;overflow:hidden;border:1px solid #708780;border-radius:7px}
 .worldStage img,.worldStage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
@@ -54,6 +54,8 @@ select{width:100%}
 <div class="card">
 <h2>Game-scale preview</h2>
 <div class="worldStage"><img id="background" src="docs/bridge/approach.png" alt="Unapproved engine screenshot reference"><canvas id="world" width="360" height="640"></canvas></div>
+<label style="font-size:12px">Optional approved 360×640 gameplay screenshot
+<input id="gameScreenshot" class="upload" type="file" accept="image/png,image/jpeg,image/webp"></label>
 <p><small>World coordinates stay 360×640, unchanged camera, no distance-based scaling. This overlays an editor candidate; it is not a registered gameplay sprite.</small></p>
 </div>
 <div id="message" role="status" aria-live="polite">Loading camera and Asset Factory profiles…</div>
@@ -120,7 +122,7 @@ select{width:100%}
 'use strict';
 const $=id=>document.getElementById(id),P=GaryPerspectiveEditor,Factory=GaryAssetFactory;
 let contract,camera,spec,state,history=[],future=[],layers={},activeLayer='whole',showBefore=false,redrawQueued=false;
-let drag=null,renderReport=null;
+let drag=null,renderReport=null,backgroundUrl=null;
 const edit=$('edit'),handles=$('handles'),world=$('world');
 const message=s=>$('message').textContent=s;
 const loadCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
@@ -196,6 +198,10 @@ function redraw(){
  redrawQueued=false;if(!spec)return;
  const composed=renderCanvas(showBefore,8);
  edit.width=handles.width=spec.source.width;edit.height=handles.height=spec.source.height;
+ const maxW=Math.min(320,Math.max(200,window.innerWidth-48)),maxH=Math.min(380,Math.max(240,window.innerHeight*.55));
+ const scale=Math.min(maxW/spec.source.width,maxH/spec.source.height);
+ document.querySelector('.artStage').style.width=Math.round(spec.source.width*scale)+'px';
+ document.querySelector('.artStage').style.height=Math.round(spec.source.height*scale)+'px';
  edit.getContext('2d').drawImage(composed.canvas,0,0);
  worldPreview(composed.canvas);geometryOverlay();
  $('layerLabel').textContent=state.mode==='whole'?'whole sprite':state.selected+' face';
@@ -230,7 +236,7 @@ function changeTemplate(id){
  spec=contract.templates.find(t=>t.id===id);if(!spec)throw Error('Unknown asset');
  state=P.initial(spec);history=[];future=[];layers={};showBefore=false;
  $('file').value='';$('compare').setAttribute('aria-pressed','false');$('compare').textContent='Show before';
- const ref=contract.scenes[spec.scene];$('background').src=ref.image;$('background').alt=ref.description;
+ const ref=contract.scenes[spec.scene];if(backgroundUrl){URL.revokeObjectURL(backgroundUrl);backgroundUrl=null;} $('background').src=ref.image;$('background').alt=ref.description;
  $('report').textContent='No art imported. Preview uses a geometric guide.';
  setControls();message('Ready: '+spec.id+' · source '+spec.source.width+'×'+spec.source.height+'. Camera projection remains unapproved.');
 }
@@ -409,6 +415,17 @@ try{
   const before=snapshot();state.placement[key==='X'?'dx':'dy']=Number(e.target.value);commit(before);queue();
  });
  $('file').addEventListener('change',e=>importPNG(e.target.files?.[0]));
+ $('gameScreenshot').addEventListener('change',async e=>{
+   const f=e.target.files?.[0];if(!f)return;
+   if(!/^image\/(png|jpeg|webp)$/.test(f.type)){message('Select a gameplay screenshot in PNG, JPEG or WebP.');return;}
+   const url=URL.createObjectURL(f),img=new Image();
+   try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Cannot read image'));img.src=url;});
+     if(img.naturalWidth!==360||img.naturalHeight!==640)throw Error('Gameplay screenshot must be exactly 360×640; crop it first.');
+     if(backgroundUrl)URL.revokeObjectURL(backgroundUrl);backgroundUrl=url;
+     $('background').src=url;message('Local game screenshot loaded for camera review (never uploaded).');
+   }catch(err){URL.revokeObjectURL(url);message('Screenshot rejected: '+err.message);}
+   e.target.value='';
+ });
  $('compare').addEventListener('click',()=>{showBefore=!showBefore;$('compare').textContent=showBefore?'Show after':'Show before';
   $('compare').setAttribute('aria-pressed',String(showBefore));queue();});
  $('reset').addEventListener('click',()=>{const before=snapshot(),fresh=P.initial(spec);
