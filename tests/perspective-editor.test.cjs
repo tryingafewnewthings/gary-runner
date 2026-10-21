@@ -68,9 +68,11 @@ test('UI has non-destructive save/reload, pointer drag, iPhone layouts, before/a
  for(const term of ['id="handles"','pointerdown','pointermove','pointercancel','showBefore',
    'id="anchorLock"','id="importSettings"','id="exportPng"','id="previewPng"',
    'id="file"','id="mode"','id="face"','id="undo"','id="redo"','gary-camera-contract.json',
-   'sourceOriginalsModified:false','settingsFile']){
+   'settingsFile']){
   assert.ok(html.includes(term),term);
  }
+ const model=fs.readFileSync(path.resolve(__dirname,'../gary-perspective-editor.js'),'utf8');
+ assert.match(model,/sourceOriginalsModified:false/);
  const f=fs.readFileSync(path.resolve(__dirname,'../gary-asset-factory.html'),'utf8');
  assert.match(f,/perspectiveLink/);
  assert.match(f,/gary-perspective-editor\.html\?asset=/);
