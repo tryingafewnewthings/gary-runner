@@ -62,7 +62,9 @@ async function main(){
   let edit=await settings(page);
   let q=edit.settings.quadrilaterals.whole;
   assert.equal(q.length,4);
+  await page.locator('#handles').scrollIntoViewIfNeeded();
   const rect=await page.locator('#handles').boundingBox();
+  assert.ok(rect.y>=0&&rect.y+rect.height<=844,'handles must be on screen before pointer drag');
   const p={x:rect.x+q[0].x*rect.width/specimen.source.width,
     y:rect.y+q[0].y*rect.height/specimen.source.height};
   await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+6,p.y+4,{steps:4});await page.mouse.up();
