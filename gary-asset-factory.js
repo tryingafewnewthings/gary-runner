@@ -128,7 +128,7 @@
       const i=(y*width+x)*4,a=p[i+3];
       if(a<=8){transparent++;continue;}
       opaque++;
-      if(m[i+3]<64)outside++;
+      if(m[i+3]<=8)outside++;
       x1=Math.min(x,x1);x2=Math.max(x,x2);y1=Math.min(y,y1);y2=Math.max(y,y2);
       if(Math.abs(x-(spec.anchor.x*width))<=Math.max(4,width*.16))groundFoot=Math.max(groundFoot,y);
     }
