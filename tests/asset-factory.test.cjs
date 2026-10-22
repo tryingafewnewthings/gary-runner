@@ -78,7 +78,9 @@ test('candidate artwork is debug-only and inserted at actual game layer boundari
  const frame=runtime.slice(runtime.indexOf('function render(dt,cutscenePlate=false)'),runtime.indexOf('/* Fixed simulation and interpolated presentation.'));
  const underWater=frame.indexOf("drawCandidate('under-water')");
  const deck=frame.indexOf("drawCandidate('deck')");
- const ground=frame.indexOf("drawCandidate('ground')");
+ const ground=frame.indexOf("drawCandidate('ground')",frame.indexOf("wilderness.drawGround"));
+ assert.ok(frame.indexOf("drawCandidate('ground')")<underWater,
+   "isolated street decals must be drawn before street decorations, independently of bridge passes");
  const rear=frame.indexOf("drawCandidate('rear')");
  const actor=frame.indexOf('drawPlayer()');
  const front=frame.indexOf("drawCandidate('front')");

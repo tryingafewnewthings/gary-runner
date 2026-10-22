@@ -946,17 +946,20 @@ let shutterMix = 0;
     }
   }
 
-  function drawHighStreet() {
-    ctx.fillStyle = '#1a1e24';
-    ctx.fillRect(0, 0, W, H);
+  function drawHighStreet(part='all') {
+    if(part!=='decor'){
+      ctx.fillStyle = '#1a1e24';
+      ctx.fillRect(0, 0, W, H);
 
-    // Cobbles sit behind the shops, so the space around each chimney is pavement.
-    const leftW = ROAD_LEFT;
-    const rightX = ROAD_RIGHT;
-    drawCobbles(0, 0, leftW, H, 'base');
-    drawCobbles(rightX, 0, W - rightX, H, 'base');
+      // Cobbles sit behind the shops, so the space around each chimney is pavement.
+      const leftW = ROAD_LEFT;
+      const rightX = ROAD_RIGHT;
+      drawCobbles(0, 0, leftW, H, 'base');
+      drawCobbles(rightX, 0, W - rightX, H, 'base');
 
+    }
     if (!streetLoaded) {
+      if(part==='decor')return;
       ctx.fillStyle = '#3a3030';
       ctx.fillRect(0, 0, ROAD_LEFT - PAVEMENT_WIDTH, H);
       ctx.fillStyle = '#30343a';
@@ -966,23 +969,23 @@ let shutterMix = 0;
 
     // The next roof stays just above the screen, so a shop approaches instead of popping in.
     forEachStreetFront((plan, index, y) => {
-      drawStreetBuilding(
+      if(part!=='ground')drawStreetBuilding(
         shopByName(plan.left), 0, y, BUILDING_WIDTH, BUILDING_H, false, index * 2.1 + 0.4
       );
-      drawCobbles(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround || 'weeds');
-      drawSideLayers(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan, 'left');
-      drawGroundPatch(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround);
+      if(part!=='decor')drawCobbles(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround || 'weeds');
+      if(part!=='ground')drawSideLayers(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan, 'left');
+      if(part!=='decor')drawGroundPatch(0, y + BUILDING_H, BUILDING_WIDTH, DETAIL_H, plan.leftGround);
 
-      drawStreetBuilding(
+      if(part!=='ground')drawStreetBuilding(
         shopByName(plan.right), ROAD_RIGHT + PAVEMENT_WIDTH, y,
         W - ROAD_RIGHT - PAVEMENT_WIDTH, BUILDING_H, true, index * 2.1 + 2.7
       );
-      drawCobbles(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightGround || 'weeds');
-      drawSideLayers(
+      if(part!=='decor')drawCobbles(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightGround || 'weeds');
+      if(part!=='ground')drawSideLayers(
         ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H,
         W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan, 'right'
       );
-      drawGroundPatch(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightGround);
+      if(part!=='decor')drawGroundPatch(ROAD_RIGHT + PAVEMENT_WIDTH, y + BUILDING_H, W - ROAD_RIGHT - PAVEMENT_WIDTH, DETAIL_H, plan.rightGround);
     });
   }
 
@@ -1058,15 +1061,19 @@ let shutterMix = 0;
   // Factory candidates are an isolated review-only render layer. No save, collision,
   // spawn, difficulty or normal Play state can reference them.
   let candidateAsset=null;
-  function drawCandidate(pass){
-    const a=candidateAsset;
-    if(!bridgePreviewSession||!a||a.pass!==pass)return;
+  let biomeCandidates=[];
+  function drawOneCandidate(a,pass){
+    if(!a||a.pass!==pass)return;
     const y=a.y+(a.scrollWithWorld?view.distance-a.placedDistance:0);
     if(y>H+32||y+a.height< -32)return;
-    ctx.save();
-    ctx.globalAlpha=a.opacity;
-    ctx.drawImage(a.image,a.x,y,a.width,a.height);
-    ctx.restore();
+    ctx.save();ctx.globalAlpha=a.opacity;
+    ctx.drawImage(a.image,a.x,y,a.width,a.height);ctx.restore();
+  }
+  function drawCandidate(pass){
+    if(!bridgePreviewSession)return;
+    // No candidate image or callback allocations in the frame loop.
+    drawOneCandidate(candidateAsset,pass);
+    for(let i=0;i<biomeCandidates.length;i++)drawOneCandidate(biomeCandidates[i],pass);
   }
   const legacyBridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
   let bridgePaint=legacyBridgePaint;
@@ -2545,8 +2552,14 @@ function updateRain(dt, advancing) {
     // At near>=500 the existing terrain provider covers all 640 rows opaquely.
     // Avoid drawing (and lazily caching) the entire hidden street underneath it.
     const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
+    // Split only isolated street-ground previews, retaining normal Play's exact
+    // draw sequence. Decals must sit beneath real shop/prop alpha silhouettes.
+    const streetCandidateGround=bridgePreviewSession&&!bridge.visible()&&!wilderness.active()&&
+      (candidateAsset?.pass==='ground'||biomeCandidates.some(a=>a.pass==='ground'));
     if(!bridgeCoversWorld&&!wilderness.covers(view.distance)){
-      drawHighStreet();drawPavements();drawRoad();
+      if(streetCandidateGround){
+        drawHighStreet('ground');drawPavements();drawRoad();drawCandidate('ground');drawHighStreet('decor');
+      }else{drawHighStreet();drawPavements();drawRoad();}
       pigeons.draw();
       if (nightOn) {
         drawNightAmbient();
@@ -2562,7 +2575,7 @@ function updateRain(dt, advancing) {
     }
     if(bridge.visible()&&!wilderness.covers(view.distance)){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);drawCandidate('under-water');bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);drawCandidate('deck');}
 
-    wilderness.drawGround(ctx,view.distance,view.clock);drawCandidate('ground');wilderness.drawDecor(ctx,view.distance,view.clock,false);drawCandidate('rear');
+    wilderness.drawGround(ctx,view.distance,view.clock);if(!streetCandidateGround)drawCandidate('ground');wilderness.drawDecor(ctx,view.distance,view.clock,false);drawCandidate('rear');
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
@@ -2726,7 +2739,7 @@ function updateRain(dt, advancing) {
       },
       artworkMode:()=>bridgePaint===legacyBridgePaint?'legacy':bridgePaint.mode,
       snapshot:()=>bridge.snapshot(),pause:suspend,
-      freeze:()=>{bridgePreviewFrozen=true;simulation.reset();},
+      freeze:()=>{bridgePreviewFrozen=true;simulation.reset();prepareView(1);render();},
       resume:()=>{bridgePreviewFrozen=false;simulation.reset();resume();},
       reset:()=>{if(state==='paused')resume();window.GaryBridgePreview.start('approach');}
     });
@@ -2768,6 +2781,7 @@ function updateRain(dt, advancing) {
           return ok;
         },
         set:({image,draw,pass='rear',scrollWithWorld=true,opacity=1})=>{
+          prepareView(1);
           const sourceW=image?.naturalWidth||image?.width;
           const sourceH=image?.naturalHeight||image?.height;
           if(!(sourceW>0&&sourceH>0))throw Error('Decoded artwork required');
@@ -2781,6 +2795,26 @@ function updateRain(dt, advancing) {
           return {pass,registered:false,collision:'NOT_DEFINED',worldDepth:candidateAsset.placedDistance};
         },
         clear:()=>{candidateAsset=null;prepareView(1);render();},
+        // Entire biome-pack candidates render together, each in its own actual
+        // world depth pass. This is a review-only, bounded ephemeral collection.
+        setPack:(assets)=>{
+          prepareView(1);
+          if(!Array.isArray(assets)||assets.length>20)throw Error('Maximum 20 biome candidates');
+          const next=assets.map((entry,i)=>{
+            const {image,draw,pass='rear',opacity=1,scrollWithWorld=true,placedDistance=view.distance}=entry||{};
+            const width=image?.naturalWidth||image?.width,height=image?.naturalHeight||image?.height;
+            if(!(width>0&&height>0)||!draw||![draw.x,draw.y,draw.width,draw.height,opacity].every(Number.isFinite)||
+               draw.width<=0||draw.height<=0||draw.width>360||draw.height>1000||
+               Math.abs(draw.x)>1000||Math.abs(draw.y)>10000||!Number.isFinite(placedDistance)||
+               !(opacity>0&&opacity<=1)||!passes.has(pass))throw Error('Invalid biome candidate '+i);
+            return {image,x:draw.x,y:draw.y,width:draw.width,height:draw.height,
+              opacity,pass,scrollWithWorld:!!scrollWithWorld,placedDistance};
+          });
+          candidateAsset=null;biomeCandidates=next;prepareView(1);render();
+          return {count:next.length,registered:false,collision:'NOT_DEFINED'};
+        },
+        clearPack:()=>{biomeCandidates=[];prepareView(1);render();},
+        packSnapshot:()=>biomeCandidates.map(a=>({pass:a.pass,x:a.x,y:a.y,screenY:a.y+(a.scrollWithWorld?view.distance-a.placedDistance:0),width:a.width,height:a.height,registered:false})),
         snapshot:()=>candidateAsset?{pass:candidateAsset.pass,
           draw:{x:candidateAsset.x,y:candidateAsset.y,width:candidateAsset.width,height:candidateAsset.height},
           scrollWithWorld:candidateAsset.scrollWithWorld,registered:false}:null

@@ -57,6 +57,7 @@ async function main(){
   assert.ok(!scripts.includes('game-runtime.js'),'Archived runtime must not be loaded');
   assert.deepEqual([...loadedScripts].sort(),[...scripts].sort(),'All index.html scripts must load successfully');
   assert.equal(await page.locator('#startBtn').isEnabled(),true);
+  assert.equal(await page.evaluate(()=>typeof window.GaryAssetPreview),'undefined','normal gameplay never exposes candidate registration');
   await page.evaluate(()=>{__frame(0);for(let i=1;i<=120;i++)__frame(i*1000/120);});
   assert.equal(await page.evaluate(()=>GaryRuntimeStats.snapshot().ticks),60);
 
