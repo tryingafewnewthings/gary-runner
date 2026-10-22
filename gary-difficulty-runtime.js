@@ -2807,7 +2807,7 @@ function updateRain(dt, advancing) {
       const passes=new Set(['ground','rear','under-water','deck','front']);
       window.GaryAssetPreview=Object.freeze({
         ready:()=>startupReady,
-        startScene:(scene='bridge-middle')=>{
+        startScene:(scene='bridge-middle',visualMode='natural')=>{
           let ok=false;
           if(scene==='street-day'||scene==='street-rain'){
             ok=window.GaryBridgePreview.start('approach');
@@ -2822,6 +2822,15 @@ function updateRain(dt, advancing) {
           }else if(scene==='wilderness-reveal'||scene==='wilderness-dense'){
             ok=window.GaryWildernessPreview.start(scene.slice(11));
           }else throw Error('Unknown asset review scene');
+          // Debug-only art review: identical geometry under explicit daylight,
+          // dark-night and heavy-rain lighting, without changing normal Play.
+          if(ok&&['day','night','rain'].includes(visualMode)){
+            nightOn=visualMode!=='day';
+            nightMix=nightOn?1:0;
+            rainMix=visualMode==='rain'?1:0;
+            shutterMix=nightOn?1:0;
+            rememberPositions();prepareView(1);render();
+          }
           if(ok)window.GaryBridgePreview.freeze();
           return ok;
         },
