@@ -5,7 +5,7 @@
  * decide artistic quality; the ledger deliberately does not claim that.
  * Existing images are grandfathered; only newly ADDED files are checked.
  */
-const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
+const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..');
 const parse=dir=>JSON.parse(fs.readFileSync(path.join(dir,'art-visual-ledger.json'),'utf8'));
 const isNewArt=f=>(/^art\/(?!candidates\/).+\.(?:png|webp)$/i.test(f)||/^[^/]+\.(?:png|webp)$/i.test(f));
@@ -50,6 +50,15 @@ function checkNewFiles(files,ledger,dir=root){
    if(!size||size[0]!==360||size[1]!==640)
     failures.push(file+': '+mode+' screenshot is not native 360x640 PNG');
   }
+  const proofFile=item.nativeReviewFile;
+  if(!proofFile||!within(dir,proofFile))failures.push(file+': original real-engine capture manifest missing');
+  else try{
+    const review=JSON.parse(fs.readFileSync(path.join(dir,proofFile),'utf8'));
+    const digest=crypto.createHash('sha256').update(fs.readFileSync(path.join(dir,file))).digest('hex');
+    if(review.schema!=='gary-eats-native-engine-art-evidence-v1'||review.sourceSha256!==digest||
+      review.registered!==false||review.technical?.pass!==true)
+      failures.push(file+': real-engine capture manifest does not match this exact source image');
+  }catch(_){failures.push(file+': invalid real-engine review evidence');}
   if(item.reviewedBy!=='ChatGPT-visual-review')
    failures.push(file+': missing agent visual comparison attestation');
   if(item.runtimeStartValidated!==true)
