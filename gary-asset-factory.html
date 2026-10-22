@@ -45,6 +45,10 @@ input[type=checkbox]{accent-color:#d9b879}
 <select id="asset"></select>
 <label for="scene">Scene reference</label>
 <select id="scene"></select>
+<label for="referenceUpload">Compare against your approved 360×640 gameplay screenshot (local only)</label>
+<input id="referenceUpload" type="file" accept="image/png,image/jpeg,image/webp">
+<button id="resetReference" type="button">Restore repository reference</button>
+<p id="referenceInfo" style="font-size:12px">Repository screenshots are review captures, not approved first-biome style masters. Import the corrected original-biome PNG for style comparison.</p>
 <label><input id="guides" type="checkbox" checked> Show geometry and lane guides</label>
 <p id="spec" style="font-size:12px"></p>
 </div>
@@ -133,6 +137,30 @@ function setScene(){
  if(customScreenshot)return;
  reference.src=contract.scenes[$('scene').value].image;
  reference.alt=contract.scenes[$('scene').value].description;
+}
+function restoreReference(){
+ if(customScreenshot){URL.revokeObjectURL(customScreenshot);customScreenshot=null;}
+ $('referenceUpload').value='';
+ $('referenceInfo').textContent='Repository screenshot restored. Existing source images are review evidence, not approved first-biome masters.';
+ setScene();picture();
+}
+async function useLocalReference(file){
+ if(!file)return;
+ if(!/^image\/(png|jpeg|webp)$/.test(file.type)){
+  status('Reference rejected: PNG, JPEG or WebP required.');return;
+ }
+ const url=URL.createObjectURL(file),candidate=new Image();
+ try{
+  await new Promise((resolve,reject)=>{candidate.onload=resolve;candidate.onerror=()=>reject(Error('Unusable reference image'));candidate.src=url;});
+  if(candidate.naturalWidth!==360||candidate.naturalHeight!==640)
+   throw Error('Reference must be exactly 360×640; select the cropped gameplay reference PNG, not the original phone screenshot.');
+  if(customScreenshot)URL.revokeObjectURL(customScreenshot);
+  customScreenshot=url;reference.src=url;
+  reference.alt='User-provided 360×640 gameplay reference: '+file.name;
+  $('referenceInfo').textContent='Local reference: '+file.name+' (360×640). Not uploaded, registered or approved automatically.';
+  showMode('screenshot');
+  status('Local 360×640 reference loaded for comparison. Perspective and in-engine layering remain unverified.');
+ }catch(e){URL.revokeObjectURL(url);status('Reference rejected: '+e.message);}
 }
 function artCanvas(type,maskImage=false){
  const c=document.createElement('canvas');c.width=spec.source.width;c.height=spec.source.height;
@@ -245,7 +273,9 @@ try{
  for(const entry of contract.templates){const option=document.createElement('option');option.value=entry.id;option.textContent=entry.name;$('asset').append(option);}
  for(const id of Object.keys(contract.scenes)){const option=document.createElement('option');option.value=id;option.textContent=id;$('scene').append(option);}
  $('asset').addEventListener('change',()=>switchAsset($('asset').value));
- $('scene').addEventListener('change',()=>{customScreenshot=null;setScene();picture();});
+ $('scene').addEventListener('change',restoreReference);
+ $('referenceUpload').addEventListener('change',async e=>useLocalReference(e.target.files?.[0]));
+ $('resetReference').addEventListener('click',restoreReference);
  $('guides').addEventListener('change',picture);
  $('upload').addEventListener('change',async e=>importArt(e.target.files?.[0]));
  $('template').addEventListener('click',()=>shareCanvas(artCanvas('template'),spec.id+'-template.png'));
