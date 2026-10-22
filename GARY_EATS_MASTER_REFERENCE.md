@@ -1,5 +1,7 @@
 # GARY EATS! — Master game reference and developer handoff
 
+**22 October 2026 override:** The active `index.html` and latest `main` commit `688f09c4` supersede this document's historical status claims: `gary-difficulty-runtime.js` is the live-loaded engine, the bridge/wilderness modules are on `main`, painted bridge art is an unapproved debug candidate, and DRAFT01 wilderness graphics are USER-REJECTED. Do not treat an older 'not implemented' or 'unmerged' statement as current. See [conflicts](docs/camera/CONFLICT_REGISTER_2026-10-22.md). Public deployment and iPhone playback are unverified.
+
 ## 20 October supplied bridge artwork integration
 
 `CODE-OBSERVED` on stacked PR #5: the externally supplied lower/deck/foreground PNGs are now registered unchanged in the real engine through Camera Lab’s **Review supplied bridge artwork** control. Broader alpha-traced geometry, independent foundation water occlusion, four 360×640 captures and full-crossing QA are documented in [BRIDGE_ARTWORK_PIPELINE.md](BRIDGE_ARTWORK_PIPELINE.md). This is an unapproved visual-review candidate; normal Play still uses PR #4’s bridge. No merge, final-art activation or physical iPhone verification is implied.
