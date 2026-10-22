@@ -315,14 +315,14 @@
     throw Error('Invalid or oversized biome ZIP manifest');
    for(const a of obj.assets){
     const png=entries.get(a.path);
-    if(!png||!/\\.png$/i.test(a.path||''))throw Error('Required PNG missing from biome ZIP');
+    if(!png||!/\.png$/i.test(a.path||''))throw Error('Required PNG missing from biome ZIP');
     a.pngData=window.GaryBiomeZip.toDataUrl(png);
    }
    await replaceWithPack(obj);return;
   }
   // A generic ChatGPT PNG ZIP has no placement manifest. Import all PNGs
   // together using measured source dimensions where genuinely available.
-  const pngs=[...entries].filter(([name])=>/\\.png$/i.test(name)&&!name.startsWith('__MACOSX/'));
+  const pngs=[...entries].filter(([name])=>/\.png$/i.test(name)&&!name.startsWith('__MACOSX/'));
   if(!pngs.length||pngs.length>LIMIT)throw Error('ZIP needs 1–20 separate PNG images or a Gary biome manifest');
   const batch=[];
   for(const [name,bytes] of pngs){
@@ -331,7 +331,7 @@
   }
   if(totalBytes(batch)>MAX_TOTAL)throw Error('PNG ZIP exceeds 18 MB local art limit');
   state.assets=batch;state.selected=batch[0].id;
-  $('biomeName').value=file.name.replace(/\\.zip$/i,'').slice(0,64);
+  $('biomeName').value=file.name.replace(/\.zip$/i,'').slice(0,64);
   rebuildList();updateSelection();renderPack();
   status(batch.length+' PNGs imported from ZIP. No verified placement manifest — inspect all sizes/layers before exporting.');
  }
@@ -340,7 +340,7 @@
   if(file.size>34*1024*1024){status('Saved biome too large for safe iPhone import.');return;}
   state.importing=true;busy('Checking the biome archive…');
   try{
-   if(/\\.zip$/i.test(file.name)||file.type==='application/zip')await importZip(file);
+   if(/\.zip$/i.test(file.name)||file.type==='application/zip')await importZip(file);
    else{
     const obj=JSON.parse(await file.text());
     await replaceWithPack(obj);
