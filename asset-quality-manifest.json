@@ -504,6 +504,11 @@
         "cellWidth": 72,
         "cellHeight": 54
       }
+    },
+    "art/forgotten-road/fox-bush-verge.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
     }
   }
 }
