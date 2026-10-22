@@ -1,5 +1,8 @@
 # Gary Eats! — Universal Asset Factory (candidate)
 
+**Producer standard, 22 October 2026:** `GARY_VISUAL_PRODUCTION.md` and `docs/visual-master/reference-pack.json` now own the reference-first generation rule. The Factory's default daylight screenshot is a real-engine QA capture with demonstration placements, not the user's full approved 30-second gameplay source. The exported prompt explicitly requires original high-street, Gary and ground image anchors, never assumes a raised profile is locked, and treats all new renders as candidates. The owner must approve against real 360×640 gameplay before production registration. Earlier dated tool-status sections below are historical.
+
+
 
 ## Consolidated audit — 22 October 2026
 
