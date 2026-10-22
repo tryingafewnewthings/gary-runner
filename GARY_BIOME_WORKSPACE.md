@@ -1,6 +1,20 @@
-# Gary Eats! — Biome Workspace (draft PR #12)
+# Gary Eats! — Biome Workspace (PR #12, awaiting approval)
 
 **Status 22 October 2026:** review-only visual/editor extension. New page: `gary-biome-workspace.html`. **Not a replacement for the actual runtime or approved wilderness art.** PR #12 is stacked on the separate mobile Asset Factory PR #11; merge upstream first, review CI, then merge PR #12. The `main` branch remains the production rollback until both are approved.
+
+## Consolidated engineering audit — 22 October 2026
+
+The existing tool now opens on the **original daylight street**, imports multiple PNGs or one ZIP from the same primary **Import art** action, and brings the actual game canvas into view after import/selection. Preview returns to the current composition without restarting the engine scene. Eight checkpoint presets remain explicit jumps, not automatic biome/story integration.
+
+Visible controls provide proportional scale (bottom-centre contact stays fixed), layer choice, same-layer forward/backward order and placement locking. Exact coordinates and technical checks are collapsed. Tap jitter is ignored, secondary touches cancel placement, pointer cancellation restores the drag origin, and page/background hiding freezes the preview. Numeric inputs use 16px text to avoid iPhone focus zoom. Bridge-only layers are labelled and explain their visibility outside bridge scenes.
+
+Scrolling guides and hit targets follow the actual rendered coordinates. Placements stay anchored to the selected checkpoint while scrolling; freezing, editing, reordering and export preserve that shared world origin, so changing one asset cannot teleport the others. The debug engine resolves fixed-step interpolation before accepting a new pack. Source PNG pixels remain untouched; width/height estimates preserve their aspect ratio, and full-frame bridge layers share the correct 360×1000 draw rectangle and `near−800` anchor.
+
+PNG signatures/IHDR dimensions are checked **before decoding**. Limits are 20 placements, 3 MB/file, 3 MP/image, 18 MB source data and **12 MP decoded artwork per pack** (duplicates count conservatively). JSON/ZIP imports validate the entire pack before decoding or replacing the current composition. ZIP streams enforce their declared output limits while decompressing, and reject inconsistent local headers, CRCs, paths, multi-disk metadata and directory offsets. STORE and standard DEFLATE import are exercised in Chromium and WebKit. Older Safari without native raw-DEFLATE support still needs STORE ZIP or self-contained JSON.
+
+Ground candidates now sit beneath actual street shop/prop silhouettes in isolated preview mode and beneath wilderness vegetation. Rear/foreground and bridge support/water/deck passes remain independent. No production registration, approved-art edits or collision/gameplay changes are introduced. Camera Lab, Perspective Editor and the existing asset gate remain the review tools.
+
+See [audit, automated evidence and 360×640 captures](docs/biome-workspace/QA.md). **Physical iPhone Safari and raised-architecture/style approval remain unverified.** PR #11's CI repair and import fixes are merged into this branch without rewriting either PR's history. Neither PR has been merged into main or deployed.
 
 ## Intended one-hand mobile workflow
 
@@ -15,7 +29,7 @@
 
 - Logical world coordinates remain fixed: 360×640, road x105–255, lanes x130/180/230, Gary contact baseline y546, single bridge deck x138–222 and length 620. Do **not** scale or warp the *game* to match source art.
 - When filename and exact intrinsic PNG dimensions match a currently recorded **technical** wilderness/bridge sprite, the tool proposes the pre-existing source-to-draw ratio. The old DRAFT01 *visuals* are user-rejected and its measured technical sizes are still **not an approved camera or art reference**. Any unknown file receives a clearly provisional display estimate and must be separately inspected, calibrated and approved.
-- Imported PNGs undergo a decoded alpha check and size caps (3MB/file, 3MP per image, 18MB source art total). Opaque artwork is surfaced for review rather than falsely validated as a transparency pass. Full `ASSET_QUALITY_GATE.md` and visually correct gameplay registration remain mandatory for promotion.
+- Imported PNGs undergo a decoded alpha check and size caps (3MB/file, 3MP per image, 18MB source art total, 12MP decoded artwork per pack). Opaque artwork is surfaced for review rather than falsely validated as a transparency pass. Full `ASSET_QUALITY_GATE.md` and visually correct gameplay registration remain mandatory for promotion.
 - JSON and ZIP manifests include `approval: UNVERIFIED_VISUAL`, `approved:false`, `registered:false`, `collision:'NOT_DEFINED'`. They never write to `gary-game-config.json`, asset manifests, world physics, encounter flow, score, localStorage or game source. No auto-promotion/deployment exists.
 - ZIP import checks safe paths, sizes, CRC32, entry count and unsupported compression. ZIPs not made by the workspace may require scene placement and alpha/dimension review; DRAFT01 is not an approved style source.
 - Dynamic engine candidate list is strictly **debug-only** and limited to 20, with no image decoding, callbacks, masks or DOM allocation in the normal render loop. Existing one-asset `GaryAssetPreview.set` and Camera Lab remain intact.

@@ -9,10 +9,10 @@ h1{font-size:22px;letter-spacing:-.6px;margin:0}h2{font-size:16px;margin:0 0 8px
 p{margin:6px 0 12px;color:#bac9c5;font-size:13px}small{color:#afbebb}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 header a{font-size:12px;color:#eccc9b;text-decoration:none}
-.layout{display:grid;grid-template-columns:minmax(285px,390px) minmax(290px,1fr);gap:16px;align-items:start}
+.layout{min-width:0;display:grid;grid-template-columns:minmax(285px,390px) minmax(290px,1fr);gap:16px;align-items:start}
 .panel{background:#1c2729;border:1px solid #3b5552;border-radius:16px;padding:14px;margin-bottom:12px}
 strong{font-weight:800}label{display:block;font-size:13px;font-weight:730;color:#dce2dc;margin:10px 0 5px}
-input,button,select{font:inherit}input[type=text],input[type=number],select{background:#0f1d1e;border:1px solid #536967;color:white;border-radius:10px;padding:10px;min-height:44px;width:100%}
+input,button,select{font:inherit}input[type=text],input[type=number],select{background:#0f1d1e;border:1px solid #536967;color:white;border-radius:10px;padding:10px;min-height:44px;width:100%;font-size:16px}
 input[type=range]{width:100%;accent-color:#e4b46e;min-height:37px}
 button{min-height:45px;padding:10px;border-radius:11px;border:1px solid #51635d;background:#293c3c;color:#fbfaf5;font-size:13px;font-weight:760;cursor:pointer;touch-action:manipulation}
 button:disabled{opacity:.35;cursor:not-allowed}.primary{background:#e7b96e;border-color:#e7b96e;color:#1e271f}
@@ -40,7 +40,7 @@ details{border:1px solid #435a57;border-radius:12px;margin-top:10px;padding:11px
 .info{font-size:11px;line-height:1.5;color:#acbeb8}
 #assetChecks{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;color:#afc6b8}
 #busy{min-height:20px;font-size:12px;color:#cdd6cf}
-@media(max-width:720px){body{padding-bottom:76px}main{padding:12px}.layout{display:flex;flex-direction:column}.left,.right{width:100%}.stage{width:min(100%,280px)}.panel{padding:12px;margin-bottom:10px}h1{font-size:20px}.mobile-bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:#121d1ef2;border-top:1px solid #465954;z-index:10;backdrop-filter:blur(10px)}.mobile-bar button{min-height:43px;font-size:12px;padding:7px}}
+@media(max-width:720px){body{padding-bottom:76px}main{padding:12px}.layout{display:flex;flex-direction:column}.left,.right{width:100%;min-width:0}.stage{width:min(100%,280px)}.panel{padding:12px;margin-bottom:10px}h1{font-size:20px}.mobile-bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:#121d1ef2;border-top:1px solid #465954;z-index:10;backdrop-filter:blur(10px)}.mobile-bar button{min-height:43px;font-size:12px;padding:7px}}
 @media(min-width:721px){.left{position:sticky;top:12px}.mobile-bar{display:none}}
 </style></head>
 <body><main>
@@ -48,14 +48,14 @@ details{border:1px solid #435a57;border-radius:12px;margin-top:10px;padding:11px
 <div class="layout">
 <section class="left" aria-label="Live game preview">
 <div class="panel"><h2><span class="step">1</span> Choose a scene</h2>
-<label for="biomeName">Biome package name</label><input id="biomeName" type="text" maxlength="64" value="New wilderness biome" autocomplete="off">
+<label for="biomeName">Biome package name</label><input id="biomeName" type="text" maxlength="64" value="New biome" autocomplete="off">
 <label for="scene">Preview location</label>
 <select id="scene">
-<option value="street-day">Original street · daylight</option><option value="street-rain">Street · rainy night</option>
+<option value="street-day" selected>Original street · daylight</option><option value="street-rain">Street · rainy night</option>
 <option value="bridge-approach">Bridge approach</option><option value="bridge-enter">Bridge entrance</option><option value="bridge-middle">Bridge middle</option><option value="bridge-exit">Bridge exit</option>
-<option value="wilderness-reveal" selected>Wilderness reveal</option><option value="wilderness-dense">Deep wilderness</option>
+<option value="wilderness-reveal">Wilderness reveal</option><option value="wilderness-dense">Deep wilderness</option>
 </select>
-<label for="timeline">Scene progression</label><input id="timeline" type="range" min="0" max="7" step="1" value="6" aria-label="Jump to a scene on the game progression timeline">
+<label for="timeline">Scene progression</label><input id="timeline" type="range" min="0" max="7" step="1" value="0" aria-label="Jump to a scene on the game progression timeline">
 <div class="columns"><button id="previous">← Earlier</button><button id="next">Later →</button></div>
 <p class="info">The timeline jumps between real-engine scene presets; it does not simulate an uninterrupted crossing.</p>
 </div>
@@ -73,29 +73,33 @@ details{border:1px solid #435a57;border-radius:12px;margin-top:10px;padding:11px
 <section class="right" aria-label="Asset pack editor">
 <div class="panel"><h2><span class="step">2</span> Add assets</h2>
 <p>Choose up to 20 transparent PNGs. Every image stays local until you export a package.</p>
-<div class="filebtn"><span>＋ Add multiple PNG images</span><input id="addFiles" type="file" accept="image/png" multiple aria-label="Import PNG artwork files"></div>
-<div class="columns" style="margin-top:8px"><button id="importPack">Import saved biome</button><button id="demo">Show sample layout</button></div>
+<div class="filebtn"><span>＋ Add PNG images or one ZIP</span><input id="addFiles" type="file" accept="image/png,.png,.zip,.json,application/zip,application/json" multiple aria-label="Import PNG artwork files"></div>
+<div class="columns" style="margin-top:8px"><button id="importPack">Import PNG ZIP / biome</button><button id="demo">Show sample layout</button></div>
 <input id="packFile" type="file" accept=".zip,.json,application/zip,application/json" hidden>
-<p class="info">Known game filenames reuse measured display sizes. New artwork uses a clearly provisional preview size; exact final registration still requires approval.</p>
+<p class="info"><a href="gary-camera-lab.html">Camera Lab</a> · <a href="gary-perspective-editor.html">Perspective Editor</a><br>Known game filenames reuse measured display sizes. New artwork uses a clearly provisional preview size; exact final registration still requires approval.</p>
 <h2 style="margin-top:13px">Assets <small id="count">0 / 20</small></h2>
 <div id="assets" aria-label="Assets included in this biome"><div class="empty">No artwork yet. Add some PNGs to begin.</div></div>
 </div>
 <div class="panel" id="selectionPanel"><h2><span class="step">3</span> Arrange and review</h2>
 <p id="selectedName">Choose an asset to adjust its position and layer.</p>
-<div class="columns">
+<details><summary>Exact position</summary><div class="columns">
 <div><label for="drawX">X</label><input id="drawX" type="number" min="-1000" max="1000" step="1" inputmode="numeric"></div>
 <div><label for="drawY">Y</label><input id="drawY" type="number" min="-1000" max="10000" step="1" inputmode="numeric"></div>
 </div>
-<details id="advanced"><summary>Size, layers and exact placement</summary>
+</details>
+<label for="scale">Scale artwork · keeps proportions and ground contact</label><input id="scale" type="range" min="50" max="150" value="100">
+<button id="lock" aria-pressed="false">Lock placement</button>
+<label for="pass">Layer</label><select id="pass">
+<option value="ground">Ground · under Gary</option><option value="rear">Behind Gary</option>
+<option value="under-water">Bridge supports · under water</option><option value="deck">Bridge deck · under Gary</option><option value="front">Foreground · covers Gary</option></select>
+<div class="columns" style="margin-top:8px"><button id="backward">Send backward</button><button id="forward">Bring forward</button></div>
+<details id="advanced"><summary>Technical settings and checks</summary>
 <div class="columns">
 <div><label for="drawW">Width</label><input id="drawW" type="number" min="1" max="360" step="1" inputmode="numeric"></div>
 <div><label for="drawH">Height</label><input id="drawH" type="number" min="1" max="1000" step="1" inputmode="numeric"></div>
 </div>
-<label for="pass">Position in scene</label><select id="pass">
-<option value="ground">Ground/decal · under Gary</option><option value="rear">Behind Gary</option>
-<option value="under-water">Bridge lower masonry · below water</option><option value="deck">Bridge deck · below Gary</option><option value="front">Foreground · covers Gary</option></select>
 <label><input id="worldScroll" type="checkbox" checked> Move with scrolling world</label>
-<label for="opacity">Visibility</label><input id="opacity" type="range" min="10" max="100" value="100">
+<label for="opacity">Visibility</label><input id="opacity" type="range" min="0.001" max="1" step="any" value="1">
 <div id="assetChecks" aria-live="polite">Pixel validation information appears here.</div>
 </details>
 <div class="columns" style="margin-top:10px"><button id="duplicate">Duplicate placement</button><button id="remove">Remove</button></div>
@@ -112,7 +116,7 @@ details{border:1px solid #435a57;border-radius:12px;margin-top:10px;padding:11px
 </section>
 </div>
 </main>
-<nav class="mobile-bar" aria-label="Biome quick actions"><button id="mobileAdd">＋ Add PNGs</button><button id="mobilePreview" class="primary">▶ Preview</button><button id="mobileSave">Save ZIP</button></nav>
-<script src="gary-wilderness-data.js"></script><script src="gary-biome-zip.js"></script>
-<script src="gary-biome-workspace.js"></script>
+<nav class="mobile-bar" aria-label="Biome quick actions"><button id="mobileAdd">＋ Import art</button><button id="mobilePreview" class="primary">▶ Preview</button><button id="mobileSave">Save ZIP</button></nav>
+<script src="gary-wilderness-data.js"></script><script src="gary-biome-zip.js?v=qa-20261022"></script>
+<script src="gary-biome-workspace.js?v=qa-20261022"></script>
 </body></html>

@@ -6,8 +6,8 @@
  const $=id=>document.getElementById(id);
  const SCENES=['street-day','street-rain','bridge-approach','bridge-enter','bridge-middle','bridge-exit','wilderness-reveal','wilderness-dense'];
  const PASSES=new Set(['ground','rear','under-water','deck','front']);
- const LIMIT=20,MAX_FILE=3*1024*1024,MAX_TOTAL=18*1024*1024,MAX_PX=3000000;
- const state={assets:[],selected:null,scene:'wilderness-reveal',ready:false,importing:false,renderQueued:false,loadToken:0};
+ const LIMIT=20,MAX_FILE=3*1024*1024,MAX_TOTAL=18*1024*1024,MAX_PX=3000000,MAX_PACK_PX=12000000;
+ const state={assets:[],selected:null,scene:'street-day',ready:false,placedDistance:0,importing:false,renderQueued:false,loadToken:0};
  const game=$('game'),overlay=$('touch'),ctx=overlay.getContext('2d');
  let drag=null,unique=0;
  const status=(message)=>{$('status').textContent=message;};
@@ -15,6 +15,7 @@
  const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
  const finite=(n)=>typeof n==='number'&&Number.isFinite(n);
  const slug=(s)=>String(s||'biome').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,44)||'biome';
+ const showPreview=()=>$('stage').scrollIntoView({block:'center',behavior:'auto'});
  const selected=()=>state.assets.find(a=>a.id===state.selected)||null;
  function engine(){
   try{return game.contentWindow?.GaryAssetPreview||null;}catch(_){return null;}
@@ -25,7 +26,7 @@
   if(state.ready){
    $('motion').textContent='▶ Play scrolling to check placement';$('motion').dataset.playing='0';
    const api=engine();
-   try{if(!api.startScene(value))throw Error('Scene unavailable');renderPack();}
+   try{if(!api.startScene(value))throw Error('Scene unavailable');state.placedDistance=game.contentWindow.GaryRuntimeStats.snapshot().distance;renderPack();}
    catch(e){status('Cannot load scene: '+e.message);}
   }
  }
@@ -44,6 +45,7 @@
     state.ready=true;
     try{
      if(!api.startScene(state.scene))throw Error('Scene preview failed');
+     state.placedDistance=game.contentWindow.GaryRuntimeStats.snapshot().distance;
      renderPack();status('Actual game ready. Tap an asset or drag it to adjust placement.');
     }catch(e){status('Preview unavailable: '+e.message);}
     return;
@@ -74,14 +76,16 @@
     reg.role==='foreground'?'front':'rear';
   }else{
    // Explicitly provisional preview guess; never exported as approved geometry.
-   width=clamp(Math.round(w*.20),22,Math.min(90,360));
-   height=clamp(Math.round(width*h/w),20,240);
+   const scale=Math.min(90/w,240/h,.20);
+   width=w*scale;height=h*scale;
    pass='rear';
   }
-  if(pass==='deck'||pass==='under-water')defaultX=pass==='deck'?0:101;
+  if(exact&&reg.source==='bridge-review-unapproved')defaultX=0;
   else if(pass==='ground')defaultX=reg?.role==='surface'?105:clamp(index%2===0?35:270,-100,360-width);
   else defaultX=clamp(index%2===0?30:286-width,-100,360-width);
-  return {draw:{x:defaultX,y:clamp(430+(index%5)*20-height,0,1000),width,height},
+  const near=state.scene.startsWith('bridge-')?game.contentWindow?.GaryBridgePreview?.snapshot()?.near:850;
+  const y=exact&&reg.source==='bridge-review-unapproved'?(finite(near)?near:850)-800:clamp(430+(index%5)*20-height,0,1000);
+  return {draw:{x:defaultX,y,width,height},
    pass,registration:exact?'MEASURED_LEGACY_DIMENSIONS_UNAPPROVED':'PROVISIONAL_PREVIEW_SCALE'};
  }
  function safeAsset(a){
@@ -98,6 +102,7 @@
   const data=g.getImageData(0,0,c.width,c.height).data;
   let transparent=0,painted=0;
   for(let i=3;i<data.length;i+=4){if(data[i]<8)transparent++;if(data[i]>64)painted++;}
+  c.width=c.height=1; // Release the temporary full-resolution alpha surface promptly.
   if(painted===0)throw Error('PNG has no visible painted pixels');
   return transparent>0?'TRANSPARENT_ALPHA_FOUND':'OPAQUE_OR_NO_TRUE_TRANSPARENCY';
  }
@@ -117,9 +122,22 @@
    reader.readAsDataURL(file);
   });
  }
+ function pngDimensions(bytes){
+  if(bytes.length<24 || bytes.slice(0,8).join(',')!=='137,80,78,71,13,10,26,10' ||
+     bytes.slice(12,16).join(',')!=='73,72,68,82')throw Error('Invalid PNG header');
+  const v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),width=v.getUint32(16),height=v.getUint32(20);
+  if(!width||!height||width*height>MAX_PX)throw Error('PNG dimensions exceed the 3 million pixel phone limit');
+  return {width,height};
+ }
+ function checkBudget(list){
+  if(totalBytes(list)>MAX_TOTAL)throw Error('Total PNG data exceeds 18 MB phone limit');
+  const pixels=list.reduce((n,a)=>n+a.source.width*a.source.height,0);
+  if(pixels>MAX_PACK_PX)throw Error('Decoded artwork exceeds the 12 million pixel phone limit');
+ }
  async function loadFile(file,index){
-  if(file.type!=='image/png'||!/\.png$/i.test(file.name))throw Error(file.name+': PNG only');
+  if((file.type&&file.type!=='image/png')||!/\.png$/i.test(file.name))throw Error(file.name+': PNG only');
   if(file.size>MAX_FILE)throw Error(file.name+': PNG exceeds 3 MB limit');
+  pngDimensions(new Uint8Array(await file.slice(0,24).arrayBuffer()));
   const dataUrl=await readData(file),img=await loadImage(dataUrl);
   const alpha=checkAlpha(img),meta=guess(file.name,img.naturalWidth,img.naturalHeight,index);
   return {id:'art-'+(++unique),name:file.name,source:{width:img.naturalWidth,height:img.naturalHeight},
@@ -132,12 +150,17 @@
   if(state.importing)return;
   state.importing=true;busy('Checking '+batch.length+' PNGs…');
   try{
+   // Bound the entire decoded batch before decoding even the first PNG.
+   let pixels=state.assets.reduce((n,a)=>n+a.source.width*a.source.height,0);
+   let bytes=totalBytes(state.assets);
+   for(const f of batch){const d=pngDimensions(new Uint8Array(await f.slice(0,24).arrayBuffer()));pixels+=d.width*d.height;bytes+=f.size;}
+   if(pixels>MAX_PACK_PX||bytes>MAX_TOTAL)throw Error('Artwork pack exceeds phone memory limits');
    const next=[];
    for(const f of batch){next.push(await loadFile(f,state.assets.length+next.length));}
    const assembled=[...state.assets,...next];
-   if(totalBytes(assembled)>MAX_TOTAL)throw Error('Total PNG data exceeds 18 MB phone limit');
+   checkBudget(assembled);freezeWorld();
    state.assets=assembled;state.selected=next[0].id;
-   rebuildList();updateSelection();renderPack();status(next.length+' artwork asset(s) added. All remain unapproved candidates.');
+   rebuildList();updateSelection();renderPack();showPreview();status(next.length+' artwork asset(s) added. All remain unapproved candidates.');
   }catch(e){status('Import failed: '+e.message);}
   finally{state.importing=false;busy('');$('addFiles').value='';}
  }
@@ -155,18 +178,18 @@
    center.append(title,description);
    const side=document.createElement('em');side.textContent=i+1+'/'+state.assets.length;
    button.append(thumbnail,center,side);
-   button.addEventListener('click',()=>{state.selected=a.id;rebuildList();updateSelection();drawGuide();});
+   button.addEventListener('click',()=>{state.selected=a.id;rebuildList();updateSelection();drawGuide();showPreview();});
    area.append(button);
   });
  }
  function updateSelection(){
   const a=selected(),active=!!a;
-  $('selectedName').textContent=a?a.name:'Select an asset above to move and layer it.';
-  for(const id of ['drawX','drawY','drawW','drawH','pass','worldScroll','opacity','duplicate','remove'])$(id).disabled=!active;
+  $('selectedName').textContent=a?a.name+(a.alpha==='OPAQUE_OR_NO_TRUE_TRANSPARENCY'?' · Warning: no transparent background':''):'Select an asset above to move and layer it.';
+  for(const id of ['drawX','drawY','drawW','drawH','pass','worldScroll','opacity','duplicate','remove','scale','backward','forward'])$(id).disabled=!active;
   if(!a){$('assetChecks').textContent='No selected artwork.';drawGuide();return;}
   $('drawX').value=a.draw.x;$('drawY').value=a.draw.y;
   $('drawW').value=a.draw.width;$('drawH').value=a.draw.height;
-  $('pass').value=a.pass;$('opacity').value=Math.round(a.opacity*100);
+  $('scale').value=100;$('pass').value=a.pass;$('opacity').value=a.opacity;
   $('worldScroll').checked=a.scrollWithWorld;
   $('assetChecks').textContent=
    'Source PNG: '+a.source.width+' × '+a.source.height+'\nAlpha: '+a.alpha+
@@ -176,18 +199,32 @@
  function drawGuide(){
   ctx.clearRect(0,0,360,640);
   const a=selected();if(!a)return;
-  const d=a.draw;
+  const d={...a.draw,y:screenY(a)};
   ctx.save();ctx.strokeStyle='#ffcc72';ctx.lineWidth=2;
   ctx.setLineDash([7,5]);ctx.strokeRect(d.x,d.y,d.width,d.height);ctx.setLineDash([]);
   ctx.fillStyle='#ffcc72';ctx.beginPath();ctx.arc(d.x+d.width/2,d.y+d.height,3,0,Math.PI*2);ctx.fill();
   ctx.restore();
+ }
+ function screenY(a){
+  if(!state.ready)return a.draw.y;
+  const i=state.assets.indexOf(a);return engine()?.packSnapshot()[i]?.screenY??a.draw.y;
+ }
+ function freezeWorld(){
+  if($('motion').dataset.playing!=='1')return;
+  game.contentWindow?.GaryBridgePreview?.freeze();
+  $('motion').dataset.playing='0';$('motion').textContent='▶ Play scrolling to check placement';
+  updateSelection();renderPack();
+ }
+ function animateGuide(){
+  if($('motion').dataset.playing!=='1')return;
+  drawGuide();requestAnimationFrame(animateGuide);
  }
  function renderPack(){
   if(!state.ready)return;
   const api=engine();
   try{
    api.setPack(state.assets.map(a=>({image:a.image,draw:a.draw,pass:a.pass,opacity:a.opacity,
-      scrollWithWorld:a.scrollWithWorld})));
+      scrollWithWorld:a.scrollWithWorld,placedDistance:state.placedDistance})));
    drawGuide();
   }catch(e){status('Game-layer preview error: '+e.message);}
  }
@@ -197,24 +234,36 @@
   requestAnimationFrame(()=>{state.renderQueued=false;renderPack();});
  }
  function updateFields(){
+  freezeWorld();
   const a=selected();if(!a)return;
   const numbers=['drawX','drawY','drawW','drawH'].map(id=>Number($(id).value));
-  if(!numbers.every(finite)||numbers[2]<=0||numbers[3]<=0||numbers[2]>360||numbers[3]>1000){
+  if(!numbers.every(finite)||numbers[2]<=0||numbers[3]<=0||numbers[2]>360||numbers[3]>1000||Math.abs(numbers[0])>1000||Math.abs(numbers[1])>10000){
    status('Invalid asset size or position. Previous values retained.');updateSelection();return;
+  }
+  const nextScroll=$('worldScroll').checked;
+  if(nextScroll!==a.scrollWithWorld){
+   const offset=(game.contentWindow?.GaryRuntimeStats?.snapshot()?.distance??state.placedDistance)-state.placedDistance;
+   numbers[1]+=nextScroll?-offset:offset;
   }
   [a.draw.x,a.draw.y,a.draw.width,a.draw.height]=numbers;
   if(!PASSES.has($('pass').value))return;
-  a.pass=$('pass').value;a.opacity=Number($('opacity').value)/100;
+  a.pass=$('pass').value;a.opacity=Number($('opacity').value);
   a.scrollWithWorld=$('worldScroll').checked;
   rebuildList();drawGuide();queueRender();
+  if((a.pass==='deck'||a.pass==='under-water')&&!state.scene.startsWith('bridge-'))status('This layer is visible at bridge checkpoints. Choose a bridge scene to review it.');
  }
  function pointFromEvent(e){
   const r=overlay.getBoundingClientRect();
   return {x:(e.clientX-r.left)*360/r.width,y:(e.clientY-r.top)*640/r.height};
  }
  function pointerDown(e){
+  if(e.isPrimary===false){if(drag)pointerEnd({pointerId:drag.id,type:'pointercancel'});return;}
+  if(e.button!==undefined&&e.button!==0)return;
+  freezeWorld();
+  if($('lock').getAttribute('aria-pressed')==='true')return;
   const p=pointFromEvent(e);
-  const a=[...state.assets].reverse().find(o=>p.x>=o.draw.x&&p.x<=o.draw.x+o.draw.width&&p.y>=o.draw.y&&p.y<=o.draw.y+o.draw.height);
+  const order=['under-water','deck','ground','rear','front'];
+  const a=[...state.assets].sort((a,b)=>order.indexOf(a.pass)-order.indexOf(b.pass)).reverse().find(o=>p.x>=o.draw.x&&p.x<=o.draw.x+o.draw.width&&p.y>=screenY(o)&&p.y<=screenY(o)+o.draw.height);
   if(!a)return;
   state.selected=a.id;rebuildList();updateSelection();
   drag={id:e.pointerId,startX:p.x,startY:p.y,originX:a.draw.x,originY:a.draw.y,assetId:a.id};
@@ -224,6 +273,7 @@
   if(!drag||drag.id!==e.pointerId)return;
   const a=selected();if(!a||drag.assetId!==a.id)return;
   const p=pointFromEvent(e);
+  if(Math.hypot(p.x-drag.startX,p.y-drag.startY)<5)return;
   a.draw.x=Math.round(clamp(drag.originX+p.x-drag.startX,-1000,1000));
   a.draw.y=Math.round(clamp(drag.originY+p.y-drag.startY,-1000,10000));
   $('drawX').value=a.draw.x;$('drawY').value=a.draw.y;
@@ -231,7 +281,8 @@
  }
  function pointerEnd(e){
   if(!drag||drag.id!==e.pointerId)return;
-  drag=null;rebuildList();renderPack();
+  if(e.type==='pointercancel'){const a=state.assets.find(a=>a.id===drag.assetId);if(a){a.draw.x=drag.originX;a.draw.y=drag.originY;}}
+  drag=null;rebuildList();updateSelection();renderPack();
  }
  async function download(data,filename,mime){
   const blob=data instanceof Blob?data:new Blob([data],{type:mime});
@@ -256,7 +307,7 @@
  }
  async function exportPack(embed){
   if(!state.assets.length){status('Add some artwork before exporting the biome.');return;}
-  const obj=exportObject(embed);
+  freezeWorld();const obj=exportObject(embed);
   const name=slug(obj.title)+(embed?'.gary-biome.json':'.gary-layout.json');
   const json=JSON.stringify(obj);
   if(json.length>34*1024*1024){status('Pack exceeds safe iPhone export size. Remove some images.');return;}
@@ -266,13 +317,20 @@
  function validatePackObject(obj){
   if(!obj||obj.schema!=='gary-eats-biome-workspace-v1'||obj.version!==1||!Array.isArray(obj.assets)||
      obj.assets.length>LIMIT||!SCENES.includes(obj.scene))throw Error('Not a supported Gary Eats! biome package');
+  let bytes=0,pixels=0;
   for(const [i,a] of obj.assets.entries()){
    if(!a||typeof a.name!=='string'||a.name.length>220||!a.source||!a.draw||
     !PASSES.has(a.pass)||!a.pngData?.startsWith('data:image/png;base64,')||
     ![a.draw.x,a.draw.y,a.draw.width,a.draw.height,a.source.width,a.source.height,a.opacity].every(finite)||
     a.draw.width<=0||a.draw.height<=0||a.draw.width>360||a.draw.height>1000||
+    Math.abs(a.draw.x)>1000||Math.abs(a.draw.y)>10000||
+    !Number.isInteger(a.source.width)||!Number.isInteger(a.source.height)||
     a.source.width<1||a.source.height<1||a.source.width*a.source.height>MAX_PX||
     !(a.opacity>0&&a.opacity<=1))throw Error('Unsafe or incomplete embedded PNG entry '+(i+1));
+   const png=window.GaryBiomeZip.fromDataUrl(a.pngData),d=pngDimensions(png);
+   if(png.length>MAX_FILE||d.width!==a.source.width||d.height!==a.source.height)throw Error('PNG source dimensions or size mismatch');
+   bytes+=png.length;pixels+=d.width*d.height;
+   if(bytes>MAX_TOTAL||pixels>MAX_PACK_PX)throw Error('Biome exceeds phone memory limits');
   }
  }
  async function replaceWithPack(obj){
@@ -287,16 +345,16 @@
     dataUrl:a.pngData,image:img,alpha:checkAlpha(img),
     registration:'REIMPORTED_CANDIDATE_UNVERIFIED'});
   }
-  if(totalBytes(next)>MAX_TOTAL)throw Error('Biome exceeds local 18 MB artwork limit');
+  checkBudget(next);freezeWorld();
   state.assets=next;state.selected=next[0]?.id||null;
   $('biomeName').value=String(obj.title||'Imported biome').slice(0,64);
   setScene(obj.scene);rebuildList();updateSelection();renderPack();
-  status(next.length+' PNGs and their placements restored. Artistic approval remains required.');
+  showPreview();status(next.length+' PNGs and their placements restored. Artistic approval remains required.');
  }
  async function exportZip(){
   if(!state.assets.length){status('Add artwork before exporting a biome ZIP.');return;}
   try{
-   const manifest=exportObject(false),files=[];
+   freezeWorld();const manifest=exportObject(false),files=[];
    for(let i=0;i<state.assets.length;i++){
     const a=state.assets[i],name='assets/'+String(i+1).padStart(2,'0')+'-'+slug(a.name)+'.png';
     manifest.assets[i].path=name;
@@ -325,16 +383,18 @@
   // together using measured source dimensions where genuinely available.
   const pngs=[...entries].filter(([name])=>/\.png$/i.test(name)&&!name.startsWith('__MACOSX/'));
   if(!pngs.length||pngs.length>LIMIT)throw Error('ZIP needs 1–20 separate PNG images or a Gary biome manifest');
+  let pixels=0;
+  for(const [,bytes] of pngs){const d=pngDimensions(bytes);pixels+=d.width*d.height;if(bytes.length>MAX_FILE||pixels>MAX_PACK_PX)throw Error('PNG ZIP exceeds phone memory limits');}
   const batch=[];
   for(const [name,bytes] of pngs){
    const file=new File([bytes],name.split('/').pop(),{type:'image/png'});
    batch.push(await loadFile(file,batch.length));
   }
-  if(totalBytes(batch)>MAX_TOTAL)throw Error('PNG ZIP exceeds 18 MB local art limit');
+  checkBudget(batch);freezeWorld();
   state.assets=batch;state.selected=batch[0].id;
   $('biomeName').value=file.name.replace(/\.zip$/i,'').slice(0,64);
   rebuildList();updateSelection();renderPack();
-  status(batch.length+' PNGs imported from ZIP. No verified placement manifest — inspect all sizes/layers before exporting.');
+  showPreview();status(batch.length+' PNGs imported from ZIP. No verified placement manifest — inspect all sizes/layers before exporting.');
  }
  async function importPack(file){
   if(!file||state.importing)return;
@@ -379,35 +439,70 @@
    const bridge=game.contentWindow?.GaryBridgePreview;
    const playing=$('motion').dataset.playing==='1';
    if(playing){
-    bridge.freeze();$('motion').dataset.playing='0';
+    freezeWorld();$('motion').dataset.playing='0';
     $('motion').textContent='▶ Play scrolling to check placement';
     status('Preview frozen for exact placement.');
    }else{
     bridge.resume();$('motion').dataset.playing='1';
-    $('motion').textContent='❚❚ Freeze world';
+    $('motion').textContent='❚❚ Freeze world';animateGuide();
     status('Playing actual debug-game scrolling. Preview assets follow world positions.');
    }
   });
-  $('start').addEventListener('click',()=>{ensureEngine();waitEngine();});
-  $('mobilePreview').addEventListener('click',()=>{ensureEngine();waitEngine();});
-  $('addFiles').addEventListener('change',e=>addFiles(e.target.files||[]));
+  $('start').addEventListener('click',()=>{ensureEngine();if(!state.ready)waitEngine();showPreview();});
+  $('mobilePreview').addEventListener('click',()=>{ensureEngine();if(!state.ready)waitEngine();showPreview();});
+  $('addFiles').addEventListener('change',e=>{
+   const files=[...(e.target.files||[])],archives=files.filter(f=>/\.(zip|json)$/i.test(f.name));
+   if(archives.length){
+    if(files.length!==1){status('Choose one biome ZIP, or multiple separate PNGs.');$('addFiles').value='';return;}
+    importPack(archives[0]);$('addFiles').value='';
+   }else addFiles(files);
+  });
   $('mobileAdd').addEventListener('click',()=>$('addFiles').click());
   $('importPack').addEventListener('click',()=>$('packFile').click());
   $('packFile').addEventListener('change',e=>importPack(e.target.files?.[0]));
   $('demo').addEventListener('click',sampleLayout);
-  for(const id of ['drawX','drawY','drawW','drawH','pass','worldScroll','opacity'])$(id).addEventListener('change',updateFields);
+  for(const id of ['drawX','drawY','drawW','drawH','pass','worldScroll','opacity']){
+   $(id).addEventListener('focus',freezeWorld);$(id).addEventListener('change',updateFields);
+  }
   $('duplicate').addEventListener('click',()=>{
+   freezeWorld();
    const a=selected();if(!a)return;
    if(state.assets.length>=LIMIT){status('Maximum 20 assets');return;}
    const n={...a,id:'copy-'+(++unique),name:a.name.replace(/\.png$/i,'')+'-copy.png',draw:{...a.draw,x:a.draw.x+14,y:a.draw.y-12}};
+   try{checkBudget([...state.assets,n]);}catch(e){status(e.message);return;}
    state.assets.push(n);state.selected=n.id;rebuildList();updateSelection();renderPack();
   });
   $('remove').addEventListener('click',()=>{
+   freezeWorld();
    if(!selected())return;
    state.assets=state.assets.filter(a=>a.id!==state.selected);
    state.selected=state.assets.at(-1)?.id||null;
    rebuildList();updateSelection();renderPack();
   });
+  $('lock').addEventListener('click',()=>{
+   drag=null;const locked=$('lock').getAttribute('aria-pressed')!=='true';
+   $('lock').setAttribute('aria-pressed',String(locked));$('lock').textContent=locked?'Unlock placement':'Lock placement';
+   overlay.style.touchAction=locked?'pan-y':'none';
+  });
+  let scaleStart=null;
+  $('scale').addEventListener('pointerdown',()=>{freezeWorld();const a=selected();scaleStart=a?{...a.draw}:null;});
+  $('scale').addEventListener('input',()=>{
+   freezeWorld();const a=selected();if(!a)return;
+   const d=scaleStart||a.draw,k=Math.min(Number($('scale').value)/100,360/d.width,1000/d.height);
+   a.draw={x:d.x+d.width*(1-k)/2,y:d.y+d.height*(1-k),width:d.width*k,height:d.height*k};
+   $('drawW').value=a.draw.width;$('drawH').value=a.draw.height;$('drawX').value=a.draw.x;$('drawY').value=a.draw.y;
+   queueRender();
+  });
+  $('scale').addEventListener('change',()=>{scaleStart=null;$('scale').value=100;rebuildList();});
+  for(const [id,step] of [['backward',-1],['forward',1]])$(id).addEventListener('click',()=>{
+   freezeWorld();const a=selected();if(!a)return;
+   const i=state.assets.indexOf(a);let j=i+step;
+   while(j>=0&&j<state.assets.length&&state.assets[j].pass!==a.pass)j+=step;
+   if(j<0||j>=state.assets.length)return;
+   [state.assets[i],state.assets[j]]=[state.assets[j],state.assets[i]];
+   rebuildList();renderPack();
+  });
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)freezeWorld();});
   $('export').addEventListener('click',()=>exportPack(true));
   $('exportZip').addEventListener('click',exportZip);
   $('mobileSave').addEventListener('click',exportZip);

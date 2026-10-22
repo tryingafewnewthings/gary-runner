@@ -58,35 +58,49 @@
   const u16=o=>v.getUint16(o,true),u32=o=>v.getUint32(o,true);
   let end=-1;
   for(let i=b.length-22;i>=Math.max(0,b.length-65557);i--){
-   if(u32(i)===0x06054b50 && i+22+u16(i+20)<=b.length){end=i;break;}
+   if(u32(i)===0x06054b50 && i+22+u16(i+20)===b.length){end=i;break;}
   }
   if(end<0)throw Error('Not a valid ZIP archive');
   const count=u16(end+10),dirOffset=u32(end+16),dirSize=u32(end+12);
-  if(count>MAX_FILES||dirOffset+dirSize>b.length||u16(end+8)!==count)throw Error('Invalid ZIP directory');
+  if(count>MAX_FILES||dirOffset+dirSize!==end||u16(end+4)!==0||u16(end+6)!==0||u16(end+8)!==count)throw Error('Invalid ZIP directory');
   const files=new Map();let pos=dirOffset,total=0;
   for(let i=0;i<count;i++){
    if(pos+46>b.length||u32(pos)!==0x02014b50)throw Error('Invalid ZIP central directory');
    const flags=u16(pos+8),method=u16(pos+10),crc=u32(pos+16);
    const clen=u32(pos+20),ulen=u32(pos+24),nl=u16(pos+28),el=u16(pos+30),cl=u16(pos+32),offset=u32(pos+42);
+   if(u16(pos+34)!==0)throw Error('Multi-disk ZIP artwork is unsupported');
    if(flags&1)throw Error('Encrypted ZIP artwork is unsupported');
    if(ulen>MAX_SINGLE||clen>MAX_TOTAL||ulen>MAX_TOTAL-total)throw Error('ZIP image exceeds safe decoded size');
    const name=safePath(td.decode(b.subarray(pos+46,pos+46+nl)));
    pos+=46+nl+el+cl;
    if(pos>dirOffset+dirSize||offset+30>b.length||u32(offset)!==0x04034b50)throw Error('Malformed ZIP offsets');
    const ln=u16(offset+26),le=u16(offset+28),start=offset+30+ln+le;
-   if(start+clen>b.length)throw Error('ZIP data truncated');
+   if(start+clen>dirOffset || offset>=dirOffset ||
+      u16(offset+8)!==method || u16(offset+6)!==flags ||
+      td.decode(b.subarray(offset+30,offset+30+ln))!==name)throw Error('ZIP data truncated or inconsistent local header');
+   if(!(flags&8)&&(u32(offset+14)!==crc||u32(offset+18)!==clen||u32(offset+22)!==ulen))throw Error('Inconsistent ZIP local sizes or CRC');
    let out=b.slice(start,start+clen);
    if(method===8){
     if(typeof DecompressionStream==='undefined')throw Error('Compressed ZIP unsupported in this browser; use a STORE ZIP or portable JSON');
     try{
-     const reader=new Blob([out]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-     out=new Uint8Array(await new Response(reader).arrayBuffer());
+     const reader=new Blob([out]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+     const chunks=[];let size=0;
+     try{
+      while(true){
+       const {value,done}=await reader.read();if(done)break;
+       size+=value.length;
+       if(size>ulen||size>MAX_SINGLE){await reader.cancel();throw Error('Decompressed ZIP exceeds declared size');}
+       chunks.push(value);
+      }
+     }finally{reader.releaseLock();}
+     out=new Uint8Array(size);let at=0;for(const chunk of chunks){out.set(chunk,at);at+=chunk.length;}
     }catch(_){throw Error('Cannot decode deflate ZIP in this Safari version; use a STORE ZIP or portable JSON');}
    }else if(method!==0)throw Error('Unsupported ZIP compression method '+method);
    if(out.length!==ulen||crc32(out)!==crc)throw Error('ZIP entry integrity check failed: '+name);
    total+=out.length;if(total>MAX_TOTAL)throw Error('ZIP exceeds safe decoded size');
    if(!name.endsWith('/')){if(files.has(name))throw Error('Duplicate ZIP filename '+name);files.set(name,out);}
   }
+  if(pos!==dirOffset+dirSize)throw Error('ZIP directory size mismatch');
   return files;
  }
  function fromDataUrl(url){

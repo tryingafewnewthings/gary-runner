@@ -39,3 +39,11 @@ The user-supplied original-game screenshot confirms hand-painted UK high-street 
 6. Never replace working assets with the visually rejected DRAFT01 pack, nor spend Codex prompts generating ordinary replacement art.
 
 **Status:** Documentation conflict registry + isolated Asset Factory reference-import enhancement proposed in draft PR #10. No gameplay modifications; raised-object perspective unapproved. Browser regression added but not yet verified in CI.
+
+## Consolidated PR #11/#12 audit (22 October, supersedes tool-status rows above)
+
+- `index.html` still loads `gary-difficulty-data.js` / `gary-difficulty-runtime.js`; `WORLD.cobbleCell=60`, canvas 360×640, road 105–255, lanes 130/180/230, foot y546 and bridge deck 138–222/length620 are unchanged. The active data file's introductory comment still names the old runtime; index.html is authoritative.
+- PR #10 is merged. The Factory's historical overlay-only descriptions are superseded by its actual isolated `GaryAssetPreview` render-pass API. PR #11 keeps its four template fixtures; PR #12 extends that API with bounded pack candidates and a separate existing Biome Workspace page. No alternate gameplay runtime was introduced.
+- PR #12's initial pack UI could register moved assets against an interpolated world position and draw street ground over shops. Both are corrected and checked against engine pixels. The original daylight high street is the initial preview; rejected DRAFT01 remains existing wilderness content, never the style master.
+- Full-frame bridge filenames previously received an incorrect default horizontal offset for lower masonry and arbitrary vertical placement. Verified 720×2000 sources now use the actual 360×1000 draw and shared `near−800` anchor. Filename and dimension matches remain technical hints, never artistic approval.
+- [Consolidated QA](../biome-workspace/QA.md) records evidence and remaining physical-iPhone/art approval gates. Public Pages availability is still contingent on approved merge/deployment.
