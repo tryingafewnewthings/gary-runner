@@ -1,0 +1,5 @@
+{
+  "schema": "gary-eats-art-visual-ledger-v1",
+  "description": "Hard evidence required for every NEW art/** production sprite. Previous images unchanged; all generation starts as art/candidates/ until actual 360x640 visual approval. This ledger is not proof of artistic fidelity by itself.",
+  "assets": {}
+}
