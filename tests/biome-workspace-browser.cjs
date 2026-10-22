@@ -66,6 +66,15 @@ async function main(){
   await page.locator('#packFile').setInputFiles({name:'roundtrip.gary-biome.json',mimeType:'application/json',buffer:first.buffer});
   await page.waitForFunction(()=>window.GaryBiomeWorkspace.snapshot().assetCount===2);
   assert.equal(await page.locator('#scene').inputValue(),'bridge-middle');
+  // The primary mobile export is a true ZIP containing every PNG and placement manifest.
+  const archive=await downloadBytes(page,'#exportZip');
+  assert.match(archive.name,/biome\\.zip$/);
+  assert.deepEqual(Array.from(archive.buffer.subarray(0,4)),[80,75,3,4]);
+  await page.locator('#remove').click();
+  await page.waitForFunction(()=>window.GaryBiomeWorkspace.snapshot().assetCount===1);
+  await page.locator('#packFile').setInputFiles({name:'whole-biome.zip',mimeType:'application/zip',buffer:archive.buffer});
+  await page.waitForFunction(()=>window.GaryBiomeWorkspace.snapshot().assetCount===2);
+  assert.equal(await page.locator('#scene').inputValue(),'bridge-middle');
   await page.locator('#pass').selectOption('front');
   const selectedPass=await page.evaluate(()=>{
     const s=window.GaryBiomeWorkspace.snapshot();
