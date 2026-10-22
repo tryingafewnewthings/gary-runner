@@ -339,7 +339,7 @@ let shutterMix = 0;
     status.textContent = 'Getting the high street ready…';
     try {
       const images = [...new Set([
-        imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery,
+        imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery, imgForgottenHedgehog,
         imgCheer, imgCrash, ...imgRun, ...(window.GaryRoadEvolution?.images || []), ...Object.values(cobbleImgs),
         ...PROPS.map(prop => prop.img), ...Object.values(itemImages), ...Object.values(foxImages), ...Object.values(wildernessImages)
       ].filter(Boolean))];
@@ -1056,6 +1056,11 @@ let shutterMix = 0;
   // GaryFoxEncounterV1: authored, non-hazard encounter on the Forgotten Road.
   const foxImages={approach:loadGary('art/fox/fox-approach.png?v=fox2',im=>validateSheet(im,'Fox approach',6,1,256,256)),snatch:loadGary('art/fox/fox-snatch.png?v=fox2',im=>validateSheet(im,'Fox snatch',4,1,256,256)),
     turn:loadGary('art/fox/fox-turn.png?v=fox2',im=>validateSheet(im,'Fox turn',3,1,256,256)),return:loadGary('art/fox/fox-return.png?v=fox2',im=>validateSheet(im,'Fox return',6,1,256,256)),bush:loadGary('art/fox/fox-bush.png?v=fox2')};
+  // Forgotten Road: decoded 6-frame hedgehog plus the original fox bush, shared.
+  const imgForgottenHedgehog=loadGary('art/forgotten-road/hedgehog-scurrying.png?v=hedgehog-20261022-1',
+    im=>validateSheet(im,'Forgotten Road hedgehog',6,1,72,54));
+  const forgottenWildlife=window.GaryForgottenWildlife.create({hedgehog:imgForgottenHedgehog,bush:foxImages.bush});
+  const wildlifeVisibility={readerVisible:false,foxActive:false,bridgeVisible:false,wildernessActive:false};
   const bridge=window.GaryBridge.create();
   let bridgePreviewFrozen=false;
   // Factory candidates are an isolated review-only render layer. No save, collision,
@@ -1143,6 +1148,7 @@ let shutterMix = 0;
     window.GaryRoadEvolution?.reset();
     window.GaryFoodCatalogue?.resetRun?.();
     pigeons.reset();
+    // Forgotten Road wildlife is stateless: its animation follows the reset global clock.
     window.GaryIntroTransition?.cancel();
     if (gameOverFrameRequest !== null) cancelAnimationFrame(gameOverFrameRequest);
     gameOverFrameRequest = null;
@@ -2561,6 +2567,16 @@ function updateRain(dt, advancing) {
         drawHighStreet('ground');drawPavements();drawRoad();drawCandidate('ground');drawHighStreet('decor');
       }else{drawHighStreet();drawPavements();drawRoad();}
       pigeons.draw();
+      // Independent bushes and non-colliding hedgehogs live on the cleared verge.
+      // They never share the hooded reader's on-screen interval or fox stage.
+      if(!cutscenePlate){
+        wildlifeVisibility.readerVisible=mystery.visible(view.distance);
+        wildlifeVisibility.foxActive=fox.quiet();
+        wildlifeVisibility.bridgeVisible=bridge.visible();
+        wildlifeVisibility.wildernessActive=wilderness.active();
+        forgottenWildlife.draw(ctx,view.distance,view.clock,mystery.clearingStart(),
+          mystery.footAt(view.distance),wildlifeVisibility);
+      }
       if (nightOn) {
         drawNightAmbient();
         drawNightRoadLight();
