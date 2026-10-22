@@ -2,6 +2,10 @@
 
 **First packaged:** 19 October 2026. **Scope:** pixel/structural preflight for assets; **not** artistic approval or physical iPhone testing.
 
+## 22 October 2026 live gate incident
+
+PR #18 merged/deployed while the Asset Quality Gate was red. Three 360×640 bridge capture PNGs lacked structural manifest entries; that failure skipped the separate visual-release check. Registering these captures repairs metadata only; `art-visual-ledger.json` remains empty and the bridge remains artistically unapproved. The workflow should run both gate steps even when one fails. A GitHub Action cannot prevent merging unless its status is configured as REQUIRED by repository branch rules. This connection cannot change those admin rules. Never mislabel CI success as physical iPhone or painterly approval.
+
 ## Components
 
 - `asset-quality-manifest.json`: explicit path-to-contract mappings for selected approved assets and sprite grids, with source dimensions, required transparent alpha, source cell sizes, safe-padding and foot baseline when dependable.

@@ -2,6 +2,10 @@
 
 **Audited against main commit 688f09c4, active index.html and source.** Distinguish CODE-OBSERVED, DOCUMENTED, VISUALLY REJECTED and UNVERIFIED-ON-DEVICE. This record does not verify deployment to public GitHub Pages.
 
+## Late audit — 22 October 2026, supersedes PR #9-era status
+
+PR #18 is merged and deployed at `48be6fea`: normal Play now loads the painted bridge overlay. It is **not artistically approved**; the Asset Quality Gate failed because three 360×640 bridge screenshots were not registered, preventing the subsequent visual provenance check. The art ledger remains empty. PRs #11/#12 are merged, contrary to old editor documents. The original first-30-seconds recording is not in the repo. The fixed ground geometry is known, but raised architecture is still provisional. Do not use DRAFT01 wilderness or the unapproved bridge as a positive style reference. A successful Pages deployment or browser smoke is not a visual acceptance test.
+
 ## Current source priority
 1. Live `index.html` script load order and actual active source: `gary-difficulty-data.js`, `gary-difficulty-runtime.js`, `gary-game-config.json`.
 2. `gary-camera-contract.json` for the fixed world contract; do not alter the provisional raised-architecture profile without multi-asset visual approval.

@@ -1,6 +1,16 @@
 # Gary Eats! — Visual Asset Production Standard
 **Version:** 22 October 2026 • **Status:** enforceable producer workflow; NOT a claim that generative models can reproduce exact art on every attempt.
 
+## Single production loop — the procedure for EVERY asset request
+
+1. **Reference:** retrieve original first-biome image pixels and current runtime registration; choose the closest approved asset of the same family. A debug screenshot or unapproved bridge/wilderness asset is not an approved style reference.
+2. **Method:** prefer controlled edits, extraction or composition of original art over new text-only illustrations. Ensure the generation/editing tool ACTUALLY receives reference-image pixels. Viewing GitHub images in another tool alone does not condition the generator. If image conditioning is unavailable, call the result a CANDIDATE.
+3. **Geometry:** lock source canvas/grid, game-unit draw size, screen-parallel camera, Gary-relative scale, foot baseline, transparency, render layer, occlusion and soft upper-left lighting BEFORE rendering. Raised-architecture projection remains provisional.
+4. **Review:** personally inspect actual image pixels and every animation frame at 360×640 beside Gary, including day/night/rain, moving ground contact and visual materials. Reject and correct wrong angles or style before delivery; do not ask the owner to operate Camera Lab or repeatedly fix artwork.
+5. **Release:** use the existing image and real-engine QA tools, not new editors or installer systems. Keep unapproved images out of normal Play; require actual artistic approval, passing CI and separate physical iPhone checks. Batch necessary integration into one safe PR. No generative model can guarantee a perfect first attempt.
+
+**Known production exception:** PR #18 merged/deployed a painted bridge while the Asset Quality Gate was red. The source bridge is unapproved, the visual ledger is empty, and the original first-30-seconds recording is not committed. Do not treat any of these as evidence of AAA fidelity. Repair enforcement rather than rubber-stamping a provenance entry.
+
 ## Automation and zero-user-work rule — 22 October 2026 amendment
 The user should only need to request the desired asset. ChatGPT must perform the anchor retrieval (actual pixels), geometry silhouette selection or creation, model generation/editing, repeated visual self-review, source alpha/grid/baseline checks, game-scale mock-up, and candidate/production status report itself. Use `gary-visual-reference-board.html` for an automatically composed original-pixel source board. Use `tools/asset-visual-brief.cjs --family bridge` for geometry-linked separate deck and parapet requests. Do NOT simply re-ask the user to upload references that exist in the repo, run Camera Lab, or do Codex's implementation work.
 

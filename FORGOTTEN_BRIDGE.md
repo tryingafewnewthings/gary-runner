@@ -1,3 +1,5 @@
+> **22 October 2026 current release override:** PR #18's painted bridge is merged and deployed in normal Play (`main` 48be6fea), but its Asset Quality Gate failed and it has no artistic approval. PRs #11/#12 are merged. Raised camera remains provisional, DRAFT01 wilderness art remains visually rejected, and physical iPhone testing is unverified. Dated PR/branch/deployment claims below are historical; use `GARY_EATS_MASTER_REFERENCE.md` and `GARY_VISUAL_PRODUCTION.md` for current decisions.
+
 # The Forgotten Bridge
 
 **22 October 2026 override:** The active `index.html` and latest `main` commit `688f09c4` supersede this document's historical status claims: `gary-difficulty-runtime.js` is the live-loaded engine, the bridge/wilderness modules are on `main`, painted bridge art is an unapproved debug candidate, and DRAFT01 wilderness graphics are USER-REJECTED. Do not treat an older 'not implemented' or 'unmerged' statement as current. See [conflicts](docs/camera/CONFLICT_REGISTER_2026-10-22.md). Public deployment and iPhone playback are unverified.

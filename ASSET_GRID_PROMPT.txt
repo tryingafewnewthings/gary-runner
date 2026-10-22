@@ -1,3 +1,5 @@
+22 OCT 2026 CURRENT: PR #18 painted bridge is live but failed the asset gate and lacks visual provenance. The original first-30-seconds gameplay recording is not committed; never treat the bridge or DRAFT01 as positive style anchors. This file is a REVIEW CHECKLIST; GARY_VISUAL_PRODUCTION.md owns the single creation procedure.
+
 22 OCTOBER 2026 — NEW ASSET PREGEN GATE
 In every Gary Eats! asset request, first follow GARY_VISUAL_PRODUCTION.md and use actual source art listed in docs/visual-master/reference-pack.json. Require first-biome source IMAGE evidence, family silhouette, consistent hand-painted styling, 360×640 game-scale comparison and explicit candidate approval status BEFORE normal game registration. Historical 48-unit cobble lines below are invalid; active 60-unit cobbles are source-verified. Raising an asset's apparent architecture cannot be automatically camera-approved.
 

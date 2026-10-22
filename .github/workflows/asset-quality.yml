@@ -67,6 +67,7 @@ jobs:
           fi
 
       - name: Block new production art without in-engine visual evidence
+        if: ${{ always() }}
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.before }}

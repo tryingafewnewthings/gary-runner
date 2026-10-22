@@ -1,3 +1,5 @@
+22 OCT 2026 CURRENT: PR #18 painted bridge is in normal Play but NOT visually approved; never use it or DRAFT01 wilderness as a style master. Follow the original first-biome source pixels and GARY_VISUAL_PRODUCTION.md.
+
 22 OCTOBER 2026 — VISUAL PRODUCTION ENTRY POINT
 For all NEW art generation, follow GARY_VISUAL_PRODUCTION.md and docs/visual-master/reference-pack.json; the original first-biome painted assets are the aesthetic reference. Do not use DRAFT01 wilderness as a positive style reference. The camera/world values in current active code win over older numeric examples below. Raised architecture is NOT artistically calibrated; no generative text can replace family-specific source-image and real-engine comparison.
 
@@ -45,7 +47,7 @@ stay legible at their authored DETAILS display caps. No floating benches,
 flat sticker-like trees or props that look attached to the building wall.
 
 3. COBBLE GROUND AND TILE SEAMS
-Current renderer uses WORLD.cobbleCell = 48 design units. drawCobbles() samples
+Current active renderer uses WORLD.cobbleCell = 60 design units (48-unit older revision superseded). drawCobbles() samples
 ONE QUADRANT of each corresponding WebP texture into each destination cell.
 This is not a 180/200-unit full-texture draw. All eight variants must share the
 same authored source size/quadrant layout, colour family, scale and edge language.
