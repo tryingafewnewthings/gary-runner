@@ -1,5 +1,8 @@
 # Gary Eats! — Mandatory AI project/asset instructions
 
+**22 October 2026 current-state override:** PR #9 merged the stacked bridge, wilderness, Camera Lab and Asset Factory into `main` at `688f09c4`. Active scripts are determined by `index.html`, which loads `gary-difficulty-data.js` and `gary-difficulty-runtime.js`, plus bridge and wilderness modules. Existing DRAFT01 wilderness artwork is **user-rejected**, not approved. Painted bridge art is an **unapproved debug candidate**. Ground world geometry is fixed; raised architecture, physical iPhone quality and Pages deployment remain unverified. See [conflict register](docs/camera/CONFLICT_REGISTER_2026-10-22.md) and [first-biome style reference](docs/camera/FIRST_BIOME_STYLE_REFERENCE_2026-10-22.md). Older status text below is historic.
+
+
 This repository is the authoritative source for a professional mobile-first narrative Canvas runner. **Never implement from old chat memory alone.**
 
 ## Every new chat, asset request or code patch
