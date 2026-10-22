@@ -1,5 +1,8 @@
 # Gary Eats! — Camera Lab and reusable visual calibration
 
+**22 October 2026 current-state override:** PR #9 merged the stacked bridge, wilderness, Camera Lab and Asset Factory into `main` at `688f09c4`. Active scripts are determined by `index.html`, which loads `gary-difficulty-data.js` and `gary-difficulty-runtime.js`, plus bridge and wilderness modules. Existing DRAFT01 wilderness artwork is **user-rejected**, not approved. Painted bridge art is an **unapproved debug candidate**. Ground world geometry is fixed; raised architecture, physical iPhone quality and Pages deployment remain unverified. See [conflict register](docs/camera/CONFLICT_REGISTER_2026-10-22.md) and [first-biome style reference](docs/camera/FIRST_BIOME_STYLE_REFERENCE_2026-10-22.md). Older status text below is historic.
+
+
 ## Supplied artwork review — 20 October update
 
 Camera Lab now has **Review supplied bridge artwork** in addition to the v2 geometry comparison. It loads `gary-bridge-art-review.json` and the three unchanged `art/bridge/production/*.png` files into the actual isolated game engine. The new rounded silhouette is alpha-calibrated rather than clipped by v2 masks. Painted-source projection sliders are locked; all world/deck/camera contracts remain fixed and raised architecture remains provisional. See [the integration and QA record](BRIDGE_ARTWORK_PIPELINE.md) and [four current engine views](docs/bridge-review/QA.md). Normal Play and main/Pages are not promoted by this work.
