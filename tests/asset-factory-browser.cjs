@@ -26,6 +26,22 @@ async function main(){
   assert.ok(Math.abs(stage.width/stage.height-9/16)<.012,'360×640 ratio preserved on iPhone');
   assert.equal(await page.locator('#asset option').count(),4);
 
+  // User's approved original-biome screenshot is compared locally, without publishing it or changing the game.
+  const referenceCanvas=createCanvas(360,640),referenceCtx=referenceCanvas.getContext('2d');
+  referenceCtx.fillStyle='#343b45';referenceCtx.fillRect(0,0,360,640);
+  const screenshotPng=referenceCanvas.toBuffer('image/png');
+  await page.locator('#referenceUpload').setInputFiles({name:'first-biome-360x640.png',mimeType:'image/png',buffer:screenshotPng});
+  await page.waitForFunction(()=>document.querySelector('#reference').src.startsWith('blob:'));
+  assert.match(await page.locator('#referenceInfo').textContent(),/360×640/);
+  assert.match(await page.locator('#reference').getAttribute('alt'),/first-biome-360x640/);
+  await page.locator('#resetReference').click();
+  await page.waitForFunction(()=>document.querySelector('#reference').src.includes('/docs/bridge/'));
+  assert.equal(await page.locator('#referenceUpload').inputValue(),'');
+  await page.locator('#referenceUpload').setInputFiles({name:'wrong-size.png',mimeType:'image/png',buffer:createCanvas(300,300).toBuffer('image/png')});
+  await page.waitForFunction(()=>document.querySelector('#result').textContent.includes('Reference rejected:'));
+  assert.ok(!(await page.locator('#reference').getAttribute('src')).startsWith('blob:'));
+  await page.locator('#resetReference').click();
+
   for(const spec of contract.templates){
    await page.locator('#asset').selectOption(spec.id);
    const preview=await page.locator('#preview').evaluate(c=>({width:c.width,height:c.height,pixels:c.getContext('2d').getImageData(0,0,360,640).data.some((v,i)=>i%4===3&&v>0)}));
