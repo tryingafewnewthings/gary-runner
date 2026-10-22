@@ -69,3 +69,24 @@ test('browser file exists, imports only local PNG and does not write gameplay so
  assert.match(html,/registered:false|registration\(spec,camera\)/);
  assert.doesNotMatch(html,/github\.com\/repos\//);
 });
+
+test('candidate artwork is debug-only and inserted at actual game layer boundaries',()=>{
+ const runtime=fs.readFileSync(path.join(root,'gary-difficulty-runtime.js'),'utf8');
+ assert.match(runtime,/if\(bridgePreviewSession\)\{\s*const passes=new Set/);
+ assert.match(runtime,/window\.GaryAssetPreview=Object\.freeze/);
+ assert.match(runtime,/registered:false,collision:'NOT_DEFINED'/);
+ const frame=runtime.slice(runtime.indexOf('function render(dt,cutscenePlate=false)'),runtime.indexOf('/* Fixed simulation and interpolated presentation.'));
+ const underWater=frame.indexOf("drawCandidate('under-water')");
+ const deck=frame.indexOf("drawCandidate('deck')");
+ const ground=frame.indexOf("drawCandidate('ground')");
+ const rear=frame.indexOf("drawCandidate('rear')");
+ const actor=frame.indexOf('drawPlayer()');
+ const front=frame.indexOf("drawCandidate('front')");
+ const hud=frame.indexOf('drawHud()');
+ assert.ok(underWater>=0&&deck>underWater&&ground>deck);
+ assert.ok(rear>ground&&actor>rear&&front>actor&&hud>front,'world draw order must be deliberate');
+ assert.doesNotMatch(frame,/createElement\('canvas'\)/,'no candidate canvas allocation in the game renderer');
+ const factoryHtml=fs.readFileSync(path.join(root,'gary-asset-factory.html'),'utf8');
+ assert.match(factoryHtml,/const image=art&&valid\?artCanvas\('art'\):artCanvas\('mask'\)/);
+ assert.match(factoryHtml,/not.*registered|No collisions/i);
+});
