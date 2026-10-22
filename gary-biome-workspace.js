@@ -308,7 +308,7 @@
    const g=c.getContext('2d');g.strokeStyle=color;g.lineWidth=9;
    g.fillStyle='rgba(130,145,127,.48)';g.fillRect(14,14,c.width-28,c.height-28);
    g.strokeRect(14,14,c.width-28,c.height-28);
-   const dataUrl=c.toDataURL('image/png'),img=new Image();img.src=dataUrl;
+   const dataUrl=c.toDataURL('image/png'),img=c;
    sample.push({id:'demo-'+(++unique),name:name+'.png',image:img,dataUrl,
     source:{width:c.width,height:c.height},draw:{x,y,width:w,height:h},pass,opacity:.75,
     scrollWithWorld:true,alpha:'GEOMETRY_PLACEHOLDER',registration:'EXAMPLE_ONLY_NOT_GAME_ART'});
