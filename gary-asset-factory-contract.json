@@ -1,6 +1,6 @@
 {
   "schema": "gary-eats-asset-factory-v1",
-  "version": 1,
+  "version": 2,
   "cameraContract": "gary-camera-contract.json",
   "reference": "Source draw dimensions and anchors are gameplay design units; image dimensions are pixels. All geometry renders screen-parallel without vanishing points.",
   "defaultApproval": "UNVERIFIED_VISUAL",
@@ -48,7 +48,7 @@
       "layer": "shops-and-props",
       "paddingPx": 12,
       "footTolerancePx": 16,
-      "style": "Victorian British brick shop frontage, clean hand-painted dark outlines, gentle elevation, no dramatic perspective.",
+      "style": "British painted near-front shop elevation, copy top-face/roof exposure from the original first-biome shop atlas exactly; screen-parallel facade, no narrowing or invented 3D volume.",
       "approval": "CANDIDATE",
       "scene": "street"
     },
@@ -98,7 +98,7 @@
       "layer": "foreground-props",
       "paddingPx": 12,
       "footTolerancePx": 18,
-      "style": "Black cast iron Victorian street lamp, gently elevated painted cartoon view, no street or opaque backdrop.",
+      "style": "Cast-iron roadside lamp, silhouette and visible faces derived from the existing painted first-biome freestanding prop convention, not a new 3D view; preserve original lighting and low-detail gameplay readability.",
       "approval": "CANDIDATE",
       "scene": "street"
     },
@@ -126,6 +126,81 @@
       "style": "Ground plane painted moss and small stones, no extrusion or environment background.",
       "approval": "CANDIDATE",
       "scene": "wilderness"
+    },
+    {
+      "id": "bridge-deck-tile",
+      "name": "Bridge deck — seamless straight tile",
+      "profile": "bridge",
+      "source": {
+        "width": 336,
+        "height": 1024
+      },
+      "draw": {
+        "x": 138,
+        "y": 200,
+        "width": 84,
+        "height": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "layer": "bridge-deck",
+      "paddingPx": 12,
+      "footTolerancePx": 18,
+      "style": "Paint existing first-biome paving materials onto a uniform 84-game-unit-wide deck section. Strictly PARALLEL sides x138 and x222 for its entire length, horizontal stone joints, no convergence or one-piece bridge illustration. Tile repeats vertically; no rails, water, banks, horizon, shadows or vegetation outside the measured silhouette.",
+      "approval": "CANDIDATE",
+      "scene": "bridge"
+    },
+    {
+      "id": "bridge-parapet-left",
+      "name": "Bridge left parapet — straight segment",
+      "profile": "bridge",
+      "source": {
+        "width": 136,
+        "height": 1024
+      },
+      "draw": {
+        "x": 117,
+        "y": 300,
+        "width": 17,
+        "height": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "layer": "foreground-parapet",
+      "paddingPx": 12,
+      "footTolerancePx": 18,
+      "style": "ONLY the left 17-unit brick parapet segment with stone coping, no deck or river. Constant apparent width, perfectly straight vertical game-scroll direction, material and outline sampled from original high-street brick fronts, no tilted 3D extrusion, no light/shadow baked on ground. Tile end to end.",
+      "approval": "CANDIDATE",
+      "scene": "bridge"
+    },
+    {
+      "id": "bridge-parapet-right",
+      "name": "Bridge right parapet — straight segment",
+      "profile": "bridge",
+      "source": {
+        "width": 136,
+        "height": 1024
+      },
+      "draw": {
+        "x": 223,
+        "y": 300,
+        "width": 17,
+        "height": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "layer": "foreground-parapet",
+      "paddingPx": 12,
+      "footTolerancePx": 18,
+      "style": "ONLY the right 17-unit brick parapet segment with stone coping, no deck or river. Constant apparent width, perfectly straight vertical game-scroll direction, material and outline sampled from original high-street brick fronts, no tilted 3D extrusion, no light/shadow baked on ground. Tile end to end. Do not mirror incompatible asymmetric art.",
+      "approval": "CANDIDATE",
+      "scene": "bridge"
     }
   ],
   "scenes": {

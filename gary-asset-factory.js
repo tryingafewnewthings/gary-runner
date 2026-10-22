@@ -43,6 +43,19 @@
           poly(w,h,[[.31,.10],[.69,.10],[.62,.18],[.38,.18]]),
           poly(w,h,[[.50,.24],[.50,.92]])];
         break;
+      case 'bridge-deck-tile':
+        // A true screen-parallel constant-width strip. Never narrow the far end.
+        solids=[poly(w,h,[[.05,.045],[.95,.045],[.95,.972],[.05,.972]])];
+        guides=[...[.25,.50,.75].map(y=>poly(w,h,[[.05,y],[.95,y]])),
+          poly(w,h,[[.50,.045],[.50,.972]])];
+        break;
+      case 'bridge-parapet-left':
+      case 'bridge-parapet-right':
+        // Both parapets have constant width. Deliberately NOT mirrored art.
+        solids=[poly(w,h,[[.13,.045],[.87,.045],[.87,.974],[.13,.974]])];
+        guides=[...[.20,.36,.52,.68,.84].map(y=>poly(w,h,[[.13,y],[.87,y]])),
+          poly(w,h,[[.50,.045],[.50,.974]])];
+        break;
       case 'ground-decay-patch':
         solids=[poly(w,h,[[.10,.08],[.34,.06],[.75,.06],[.94,.20],[.94,.65],[.81,.92],[.40,.94],[.06,.76],[.06,.34]])];
         guides=[poly(w,h,[[.25,.19],[.61,.14],[.76,.33]]),

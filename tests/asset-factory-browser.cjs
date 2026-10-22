@@ -24,7 +24,7 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector('#reference').complete&&document.querySelector('#reference').naturalWidth>0);
   const stage=await page.locator('#stage').boundingBox();
   assert.ok(Math.abs(stage.width/stage.height-9/16)<.012,'360×640 ratio preserved on iPhone');
-  assert.equal(await page.locator('#asset option').count(),4);
+  assert.equal(await page.locator('#asset option').count(),7);
   assert.equal(await page.locator('#advanced').evaluate(el=>el.open),false,'technical controls should start collapsed');
   assert.equal(await page.locator('#quickPreview').isVisible(),true,'mobile action dock should be visible');
   assert.equal(await page.locator('#upload').count(),1,'one primary artwork picker');
@@ -135,6 +135,16 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='front');
   const frontPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
   assert.notEqual(frontPixels,rearPixels,'front/rear render passes should change candidate occlusion');
+  const lighting=await page.locator('#game').evaluate(f=>{
+    const w=f.contentWindow,api=w.GaryAssetPreview,out={};
+    for(const mode of ['day','night','rain']){
+      if(!api.startScene('bridge-middle',mode))throw Error('Missing isolated lighting preset');
+      out[mode]=w.document.querySelector('#c').toDataURL('image/png');
+    }
+    return out;
+  });
+  assert.notEqual(lighting.day,lighting.night,'day/night visual evidence must differ');
+  assert.notEqual(lighting.night,lighting.rain,'night/rain visual evidence must differ');
   await page.locator('#registration').click();
   const candidate=JSON.parse(await page.locator('#copyField').inputValue());
   assert.equal(candidate.approved,false);assert.equal(candidate.registered,false);
@@ -154,6 +164,18 @@ async function main(){
   const compact=await page.locator('#stage').boundingBox();
   assert.ok(Math.abs(compact.width/compact.height-9/16)<.012);
   assert.ok((await page.evaluate(()=>document.documentElement.scrollWidth))<=375,'compact phone viewport must not scroll sideways');
+  // Reference board must actually render ORIGINAL atlas/Gary/cobbles pixels
+  // automatically, without requiring the iPhone user to upload anything.
+  await page.goto('http://127.0.0.1:'+server.address().port+'/gary-visual-reference-board.html',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.startsWith('Ready —'),null,{timeout:30000});
+  const board=await page.locator('#board').evaluate(c=>{
+   const g=c.getContext('2d'),sample=(x,y)=>[...g.getImageData(x,y,1,1).data];
+   return {width:c.width,height:c.height,street:sample(45,100),shop:sample(430,130),gary:sample(790,152),cobble:sample(780,380)};
+  });
+  assert.equal(board.width,1080);assert.equal(board.height,760);
+  assert.notDeepEqual(board.street,board.shop,'street image must not be a placeholder box');
+  assert.notDeepEqual(board.street,board.cobble,'cobble pixels must come from native atlas');
+  assert.equal(await page.locator('#save').isEnabled(),true);
   assert.deepEqual(errors,[]);
   console.log(engineName+': mobile workflow, hidden advanced controls, drag placement, real-engine layering, PNG QA and handoff PASS');
  }finally{await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

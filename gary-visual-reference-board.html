@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — Canonical Visual Reference Board</title>
+<style>
+:root{color-scheme:dark;font:15px/1.5 -apple-system,BlinkMacSystemFont,Arial;background:#111a1c;color:#f5f1e7}
+*{box-sizing:border-box}body{margin:0;padding:18px}main{max-width:1100px;margin:auto}
+h1{font-size:23px;margin:0 0 6px}p{color:#c4d0c8;max-width:800px}
+button{font:inherit;color:#192524;background:#e8bd7c;border:0;border-radius:11px;padding:13px 16px;min-height:44px;font-weight:700}
+canvas{display:block;width:100%;height:auto;border:1px solid #53625d;border-radius:8px;background:#30373b}
+#status{font-weight:650}.warn{color:#ffcf9e}
+small{color:#aebbb3}a{color:#e2ba7b}
+</style></head><body><main>
+<h1>Gary Eats! — Original game visual anchors</h1>
+<p>Automatic, pixel-based reference board created from CURRENT ORIGINAL game art, not an AI-generated illustration. Use these image pixels when generating new assets. The street image is a 360×640 real-engine QA capture, <strong>not</strong> an owner-approved clean first-30-seconds master. It includes testing scenery.</p>
+<p id="status">Loading original source art…</p>
+<canvas id="board" width="1080" height="760" aria-label="Native first-biome street reference, shop atlas crop, Gary's original walk sheet and original cobbles"></canvas>
+<p><button id="save" disabled>Save reference PNG</button></p>
+<p><small>Do not use the rejected wilderness or the painted bridge candidate as the reference. Geometry: 360×640, road x105–255, bridge one-lane deck x138–222, no visual depth convergence. View must be evaluated at native gameplay size.</small></p>
+<script>
+(async()=>{
+ 'use strict';
+ const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
+ const status=document.getElementById('status');
+ const load=src=>new Promise((resolve,reject)=>{
+  const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Image missing: '+src));
+  img.src=src;
+ });
+ const font=(size=15)=>{ctx.fillStyle='#f2e7d0';ctx.font='700 '+size+'px -apple-system,Arial';};
+ const text=(t,x,y,size=15)=>{font(size);ctx.fillText(t,x,y);};
+ const line=(x,y,w,h)=>{ctx.strokeStyle='#99a19a';ctx.lineWidth=1;ctx.strokeRect(x,y,w,h);};
+ const fill=(x,y,w,h)=>{ctx.fillStyle='#273033';ctx.fillRect(x,y,w,h);};
+ fill(0,0,1080,760);
+ try{
+  const [street,atlas,gary,cobble]=await Promise.all([
+   load('docs/biome-workspace/layout-street-day.png'),
+   load('high_street_sprites.webp'),
+   load('gary_walk_sheet.PNG'),
+   load('IMG_7141.webp')
+  ]);
+  // Entire 360×640 screenshot at NATURAL GAMEPLAY SIZE, no stretching.
+  text('01  REAL ENGINE 360×640 — DAY',20,38);
+  ctx.drawImage(street,20,64,360,640);line(20,64,360,640);
+  text('02  ORIGINAL SHOP ATLAS — CROPS',400,38);
+  const shops=[
+   {name:'Fish & Chips',x:12,y:57,w:484,h:1287},
+   {name:'Peri Peri',x:527,y:57,w:443,h:1287},
+   {name:'Bakery',x:999,y:57,w:442,h:1287},
+   {name:'Red Lion',x:1467,y:57,w:442,h:1287},
+   {name:'Butcher',x:1940,y:57,w:446,h:1287},
+   {name:'Mallace',x:2422,y:57,w:476,h:1287}
+  ];
+  shops.forEach((s,i)=>{
+   const x=400+i%3*105,y=64+Math.floor(i/3)*290;
+   ctx.drawImage(atlas,s.x,s.y,s.w,s.h,x,y,89,236);line(x,y,89,236);
+   text(s.name,x,y+253,12);
+  });
+  text('03  ORIGINAL GARY WALK FRAME',740,38);
+  const fw=gary.naturalWidth/6,fh=gary.naturalHeight;
+  if(!Number.isInteger(fw)||fw<=0)throw Error('Gary source sheet is not six equal frames');
+  // World height is 142. Use original source aspect, no arbitrary horizontal stretching.
+  const gh=142,gw=fw/fh*gh;
+  ctx.drawImage(gary,0,0,fw,fh,770,74,gw,gh);
+  text('Gary game height: 142',742,245,13);
+  text('Foot Y: 546',742,266,13);
+  text('04  ORIGINAL COBBLES',740,315);
+  for(let i=0;i<2;i++)for(let j=0;j<2;j++){
+   ctx.drawImage(cobble,j*cobble.naturalWidth/2,i*cobble.naturalHeight/2,cobble.naturalWidth/2,cobble.naturalHeight/2,742+j*60,339+i*60,60,60);
+  }
+  line(742,339,120,120);
+  text('Original 2×2 texture = 120 units',742,479,13);
+  text('05  NON-NEGOTIABLE',742,555);
+  text('Flat horizontal world bands',742,580,13);
+  text('No vanishing point',742,600,13);
+  text('Upper-left painted daylight',742,620,13);
+  text('Layer water / wall / deck separately',742,640,13);
+  document.getElementById('save').disabled=false;
+  document.getElementById('save').onclick=()=>{const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='gary-first-biome-native-source-board.png';a.click();};
+  status.textContent='Ready — rendered entirely from four original game image files.';
+ }catch(e){status.className='warn';status.textContent='Reference unavailable: '+e.message+'. Do NOT label a new image game-ready.';}
+})();
+</script></main></body></html>
