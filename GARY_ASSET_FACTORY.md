@@ -1,5 +1,10 @@
 # Gary Eats! — Universal Asset Factory (candidate)
 
+**22 October 2026 override:** The bridge, wilderness and camera/tooling branch stack reached `main` through merged PR #9 (`688f09c4`). Date-specific claims below that PR #4/5 or the factory are unmerged are historical. DRAFT01 wilderness art is **visually rejected**, even where the renderer still loads it. Painted bridge art remains a **debug review candidate**, not production-approved. Raised architecture is provisional. Do not infer iPhone/Pages verification from main-branch presence. See [current conflict register](docs/camera/CONFLICT_REGISTER_2026-10-22.md).
+
+**New in draft PR #10, not yet merged:** the Factory accepts a local user-provided **exact 360×640** original-biome screenshot and rejects wrong-size references. It does not publish the uploaded image, modify the game, lock the raised camera or insert candidate art into real engine render passes. Use the rectified first-biome PNG generated in the chat, not the full phone screenshot.
+
+
 **Branch:** `feat/universal-asset-factory`, stacked on `feat/visual-camera-calibration` / PR #5 and bridge PR #4. **No automatic merge or deployment.**
 
 Open `gary-asset-factory.html` on the branch using a same-origin HTTP server. After review and deployment, its GitHub Pages path is `https://tryingafewnewthings.github.io/gary-runner/gary-asset-factory.html`; it is **not** available on public Pages until merged and deployed.
