@@ -1,6 +1,15 @@
 # Gary Eats! — Visual Asset Production Standard
 **Version:** 22 October 2026 • **Status:** enforceable producer workflow; NOT a claim that generative models can reproduce exact art on every attempt.
 
+## Automation and zero-user-work rule — 22 October 2026 amendment
+The user should only need to request the desired asset. ChatGPT must perform the anchor retrieval (actual pixels), geometry silhouette selection or creation, model generation/editing, repeated visual self-review, source alpha/grid/baseline checks, game-scale mock-up, and candidate/production status report itself. Use `gary-visual-reference-board.html` for an automatically composed original-pixel source board. Use `tools/asset-visual-brief.cjs --family bridge` for geometry-linked separate deck and parapet requests. Do NOT simply re-ask the user to upload references that exist in the repo, run Camera Lab, or do Codex's implementation work.
+
+**Absolute rejection rules:** If an asset introduces vanishing geometry, isometric tilt, disproportionate detail/lighting, independent vignette/ground, wrong sprite identity, unexplained alpha, incorrect visual ground contact, or incorrect game-scale orientation, reject it before presenting it as finished. Re-generate using the actual game images and measured mask. Do NOT repeatedly send failed full-scene illustrations to the user, and do not use the fox/rejected wilderness as sole reference.
+
+**Real-world limitation:** no workflow can guarantee pixel-perfect generative art. Structural validators cannot grade painterly cohesion, and the original user-uploaded first-30-second film is not stored in GitHub. Where the currently accessible originals or real-engine preview are insufficient, clearly call an asset a candidate; never quietly call it production-ready. Do not require manual interaction by the user to run the review; carry out supported steps yourself.
+
+**New production evidence:** `art-visual-ledger.json` and `tools/visual-release-gate.cjs` require an actual first-biome reference, measured draw/foot bounds, reviewed camera, 360×640 day/night/rain screenshots and successful active startup before any NEW `art/**` image can be promoted. `art/candidates/` may contain unverified experiments, but may not be referenced by normal gameplay. Continue applying `ASSET_QUALITY_GATE.md` for pixel-level checks. Evidence-gate success is NOT a claim of artistic perfection or physical iPhone verification.
+
 ## Invocation in every GaryEatsRunner chat
 When the user says "generate [asset]" (or asks to edit a sprite, environment, shop, biome, effect, bridge or character), do the preparation and generate the requested art in ChatGPT in the SAME turn where possible. Do not ask the user to repeat established dimensions or delegate normal illustration to Codex. Before generation read the **current main branch** versions of:
 1. `AGENTS.md`, this standard, `docs/visual-master/reference-pack.json`;
