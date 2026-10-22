@@ -62,6 +62,9 @@ async function main(){
    assert.equal(bytes.readUInt32BE(20),spec.source.height);
   }
 
+  await page.locator('#upload').setInputFiles({name:'fake.png',mimeType:'image/png',buffer:Buffer.from('not a PNG')});
+  await page.waitForFunction(()=>document.querySelector('#report').textContent.includes('invalid PNG source dimensions'));
+  assert.equal(await page.locator('#final').isEnabled(),false);
   const specimen=contract.templates[2];
   await page.locator('#asset').selectOption(specimen.id);
   const c=createCanvas(specimen.source.width,specimen.source.height),ctx=c.getContext('2d');
@@ -112,7 +115,8 @@ async function main(){
   await page.locator('#advanced').evaluate(el=>el.open=false);
   await page.locator('#preview').scrollIntoViewIfNeeded();
   const dragBounds=await page.locator('#preview').boundingBox();
-  const sx=dragBounds.x+dragBounds.width/2, sy=dragBounds.y+dragBounds.height/2;
+  const sx=dragBounds.x+(178+specimen.draw.width/2)*dragBounds.width/360,
+   sy=dragBounds.y+(350+specimen.draw.height/2)*dragBounds.height/640;
   await page.mouse.move(sx,sy);
   await page.mouse.down();
   await page.mouse.move(sx+34,sy+20,{steps:4});

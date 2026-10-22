@@ -180,6 +180,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 'use strict';
 const $=id=>document.getElementById(id);
 let camera,contract,spec,mode='screenshot',art=null,valid=false,uploadName='',liveCandidateActive=false;
+let importToken=0;
 let artworkUrl=null,customScreenshot=null,cachedCandidateCanvas=null;
 const view=$('preview'),ctx=view.getContext('2d');
 const frame=$('game'),reference=$('reference');
@@ -213,6 +214,7 @@ function picture(){
  }
 }
 function switchAsset(id){
+ ++importToken;
  spec=contract.templates.find(t=>t.id===id);
  if(!spec)throw Error('Unknown template '+id);
  const prevScene=$('scene').value;
@@ -305,18 +307,30 @@ function brief(){
  ].join('\n');
 }
 async function importArt(file){
+ const token=++importToken;
  valid=false;art=null;cachedCandidateCanvas=null;$('final').disabled=true;
  if(!file)return;
- if(file.type!=='image/png'){
-  $('report').textContent='FAIL: PNG required, not '+file.type;
+ if(file.type!=='image/png' || file.size>3*1024*1024){
+  $('report').textContent='FAIL: PNG required, maximum 3 MB';
   $('artSummary').textContent='PNG needed — this file was not added.';
   $('artSummary').dataset.kind='fail';if(mode==='live')syncCandidate();return;
+ }
+ // Inspect source dimensions before Safari allocates a decoded image.
+ const header=new Uint8Array(await file.slice(0,24).arrayBuffer());
+ if(token!==importToken)return;
+ const v=new DataView(header.buffer);
+ if(header.length<24 || header.slice(0,8).join(',')!=='137,80,78,71,13,10,26,10' ||
+    v.getUint32(16)!==spec.source.width || v.getUint32(20)!==spec.source.height){
+  $('artSummary').textContent='PNG dimensions must match the selected template.';
+  $('artSummary').dataset.kind='fail';$('report').textContent='FAIL: invalid PNG source dimensions';
+  if(mode==='live')syncCandidate();return;
  }
  if(artworkUrl)URL.revokeObjectURL(artworkUrl);
  artworkUrl=URL.createObjectURL(file);uploadName=file.name;
  const pic=new Image();
  try{
   await new Promise((resolve,reject)=>{pic.onload=resolve;pic.onerror=()=>reject(Error('Unreadable PNG'));pic.src=artworkUrl;});
+  if(token!==importToken)return;
   const src=document.createElement('canvas');src.width=pic.naturalWidth;src.height=pic.naturalHeight;
   const sctx=src.getContext('2d',{willReadFrequently:true});sctx.drawImage(pic,0,0);
   const geom=artCanvas('mask'),mctx=geom.getContext('2d',{willReadFrequently:true});
@@ -330,6 +344,7 @@ async function importArt(file){
   status(valid?'PNG structural checks pass; artistic approval and integration remain outstanding.':
    'PNG failed structural checks. Keep artwork available for comparison; masked export disabled.');
  }catch(e){
+  if(token!==importToken)return;
   $('report').textContent='FAIL: '+e.message;
   $('artSummary').textContent='Could not use this PNG: '+e.message;
   $('artSummary').dataset.kind='fail';
@@ -439,8 +454,11 @@ try{
   });
  };
  view.addEventListener('pointerdown',e=>{
-  if(!spec)return;
+  if(!spec || e.isPrimary===false || (e.button!==undefined&&e.button!==0))return;
   const r=view.getBoundingClientRect();if(!r.width||!r.height)return;
+  const d=previewDraw(),px=(e.clientX-r.left)*360/r.width,py=(e.clientY-r.top)*640/r.height;
+  if(px<d.x||px>d.x+d.width||py<d.y||py>d.y+d.height)return;
+  gameAPI()?.freeze();
   drag={id:e.pointerId,x:e.clientX,y:e.clientY,
    placeX:Number($('placeX').value),placeY:Number($('placeY').value),
    width:r.width,height:r.height};
@@ -449,6 +467,7 @@ try{
  });
  view.addEventListener('pointermove',e=>{
   if(!drag||e.pointerId!==drag.id)return;
+  if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<5)return;
   const x=Math.max(-200,Math.min(400,Math.round(drag.placeX+(e.clientX-drag.x)*360/drag.width)));
   const y=Math.max(-500,Math.min(1000,Math.round(drag.placeY+(e.clientY-drag.y)*640/drag.height)));
   $('placeX').value=x;$('placeY').value=y;
