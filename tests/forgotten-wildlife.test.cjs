@@ -22,6 +22,13 @@ test('no wildlife in daylight or before reader-zone clearing',()=>{
  assert.deepEqual(scene(6500,-1000,{bridgeVisible:true}),[]);
  assert.deepEqual(scene(6500,-1000,{wildernessActive:true}),[]);
 });
+test('wildlife is present during early decay clearing, before the reader is scheduled',()=>{
+ const visible=scene(4000,-Infinity);
+ assert.ok(visible.some(c=>c.length===9),'hedgehog should appear well before bench scheduling');
+ const withoutBenchSegment=scene(4000,-Infinity,{benchSegment:14});
+ assert.ok(withoutBenchSegment.filter(c=>c.length===9).length<visible.filter(c=>c.length===9).length,
+   'the bench segment itself must remain free of hedgehogs');
+});
 test('hide all ambient decorations while reader in shot, including cutscene margins',()=>{
  for(const foot of [-30,0,320,640,770])assert.deepEqual(scene(6500,foot),[]);
  assert.deepEqual(scene(6500,-1000,{readerVisible:true}),[]);
