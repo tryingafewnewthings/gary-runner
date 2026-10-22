@@ -76,9 +76,44 @@ async function main(){
   assert.match(await page.locator('#copyField').inputValue(),/Do NOT crop, resize, rotate/);
 
   await page.locator('#real').click();
-  assert.match(await page.locator('#result').textContent(),/isolated game|Waiting|debug|engine/i);
   assert.ok((await page.locator('#game').getAttribute('src')).includes('bridgepreview=1'));
-  // Actual-engine progression is already tested by Camera Lab / Bridge browser suites.
+  // This assertion reads the ACTUAL isolated runtime, not the Factory overlay.
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='front',
+    null,{timeout:60000});
+  assert.match(await page.locator('#result').textContent(),/real-engine front pass/i);
+  await page.locator('#placeX').fill('178');
+  await page.locator('#placeY').fill('350');
+  await page.locator('#placeY').evaluate(el=>el.blur());
+  await page.waitForFunction(()=>{
+   const a=document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot();
+   return a?.draw.x===178&&a?.draw.y===350;
+  });
+  const fromEngine=await page.evaluate(()=>{
+   const w=document.querySelector('#game').contentWindow,c=w.document.querySelector('#c');
+   const withCandidate=c.toDataURL('image/png'),snapshot=w.GaryAssetPreview.snapshot();
+   w.GaryAssetPreview.clear();
+   const withoutCandidate=c.toDataURL('image/png');
+   return {withCandidate,withoutCandidate,snapshot};
+  });
+  assert.notEqual(fromEngine.withCandidate,fromEngine.withoutCandidate,'candidate must alter actual engine canvas pixels');
+  assert.equal(fromEngine.snapshot.registered,false);
+  assert.equal(fromEngine.snapshot.scrollWithWorld,true);
+  await page.locator('#renderPass').selectOption('rear');
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='rear');
+  const rearPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
+  await page.locator('#renderPass').selectOption('front');
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='front');
+  const frontPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
+  assert.notEqual(frontPixels,rearPixels,'front/rear render passes should change candidate occlusion');
+  await page.locator('#registration').click();
+  const candidate=JSON.parse(await page.locator('#copyField').inputValue());
+  assert.equal(candidate.approved,false);assert.equal(candidate.registered,false);
+  assert.equal(candidate.review.actualRenderPassPreview,true);
+  assert.equal(candidate.review.pass,'front');
+  assert.equal(candidate.review.draw.x,178);
+  await page.locator('#scenePreset').selectOption('wilderness-reveal');
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryWildernessPreview?.snapshot()?.active===true,
+   null,{timeout:20000}).catch(()=>{}); // wilderness scenes also have deterministic environmental preview
   await page.locator('#still').click();
   await page.setViewportSize({width:375,height:667});
   const compact=await page.locator('#stage').boundingBox();
