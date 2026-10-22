@@ -154,6 +154,18 @@ async function main(){
   const compact=await page.locator('#stage').boundingBox();
   assert.ok(Math.abs(compact.width/compact.height-9/16)<.012);
   assert.ok((await page.evaluate(()=>document.documentElement.scrollWidth))<=375,'compact phone viewport must not scroll sideways');
+  // Reference board must actually render ORIGINAL atlas/Gary/cobbles pixels
+  // automatically, without requiring the iPhone user to upload anything.
+  await page.goto('http://127.0.0.1:'+server.address().port+'/gary-visual-reference-board.html',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.startsWith('Ready —'),null,{timeout:30000});
+  const board=await page.locator('#board').evaluate(c=>{
+   const g=c.getContext('2d'),sample=(x,y)=>[...g.getImageData(x,y,1,1).data];
+   return {width:c.width,height:c.height,street:sample(45,100),shop:sample(430,130),gary:sample(790,152),cobble:sample(780,380)};
+  });
+  assert.equal(board.width,1080);assert.equal(board.height,760);
+  assert.notDeepEqual(board.street,board.shop,'street image must not be a placeholder box');
+  assert.notDeepEqual(board.street,board.cobble,'cobble pixels must come from native atlas');
+  assert.equal(await page.locator('#save').isEnabled(),true);
   assert.deepEqual(errors,[]);
   console.log(engineName+': mobile workflow, hidden advanced controls, drag placement, real-engine layering, PNG QA and handoff PASS');
  }finally{await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
