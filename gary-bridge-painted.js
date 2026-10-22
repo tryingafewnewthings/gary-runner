@@ -11,7 +11,7 @@
      leftWall:[221,0,13,72],rightWall:[234,0,12,72],lip:[79,74,63,17]},
    road:[105,255],lane:[138,222],walls:[[117,17],[223,17]]
  });
- function create({makeCanvas,ImageType,onReady}={}){
+ function create({makeCanvas,ImageType,cobble,onReady}={}){
    if(typeof makeCanvas!=='function'||typeof ImageType!=='function')throw Error('Bridge texture dependencies missing');
    let ready=false,reason='pending';let caches=null;
    const img=new ImageType();
@@ -42,7 +42,17 @@
        // Texture over old detached arches: continuous parallel bridge side
        // masonry, with independent foreground parapets and centre walkway.
        drawStrip(m,'leftWall',101,37);drawStrip(m,'rightWall',222,37);
-       drawStrip(d,'deck',138,84);
+       // Original first-biome cobbles are the authoritative bridge paving.
+       // Use exactly the same 2x2 source quadrants and 60-unit world scale.
+       if(cobble?.naturalWidth>0&&cobble?.naturalHeight>0){
+         const C=60,hw=cobble.naturalWidth/2,hh=cobble.naturalHeight/2;
+         d.save();d.beginPath();d.rect(138,SPEC.far,84,SPEC.end-SPEC.far);d.clip();
+         for(let y=SPEC.far,row=0;y<SPEC.end;y+=C,row++){
+           for(let x=138,col=0;x<222;x+=C,col++)
+             d.drawImage(cobble,(col%2)*hw,(row%2)*hh,hw,hh,x,y,C+0.5,C+0.5);
+         }
+         d.restore();
+       }else drawStrip(d,'deck',138,84);
        drawStrip(f,'leftWall',117,17);drawStrip(f,'rightWall',223,17);
        // Two short masonry seam details mark entry/exit, without covering Gary's lane.
        const [sx,sy,sw,sh]=SPEC.src.lip;
@@ -51,6 +61,8 @@
        caches={under,lower,deck,front};ready=true;reason='ready';onReady?.();
      }catch(e){ready=false;reason=String(e?.message||e);}
    }
+   // If original cobbles load after atlas, rebuild cached art ONCE, never per frame.
+   if(cobble?.addEventListener)cobble.addEventListener('load',()=>{if(ready)build();},{once:true});
    img.onload=build;
    img.onerror=()=>{ready=false;reason='asset unavailable';};
    img.src=SRC;
