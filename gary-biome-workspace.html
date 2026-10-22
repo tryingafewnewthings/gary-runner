@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — Biome Workspace</title>
+<style>
+:root{color-scheme:dark;font:15px/1.42 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f1517;color:#f5f2ea}
+*{box-sizing:border-box}body{margin:0;padding:0 0 36px}main{max-width:1100px;margin:auto;padding:14px}
+h1{font-size:22px;letter-spacing:-.6px;margin:0}h2{font-size:16px;margin:0 0 8px}
+p{margin:6px 0 12px;color:#bac9c5;font-size:13px}small{color:#afbebb}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+header a{font-size:12px;color:#eccc9b;text-decoration:none}
+.layout{display:grid;grid-template-columns:minmax(285px,390px) minmax(290px,1fr);gap:16px;align-items:start}
+.panel{background:#1c2729;border:1px solid #3b5552;border-radius:16px;padding:14px;margin-bottom:12px}
+strong{font-weight:800}label{display:block;font-size:13px;font-weight:730;color:#dce2dc;margin:10px 0 5px}
+input,button,select{font:inherit}input[type=text],input[type=number],select{background:#0f1d1e;border:1px solid #536967;color:white;border-radius:10px;padding:10px;min-height:44px;width:100%}
+input[type=range]{width:100%;accent-color:#e4b46e;min-height:37px}
+button{min-height:45px;padding:10px;border-radius:11px;border:1px solid #51635d;background:#293c3c;color:#fbfaf5;font-size:13px;font-weight:760;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.35;cursor:not-allowed}.primary{background:#e7b96e;border-color:#e7b96e;color:#1e271f}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #f8cd8d;outline-offset:2px}
+.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.step{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:8px;background:#594632;color:#ffe0af;margin-right:7px}
+.stage-shell{display:grid;place-items:center;background:#182326;padding:8px;border-radius:16px;border:1px solid #4a6261}
+.stage{width:min(100%,340px);aspect-ratio:9/16;position:relative;overflow:hidden;border-radius:10px;background:#253035}
+.stage iframe,.stage canvas{position:absolute;inset:0;display:block;width:100%;height:100%;border:0}
+.stage canvas{z-index:2;touch-action:none;cursor:grab}
+.stage .chip{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);border-radius:30px;background:#091918df;color:#faf7e9;padding:5px 9px;font-size:11px;pointer-events:none;z-index:3;white-space:nowrap}
+#status{border:1px solid #416358;background:#1b352e;padding:10px;border-radius:11px;min-height:39px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:9px}
+#assets{display:grid;gap:7px;max-height:310px;overflow:auto}
+.item{display:grid;grid-template-columns:46px minmax(0,1fr) 65px;align-items:center;gap:9px;padding:6px;text-align:left;min-height:56px;border:1px solid #4a5c59;background:#17282a;width:100%;border-radius:11px}
+.item[aria-pressed=true]{border-color:#efc37c;background:#344238}
+.item img{width:43px;height:43px;object-fit:contain;background:#111a1b;border-radius:7px}
+.item strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item span,.item em{font-size:11px;color:#b9cfc6;font-style:normal}
+.item em{text-align:right}
+.empty{border:1px dashed #556863;border-radius:11px;padding:18px;text-align:center;color:#bacbc6;font-size:13px}
+.filebtn{display:flex;position:relative;align-items:center;justify-content:center;background:#2d4942;border:1px dashed #a7bb9d;border-radius:12px;min-height:52px;margin-top:9px;font-weight:780}
+.filebtn input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
+.bad{color:#ffbdac}.good{color:#9ee3b4}.warn{color:#f6d295}
+details{border:1px solid #435a57;border-radius:12px;margin-top:10px;padding:11px}summary{font-size:13px;font-weight:800;cursor:pointer}
+.info{font-size:11px;line-height:1.5;color:#acbeb8}
+#assetChecks{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;color:#afc6b8}
+#busy{min-height:20px;font-size:12px;color:#cdd6cf}
+@media(max-width:720px){body{padding-bottom:76px}main{padding:12px}.layout{display:flex;flex-direction:column}.left,.right{width:100%}.stage{width:min(100%,280px)}.panel{padding:12px;margin-bottom:10px}h1{font-size:20px}.mobile-bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:#121d1ef2;border-top:1px solid #465954;z-index:10;backdrop-filter:blur(10px)}.mobile-bar button{min-height:43px;font-size:12px;padding:7px}}
+@media(min-width:721px){.left{position:sticky;top:12px}.mobile-bar{display:none}}
+</style></head>
+<body><main>
+<header><div><h1>Gary Eats! Biome Workspace</h1><p>Build scenes with real game layers · no production changes</p></div><a href="gary-asset-factory.html">Asset Factory ↗</a></header>
+<div class="layout">
+<section class="left" aria-label="Live game preview">
+<div class="panel"><h2><span class="step">1</span> Choose a scene</h2>
+<label for="biomeName">Biome package name</label><input id="biomeName" type="text" maxlength="64" value="New wilderness biome" autocomplete="off">
+<label for="scene">Preview location</label>
+<select id="scene">
+<option value="street-day">Original street · daylight</option><option value="street-rain">Street · rainy night</option>
+<option value="bridge-approach">Bridge approach</option><option value="bridge-enter">Bridge entrance</option><option value="bridge-middle">Bridge middle</option><option value="bridge-exit">Bridge exit</option>
+<option value="wilderness-reveal" selected>Wilderness reveal</option><option value="wilderness-dense">Deep wilderness</option>
+</select>
+<label for="timeline">Scene progression</label><input id="timeline" type="range" min="0" max="7" step="1" value="6" aria-label="Jump to a scene on the game progression timeline">
+<div class="columns"><button id="previous">← Earlier</button><button id="next">Later →</button></div>
+<p class="info">The timeline jumps between real-engine scene presets; it does not simulate an uninterrupted crossing.</p>
+</div>
+<div class="panel"><h2>Game canvas <small>360 × 640</small></h2>
+<div class="stage-shell"><div id="stage" class="stage">
+<iframe id="game" src="about:blank" title="Isolated actual Gary Eats renderer"></iframe>
+<canvas id="touch" width="360" height="640" aria-label="Drag the selected asset to position it in the game"></canvas>
+<div class="chip">Tap artwork to select · drag to move</div>
+</div></div>
+<div class="columns" style="margin-top:9px"><button id="start" class="primary">▶ Preview biome</button><button id="screenshot">Save screenshot</button></div>
+<div id="status" role="status" aria-live="polite">Load the game to begin reviewing your biome.</div>
+</div>
+</section>
+<section class="right" aria-label="Asset pack editor">
+<div class="panel"><h2><span class="step">2</span> Add assets</h2>
+<p>Choose up to 20 transparent PNGs. Every image stays local until you export a package.</p>
+<div class="filebtn"><span>＋ Add multiple PNG images</span><input id="addFiles" type="file" accept="image/png" multiple aria-label="Import PNG artwork files"></div>
+<div class="columns" style="margin-top:8px"><button id="importPack">Import saved biome</button><button id="demo">Show sample layout</button></div>
+<input id="packFile" type="file" accept=".json,application/json" hidden>
+<p class="info">Known game filenames reuse measured display sizes. New artwork uses a clearly provisional preview size; exact final registration still requires approval.</p>
+<h2 style="margin-top:13px">Assets <small id="count">0 / 20</small></h2>
+<div id="assets" aria-label="Assets included in this biome"><div class="empty">No artwork yet. Add some PNGs to begin.</div></div>
+</div>
+<div class="panel" id="selectionPanel"><h2><span class="step">3</span> Arrange and review</h2>
+<p id="selectedName">Choose an asset to adjust its position and layer.</p>
+<div class="columns">
+<div><label for="drawX">X</label><input id="drawX" type="number" min="-1000" max="1000" step="1" inputmode="numeric"></div>
+<div><label for="drawY">Y</label><input id="drawY" type="number" min="-1000" max="10000" step="1" inputmode="numeric"></div>
+</div>
+<details id="advanced"><summary>Size, layers and exact placement</summary>
+<div class="columns">
+<div><label for="drawW">Width</label><input id="drawW" type="number" min="1" max="360" step="1" inputmode="numeric"></div>
+<div><label for="drawH">Height</label><input id="drawH" type="number" min="1" max="1000" step="1" inputmode="numeric"></div>
+</div>
+<label for="pass">Position in scene</label><select id="pass">
+<option value="ground">Ground/decal · under Gary</option><option value="rear">Behind Gary</option>
+<option value="under-water">Bridge lower masonry · below water</option><option value="deck">Bridge deck · below Gary</option><option value="front">Foreground · covers Gary</option></select>
+<label><input id="worldScroll" type="checkbox" checked> Move with scrolling world</label>
+<label for="opacity">Visibility</label><input id="opacity" type="range" min="10" max="100" value="100">
+<div id="assetChecks" aria-live="polite">Pixel validation information appears here.</div>
+</details>
+<div class="columns" style="margin-top:10px"><button id="duplicate">Duplicate placement</button><button id="remove">Remove</button></div>
+</div>
+<div class="panel"><h2>Export the whole biome</h2>
+<p>A single portable file includes all imported PNGs, dimensions, placements, render layers, scene and approval status.</p>
+<div class="columns"><button id="export" class="primary">Save complete biome</button><button id="exportLayout">Save layout JSON</button></div>
+<p class="info">Exports are marked <strong>UNAPPROVED</strong> and do not install assets in the live game. Collision, animation and actual mobile performance are still separate checks.</p>
+</div>
+<div id="busy" role="status"></div>
+</section>
+</div>
+</main>
+<nav class="mobile-bar" aria-label="Biome quick actions"><button id="mobileAdd">＋ Add PNGs</button><button id="mobilePreview" class="primary">▶ Preview</button><button id="mobileSave">Export biome</button></nav>
+<script src="gary-wilderness-data.js"></script>
+<script src="gary-biome-workspace.js"></script>
+</body></html>
