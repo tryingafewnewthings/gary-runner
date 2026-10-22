@@ -1,13 +1,19 @@
 # Gary Eats! — Universal Asset Factory (candidate)
 
 
+## Consolidated audit — 22 October 2026
+
+PR #11 now rejects non-PNG, over-3 MB and wrong-template-dimension files before decoding; stale imports cannot populate another template. Dragging starts inside the candidate rectangle and ignores small tap jitter and secondary pointers. Chromium and WebKit mobile regressions pass, including actual engine pixel differences and PNG export. This is simulated browser evidence; physical iPhone import/share/animation/performance remains **UNVERIFIED**.
+
+The multi-asset workflow lives in the existing stacked PR #12 Biome Workspace. Merge #11 first, then reconcile #12 onto main without losing its history. Neither editor registers candidates in normal gameplay. Historical overlay-only and unmerged-PR-#10 statements below are superseded: #10 is merged, and the isolated renderer owns candidate compositing.
+
 ## Mobile-first visual editor — 22 October 2026 (draft PR)
 
 The previous UI required opening five developer panels and using placement numbers, layer names, masks and JSON just to view an asset on an iPhone. The **existing** Asset Factory has been reorganised into three visible steps:
 
 1. **Choose an asset** (four currently registered example templates) and gameplay location.
 2. **Add artwork** using the iPhone file picker, or save a silhouette guide and copy its detailed ChatGPT generation prompt.
-3. **Preview in the real game and save a screenshot/handoff.** Drag anywhere on the 360×640 preview to move the candidate. Touch positions are converted from CSS viewport pixels into exact game design units. The fixed camera/lanes and the original PNG pixels do not change.
+3. **Preview in the real game and save a screenshot/handoff.** Drag the candidate artwork on the 360×640 preview to move the candidate. Touch positions are converted from CSS viewport pixels into exact game design units. The fixed camera/lanes and the original PNG pixels do not change.
 
 On mobile, three fixed, large quick controls provide **Add PNG / Preview / Save preview**; desktop keeps the same interface in two columns. Reference import, X/Y fields, render-pass selector, manual perspective editor, masks and raw QA report are collapsed under **Advanced controls and diagnostics**. This is a display/workflow change, not permission to skip strict source dimensions, alpha/silhouette, first-biome stylistic matching or artistic sign-off.
 
