@@ -110,6 +110,7 @@ async function main(){
   // without changing collision/physics or the camera contract.
   const initial=await page.evaluate(()=>document.querySelector('#placeX').valueAsNumber);
   await page.locator('#advanced').evaluate(el=>el.open=false);
+  await page.locator('#preview').scrollIntoViewIfNeeded();
   const dragBounds=await page.locator('#preview').boundingBox();
   const sx=dragBounds.x+dragBounds.width/2, sy=dragBounds.y+dragBounds.height/2;
   await page.mouse.move(sx,sy);
