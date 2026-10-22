@@ -1096,7 +1096,7 @@ let shutterMix = 0;
   // Safely predecode the illustrated bridge as an optional decoration. If the WebP
   // fails, keep the complete original procedural bridge without blocking startup.
   const bridgePaintedEnabled=!bridgePreviewSession||new URLSearchParams(location.search).get('painted')==='1';
-  const paintedBridge=bridgePaintedEnabled&&window.GaryBridgePainted?.create({makeCanvas:()=>document.createElement('canvas'),ImageType:Image})||null;
+  const paintedBridge=bridgePaintedEnabled&&window.GaryBridgePainted?.create({makeCanvas:()=>document.createElement('canvas'),ImageType:Image,cobble:cobbleImgs.base})||null;
   if(bridgePreviewSession&&bridgePaintedEnabled)window.GaryPaintedBridgeStatus=Object.freeze({ready:()=>!!paintedBridge?.ready(),reason:()=>paintedBridge?.reason()});
   let bridgePaint=legacyBridgePaint;
   const wildernessImages=Object.fromEntries(Object.entries(window.GaryWildernessData.assets).map(([key,def])=>[key,itemImages[key]||loadGary('art/wilderness/'+def.path)]));
