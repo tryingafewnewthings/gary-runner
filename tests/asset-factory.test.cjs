@@ -13,10 +13,10 @@ function mask(spec,mode='mask'){
  factory.draw(ctx,spec,{mode});
  return c.getContext('2d').getImageData(0,0,c.width,c.height);
 }
-test('four reusable profiles inherit current 360×640 world dimensions and reject approval drift',()=>{
+test('seven measured templates inherit current 360×640 world dimensions and reject approval drift',()=>{
  assert.deepEqual(factory.validate(contract,camera),{ok:true,errors:[]});
- assert.equal(contract.templates.length,4);
- for(const id of ['victorian-frontage','stone-bridge-pier','victorian-lamppost','ground-decay-patch'])
+ assert.equal(contract.templates.length,7);
+ for(const id of ['victorian-frontage','stone-bridge-pier','victorian-lamppost','ground-decay-patch','bridge-deck-tile','bridge-parapet-left','bridge-parapet-right'])
    assert.ok(contract.templates.some(t=>t.id===id));
  for(const [key,expected] of [['width',360],['height',640],['roadWidth',150],['cobbleCell',60]]){
   assert.match(world,new RegExp('\\b'+key+'\\s*:\\s*'+expected+'\\b'));
@@ -26,7 +26,7 @@ test('four reusable profiles inherit current 360×640 world dimensions and rejec
  const raised=structuredClone(camera);raised.profiles['raised-architecture'].status='LOCKED';
  assert.equal(factory.validate(contract,raised).ok,false);
 });
-test('all four opaque geometry masks fit their source untrimmed padding and grounded baselines',()=>{
+test('all seven opaque geometry masks fit their source untrimmed padding and grounded baselines',()=>{
  for(const spec of contract.templates){
   const data=mask(spec),result=factory.inspect(data,data,spec,'image/png');
   assert.equal(result.pass,true,spec.id+': '+result.failures.join(', '));
