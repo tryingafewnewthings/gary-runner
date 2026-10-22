@@ -1,5 +1,8 @@
 # Forgotten Bridge — supplied artwork review candidate
 
+**22 October 2026 override:** The bridge, wilderness and camera/tooling branch stack reached `main` through merged PR #9 (`688f09c4`). Date-specific claims below that PR #4/5 or the factory are unmerged are historical. DRAFT01 wilderness art is **visually rejected**, even where the renderer still loads it. Painted bridge art remains a **debug review candidate**, not production-approved. Raised architecture is provisional. Do not infer iPhone/Pages verification from main-branch presence. See [current conflict register](docs/camera/CONFLICT_REGISTER_2026-10-22.md).
+
+
 **20 October 2026 · CODE-OBSERVED on PR #5, stacked on unmerged PR #4. Artwork and raised architecture remain NOT APPROVED.** Normal Play keeps PR #4's procedural bridge. This integration is available in the actual game engine through the isolated Camera Lab session; it is not deployed to main/Pages or promoted as final production art.
 
 ## Review in Camera Lab
