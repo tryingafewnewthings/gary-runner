@@ -180,7 +180,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 'use strict';
 const $=id=>document.getElementById(id);
 let camera,contract,spec,mode='screenshot',art=null,valid=false,uploadName='',liveCandidateActive=false;
-let artworkUrl=null,customScreenshot=null;
+let artworkUrl=null,customScreenshot=null,cachedCandidateCanvas=null;
 const view=$('preview'),ctx=view.getContext('2d');
 const frame=$('game'),reference=$('reference');
 const status=s=>$('result').textContent=s;
@@ -206,9 +206,11 @@ function picture(){
   if($('guides').checked)GaryAssetFactory.draw(ctx,spec,{mode:'outline'});
  }else if(!(mode==='live'&&liveCandidateActive))GaryAssetFactory.draw(ctx,spec,{mode:'template'});
  ctx.restore();
- ctx.save();ctx.strokeStyle='#e8b67c';ctx.setLineDash([4,3]);ctx.lineWidth=1.1;ctx.strokeRect(d.x,d.y,d.width,d.height);
- ctx.fillStyle='#f4d49e';ctx.beginPath();
- ctx.arc(d.x+d.width*spec.anchor.x,d.y+d.height*spec.anchor.y,2.3,0,2*Math.PI);ctx.fill();ctx.restore();
+ if($('guides').checked){
+  ctx.save();ctx.strokeStyle='#e8b67c';ctx.setLineDash([4,3]);ctx.lineWidth=1.1;ctx.strokeRect(d.x,d.y,d.width,d.height);
+  ctx.fillStyle='#f4d49e';ctx.beginPath();
+  ctx.arc(d.x+d.width*spec.anchor.x,d.y+d.height*spec.anchor.y,2.3,0,2*Math.PI);ctx.fill();ctx.restore();
+ }
 }
 function switchAsset(id){
  spec=contract.templates.find(t=>t.id===id);
@@ -219,7 +221,9 @@ function switchAsset(id){
  $('renderPass').value=({'ground-overlays':'ground','shops-and-props':'rear','lower-masonry-under-water':'under-water','foreground-props':'front'})[spec.layer]||'rear';
  $('placeX').value=String(spec.draw.x);$('placeY').value=String(spec.draw.y);
  if(artworkUrl){URL.revokeObjectURL(artworkUrl);artworkUrl=null;}
- art=null;valid=false;uploadName='';$('upload').value='';$('final').disabled=true;
+ art=null;valid=false;uploadName='';cachedCandidateCanvas=null;$('upload').value='';$('final').disabled=true;
+ $('artSummary').textContent='No artwork selected — showing a shape guide.';
+ $('artSummary').dataset.kind='idle';
  $('report').textContent='No artwork imported.';
  setScene();if(mode==='live')gameStart();picture();
  $('perspectiveLink').href='gary-perspective-editor.html?asset='+encodeURIComponent(spec.id);
@@ -301,9 +305,13 @@ function brief(){
  ].join('\n');
 }
 async function importArt(file){
- valid=false;art=null;$('final').disabled=true;
+ valid=false;art=null;cachedCandidateCanvas=null;$('final').disabled=true;
  if(!file)return;
- if(file.type!=='image/png'){$('report').textContent='FAIL: PNG required, not '+file.type;return;}
+ if(file.type!=='image/png'){
+  $('report').textContent='FAIL: PNG required, not '+file.type;
+  $('artSummary').textContent='PNG needed — this file was not added.';
+  $('artSummary').dataset.kind='fail';if(mode==='live')syncCandidate();return;
+ }
  if(artworkUrl)URL.revokeObjectURL(artworkUrl);
  artworkUrl=URL.createObjectURL(file);uploadName=file.name;
  const pic=new Image();
@@ -315,11 +323,18 @@ async function importArt(file){
   const result=GaryAssetFactory.inspect(sctx.getImageData(0,0,src.width,src.height),
     src.width===geom.width&&src.height===geom.height?mctx.getImageData(0,0,geom.width,geom.height):null,spec,file.type);
   valid=result.pass;art=pic;$('final').disabled=!valid;
+  $('artSummary').textContent=valid?'Artwork checked: '+file.name:'Artwork needs correction: '+result.failures.join('; ');
+  $('artSummary').dataset.kind=valid?'pass':'fail';
   $('report').textContent=(valid?'STRUCTURAL PASS':'STRUCTURAL FAIL')+
    '\n'+JSON.stringify(result,null,2)+'\nArtistic camera accuracy: UNVERIFIED.';
   status(valid?'PNG structural checks pass; artistic approval and integration remain outstanding.':
    'PNG failed structural checks. Keep artwork available for comparison; masked export disabled.');
- }catch(e){$('report').textContent='FAIL: '+e.message;}
+ }catch(e){
+  $('report').textContent='FAIL: '+e.message;
+  $('artSummary').textContent='Could not use this PNG: '+e.message;
+  $('artSummary').dataset.kind='fail';
+ }
+ cachedCandidateCanvas=null;
  if(mode==='live')syncCandidate();
  picture();
 }
@@ -348,7 +363,7 @@ function syncCandidate(){
  if(!api?.ready()||!spec||mode!=='live')return false;
  try{
   // Only precompose when candidate changes. Never allocate in the live frame loop.
-  const image=art&&valid?artCanvas('art'):artCanvas('mask');
+  const image=cachedCandidateCanvas||(cachedCandidateCanvas=art&&valid?artCanvas('art'):artCanvas('mask'));
   const result=api.set({image,draw:previewDraw(),pass:$('renderPass').value,scrollWithWorld:$('worldScroll').checked});
   liveCandidateActive=true;picture();
   status((art&&valid?'Masked candidate PNG':'Silhouette blockout')+' inserted inside real-engine '+result.pass+
@@ -379,6 +394,7 @@ function awaitGame(){
 }
 function showMode(next){
  mode=next;
+ $('stageTip').textContent=next==='live'?'Drag to position the asset':'Shape guide · select Preview for real game';
  frame.style.visibility=mode==='live'?'visible':'hidden';
  reference.style.visibility=mode==='live'?'hidden':'visible';
  if(next==='live'){
@@ -404,6 +420,46 @@ try{
  $('referenceUpload').addEventListener('change',async e=>useLocalReference(e.target.files?.[0]));
  $('resetReference').addEventListener('click',restoreReference);
  $('guides').addEventListener('change',picture);
+ $('resetPlacement').addEventListener('click',()=>{
+  $('placeX').value=spec.draw.x;$('placeY').value=spec.draw.y;
+  if(mode==='live')syncCandidate();picture();
+ });
+ $('quickAdd').addEventListener('click',()=>$('upload').click());
+ $('quickPreview').addEventListener('click',()=>showMode('live'));
+ $('quickSave').addEventListener('click',screenshot);
+ // Pointer events operate solely in screen-design coordinates; neither game
+ // physics nor the camera geometry is modified by dragging the candidate.
+ let drag=null,dragQueued=false;
+ const updateDraggedPreview=()=>{
+  if(dragQueued)return;dragQueued=true;
+  requestAnimationFrame(()=>{
+   dragQueued=false;
+   if(mode==='live')syncCandidate();
+   else picture();
+  });
+ };
+ view.addEventListener('pointerdown',e=>{
+  if(!spec)return;
+  const r=view.getBoundingClientRect();if(!r.width||!r.height)return;
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY,
+   placeX:Number($('placeX').value),placeY:Number($('placeY').value),
+   width:r.width,height:r.height};
+  view.setPointerCapture?.(e.pointerId);
+  e.preventDefault();
+ });
+ view.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.id)return;
+  const x=Math.max(-200,Math.min(400,Math.round(drag.placeX+(e.clientX-drag.x)*360/drag.width)));
+  const y=Math.max(-500,Math.min(1000,Math.round(drag.placeY+(e.clientY-drag.y)*640/drag.height)));
+  $('placeX').value=x;$('placeY').value=y;
+  updateDraggedPreview();
+  e.preventDefault();
+ });
+ for(const eventName of ['pointerup','pointercancel','lostpointercapture'])
+  view.addEventListener(eventName,e=>{
+   if(drag&&drag.id===e.pointerId){drag=null;updateDraggedPreview();}
+  });
+
  $('upload').addEventListener('change',async e=>importArt(e.target.files?.[0]));
  $('template').addEventListener('click',()=>shareCanvas(artCanvas('template'),spec.id+'-template.png'));
  $('mask').addEventListener('click',()=>shareCanvas(artCanvas('mask'),spec.id+'-mask.png'));
@@ -429,7 +485,9 @@ try{
   'Review scene: '+$('scenePreset').value+'; pass: '+$('renderPass').value+'; scroll: '+$('worldScroll').checked+'.\n'+
   'Run asset-quality gate and check layered render order, visual camera and iPhone playback. Never auto-register unapproved work.'));
  frame.addEventListener('load',()=>{if(mode==='live')awaitGame();});
- $('scene').value=contract.templates[0].scene;switchAsset(contract.templates[0].id);status('Four deterministic templates ready. Camera geometry is not artistic approval.');
+ $('scene').value=contract.templates[0].scene;switchAsset(contract.templates[0].id);
+ $('stageTip').textContent='Preview mode · tap ▶ to load game';
+ status('Select an asset and tap Preview in game. Drag to adjust placement.');
 }catch(e){status('Factory initialization failed: '+e.message);}
 })();
 </script></body></html>
