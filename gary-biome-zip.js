@@ -19,7 +19,7 @@
  }
  function safePath(name){
   if(typeof name!=='string'||!name||name.startsWith('/')||name.includes('\\')||name.includes('..')||name.includes(':')||
-     name.split('/').some(seg=>!seg||seg==='.')||name.length>240)throw Error('Unsafe ZIP entry path');
+     name.replace(/\/$/,'').split('/').some(seg=>!seg||seg==='.')||name.length>240)throw Error('Unsafe ZIP entry path');
   return name;
  }
  function bytesOf(data){
@@ -85,7 +85,7 @@
    }else if(method!==0)throw Error('Unsupported ZIP compression method '+method);
    if(out.length!==ulen||crc32(out)!==crc)throw Error('ZIP entry integrity check failed: '+name);
    total+=out.length;if(total>MAX_TOTAL)throw Error('ZIP exceeds safe decoded size');
-   if(!name.endsWith('/'))files.set(name,out);
+   if(!name.endsWith('/')){if(files.has(name))throw Error('Duplicate ZIP filename '+name);files.set(name,out);}
   }
   return files;
  }
