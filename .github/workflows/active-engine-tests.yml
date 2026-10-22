@@ -17,7 +17,7 @@ jobs:
   active-engine:
     name: Active engine integration and browser checks (simulated devices)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +26,19 @@ jobs:
           cache: npm
       - name: Install locked test dependencies
         run: npm ci --no-audit --no-fund
+      # Run 39775611474 exhausted all 15 minutes downloading OS packages from
+      # azure.archive.ubuntu.com, before a single test ran. Bound slow downloads
+      # and use Ubuntu's primary HTTPS mirror on this fixed Ubuntu runner.
+      - name: Configure reliable Ubuntu package downloads
+        run: |
+          for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source" ]; then
+              sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g; s|https://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+            fi
+          done
+          printf 'Acquire::Retries "2";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\n' | sudo tee /etc/apt/apt.conf.d/99-gary-downloads > /dev/null
       - name: Install browsers and operating system dependencies
+        timeout-minutes: 12
         run: npx --no-install playwright install --with-deps chromium webkit
       - name: Unit and controller checks
         run: npm run test:unit
@@ -41,7 +53,7 @@ jobs:
           GARY_TEST_ENGINE: webkit
         run: npm run test:browser
       - name: Upload browser and integration failure diagnostics
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: active-engine-diagnostics
