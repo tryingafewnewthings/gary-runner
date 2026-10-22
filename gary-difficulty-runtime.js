@@ -339,7 +339,7 @@ let shutterMix = 0;
     status.textContent = 'Getting the high street ready…';
     try {
       const images = [...new Set([
-        imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery, imgForgottenHedgehog,
+        imgWalkSheet, imgStreet, imgGaryIntro, imgSideLeft, imgSideRight, imgMystery, imgForgottenHedgehog, imgForgottenBush,
         imgCheer, imgCrash, ...imgRun, ...(window.GaryRoadEvolution?.images || []), ...Object.values(cobbleImgs),
         ...PROPS.map(prop => prop.img), ...Object.values(itemImages), ...Object.values(foxImages), ...Object.values(wildernessImages)
       ].filter(Boolean))];
@@ -1059,7 +1059,8 @@ let shutterMix = 0;
   // Forgotten Road: decoded 6-frame hedgehog plus the original fox bush, shared.
   const imgForgottenHedgehog=loadGary('art/forgotten-road/hedgehog-scurrying.png?v=hedgehog-20261022-1',
     im=>validateSheet(im,'Forgotten Road hedgehog',6,1,72,54));
-  const forgottenWildlife=window.GaryForgottenWildlife.create({hedgehog:imgForgottenHedgehog,bush:foxImages.bush});
+  const imgForgottenBush=loadGary('art/forgotten-road/fox-bush-verge.png?v=hedgehog-20261022-1');
+  const forgottenWildlife=window.GaryForgottenWildlife.create({hedgehog:imgForgottenHedgehog,bush:imgForgottenBush});
   const wildlifeVisibility={readerVisible:false,foxActive:false,bridgeVisible:false,wildernessActive:false,benchSegment:Infinity};
   const bridge=window.GaryBridge.create();
   let bridgePreviewFrozen=false;
