@@ -274,27 +274,78 @@
     !(a.opacity>0&&a.opacity<=1))throw Error('Unsafe or incomplete embedded PNG entry '+(i+1));
   }
  }
+ async function replaceWithPack(obj){
+  validatePackObject(obj);
+  const next=[];
+  for(const a of obj.assets){
+   const img=await loadImage(a.pngData);
+   if(img.naturalWidth!==a.source.width||img.naturalHeight!==a.source.height)
+    throw Error('Source dimensions mismatch in '+a.name);
+   next.push({id:'pack-'+(++unique),name:a.name,source:a.source,draw:{...a.draw},
+    pass:a.pass,opacity:a.opacity,scrollWithWorld:a.scrollWithWorld!==false,
+    dataUrl:a.pngData,image:img,alpha:checkAlpha(img),
+    registration:'REIMPORTED_CANDIDATE_UNVERIFIED'});
+  }
+  if(totalBytes(next)>MAX_TOTAL)throw Error('Biome exceeds local 18 MB artwork limit');
+  state.assets=next;state.selected=next[0]?.id||null;
+  $('biomeName').value=String(obj.title||'Imported biome').slice(0,64);
+  setScene(obj.scene);rebuildList();updateSelection();renderPack();
+  status(next.length+' PNGs and their placements restored. Artistic approval remains required.');
+ }
+ async function exportZip(){
+  if(!state.assets.length){status('Add artwork before exporting a biome ZIP.');return;}
+  try{
+   const manifest=exportObject(false),files=[];
+   for(let i=0;i<state.assets.length;i++){
+    const a=state.assets[i],name='assets/'+String(i+1).padStart(2,'0')+'-'+slug(a.name)+'.png';
+    manifest.assets[i].path=name;
+    files.push({name,data:window.GaryBiomeZip.fromDataUrl(a.dataUrl)});
+   }
+   const bytes=new TextEncoder().encode(JSON.stringify(manifest));
+   const archive=window.GaryBiomeZip.zip([{name:'manifest.json',data:bytes},...files]);
+   await download(archive,slug(manifest.title)+'-biome.zip','application/zip');
+   status('Complete biome ZIP saved with all original PNG files and unapproved placement manifest.');
+  }catch(e){status('ZIP export failed: '+e.message);}
+ }
+ async function importZip(file){
+  const entries=await window.GaryBiomeZip.unzip(file);
+  if(entries.has('manifest.json')){
+   const obj=JSON.parse(new TextDecoder().decode(entries.get('manifest.json')));
+   if(!obj||!Array.isArray(obj.assets)||obj.assets.length>LIMIT)
+    throw Error('Invalid or oversized biome ZIP manifest');
+   for(const a of obj.assets){
+    const png=entries.get(a.path);
+    if(!png||!/\\.png$/i.test(a.path||''))throw Error('Required PNG missing from biome ZIP');
+    a.pngData=window.GaryBiomeZip.toDataUrl(png);
+   }
+   await replaceWithPack(obj);return;
+  }
+  // A generic ChatGPT PNG ZIP has no placement manifest. Import all PNGs
+  // together using measured source dimensions where genuinely available.
+  const pngs=[...entries].filter(([name])=>/\\.png$/i.test(name)&&!name.startsWith('__MACOSX/'));
+  if(!pngs.length||pngs.length>LIMIT)throw Error('ZIP needs 1–20 separate PNG images or a Gary biome manifest');
+  const batch=[];
+  for(const [name,bytes] of pngs){
+   const file=new File([bytes],name.split('/').pop(),{type:'image/png'});
+   batch.push(await loadFile(file,batch.length));
+  }
+  if(totalBytes(batch)>MAX_TOTAL)throw Error('PNG ZIP exceeds 18 MB local art limit');
+  state.assets=batch;state.selected=batch[0].id;
+  $('biomeName').value=file.name.replace(/\\.zip$/i,'').slice(0,64);
+  rebuildList();updateSelection();renderPack();
+  status(batch.length+' PNGs imported from ZIP. No verified placement manifest — inspect all sizes/layers before exporting.');
+ }
  async function importPack(file){
   if(!file||state.importing)return;
-  if(file.size>34*1024*1024){status('Saved biome is too large for phone import.');return;}
-  state.importing=true;busy('Checking the saved biome…');
+  if(file.size>34*1024*1024){status('Saved biome too large for safe iPhone import.');return;}
+  state.importing=true;busy('Checking the biome archive…');
   try{
-   const obj=JSON.parse(await file.text());validatePackObject(obj);
-   const next=[];
-   for(const [i,a] of obj.assets.entries()){
-    const img=await loadImage(a.pngData);
-    if(img.naturalWidth!==a.source.width||img.naturalHeight!==a.source.height)throw Error('Source dimensions mismatch in '+a.name);
-    next.push({id:'pack-'+(++unique),name:a.name,source:a.source,draw:{...a.draw},
-     pass:a.pass,opacity:a.opacity,scrollWithWorld:a.scrollWithWorld!==false,
-     dataUrl:a.pngData,image:img,alpha:checkAlpha(img),
-     registration:'REIMPORTED_CANDIDATE_UNVERIFIED'});
+   if(/\\.zip$/i.test(file.name)||file.type==='application/zip')await importZip(file);
+   else{
+    const obj=JSON.parse(await file.text());
+    await replaceWithPack(obj);
    }
-   if(totalBytes(next)>MAX_TOTAL)throw Error('Biome exceeds local 18 MB artwork limit');
-   state.assets=next;state.selected=next[0]?.id||null;
-   $('biomeName').value=String(obj.title||'Imported biome').slice(0,64);
-   setScene(obj.scene);rebuildList();updateSelection();renderPack();
-   status(next.length+' PNGs and their placements restored. Artistic approval remains required.');
-  }catch(e){status('Could not import pack: '+e.message);}
+  }catch(e){status('Could not import biome: '+e.message);}
   finally{state.importing=false;busy('');$('packFile').value='';}
  }
  function sampleLayout(){
@@ -343,7 +394,8 @@
    rebuildList();updateSelection();renderPack();
   });
   $('export').addEventListener('click',()=>exportPack(true));
-  $('mobileSave').addEventListener('click',()=>exportPack(true));
+  $('exportZip').addEventListener('click',exportZip);
+  $('mobileSave').addEventListener('click',exportZip);
   $('exportLayout').addEventListener('click',()=>exportPack(false));
   $('screenshot').addEventListener('click',async()=>{
    if(!state.ready){status('Open the real-game preview first.');return;}
