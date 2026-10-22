@@ -26,6 +26,22 @@ async function main(){
   assert.ok(Math.abs(stage.width/stage.height-9/16)<.012,'360×640 ratio preserved on iPhone');
   assert.equal(await page.locator('#asset option').count(),4);
 
+  // User's approved original-biome screenshot is compared locally, without publishing it or changing the game.
+  const referenceCanvas=createCanvas(360,640),referenceCtx=referenceCanvas.getContext('2d');
+  referenceCtx.fillStyle='#343b45';referenceCtx.fillRect(0,0,360,640);
+  const screenshotPng=referenceCanvas.toBuffer('image/png');
+  await page.locator('#referenceUpload').setInputFiles({name:'first-biome-360x640.png',mimeType:'image/png',buffer:screenshotPng});
+  await page.waitForFunction(()=>document.querySelector('#reference').src.startsWith('blob:'));
+  assert.match(await page.locator('#referenceInfo').textContent(),/360×640/);
+  assert.match(await page.locator('#reference').getAttribute('alt'),/first-biome-360x640/);
+  await page.locator('#resetReference').click();
+  await page.waitForFunction(()=>document.querySelector('#reference').src.includes('/docs/bridge/'));
+  assert.equal(await page.locator('#referenceUpload').inputValue(),'');
+  await page.locator('#referenceUpload').setInputFiles({name:'wrong-size.png',mimeType:'image/png',buffer:createCanvas(300,300).toBuffer('image/png')});
+  await page.waitForFunction(()=>document.querySelector('#result').textContent.includes('Reference rejected:'));
+  assert.ok(!(await page.locator('#reference').getAttribute('src')).startsWith('blob:'));
+  await page.locator('#resetReference').click();
+
   for(const spec of contract.templates){
    await page.locator('#asset').selectOption(spec.id);
    const preview=await page.locator('#preview').evaluate(c=>({width:c.width,height:c.height,pixels:c.getContext('2d').getImageData(0,0,360,640).data.some((v,i)=>i%4===3&&v>0)}));
@@ -60,9 +76,47 @@ async function main(){
   assert.match(await page.locator('#copyField').inputValue(),/Do NOT crop, resize, rotate/);
 
   await page.locator('#real').click();
-  assert.match(await page.locator('#result').textContent(),/isolated game|Waiting|debug|engine/i);
   assert.ok((await page.locator('#game').getAttribute('src')).includes('bridgepreview=1'));
-  // Actual-engine progression is already tested by Camera Lab / Bridge browser suites.
+  // This assertion reads the ACTUAL isolated runtime, not the Factory overlay.
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='front',
+    null,{timeout:60000});
+  assert.match(await page.locator('#result').textContent(),/real-engine front pass/i);
+  await page.locator('#placeX').fill('178');
+  await page.locator('#placeY').fill('350');
+  await page.locator('#placeY').evaluate(el=>el.blur());
+  await page.waitForFunction(()=>{
+   const a=document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot();
+   return a?.draw.x===178&&a?.draw.y===350;
+  });
+  const fromEngine=await page.evaluate(()=>{
+   const w=document.querySelector('#game').contentWindow,c=w.document.querySelector('#c');
+   const withCandidate=c.toDataURL('image/png'),snapshot=w.GaryAssetPreview.snapshot();
+   w.GaryAssetPreview.clear();
+   const withoutCandidate=c.toDataURL('image/png');
+   return {withCandidate,withoutCandidate,snapshot};
+  });
+  assert.notEqual(fromEngine.withCandidate,fromEngine.withoutCandidate,'candidate must alter actual engine canvas pixels');
+  assert.equal(fromEngine.snapshot.registered,false);
+  assert.equal(fromEngine.snapshot.scrollWithWorld,true);
+  await page.locator('#renderPass').selectOption('rear');
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='rear');
+  const rearPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
+  await page.locator('#renderPass').selectOption('front');
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='front');
+  const frontPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
+  assert.notEqual(frontPixels,rearPixels,'front/rear render passes should change candidate occlusion');
+  await page.locator('#registration').click();
+  const candidate=JSON.parse(await page.locator('#copyField').inputValue());
+  assert.equal(candidate.approved,false);assert.equal(candidate.registered,false);
+  assert.equal(candidate.review.actualRenderPassPreview,true);
+  assert.equal(candidate.review.pass,'front');
+  assert.equal(candidate.review.draw.x,178);
+  await page.locator('#scenePreset').selectOption('wilderness-reveal');
+  await page.waitForFunction(()=>{
+   const w=document.querySelector('#game')?.contentWindow;
+   const state=w?.GaryWildernessPreview?.snapshot();
+   return state?.origin!==null&&state?.progress>0;
+  },null,{timeout:20000});
   await page.locator('#still').click();
   await page.setViewportSize({width:375,height:667});
   const compact=await page.locator('#stage').boundingBox();

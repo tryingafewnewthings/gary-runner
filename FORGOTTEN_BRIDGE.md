@@ -1,5 +1,7 @@
 # The Forgotten Bridge
 
+**22 October 2026 override:** The active `index.html` and latest `main` commit `688f09c4` supersede this document's historical status claims: `gary-difficulty-runtime.js` is the live-loaded engine, the bridge/wilderness modules are on `main`, painted bridge art is an unapproved debug candidate, and DRAFT01 wilderness graphics are USER-REJECTED. Do not treat an older 'not implemented' or 'unmerged' statement as current. See [conflicts](docs/camera/CONFLICT_REGISTER_2026-10-22.md). Public deployment and iPhone playback are unverified.
+
 ## Supplied artwork candidate — 20 October update
 
 PR #5 now integrates the externally produced three-layer painted bridge as a **NOT APPROVED** Camera Lab review candidate in the active engine. Its own calibrated masks and independent water occlusion replace the earlier masks for this candidate only. The legacy renderer remains normal Play’s default. See [BRIDGE_ARTWORK_PIPELINE.md](BRIDGE_ARTWORK_PIPELINE.md) for exact registration, four inspected views, full crossing QA, source-art defects and physical-iPhone limits. PR #4 and PR #5 remain unmerged.

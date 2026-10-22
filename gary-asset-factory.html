@@ -21,7 +21,8 @@ button:disabled{opacity:.4;cursor:not-allowed}button:focus-visible,select:focus-
 #result{background:#1d3b35;color:#e5f1df;min-height:43px;padding:10px;border-radius:7px;white-space:pre-line}
 #report{font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0;color:#d4dfd4}
 .tag{color:#f6d5a4;font-weight:700}small{color:#abbeb4}
-input[type=file]{width:100%;max-width:100%;min-height:44px}
+input[type=file],input[type=number]{width:100%;max-width:100%;min-height:44px}
+input[type=number]{font:inherit;padding:8px;background:#111f1e;border:1px solid #648174;border-radius:6px;color:#fff}
 input[type=checkbox]{accent-color:#d9b879}
 #copyField{width:100%;min-height:140px;margin-top:9px;display:none;font:12px/1.4 monospace;color:#f4f1e9;background:#111e1d;border:1px solid #60776d}
 @media(max-width:720px){.layout{grid-template-columns:1fr}.stage{width:min(100%,310px);margin:auto}h1{font-size:20px}}
@@ -45,6 +46,10 @@ input[type=checkbox]{accent-color:#d9b879}
 <select id="asset"></select>
 <label for="scene">Scene reference</label>
 <select id="scene"></select>
+<label for="referenceUpload">Compare against your approved 360×640 gameplay screenshot (local only)</label>
+<input id="referenceUpload" type="file" accept="image/png,image/jpeg,image/webp">
+<button id="resetReference" type="button">Restore repository reference</button>
+<p id="referenceInfo" style="font-size:12px">Repository screenshots are review captures, not approved first-biome style masters. Import the corrected original-biome PNG for style comparison.</p>
 <label><input id="guides" type="checkbox" checked> Show geometry and lane guides</label>
 <p id="spec" style="font-size:12px"></p>
 </div>
@@ -72,7 +77,29 @@ input[type=checkbox]{accent-color:#d9b879}
 <p style="font-size:12px">Adjust imported artwork's apparent height, skew or individual face corners. You will need to select the PNG again in the editor; originals stay on your device.</p>
 </div>
 <div class="panel">
-<h2>4. Preview / evidence</h2>
+<h2>4. Real-engine review</h2>
+<label for="scenePreset">Gameplay position</label>
+<select id="scenePreset">
+<option value="street-day">High street · daylight</option><option value="street-rain">High street · night/rain</option>
+<option value="bridge-approach">Bridge · approach</option><option value="bridge-enter">Bridge · entrance</option>
+<option value="bridge-middle">Bridge · middle</option><option value="bridge-exit">Bridge · exit</option>
+<option value="wilderness-reveal">Wilderness · reveal</option><option value="wilderness-dense">Wilderness · dense</option>
+</select>
+<label for="renderPass">Renderer layer</label>
+<select id="renderPass">
+<option value="ground">Ground — below scenery/actors</option>
+<option value="rear">Rear scenery — behind Gary</option>
+<option value="under-water">Bridge masonry — beneath water mask</option>
+<option value="deck">Bridge deck — beneath Gary</option>
+<option value="front">Foreground — in front of Gary</option>
+</select>
+<div class="controls">
+<label for="placeX">Screen/world X <input id="placeX" type="number" min="-200" max="400" step="1" inputmode="numeric"></label>
+<label for="placeY">Screen/world Y <input id="placeY" type="number" min="-500" max="1000" step="1" inputmode="numeric"></label>
+</div>
+<label><input id="worldScroll" type="checkbox" checked> Scroll with world position</label>
+<p style="font-size:12px">Isolated debug view: actual game pass and layering, no collisions, production registration, saves or perspective approval.</p>
+<h2>5. Preview / evidence</h2>
 <div class="controls">
 <button id="still">Game screenshot</button>
 <button id="real">Real engine (bridge debug)</button>
@@ -81,7 +108,7 @@ input[type=checkbox]{accent-color:#d9b879}
 <button id="screenshot">Export annotated preview</button>
 <button id="instructions">Copy handoff</button>
 </div>
-<p style="font-size:12px">Real engine is shown behind the overlay in its own isolated debug session. Imported art is NOT inserted into gameplay render passes or assigned collisions until integrated separately.</p>
+<p style="font-size:12px">Real engine inserts the candidate inside its selected rendering pass. This does not approve its art, modify collisions or register it for normal Play.</p>
 </div>
 <textarea id="copyField" readonly aria-label="Copyable prompt and registration output"></textarea>
 <p style="font-size:12px"><a href="GARY_ASSET_FACTORY.md">Implementation and QA status</a> · <a href="gary-camera-lab.html">Existing Camera Lab</a></p>
@@ -91,12 +118,18 @@ input[type=checkbox]{accent-color:#d9b879}
 (async function(){
 'use strict';
 const $=id=>document.getElementById(id);
-let camera,contract,spec,mode='screenshot',art=null,valid=false,uploadName='';
+let camera,contract,spec,mode='screenshot',art=null,valid=false,uploadName='',liveCandidateActive=false;
 let artworkUrl=null,customScreenshot=null;
 const view=$('preview'),ctx=view.getContext('2d');
 const frame=$('game'),reference=$('reference');
 const status=s=>$('result').textContent=s;
 function current(){return spec;}
+function previewDraw(){
+ const x=Number($('placeX').value),y=Number($('placeY').value);
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x< -200||x>400||y< -500||y>1000)
+  throw Error('Preview coordinates out of bounds');
+ return {x,y,width:spec.draw.width,height:spec.draw.height};
+}
 function picture(){
  ctx.clearRect(0,0,360,640);
  if($('guides').checked){
@@ -105,12 +138,12 @@ function picture(){
   ctx.restore();
  }
  if(!spec)return;
- const d=spec.draw;
+ const d=previewDraw();
  ctx.save();ctx.translate(d.x,d.y);
- if(art){
+ if(art && !(mode==='live'&&liveCandidateActive)){
   GaryAssetFactory.draw(ctx,spec,{mode:'clip',image:art});
   if($('guides').checked)GaryAssetFactory.draw(ctx,spec,{mode:'outline'});
- }else GaryAssetFactory.draw(ctx,spec,{mode:'template'});
+ }else if(!(mode==='live'&&liveCandidateActive))GaryAssetFactory.draw(ctx,spec,{mode:'template'});
  ctx.restore();
  ctx.save();ctx.strokeStyle='#e8b67c';ctx.setLineDash([4,3]);ctx.lineWidth=1.1;ctx.strokeRect(d.x,d.y,d.width,d.height);
  ctx.fillStyle='#f4d49e';ctx.beginPath();
@@ -121,10 +154,13 @@ function switchAsset(id){
  if(!spec)throw Error('Unknown template '+id);
  const prevScene=$('scene').value;
  if(prevScene!==spec.scene)$('scene').value=spec.scene;
+ $('scenePreset').value=spec.scene==='bridge'?'bridge-middle':spec.scene==='wilderness'?'wilderness-reveal':'street-day';
+ $('renderPass').value=({'ground-overlays':'ground','shops-and-props':'rear','lower-masonry-under-water':'under-water','foreground-props':'front'})[spec.layer]||'rear';
+ $('placeX').value=String(spec.draw.x);$('placeY').value=String(spec.draw.y);
  if(artworkUrl){URL.revokeObjectURL(artworkUrl);artworkUrl=null;}
  art=null;valid=false;uploadName='';$('upload').value='';$('final').disabled=true;
  $('report').textContent='No artwork imported.';
- setScene();picture();
+ setScene();if(mode==='live')gameStart();picture();
  $('perspectiveLink').href='gary-perspective-editor.html?asset='+encodeURIComponent(spec.id);
  $('spec').textContent=spec.source.width+'×'+spec.source.height+' source pixels · '+spec.draw.width+'×'+spec.draw.height+
   ' design units · x'+spec.draw.x+' y'+spec.draw.y+' · anchor ('+spec.anchor.x+','+spec.anchor.y+') · '+contract.profiles[spec.profile].status;
@@ -133,6 +169,30 @@ function setScene(){
  if(customScreenshot)return;
  reference.src=contract.scenes[$('scene').value].image;
  reference.alt=contract.scenes[$('scene').value].description;
+}
+function restoreReference(){
+ if(customScreenshot){URL.revokeObjectURL(customScreenshot);customScreenshot=null;}
+ $('referenceUpload').value='';
+ $('referenceInfo').textContent='Repository screenshot restored. Existing source images are review evidence, not approved first-biome masters.';
+ setScene();picture();
+}
+async function useLocalReference(file){
+ if(!file)return;
+ if(!/^image\/(png|jpeg|webp)$/.test(file.type)){
+  status('Reference rejected: PNG, JPEG or WebP required.');return;
+ }
+ const url=URL.createObjectURL(file),candidate=new Image();
+ try{
+  await new Promise((resolve,reject)=>{candidate.onload=resolve;candidate.onerror=()=>reject(Error('Unusable reference image'));candidate.src=url;});
+  if(candidate.naturalWidth!==360||candidate.naturalHeight!==640)
+   throw Error('Reference must be exactly 360×640; select the cropped gameplay reference PNG, not the original phone screenshot.');
+  if(customScreenshot)URL.revokeObjectURL(customScreenshot);
+  customScreenshot=url;reference.src=url;
+  reference.alt='User-provided 360×640 gameplay reference: '+file.name;
+  $('referenceInfo').textContent='Local reference: '+file.name+' (360×640). Not uploaded, registered or approved automatically.';
+  showMode('screenshot');
+  status('Local 360×640 reference loaded for comparison. Perspective and in-engine layering remain unverified.');
+ }catch(e){URL.revokeObjectURL(url);status('Reference rejected: '+e.message);}
 }
 function artCanvas(type,maskImage=false){
  const c=document.createElement('canvas');c.width=spec.source.width;c.height=spec.source.height;
@@ -172,6 +232,8 @@ function brief(){
  'Registration anchor (normalised): x='+spec.anchor.x+', y='+spec.anchor.y+'. Transparent safe padding: '+spec.paddingPx+' source pixels.',
  'Camera family: '+spec.profile+' ('+cameraProfile.status+'). Existing game uses fixed, parallel screen coordinates with no receding vanishing point.',
  'Art treatment: '+spec.style,
+  'Style master: user-supplied ORIGINAL Gary Eats! high-street screenshot (360×640 crop). Match painterly UK street quality: cool-grey irregular cobbles, slate road, red-brick shopfronts, charcoal outlining, restrained texture, warm local lighting, recognisable Gary scale. Adapt this language to the target biome; do NOT use DRAFT01 wilderness art as style reference.',
+  'The screenshot reference is evidence for colour/material/illustrated viewpoint only. Bridge supports, roofs and other raised faces still require separate perspective approval.',
  'One image, no road, people, water, scenery, cast background, checkerboard, border or embedded UI. Preserve truly transparent RGBA background.',
  'Do NOT crop, resize, rotate, mirror, or change the protected template geometry. Keep all visible pixels within the silhouette mask.',
  'Final artistic camera/style matching requires comparison to the approved game screenshot in Camera Lab; this prompt does not certify approval.'
@@ -197,6 +259,7 @@ async function importArt(file){
   status(valid?'PNG structural checks pass; artistic approval and integration remain outstanding.':
    'PNG failed structural checks. Keep artwork available for comparison; masked export disabled.');
  }catch(e){$('report').textContent='FAIL: '+e.message;}
+ if(mode==='live')syncCandidate();
  picture();
 }
 async function screenshot(){
@@ -216,24 +279,55 @@ async function screenshot(){
 function gameAPI(){
  try{return frame.contentWindow?.GaryBridgePreview;}catch(_){return null;}
 }
-function gameStart(){
- const api=gameAPI();
- if(!api)return false;
+function assetAPI(){
+ try{return frame.contentWindow?.GaryAssetPreview;}catch(_){return null;}
+}
+function syncCandidate(){
+ const api=assetAPI();
+ if(!api?.ready()||!spec||mode!=='live')return false;
  try{
-  const scene=spec.scene==='bridge'?'middle':'approach';
-  if(!api.start(scene))return false;
-  api.freeze();return true;
- }catch(_){return false;}
+  // Only precompose when candidate changes. Never allocate in the live frame loop.
+  const image=art&&valid?artCanvas('art'):artCanvas('mask');
+  const result=api.set({image,draw:previewDraw(),pass:$('renderPass').value,scrollWithWorld:$('worldScroll').checked});
+  liveCandidateActive=true;picture();
+  status((art&&valid?'Masked candidate PNG':'Silhouette blockout')+' inserted inside real-engine '+result.pass+
+   ' pass. No collisions, gameplay registration, art approval or device approval.');
+  return true;
+ }catch(e){liveCandidateActive=false;picture();status('Candidate rejected: '+e.message);return false;}
+}
+function gameStart(){
+ const api=assetAPI();
+ if(!api?.ready())return false;
+ try{
+  if(!api.startScene($('scenePreset').value))return false;
+  liveCandidateActive=false;
+  return syncCandidate();
+ }catch(e){liveCandidateActive=false;status('Scene unavailable: '+e.message);return false;}
+}
+let sceneLoadToken=0;
+function awaitGame(){
+ const token=++sceneLoadToken;
+ let attempts=0;
+ function attempt(){
+  if(token!==sceneLoadToken||mode!=='live')return;
+  if(gameStart())return;
+  if(++attempts<80)setTimeout(attempt,250);
+  else status('Isolated engine not ready. Inspect asset loading and retry Real engine.');
+ }
+ attempt();
 }
 function showMode(next){
  mode=next;
  frame.style.visibility=mode==='live'?'visible':'hidden';
  reference.style.visibility=mode==='live'?'hidden':'visible';
  if(next==='live'){
+  liveCandidateActive=false;
   if(frame.src==='about:blank')frame.src='index.html?debug=1&bridgepreview=1&seed=12345';
-  if(!gameStart())status('Waiting for isolated game startup. Retry Real engine after loading.');
-  else status('Real-engine background with design overlay; NOT registered in the game render pass.');
- }else{gameAPI()?.freeze();status('Gameplay screenshot composite · candidate silhouette; no runtime registration.');}
+  awaitGame();
+ }else{
+  ++sceneLoadToken;gameAPI()?.freeze();liveCandidateActive=false;
+  status('Screenshot overlay only. Real engine mode is required to check world occlusion.');
+ }
  picture();
 }
 try{
@@ -245,25 +339,35 @@ try{
  for(const entry of contract.templates){const option=document.createElement('option');option.value=entry.id;option.textContent=entry.name;$('asset').append(option);}
  for(const id of Object.keys(contract.scenes)){const option=document.createElement('option');option.value=id;option.textContent=id;$('scene').append(option);}
  $('asset').addEventListener('change',()=>switchAsset($('asset').value));
- $('scene').addEventListener('change',()=>{customScreenshot=null;setScene();picture();});
+ $('scene').addEventListener('change',restoreReference);
+ $('referenceUpload').addEventListener('change',async e=>useLocalReference(e.target.files?.[0]));
+ $('resetReference').addEventListener('click',restoreReference);
  $('guides').addEventListener('change',picture);
  $('upload').addEventListener('change',async e=>importArt(e.target.files?.[0]));
  $('template').addEventListener('click',()=>shareCanvas(artCanvas('template'),spec.id+'-template.png'));
  $('mask').addEventListener('click',()=>shareCanvas(artCanvas('mask'),spec.id+'-mask.png'));
  $('final').addEventListener('click',()=>{if(valid&&art)shareCanvas(artCanvas('art'),spec.id+'-masked-candidate.png');});
  $('brief').addEventListener('click',()=>copy(brief()));
- $('registration').addEventListener('click',()=>copy(JSON.stringify(GaryAssetFactory.registration(spec,camera),null,2)));
+ $('registration').addEventListener('click',()=>copy(JSON.stringify({...GaryAssetFactory.registration(spec,camera),review:{
+  scene:$('scenePreset').value,pass:$('renderPass').value,worldScrolling:$('worldScroll').checked,draw:previewDraw(),
+  actualRenderPassPreview:liveCandidateActive,raisedPerspective:'UNVERIFIED',physicalIphone:'UNVERIFIED'
+ }},null,2)));
  $('clear').addEventListener('click',()=>switchAsset(spec.id));
  $('still').addEventListener('click',()=>showMode('screenshot'));
  $('real').addEventListener('click',()=>showMode('live'));
+ $('scenePreset').addEventListener('change',()=>{if(mode==='live')awaitGame();});
+ $('renderPass').addEventListener('change',()=>{if(mode==='live')syncCandidate();});
+ $('worldScroll').addEventListener('change',()=>{if(mode==='live')syncCandidate();});
+ for(const id of ['placeX','placeY'])$(id).addEventListener('change',()=>{if(mode==='live')syncCandidate();picture();});
  $('pause').addEventListener('click',()=>{gameAPI()?.freeze();status('Debug engine frozen.');});
- $('resume').addEventListener('click',()=>{gameAPI()?.resume();status('Debug engine playing; candidate overlay still not integrated.');});
+ $('resume').addEventListener('click',()=>{gameAPI()?.resume();status('Debug engine playing; candidate scrolls with the world when enabled.');});
  $('screenshot').addEventListener('click',screenshot);
  $('instructions').addEventListener('click',()=>copy('Review '+spec.id+' using source PNG '+uploadName+'.\n'+
   'Camera profile: '+contract.profiles[spec.profile].status+'.\n'+
-  'World position: '+JSON.stringify(spec.draw)+'; anchor: '+JSON.stringify(spec.anchor)+'.\n'+
+  'World position: '+JSON.stringify(previewDraw())+'; anchor: '+JSON.stringify(spec.anchor)+'.\n'+
+  'Review scene: '+$('scenePreset').value+'; pass: '+$('renderPass').value+'; scroll: '+$('worldScroll').checked+'.\n'+
   'Run asset-quality gate and check layered render order, visual camera and iPhone playback. Never auto-register unapproved work.'));
- frame.addEventListener('load',()=>{if(mode==='live'&&gameAPI()&&!gameStart())status('Engine loading assets; retry Real engine.');});
+ frame.addEventListener('load',()=>{if(mode==='live')awaitGame();});
  $('scene').value=contract.templates[0].scene;switchAsset(contract.templates[0].id);status('Four deterministic templates ready. Camera geometry is not artistic approval.');
 }catch(e){status('Factory initialization failed: '+e.message);}
 })();

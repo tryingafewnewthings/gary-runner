@@ -1,5 +1,10 @@
 # The Other Side — first wilderness
 
+**22 October 2026 override:** The bridge, wilderness and camera/tooling branch stack reached `main` through merged PR #9 (`688f09c4`). Date-specific claims below that PR #4/5 or the factory are unmerged are historical. DRAFT01 wilderness art is **visually rejected**, even where the renderer still loads it. Painted bridge art remains a **debug review candidate**, not production-approved. Raised architecture is provisional. Do not infer iPhone/Pages verification from main-branch presence. See [current conflict register](docs/camera/CONFLICT_REGISTER_2026-10-22.md).
+
+The 38 DRAFT01-derived registered sprites and current biome controller are reusable implementation scaffolding, not an approved art pack. Regenerate art consistent with the original high street and validate each world layer before replacing production pixels.
+
+
 ## Status and review
 
 CODE-OBSERVED / TESTED: first playable wilderness follows the stranger, completed fox and Forgotten Bridge on `feat/visual-camera-calibration` (PR #5, stacked on #4). No merge or deployment. Supplied DRAFT01 pixels only; no new illustration. Bridge production artwork and raised projection remain unapproved and review-only. Normal Play retains its existing bridge renderer and disabled collapse.
