@@ -53,8 +53,6 @@
         const slot=((index%street.length)+street.length)%street.length;
         return index===emptyFrom ? clearing[slot] : empty[slot];
       },
-      clearingStart:()=>emptyFrom,
-      benchIndex:()=>benchSegment,
       quiet:()=>Number.isFinite(emptyFrom) && !passed,
       slow(distance,hazardsClear) { return !passed && hazardsClear && footAt(distance)>=-180; },
       visible(distance) { const foot=footAt(distance); return foot>0 && foot<screenHeight+SPEC.height && !passed; },
