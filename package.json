@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "npm run test:unit && npm run test:assets && npm run test:integration && npm run test:browser",
-    "test:unit": "node --test tests/core.test.cjs tests/mystery.test.cjs tests/asset-quality-gate.test.cjs tests/fox.test.cjs tests/camera-contract.test.cjs tests/asset-factory.test.cjs tests/perspective-editor.test.cjs tests/biome-workspace.test.cjs tests/biome-zip.test.cjs",
+    "test:unit": "node --test tests/core.test.cjs tests/mystery.test.cjs tests/asset-quality-gate.test.cjs tests/fox.test.cjs tests/camera-contract.test.cjs tests/asset-factory.test.cjs tests/perspective-editor.test.cjs tests/biome-workspace.test.cjs tests/biome-zip.test.cjs tests/visual-production-contract.test.cjs",
     "test:integration": "node --test --test-concurrency=1 tests/road-decay.test.cjs tests/last-orders-integration.test.cjs tests/bridge.test.cjs tests/bridge-art.test.cjs tests/wilderness.test.cjs",
     "test:browser": "node tests/browser-smoke.cjs && node tests/bridge-browser.cjs && node tests/camera-browser.cjs && node tests/bridge-art-browser.cjs && node tests/wilderness-browser.cjs && node tests/asset-factory-browser.cjs && node tests/biome-workspace-browser.cjs && node tests/perspective-editor-browser.cjs",
     "test:assets": "node tests/asset-quality-gate.cjs --all",

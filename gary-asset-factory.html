@@ -102,7 +102,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <div class="preview-label"><strong>Game preview</strong><span>360 × 640 • drag artwork to move</span></div>
 <div class="stage-wrap"><div class="stage" id="stage">
 <iframe id="game" src="about:blank" title="Isolated real Gary Eats engine"></iframe>
-<img id="reference" src="docs/bridge/approach.png" alt="Reference gameplay screenshot, not approved artwork">
+<img id="reference" src="docs/biome-workspace/layout-street-day.png" alt="Reference gameplay screenshot, not approved artwork">
 <canvas id="preview" width="360" height="640" aria-label="Drag the asset to reposition it in the game"></canvas>
 <div class="stage-tip" id="stageTip">Drag to move the asset</div>
 </div></div>
@@ -291,19 +291,18 @@ function copy(text){
 function brief(){
  const cameraProfile=contract.profiles[spec.profile];
  return [
- 'GARY EATS! — ART GENERATION BRIEF (CANDIDATE, NOT CAMERA-APPROVED)',
- 'Generate ONE transparent PNG of: '+spec.name+'.',
- 'ATTACH the exported template PNG; preserve its full silhouette, proportions, angle, viewpoint, padding and base placement. Do not invent 3D foreshortening or another vanishing point.',
- 'Source dimensions: '+spec.source.width+'×'+spec.source.height+' px. No sprite-sheet grid: single 1×1 cell.',
- 'Gameplay draw rectangle (360×640 design canvas): x='+spec.draw.x+', y='+spec.draw.y+', width='+spec.draw.width+', height='+spec.draw.height+'.',
- 'Registration anchor (normalised): x='+spec.anchor.x+', y='+spec.anchor.y+'. Transparent safe padding: '+spec.paddingPx+' source pixels.',
- 'Camera family: '+spec.profile+' ('+cameraProfile.status+'). Existing game uses fixed, parallel screen coordinates with no receding vanishing point.',
- 'Art treatment: '+spec.style,
-  'Style master: user-supplied ORIGINAL Gary Eats! high-street screenshot (360×640 crop). Match painterly UK street quality: cool-grey irregular cobbles, slate road, red-brick shopfronts, charcoal outlining, restrained texture, warm local lighting, recognisable Gary scale. Adapt this language to the target biome; do NOT use DRAFT01 wilderness art as style reference.',
-  'The screenshot reference is evidence for colour/material/illustrated viewpoint only. Bridge supports, roofs and other raised faces still require separate perspective approval.',
- 'One image, no road, people, water, scenery, cast background, checkerboard, border or embedded UI. Preserve truly transparent RGBA background.',
- 'Do NOT crop, resize, rotate, mirror, or change the protected template geometry. Keep all visible pixels within the silhouette mask.',
- 'Final artistic camera/style matching requires comparison to the approved game screenshot in Camera Lab; this prompt does not certify approval.'
+  'GARY EATS! — STRICT REFERENCE-LOCKED ART GENERATION (CANDIDATE / NOT APPROVED)',
+  'READ CURRENT GARY_VISUAL_PRODUCTION.md and ATTACH SOURCE IMAGES: (1) ORIGINAL high_street_sprites.webp cropped to the comparable first-biome shop/prop; (2) original gary_walk_sheet.PNG / Gary 360×640 daylight street gameplay crop; (3) original cobble/texturing where ground is visible; (4) the transparent silhouette PNG from this exact template. Text-only prompts are insufficient for faithful materials.',
+  'Generate ONE separate true-transparent RGBA PNG of: '+spec.name+'. No scene/background, fake transparency, sky, road, grass background, arbitrary cast shadow, checkerboard, white fringe, extra object, extra text or baked HUD.',
+  'CANONICAL CAMERA: fixed painted 2D near-orthographic presentation, completely screen-parallel ground x/y, no vanishing point, perspective convergence, lens/FOV, distance scaling, foreshortening, invented 3D projection, diagonal rotation or isometric grid. For raised faces copy the specific approved family silhouette; raised architecture is NOT yet globally approved.',
+  'SOURCE pixels: '+spec.source.width+' × '+spec.source.height+'. GRID 1 column × 1 row. Preserve entire canvas and '+spec.paddingPx+' px transparent padding. Never trim, rotate, mirror, tilt or resize the protected source silhouette.',
+  'GAMEPLAY DRAW in fixed 360×640 DESIGN UNITS: x='+spec.draw.x+', y='+spec.draw.y+', width='+spec.draw.width+', height='+spec.draw.height+'. Gary target height ~142 units, feet y546. Respect relative scale to him; source pixels do not equal world units.',
+  'GROUND / ANCHOR: normalized ('+spec.anchor.x+','+spec.anchor.y+'); maintain physical bottom contact and expected '+spec.layer+' occlusion; no hovering, fake wall mounting or clipped roots/feet.',
+  'CAMERA CLASS / STATUS: '+spec.profile+' / '+cameraProfile.status+'. Never label provisional as an approved exact physical camera.',
+  'PAINTERLY STYLE: match the ACTUAL first 30 seconds of original British street gameplay, using ORIGINAL source images: crisp slender dark outlines, restrained natural texture at gameplay scale, restrained soft shading, soft UPPER-LEFT daylight, consistent saturation/material response, cool irregular cobbles, dark slate road, red-brick/charcoal shop palette. No photorealism, unrelated illustration style, overly modelled 3D stones, harsh specular/rim highlights or DRAFT01 olive-wedge grass.',
+  'OBJECT-FAMILY TREATMENT: '+spec.style,
+  'ATTACH the silhouette PNG and preserve its full outline, body orientation, top-face exposure, width, height, registration and foot baseline. Restrict all painted pixels to the silhouette; no invented external geometry.',
+  'REVIEW AT NATIVE 360×640 against the original Gary/street reference, in DAY, NIGHT and HEAVY RAIN, including scrolling/layer occlusion and alpha checks on white/black/mid-tone. This is NOT an approval: export as UNVERIFIED candidate until user signs off.'
  ].join('\n');
 }
 async function importArt(file){

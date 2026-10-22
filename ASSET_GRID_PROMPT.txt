@@ -1,3 +1,6 @@
+22 OCTOBER 2026 — NEW ASSET PREGEN GATE
+In every Gary Eats! asset request, first follow GARY_VISUAL_PRODUCTION.md and use actual source art listed in docs/visual-master/reference-pack.json. Require first-biome source IMAGE evidence, family silhouette, consistent hand-painted styling, 360×640 game-scale comparison and explicit candidate approval status BEFORE normal game registration. Historical 48-unit cobble lines below are invalid; active 60-unit cobbles are source-verified. Raising an asset's apparent architecture cannot be automatically camera-approved.
+
 <!-- GARY_EATS_REFERENCE_20261019_START -->
 19 OCTOBER 2026 — CURRENT REVIEW PREFLIGHT
 Before each new asset request in any Gary Eats! chat, fetch current repo AGENTS.md, GARY_EATS_MASTER_REFERENCE.md, STYLE.txt, this file, index.html, gary-difficulty-data.js and relevant art registration. The ACTUAL current code route uses gary-difficulty-runtime.js; legacy game-data.js / game-runtime.js and historical asset grids may be outdated. Actual WORLD.cobbleCell is 60.

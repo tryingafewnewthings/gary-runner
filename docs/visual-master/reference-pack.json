@@ -1,0 +1,81 @@
+{
+  "schema": "gary-eats-visual-reference-pack-v1",
+  "captured": "2026-10-22",
+  "purpose": "Consistent future-generation source anchors; no automatic art approval.",
+  "primaryStyleEvidence": [
+    {
+      "path": "high_street_sprites.webp",
+      "kind": "original-shop-atlas",
+      "status": "CURRENT_ENGINE_SOURCE",
+      "notes": "Painterly outlines/brick/signage/cropped windows. Consult BUILDINGS indices in active data; do not treat entire atlas as one source object."
+    },
+    {
+      "path": "gary_walk_sheet.PNG",
+      "kind": "original-gary-animated-sheet",
+      "status": "CURRENT_ENGINE_SOURCE",
+      "notes": "Six horizontal frames; Gary size/identity must be compared at ~142 game units."
+    },
+    {
+      "path": "IMG_7141.webp",
+      "kind": "original-cobble-texture",
+      "status": "CURRENT_ENGINE_SOURCE",
+      "notes": "One of 8 related texture sources; renderer samples source quadrant into 60 game-unit cells."
+    },
+    {
+      "path": "docs/biome-workspace/layout-street-day.png",
+      "kind": "360x640-real-engine-daylight-capture",
+      "status": "QA_OBSERVED_NOT_MASTER_APPROVED",
+      "notes": "Real street, shops, Gary, cobbles and UI; includes nonproduction bush placements for tooling QA. Not a complete first-30-seconds style master."
+    }
+  ],
+  "neededForFullStyleLock": [
+    {
+      "asset": "Owner's original ~30-second daytime gameplay recording",
+      "status": "NOT_COMMITTED",
+      "notes": "Extract multiple real gameplay compositions at 360x640: early clean street, shops/props, pickups, Gary transition, day/night/rain as available. Do not pretend this is in repository."
+    },
+    {
+      "asset": "Owner-signed-off Freestanding family overlay",
+      "status": "UNAPPROVED"
+    },
+    {
+      "asset": "Owner-signed-off Raised architecture / bridge overlay",
+      "status": "UNAPPROVED"
+    }
+  ],
+  "rejectedAsStyleReferences": [
+    "art/wilderness/verge/verge_grass_dense_olive_01.png",
+    "docs/wilderness/reveal.png",
+    "art/bridge/production/lower.png"
+  ],
+  "lockedNumbersFrom": "gary-difficulty-data.js and gary-camera-contract.json",
+  "worldSnapshot": {
+    "canvas": [
+      360,
+      640
+    ],
+    "road": [
+      105,
+      255
+    ],
+    "lanes": [
+      130,
+      180,
+      230
+    ],
+    "garyY": 540,
+    "garyFootY": 546,
+    "garyHeight": 142,
+    "shopDraw": [
+      89,
+      236
+    ],
+    "cobbleCell": 60,
+    "bridgeDeck": [
+      138,
+      222
+    ],
+    "bridgeLength": 620
+  },
+  "policy": "Read code again for numeric changes; do not use this snapshot to override current engine."
+}

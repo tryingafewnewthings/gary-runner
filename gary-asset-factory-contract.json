@@ -130,8 +130,8 @@
   ],
   "scenes": {
     "street": {
-      "image": "docs/bridge/approach.png",
-      "description": "Temporary street/bridge approach screenshot. Replace with approved high-street screenshot when available."
+      "image": "docs/biome-workspace/layout-street-day.png",
+      "description": "Actual 360x640 first-biome daylight game render with debug demonstration placements. QA evidence only, not an owner-approved first-30-second style master."
     },
     "bridge": {
       "image": "docs/bridge-review/middle.png",
