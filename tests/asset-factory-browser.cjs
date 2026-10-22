@@ -112,8 +112,11 @@ async function main(){
   assert.equal(candidate.review.pass,'front');
   assert.equal(candidate.review.draw.x,178);
   await page.locator('#scenePreset').selectOption('wilderness-reveal');
-  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryWildernessPreview?.snapshot()?.active===true,
-   null,{timeout:20000}).catch(()=>{}); // wilderness scenes also have deterministic environmental preview
+  await page.waitForFunction(()=>{
+   const w=document.querySelector('#game')?.contentWindow;
+   const state=w?.GaryWildernessPreview?.snapshot();
+   return state?.origin!==null&&state?.progress>0;
+  },null,{timeout:20000});
   await page.locator('#still').click();
   await page.setViewportSize({width:375,height:667});
   const compact=await page.locator('#stage').boundingBox();
