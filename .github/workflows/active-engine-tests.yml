@@ -48,6 +48,8 @@ jobs:
         run: npm run test:integration
       - name: Chromium smoke
         run: npm run test:browser
+      - name: Capture painted bridge at native 360x640 in three lighting modes
+        run: node tests/bridge-painted-capture.cjs
       - name: WebKit smoke (not physical iPhone Safari)
         env:
           GARY_TEST_ENGINE: webkit
