@@ -21,7 +21,8 @@ button:disabled{opacity:.4;cursor:not-allowed}button:focus-visible,select:focus-
 #result{background:#1d3b35;color:#e5f1df;min-height:43px;padding:10px;border-radius:7px;white-space:pre-line}
 #report{font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0;color:#d4dfd4}
 .tag{color:#f6d5a4;font-weight:700}small{color:#abbeb4}
-input[type=file]{width:100%;max-width:100%;min-height:44px}
+input[type=file],input[type=number]{width:100%;max-width:100%;min-height:44px}
+input[type=number]{font:inherit;padding:8px;background:#111f1e;border:1px solid #648174;border-radius:6px;color:#fff}
 input[type=checkbox]{accent-color:#d9b879}
 #copyField{width:100%;min-height:140px;margin-top:9px;display:none;font:12px/1.4 monospace;color:#f4f1e9;background:#111e1d;border:1px solid #60776d}
 @media(max-width:720px){.layout{grid-template-columns:1fr}.stage{width:min(100%,310px);margin:auto}h1{font-size:20px}}
@@ -92,6 +93,10 @@ input[type=checkbox]{accent-color:#d9b879}
 <option value="deck">Bridge deck — beneath Gary</option>
 <option value="front">Foreground — in front of Gary</option>
 </select>
+<div class="controls">
+<label for="placeX">Screen/world X <input id="placeX" type="number" min="-200" max="400" step="1" inputmode="numeric"></label>
+<label for="placeY">Screen/world Y <input id="placeY" type="number" min="-500" max="1000" step="1" inputmode="numeric"></label>
+</div>
 <label><input id="worldScroll" type="checkbox" checked> Scroll with world position</label>
 <p style="font-size:12px">Isolated debug view: actual game pass and layering, no collisions, production registration, saves or perspective approval.</p>
 <h2>5. Preview / evidence</h2>
@@ -119,6 +124,12 @@ const view=$('preview'),ctx=view.getContext('2d');
 const frame=$('game'),reference=$('reference');
 const status=s=>$('result').textContent=s;
 function current(){return spec;}
+function previewDraw(){
+ const x=Number($('placeX').value),y=Number($('placeY').value);
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x< -200||x>400||y< -500||y>1000)
+  throw Error('Preview coordinates out of bounds');
+ return {x,y,width:spec.draw.width,height:spec.draw.height};
+}
 function picture(){
  ctx.clearRect(0,0,360,640);
  if($('guides').checked){
@@ -127,7 +138,7 @@ function picture(){
   ctx.restore();
  }
  if(!spec)return;
- const d=spec.draw;
+ const d=previewDraw();
  ctx.save();ctx.translate(d.x,d.y);
  if(art && !(mode==='live'&&liveCandidateActive)){
   GaryAssetFactory.draw(ctx,spec,{mode:'clip',image:art});
@@ -145,6 +156,7 @@ function switchAsset(id){
  if(prevScene!==spec.scene)$('scene').value=spec.scene;
  $('scenePreset').value=spec.scene==='bridge'?'bridge-middle':spec.scene==='wilderness'?'wilderness-reveal':'street-day';
  $('renderPass').value=({'ground-overlays':'ground','shops-and-props':'rear','lower-masonry-under-water':'under-water','foreground-props':'front'})[spec.layer]||'rear';
+ $('placeX').value=String(spec.draw.x);$('placeY').value=String(spec.draw.y);
  if(artworkUrl){URL.revokeObjectURL(artworkUrl);artworkUrl=null;}
  art=null;valid=false;uploadName='';$('upload').value='';$('final').disabled=true;
  $('report').textContent='No artwork imported.';
@@ -276,7 +288,7 @@ function syncCandidate(){
  try{
   // Only precompose when candidate changes. Never allocate in the live frame loop.
   const image=art&&valid?artCanvas('art'):artCanvas('mask');
-  const result=api.set({image,draw:spec.draw,pass:$('renderPass').value,scrollWithWorld:$('worldScroll').checked});
+  const result=api.set({image,draw:previewDraw(),pass:$('renderPass').value,scrollWithWorld:$('worldScroll').checked});
   liveCandidateActive=true;picture();
   status((art&&valid?'Masked candidate PNG':'Silhouette blockout')+' inserted inside real-engine '+result.pass+
    ' pass. No collisions, gameplay registration, art approval or device approval.');
@@ -337,7 +349,7 @@ try{
  $('final').addEventListener('click',()=>{if(valid&&art)shareCanvas(artCanvas('art'),spec.id+'-masked-candidate.png');});
  $('brief').addEventListener('click',()=>copy(brief()));
  $('registration').addEventListener('click',()=>copy(JSON.stringify({...GaryAssetFactory.registration(spec,camera),review:{
-  scene:$('scenePreset').value,pass:$('renderPass').value,worldScrolling:$('worldScroll').checked,
+  scene:$('scenePreset').value,pass:$('renderPass').value,worldScrolling:$('worldScroll').checked,draw:previewDraw(),
   actualRenderPassPreview:liveCandidateActive,raisedPerspective:'UNVERIFIED',physicalIphone:'UNVERIFIED'
  }},null,2)));
  $('clear').addEventListener('click',()=>switchAsset(spec.id));
@@ -346,12 +358,13 @@ try{
  $('scenePreset').addEventListener('change',()=>{if(mode==='live')awaitGame();});
  $('renderPass').addEventListener('change',()=>{if(mode==='live')syncCandidate();});
  $('worldScroll').addEventListener('change',()=>{if(mode==='live')syncCandidate();});
+ for(const id of ['placeX','placeY'])$(id).addEventListener('change',()=>{if(mode==='live')syncCandidate();picture();});
  $('pause').addEventListener('click',()=>{gameAPI()?.freeze();status('Debug engine frozen.');});
  $('resume').addEventListener('click',()=>{gameAPI()?.resume();status('Debug engine playing; candidate scrolls with the world when enabled.');});
  $('screenshot').addEventListener('click',screenshot);
  $('instructions').addEventListener('click',()=>copy('Review '+spec.id+' using source PNG '+uploadName+'.\n'+
   'Camera profile: '+contract.profiles[spec.profile].status+'.\n'+
-  'World position: '+JSON.stringify(spec.draw)+'; anchor: '+JSON.stringify(spec.anchor)+'.\n'+
+  'World position: '+JSON.stringify(previewDraw())+'; anchor: '+JSON.stringify(spec.anchor)+'.\n'+
   'Review scene: '+$('scenePreset').value+'; pass: '+$('renderPass').value+'; scroll: '+$('worldScroll').checked+'.\n'+
   'Run asset-quality gate and check layered render order, visual camera and iPhone playback. Never auto-register unapproved work.'));
  frame.addEventListener('load',()=>{if(mode==='live')awaitGame();});
