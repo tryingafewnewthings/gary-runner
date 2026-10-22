@@ -1,16 +1,14 @@
-# Gary Eats! — Safe repository cleanup review (22 October 2026)
+# Gary Eats! — Safe repository cleanup audit (22 October 2026)
 
-**Proposal, not yet live:** delete obsolete one-off installer HTML and the duplicated, user-rejected wilderness DRAFT01 ZIP from current main tree after PR review. Based on main `b39af28f973fe2d4c1d4204bfe2ad72917403d78`. No production/game runtime, assets in use, tests, backup engines or project/visual documentation is changed.
+## Proposed change (not merged)
 
-## Why these files
+Delete **18 retired one-off installer/redirect HTML pages** from the current main tree. This is a maintenance-only PR. No current game code, art, test, editor, configuration, or rollback engine is modified or deleted.
 
-The old installers are one-off publishing mechanisms for changes now represented by committed source; some are historical redirects. The game loads scripts from `index.html`, not from these pages. The `GaryEats_Wilderness_Asset_Pack_DRAFT01.zip` is a large source ZIP of rejected art whose extracted images remain available to the current, still-unapproved wilderness engine. Removing this ZIP does **not** remove those sprite images, replace the wilderness, change gameplay, or purge Git history.
+Baseline: `b39af28f973fe2d4c1d4204bfe2ad72917403d78`. Branch: `cleanup/superseded-pages-20261022`.
 
-Current Git snapshot has 324 entries. Review checked `index.html`, all public production editing-page entry files, the asset quality manifest, active browser/asset/integration test entry files and `AGENTS.md` for named references. None of the candidates were referenced by that active subset; **this does not claim a fully exhaustive dependency graph**.
+**Total files:** 18. **Current-tree bytes:** 3,199,018 (3.05 MiB). Deletion does not purge Git history or immediately reduce storage used by old Git commits.
 
-## Exact deletion manifest
-
-| File | Size (bytes) | Recorded blob SHA |
+| Superseded file | Bytes | Recorded source blob |
 | --- | ---: | --- |
 | `Gary_Eats_Cutscene_Studio_Installer.html` | 1216656 | `12fdf21b883f825c23962a1603d6ae330622b9bd` |
 | `gary-decay-v3-repair-installer.html` | 593 | `84d5aebb7658d0258cb11b12da505eeede1c4438` |
@@ -30,30 +28,31 @@ Current Git snapshot has 324 entries. Review checked `index.html`, all public pr
 | `gary-repository-cleanup-installer.html` | 25238 | `39c6e96526c4f7ce77cde6948b22e78a64763065` |
 | `gary-cleanup-installer-v2.html` | 17874 | `2a84abf8ea648417a0b7917287d7ce55a015e020` |
 | `installer.html` | 244 | `56b7d8330145f97469f1fd1e38193ae504784a91` |
-| `GaryEats_Wilderness_Asset_Pack_DRAFT01.zip` | 18607270 | `beb172d12f43de5ce56f02b69f06e2f077023a5a` |
 
-**Total current-tree bytes removed:** 21,806,288 (20.80 MiB). This is a reduction in HEAD/Pages files, **not** a claim about Git history size or immediate repository storage reclamation.
+## Verified keep decision: DRAFT01 ZIP
 
-## Explicit protected material
+**Preserve `GaryEats_Wilderness_Asset_Pack_DRAFT01.zip`** even though its artwork was rejected as a production style source. The original first cleanup proposal included deletion of this 18.6-MB archive, but **GitHub Actions correctly failed**: `tests/wilderness.test.cjs` reads the ZIP and checks its SHA-256 against `art/wilderness/registration.json`. To preserve an existing regression/provenance guarantee, the archive has been restored to the cleanup branch. No test has been relaxed or removed. The extracted `art/wilderness/**` sprite files also remain, since the current renderer loads them.
 
-- `index.html`, `gary-difficulty-data.js`, `gary-difficulty-runtime.js`, `gary-game-config.json`, cutscene, reader, fox, road-decay, bridge, current wilderness sources and **all referenced images**.
-- `game.js`, archived engines, legacy preview pages/tests, historical `*-backup.json`, `gary-emergency-restore.html` and `gary-emergency-rollback-installer.html`.
-- `gary-asset-factory.html`, `gary-biome-workspace.html`, `gary-camera-lab.html`, `gary-perspective-editor.html`, `gary-studio.html`, `gary-cutscene-studio.html`, `gary-docs-publisher.html`, their JS/config/dependencies.
-- `AGENTS.md`, `STYLE.txt`, `ASSET_GRID_PROMPT.txt`, `ASSET_QUALITY_GATE.md`, `GARY_EATS_MASTER_REFERENCE.md`, all visual/camera references and test harnesses.
-- All extracted `art/wilderness/**` files remain even though DRAFT01 visuals were rejected, because the current engine still draws them.
-- `GARY_CLEANUP_MANIFEST.json` remains as historic record of the previous cleanup.
+## Why the 18 deletions are in scope
 
-## Verification before merge
+Each is a standalone historical publishing page, obsolete patch publisher or redirect. The current `index.html` uses `gary-difficulty-data.js` and `gary-difficulty-runtime.js` with registered modules. The current Safari editors are separate, protected pages. Removing old installers makes old direct URLs to those installers stop resolving; it does not reverse their published source changes, which persist.
 
-1. Review PR **Files changed**: exactly the 19 deletions above and this added documentation. If any runtime file or asset image was touched, reject.
-2. Require green existing GitHub Actions checks (`npm test`, asset quality gate, Chromium/WebKit active-game tests) where available. Those tests already include the fox, reader/cutscene, roast, bridge, startup/controls, art editor and wilderness behaviours.
-3. Merge only after checks and owner approval; never force-push `main`. Old direct links to deleted installers will become 404. No current editor or normal game URL should change.
-4. Roll back with a normal GitHub **Revert** PR, or restore specific paths from pre-cleanup commit `b39af28f973fe2d4c1d4204bfe2ad72917403d78`; do not reset the branch or delete Git history.
+## Dependency and QA evidence
 
-## Quality status
+- Compared base/new Git tree entries: these 18 files were the only deleted paths; no existing source, asset or test file changed, and this document was added.
+- Audited active `index.html`, core editor entry pages (`gary-studio`, `gary-biome-workspace`, `gary-asset-factory`, `gary-camera-lab`, `gary-cutscene-studio`, `gary-docs-publisher`, `gary-perspective-editor`), the asset manifest, browser/asset/bench integration test entrypoints, and `AGENTS.md` for direct candidate references. None of these actively reference the obsolete installer pages. This is not a guarantee that every historical document remains link-clean.
+- First PR attempt: Node unit tests **PASS**, 38/39 native integration checks **PASS**, missing ZIP source-provenance fixture caused **FAIL**. The original ZIP was restored unchanged; this PR must now pass fresh CI, including asset gate and browser checks, before merging. Do not merge on stale or failing tests.
+- No physical iPhone verification is implied. The gameplay, art and renderer code are untouched.
 
-- Repository/tree identity and filename/size existence: **PASS (GitHub metadata observed)**.
-- Active entrypoint/editor/test-entry string reference scan: **PASS for audited subset**.
-- Full recursive runtime dependency proof: **UNVERIFIED** (scope intentionally conservative).
-- Full CI regression on PR, physical iPhone Safari smoke and published Pages: **UNVERIFIED until observed**.
-- User-approved first-biome visual master/reference assets and the rejected wilderness sprites: **PRESERVED**.
+## Protected files
+
+Keep all live scripts, shops/Gary/fox/bench/cutscene/roast/wilderness image files, bridge assets, all test suites and CI workflows, visual director and camera documents, `ASSET_GRID`, `GARY_CLEANUP_MANIFEST.json`, current interactive studios, `gary-emergency-restore.html`, `gary-emergency-rollback-installer.html`, backups, historic engines and legacy preview harnesses. No speculative deep asset deletion.
+
+## Owner approval / rollback
+
+1. Inspect the PR's exact **Files changed**; expect 18 deletions and this added documentation.
+2. Wait for green GitHub Actions results. If anything is red or files differ, do **not** merge.
+3. Merge normally from Safari. Old deleted installer URLs will become 404 once Pages deploys.
+4. Roll back by a normal GitHub revert PR, restoring the deleted paths from Git history. Do not force-reset `main`.
+
+This is a safe first cleanup pass, not a claim that every unused file has been conclusively identified. Future asset deletion requires explicit source/runtime/test dependency proof and artistic retention decisions.
