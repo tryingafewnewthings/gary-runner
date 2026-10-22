@@ -1060,7 +1060,7 @@ let shutterMix = 0;
   const imgForgottenHedgehog=loadGary('art/forgotten-road/hedgehog-scurrying.png?v=hedgehog-20261022-1',
     im=>validateSheet(im,'Forgotten Road hedgehog',6,1,72,54));
   const forgottenWildlife=window.GaryForgottenWildlife.create({hedgehog:imgForgottenHedgehog,bush:foxImages.bush});
-  const wildlifeVisibility={readerVisible:false,foxActive:false,bridgeVisible:false,wildernessActive:false};
+  const wildlifeVisibility={readerVisible:false,foxActive:false,bridgeVisible:false,wildernessActive:false,benchSegment:Infinity};
   const bridge=window.GaryBridge.create();
   let bridgePreviewFrozen=false;
   // Factory candidates are an isolated review-only render layer. No save, collision,
@@ -2574,7 +2574,8 @@ function updateRain(dt, advancing) {
         wildlifeVisibility.foxActive=fox.quiet();
         wildlifeVisibility.bridgeVisible=bridge.visible();
         wildlifeVisibility.wildernessActive=wilderness.active();
-        forgottenWildlife.draw(ctx,view.distance,view.clock,mystery.clearingStart(),
+        wildlifeVisibility.benchSegment=mystery.benchIndex();
+        forgottenWildlife.draw(ctx,view.distance,view.clock,visualClearFrom,
           mystery.footAt(view.distance),wildlifeVisibility);
       }
       if (nightOn) {
