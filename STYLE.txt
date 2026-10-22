@@ -1,3 +1,6 @@
+22 OCTOBER 2026 — VISUAL PRODUCTION ENTRY POINT
+For all NEW art generation, follow GARY_VISUAL_PRODUCTION.md and docs/visual-master/reference-pack.json; the original first-biome painted assets are the aesthetic reference. Do not use DRAFT01 wilderness as a positive style reference. The camera/world values in current active code win over older numeric examples below. Raised architecture is NOT artistically calibrated; no generative text can replace family-specific source-image and real-engine comparison.
+
 <!-- GARY_EATS_REFERENCE_20261019_START -->
 19 OCTOBER 2026 — CURRENT CONTRACT AMENDMENT (supersedes conflicting dated baselines)
 The LIVE entry point is index.html -> gary-difficulty-data.js + gary-difficulty-runtime.js; live WORLD.cobbleCell is 60, not the 48-unit reference printed in section 3 above. ROAD x105..255, lanes 130/180/230, canvas 360x640 and Gary y540 remain authoritative unless the loaded source changes.
