@@ -10,7 +10,6 @@ const read=p=>JSON.parse(fs.readFileSync(path.join(root,p),'utf8'));
 const camera=read('gary-camera-contract.json');
 const factory=read('gary-asset-factory-contract.json');
 const visualRefs=read('docs/visual-master/reference-pack.json');
-const forbidden=/\\b(vanishing point|isometric|photorealistic|cinematic lens|field of view|fisheye)\\b/i;
 const common=Object.freeze({
  kind:'CANDIDATE_UNVERIFIED_VISUAL',
  originalAnchors:visualRefs.primaryStyleEvidence.map(x=>({file:x.path,status:x.status})),
@@ -68,7 +67,7 @@ function one(id,name){
   referenceEvidence:'Original file paths exist; no model has automatically compared the IMAGE PIXELS by compiling this brief.',
   imageSourcesMustBeAttached:true,source:spec.source,draw:spec.draw,anchor:spec.anchor,layer:spec.layer,
   cameraStatus:profile.status,scene,
-  prompt:'GARY EATS — '+title+'\\n'+constraints.join('\\n'),
+  prompt:'GARY EATS — '+title+'\n'+constraints.join('\n'),
   verification:common.test};
 }
 function build(family,name){
@@ -87,7 +86,7 @@ function build(family,name){
 if(require.main===module){
  try{const args=process.argv.slice(2),get=k=>{const i=args.indexOf(k);return i===-1?undefined:args[i+1];};
  const family=get('--family');if(!family)throw Error('Usage: node tools/asset-visual-brief.cjs --family bridge --name "brick bridge"');
- process.stdout.write(JSON.stringify(build(family,get('--name')),null,2)+'\\n');}
+ process.stdout.write(JSON.stringify(build(family,get('--name')),null,2)+'\n');}
  catch(e){console.error(e.message);process.exitCode=1;}
 }
 module.exports={build,one};
