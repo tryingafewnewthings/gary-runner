@@ -52,7 +52,7 @@ async function main(){
   const r=await page.locator('#touch').boundingBox(),x=r.x+select.x*r.width/360,y=r.y+select.y*r.height/640;
   await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+20,y+18,{steps:3});await page.mouse.up();
   await page.waitForFunction(before=>window.GaryBiomeWorkspace.snapshot().pack.assets[0].draw.x>before,select.original);
-  await page.locator('#timeline').fill('4');
+  await page.locator('#timeline').evaluate(el=>{el.value='4';el.dispatchEvent(new Event('input',{bubbles:true}));});
   await page.waitForFunction(()=>window.GaryBiomeWorkspace.snapshot().scene==='bridge-middle');
   const first=await downloadBytes(page,'#export');
   assert.match(first.name,/gary-biome\.json$/);
