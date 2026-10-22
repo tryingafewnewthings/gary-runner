@@ -25,11 +25,12 @@ test('bridge overlays use three cached draw surfaces, no per-frame allocations',
    naturalWidth=246;naturalHeight=93;
    set src(v){this.loaded=v;this.onload?.();}
  }
- const makeCanvas=()=>{allocated++;const c=createCanvas(1,1);return c;};
+ const fakeContext={save(){},restore(){},beginPath(){},rect(){},clip(){},drawImage(){}};
+ const makeCanvas=()=>{allocated++;return {width:1,height:1,getContext:()=>fakeContext};};
  const inst=art.create({makeCanvas,ImageType:FakeImage});
  assert.equal(inst.ready(),true);
  assert.equal(allocated,3);
- const g=createCanvas(360,640).getContext('2d');
+ const g=fakeContext;
  for(let i=0;i<300;i++){
    assert.equal(inst.drawUnder(g,800),true);
    assert.equal(inst.drawDeck(g,800),true);
