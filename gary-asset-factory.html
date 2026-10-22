@@ -220,7 +220,7 @@ function switchAsset(id){
  const prevScene=$('scene').value;
  if(prevScene!==spec.scene)$('scene').value=spec.scene;
  $('scenePreset').value=spec.scene==='bridge'?'bridge-middle':spec.scene==='wilderness'?'wilderness-reveal':'street-day';
- $('renderPass').value=({'ground-overlays':'ground','shops-and-props':'rear','lower-masonry-under-water':'under-water','foreground-props':'front'})[spec.layer]||'rear';
+ $('renderPass').value=({'ground-overlays':'ground','shops-and-props':'rear','lower-masonry-under-water':'under-water','foreground-props':'front','bridge-deck':'deck','foreground-parapet':'front'})[spec.layer]||'rear';
  $('placeX').value=String(spec.draw.x);$('placeY').value=String(spec.draw.y);
  if(artworkUrl){URL.revokeObjectURL(artworkUrl);artworkUrl=null;}
  art=null;valid=false;uploadName='';cachedCandidateCanvas=null;$('upload').value='';$('final').disabled=true;
