@@ -37,7 +37,7 @@ test('bridge overlays use four cached draw surfaces, no per-frame allocations',(
    assert.equal(inst.drawDeck(g,800),true);
    assert.equal(inst.drawFront(g,800),true);
  }
- assert.equal(allocated,3);
+ assert.equal(allocated,4);
 });
 test('failed image never blocks startup; old bridge stays available',()=>{
  class Absent{
