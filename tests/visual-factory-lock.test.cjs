@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto');
 const {createCanvas}=require('@napi-rs/canvas');
 const camera=require('../gary-camera-contract.json');
 const contract=require('../gary-asset-factory-contract.json');
@@ -75,6 +75,8 @@ test('new images cannot be promoted without real-game review evidence and origin
   const files=['docs/biome-workspace/layout-street-day.png','docs/qa/new/day.png','docs/qa/new/night.png','docs/qa/new/rain.png'];
   for(const p of files)fs.writeFileSync(path.join(tmp,p),png);
   const image='art/new/bridge-deck.png';fs.writeFileSync(path.join(tmp,image),png);
+  const reviewFile='docs/qa/new/review.json';
+  fs.writeFileSync(path.join(tmp,reviewFile),JSON.stringify({schema:'gary-eats-native-engine-art-evidence-v1',sourceSha256:crypto.createHash('sha256').update(png).digest('hex'),registered:false,technical:{pass:true}}));
   const unregistered=checkNewFiles([image],{schema:'gary-eats-art-visual-ledger-v1',assets:{}},tmp);
   assert.equal(unregistered.pass,false);
   const ledger={schema:'gary-eats-art-visual-ledger-v1',assets:{}};
@@ -82,7 +84,7 @@ test('new images cannot be promoted without real-game review evidence and origin
    source:{width:336,height:1024},draw:{x:138,y:180,width:84,height:256},groundContact:{x:180,y:430},
    references:['high_street_sprites.webp','docs/biome-workspace/layout-street-day.png'],
    engineEvidence:{day:files[1],night:files[2],rain:files[3]},
-   reviewedBy:'ChatGPT-visual-review',runtimeStartValidated:true};
+   nativeReviewFile:reviewFile,reviewedBy:'ChatGPT-visual-review',runtimeStartValidated:true};
   assert.deepEqual(checkNewFiles([image],ledger,tmp).failures,[]);
   ledger.assets[image].cameraStatus='PROVISIONAL';
   assert.match(checkNewFiles([image],ledger,tmp).failures.join(' '),/camera/);
