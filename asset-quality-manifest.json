@@ -1,95 +1,509 @@
 {
   "schemaVersion": 1,
   "description": "Current approved/observed asset export contracts. Actual gameplay-scale review still required. Source: STYLE.txt + art/fox/registration.json + active data.",
-  "defaults": { "maxBytes": 6291456, "requirePngCrc": true },
+  "defaults": {
+    "maxBytes": 6291456,
+    "requirePngCrc": true
+  },
   "assets": {
-    "docs/biome-workspace/layout-street-day.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/biome-workspace/layout-bridge-middle.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/biome-workspace/layout-wilderness-reveal.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/biome-workspace/bridge-ground.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/biome-workspace/bridge-rear.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/biome-workspace/bridge-under-water.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/biome-workspace/bridge-deck.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/biome-workspace/bridge-front.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/wilderness/bridge.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/wilderness/reveal.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/wilderness/dense.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/wilderness/obstacles.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/wilderness/rustle.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/wilderness/ruins.png": {"width": 360, "height": 640, "alpha": false},
-    "art/wilderness/verge/verge_grass_dense_olive_01.png": {"width": 256, "height": 512, "alpha": true},
-    "art/wilderness/verge/verge_grass_wind_left_01.png": {"width": 256, "height": 512, "alpha": true},
-    "art/wilderness/verge/verge_grass_tall_wet_01.png": {"width": 256, "height": 512, "alpha": true},
-    "art/wilderness/verge/verge_grass_seedheads_01.png": {"width": 256, "height": 512, "alpha": true},
-    "art/wilderness/verge/verge_grass_short_mixed_01.png": {"width": 256, "height": 512, "alpha": true},
-    "art/wilderness/verge/verge_grass_sparse_01.png": {"width": 256, "height": 512, "alpha": true},
-    "art/wilderness/props/rock_cluster_small_01.png": {"width": 366, "height": 239, "alpha": true},
-    "art/wilderness/props/rock_cluster_large_01.png": {"width": 428, "height": 323, "alpha": true},
-    "art/wilderness/props/rotten_posts_cluster_01.png": {"width": 264, "height": 424, "alpha": true},
-    "art/wilderness/props/broken_fence_cluster_01.png": {"width": 406, "height": 316, "alpha": true},
-    "art/wilderness/props/blackberry_bramble_patch_01.png": {"width": 386, "height": 399, "alpha": true},
-    "art/wilderness/props/thistle_patch_01.png": {"width": 351, "height": 409, "alpha": true},
-    "art/wilderness/props/leaf_litter_twigs_patch_01.png": {"width": 365, "height": 215, "alpha": true},
-    "art/wilderness/props/deadfall_twig_pile_01.png": {"width": 466, "height": 325, "alpha": true},
-    "art/wilderness/hazards/fallen_branch_small_01.png": {"width": 411, "height": 217, "alpha": true},
-    "art/wilderness/hazards/fallen_log_large_01.png": {"width": 684, "height": 361, "alpha": true},
-    "art/wilderness/hazards/boulder_cluster_hazard_01.png": {"width": 379, "height": 368, "alpha": true},
-    "art/wilderness/hazards/muddy_ruts_hazard_01.png": {"width": 386, "height": 487, "alpha": true},
-    "art/wilderness/hazards/puddle_hazard_large_01.png": {"width": 498, "height": 437, "alpha": true},
-    "art/wilderness/hazards/thorn_bramble_hazard_01.png": {"width": 397, "height": 463, "alpha": true},
-    "art/wilderness/ruins/ruined_wall_low_01.png": {"width": 572, "height": 372, "alpha": true},
-    "art/wilderness/ruins/stone_arch_ruin_01.png": {"width": 542, "height": 389, "alpha": true},
-    "art/wilderness/ruins/standing_stone_marker_01.png": {"width": 317, "height": 352, "alpha": true},
-    "art/wilderness/ruins/wooden_signpost_broken_01.png": {"width": 358, "height": 459, "alpha": true},
-    "art/wilderness/ruins/broken_gate_section_01.png": {"width": 538, "height": 379, "alpha": true},
-    "art/wilderness/ruins/cairn_stone_stack_01.png": {"width": 346, "height": 329, "alpha": true},
-    "art/wilderness/decals/puddle_decal_large_01.png": {"width": 506, "height": 497, "alpha": true},
-    "art/wilderness/decals/puddle_decal_small_01.png": {"width": 329, "height": 366, "alpha": true},
-    "art/wilderness/decals/mud_splash_decal_01.png": {"width": 309, "height": 437, "alpha": true},
-    "art/wilderness/decals/leaf_scatter_decal_01.png": {"width": 329, "height": 412, "alpha": true},
-    "art/wilderness/decals/cracked_asphalt_patch_01.png": {"width": 466, "height": 503, "alpha": true},
-    "art/wilderness/decals/loose_stones_scatter_01.png": {"width": 355, "height": 398, "alpha": true},
-    "art/wilderness/decals/grass_patch_small_01.png": {"width": 356, "height": 504, "alpha": true},
-    "art/wilderness/decals/damp_grime_patch_01.png": {"width": 336, "height": 418, "alpha": true},
-    "art/wilderness/road/road_surface_wilderness_base_300x1024.png": {"width": 300, "height": 1024, "alpha": false},
-    "art/wilderness/road/road_surface_variant_01.png": {"width": 248, "height": 948, "alpha": false},
-    "art/wilderness/road/road_surface_variant_02.png": {"width": 242, "height": 948, "alpha": false},
-    "art/wilderness/road/road_surface_variant_03.png": {"width": 265, "height": 948, "alpha": false},
-    "art/bridge/production/lower.png": {"width": 720, "height": 2000, "alpha": true},
-    "art/bridge/production/deck.png": {"width": 720, "height": 2000, "alpha": true},
-    "art/bridge/production/foreground.png": {"width": 720, "height": 2000, "alpha": true},
-    "art/bridge/review-masks/lower.png": {"width": 720, "height": 2000, "alpha": true},
-    "art/bridge/review-masks/deck.png": {"width": 720, "height": 2000, "alpha": true},
-    "art/bridge/review-masks/foreground.png": {"width": 720, "height": 2000, "alpha": true},
-    "art/bridge/review-masks/water-occlusion-mask.png": {"width": 720, "height": 2000, "alpha": true},
-    "docs/bridge-review/approach.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/bridge-review/enter.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/bridge-review/middle.png": {"width": 360, "height": 640, "alpha": false},
-    "docs/bridge-review/exit.png": {"width": 360, "height": 640, "alpha": false},
-    "art/bridge/templates/lower.png": { "width": 720, "height": 2000, "alpha": true },
-    "art/bridge/templates/deck.png": { "width": 720, "height": 2000, "alpha": true },
-    "art/bridge/templates/foreground.png": { "width": 720, "height": 2000, "alpha": true },
-    "art/bridge/templates/water-occlusion-mask.png": { "width": 720, "height": 2000, "alpha": true },
-    "docs/bridge-art/enter.png": { "width": 360, "height": 640, "alpha": false },
-    "docs/bridge-art/middle.png": { "width": 360, "height": 640, "alpha": false },
-    "docs/bridge-art/exit.png": { "width": 360, "height": 640, "alpha": false },
-    "docs/bridge/approach.png": { "width": 360, "height": 640, "alpha": false },
-    "docs/bridge/enter.png": { "width": 360, "height": 640, "alpha": false },
-    "docs/bridge/middle.png": { "width": 360, "height": 640, "alpha": false },
-    "docs/bridge/exit.png": { "width": 360, "height": 640, "alpha": false },
-    "gary_intro_sheet.PNG": { "width": 1536, "height": 1024, "alpha": true, "grid": {"cols": 4, "rows": 2, "cellWidth": 384, "cellHeight": 512} },
-    "gary_transition_sheet.png": { "width": 1536, "height": 512, "alpha": true, "grid": {"cols": 4, "rows": 1, "cellWidth": 384, "cellHeight": 512} },
-    "art/fox/fox-approach.png": { "width": 1536, "height": 256, "alpha": true, "grid": {"cols": 6, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
-    "art/fox/fox-return.png": { "width": 1536, "height": 256, "alpha": true, "grid": {"cols": 6, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
-    "art/fox/fox-snatch.png": { "width": 1024, "height": 256, "alpha": true, "grid": {"cols": 4, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
-    "art/fox/fox-turn.png": { "width": 768, "height": 256, "alpha": true, "grid": {"cols": 3, "rows": 1, "cellWidth": 256, "cellHeight": 256, "baselineY": 220, "baselineTolerance": 5, "padding": 6} },
-    "art/fox/fox-bush.png": { "width": 512, "height": 512, "alpha": true },
-    "art/food/half-eaten-sausage-roll.png": { "width": 512, "height": 512, "alpha": true },
-    "art/food/custard-cream.png": { "width": 512, "height": 512, "alpha": true },
-    "art/obstacles/gary-service-charge-barrier.png": { "width": 1024, "height": 512, "alpha": true },
-    "art/forgotten-road/decay-light.png": { "width": 512, "height": 512, "alpha": true },
-    "art/forgotten-road/decay-medium.png": { "width": 512, "height": 512, "alpha": true },
-    "art/forgotten-road/decay-heavy.png": { "width": 512, "height": 512, "alpha": true },
-    "art/forgotten-road/decay-kerb.png": { "width": 512, "height": 512, "alpha": true }
+    "docs/biome-workspace/layout-street-day.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/biome-workspace/layout-bridge-middle.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/biome-workspace/layout-wilderness-reveal.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/biome-workspace/bridge-ground.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/biome-workspace/bridge-rear.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/biome-workspace/bridge-under-water.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/biome-workspace/bridge-deck.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/biome-workspace/bridge-front.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/wilderness/bridge.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/wilderness/reveal.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/wilderness/dense.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/wilderness/obstacles.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/wilderness/rustle.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/wilderness/ruins.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "art/wilderness/verge/verge_grass_dense_olive_01.png": {
+      "width": 256,
+      "height": 512,
+      "alpha": true
+    },
+    "art/wilderness/verge/verge_grass_wind_left_01.png": {
+      "width": 256,
+      "height": 512,
+      "alpha": true
+    },
+    "art/wilderness/verge/verge_grass_tall_wet_01.png": {
+      "width": 256,
+      "height": 512,
+      "alpha": true
+    },
+    "art/wilderness/verge/verge_grass_seedheads_01.png": {
+      "width": 256,
+      "height": 512,
+      "alpha": true
+    },
+    "art/wilderness/verge/verge_grass_short_mixed_01.png": {
+      "width": 256,
+      "height": 512,
+      "alpha": true
+    },
+    "art/wilderness/verge/verge_grass_sparse_01.png": {
+      "width": 256,
+      "height": 512,
+      "alpha": true
+    },
+    "art/wilderness/props/rock_cluster_small_01.png": {
+      "width": 366,
+      "height": 239,
+      "alpha": true
+    },
+    "art/wilderness/props/rock_cluster_large_01.png": {
+      "width": 428,
+      "height": 323,
+      "alpha": true
+    },
+    "art/wilderness/props/rotten_posts_cluster_01.png": {
+      "width": 264,
+      "height": 424,
+      "alpha": true
+    },
+    "art/wilderness/props/broken_fence_cluster_01.png": {
+      "width": 406,
+      "height": 316,
+      "alpha": true
+    },
+    "art/wilderness/props/blackberry_bramble_patch_01.png": {
+      "width": 386,
+      "height": 399,
+      "alpha": true
+    },
+    "art/wilderness/props/thistle_patch_01.png": {
+      "width": 351,
+      "height": 409,
+      "alpha": true
+    },
+    "art/wilderness/props/leaf_litter_twigs_patch_01.png": {
+      "width": 365,
+      "height": 215,
+      "alpha": true
+    },
+    "art/wilderness/props/deadfall_twig_pile_01.png": {
+      "width": 466,
+      "height": 325,
+      "alpha": true
+    },
+    "art/wilderness/hazards/fallen_branch_small_01.png": {
+      "width": 411,
+      "height": 217,
+      "alpha": true
+    },
+    "art/wilderness/hazards/fallen_log_large_01.png": {
+      "width": 684,
+      "height": 361,
+      "alpha": true
+    },
+    "art/wilderness/hazards/boulder_cluster_hazard_01.png": {
+      "width": 379,
+      "height": 368,
+      "alpha": true
+    },
+    "art/wilderness/hazards/muddy_ruts_hazard_01.png": {
+      "width": 386,
+      "height": 487,
+      "alpha": true
+    },
+    "art/wilderness/hazards/puddle_hazard_large_01.png": {
+      "width": 498,
+      "height": 437,
+      "alpha": true
+    },
+    "art/wilderness/hazards/thorn_bramble_hazard_01.png": {
+      "width": 397,
+      "height": 463,
+      "alpha": true
+    },
+    "art/wilderness/ruins/ruined_wall_low_01.png": {
+      "width": 572,
+      "height": 372,
+      "alpha": true
+    },
+    "art/wilderness/ruins/stone_arch_ruin_01.png": {
+      "width": 542,
+      "height": 389,
+      "alpha": true
+    },
+    "art/wilderness/ruins/standing_stone_marker_01.png": {
+      "width": 317,
+      "height": 352,
+      "alpha": true
+    },
+    "art/wilderness/ruins/wooden_signpost_broken_01.png": {
+      "width": 358,
+      "height": 459,
+      "alpha": true
+    },
+    "art/wilderness/ruins/broken_gate_section_01.png": {
+      "width": 538,
+      "height": 379,
+      "alpha": true
+    },
+    "art/wilderness/ruins/cairn_stone_stack_01.png": {
+      "width": 346,
+      "height": 329,
+      "alpha": true
+    },
+    "art/wilderness/decals/puddle_decal_large_01.png": {
+      "width": 506,
+      "height": 497,
+      "alpha": true
+    },
+    "art/wilderness/decals/puddle_decal_small_01.png": {
+      "width": 329,
+      "height": 366,
+      "alpha": true
+    },
+    "art/wilderness/decals/mud_splash_decal_01.png": {
+      "width": 309,
+      "height": 437,
+      "alpha": true
+    },
+    "art/wilderness/decals/leaf_scatter_decal_01.png": {
+      "width": 329,
+      "height": 412,
+      "alpha": true
+    },
+    "art/wilderness/decals/cracked_asphalt_patch_01.png": {
+      "width": 466,
+      "height": 503,
+      "alpha": true
+    },
+    "art/wilderness/decals/loose_stones_scatter_01.png": {
+      "width": 355,
+      "height": 398,
+      "alpha": true
+    },
+    "art/wilderness/decals/grass_patch_small_01.png": {
+      "width": 356,
+      "height": 504,
+      "alpha": true
+    },
+    "art/wilderness/decals/damp_grime_patch_01.png": {
+      "width": 336,
+      "height": 418,
+      "alpha": true
+    },
+    "art/wilderness/road/road_surface_wilderness_base_300x1024.png": {
+      "width": 300,
+      "height": 1024,
+      "alpha": false
+    },
+    "art/wilderness/road/road_surface_variant_01.png": {
+      "width": 248,
+      "height": 948,
+      "alpha": false
+    },
+    "art/wilderness/road/road_surface_variant_02.png": {
+      "width": 242,
+      "height": 948,
+      "alpha": false
+    },
+    "art/wilderness/road/road_surface_variant_03.png": {
+      "width": 265,
+      "height": 948,
+      "alpha": false
+    },
+    "art/bridge/production/lower.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/production/deck.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/production/foreground.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/review-masks/lower.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/review-masks/deck.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/review-masks/foreground.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/review-masks/water-occlusion-mask.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "docs/bridge-review/approach.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-review/enter.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-review/middle.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-review/exit.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "art/bridge/templates/lower.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/templates/deck.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/templates/foreground.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "art/bridge/templates/water-occlusion-mask.png": {
+      "width": 720,
+      "height": 2000,
+      "alpha": true
+    },
+    "docs/bridge-art/enter.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-art/middle.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-art/exit.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge/approach.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge/enter.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge/middle.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge/exit.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "gary_intro_sheet.PNG": {
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "grid": {
+        "cols": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 512
+      }
+    },
+    "gary_transition_sheet.png": {
+      "width": 1536,
+      "height": 512,
+      "alpha": true,
+      "grid": {
+        "cols": 4,
+        "rows": 1,
+        "cellWidth": 384,
+        "cellHeight": 512
+      }
+    },
+    "art/fox/fox-approach.png": {
+      "width": 1536,
+      "height": 256,
+      "alpha": true,
+      "grid": {
+        "cols": 6,
+        "rows": 1,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "baselineY": 220,
+        "baselineTolerance": 5,
+        "padding": 6
+      }
+    },
+    "art/fox/fox-return.png": {
+      "width": 1536,
+      "height": 256,
+      "alpha": true,
+      "grid": {
+        "cols": 6,
+        "rows": 1,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "baselineY": 220,
+        "baselineTolerance": 5,
+        "padding": 6
+      }
+    },
+    "art/fox/fox-snatch.png": {
+      "width": 1024,
+      "height": 256,
+      "alpha": true,
+      "grid": {
+        "cols": 4,
+        "rows": 1,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "baselineY": 220,
+        "baselineTolerance": 5,
+        "padding": 6
+      }
+    },
+    "art/fox/fox-turn.png": {
+      "width": 768,
+      "height": 256,
+      "alpha": true,
+      "grid": {
+        "cols": 3,
+        "rows": 1,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "baselineY": 220,
+        "baselineTolerance": 5,
+        "padding": 6
+      }
+    },
+    "art/fox/fox-bush.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
+    },
+    "art/food/half-eaten-sausage-roll.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
+    },
+    "art/food/custard-cream.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
+    },
+    "art/obstacles/gary-service-charge-barrier.png": {
+      "width": 1024,
+      "height": 512,
+      "alpha": true
+    },
+    "art/forgotten-road/decay-light.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
+    },
+    "art/forgotten-road/decay-medium.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
+    },
+    "art/forgotten-road/decay-heavy.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
+    },
+    "art/forgotten-road/decay-kerb.png": {
+      "width": 512,
+      "height": 512,
+      "alpha": true
+    },
+    "art/forgotten-road/hedgehog-scurrying.png": {
+      "width": 432,
+      "height": 54,
+      "alpha": true,
+      "grid": {
+        "cols": 6,
+        "rows": 1,
+        "cellWidth": 72,
+        "cellHeight": 54
+      }
+    }
   }
 }
