@@ -1,14 +1,14 @@
 /* Gary Eats! painted bridge: optional texture overlay on exact existing bridge geometry.
- * One 328×124 RGBA WebP atlas, one preload, three cached render passes. No gameplay changes.
+ * One 246×93 RGBA WebP atlas, one preload, three cached render passes. No gameplay changes.
  * If image missing/incompatible the entire renderer safely falls back to the current procedural bridge.
  */
 (function(root){'use strict';
  const VERSION='bridge-painted-20261022-v1';
  const SRC='art/bridge/painted/bridge-atlas.webp?v='+VERSION;
  const SPEC=Object.freeze({
-   atlas:[328,124],tileHeight:96,far:180,end:800,
-   src:{leftBank:[0,0,105,96],deck:[105,0,84,96],rightBank:[189,0,105,96],
-     leftWall:[294,0,17,96],rightWall:[311,0,17,96],lip:[105,99,84,22]},
+   atlas:[246,93],tileHeight:96,far:180,end:800,
+   src:{leftBank:[0,0,79,72],deck:[79,0,63,72],rightBank:[142,0,79,72],
+     leftWall:[221,0,13,72],rightWall:[234,0,12,72],lip:[79,74,63,17]},
    road:[105,255],lane:[138,222],walls:[[117,17],[223,17]]
  });
  function create({makeCanvas,ImageType,onReady}={}){
@@ -24,7 +24,7 @@
      c.restore();
    }
    function build(){
-     if(!img.naturalWidth||img.naturalWidth!==328||img.naturalHeight!==124){
+     if(!img.naturalWidth||img.naturalWidth!==246||img.naturalHeight!==93){
        reason='invalid atlas dimensions';return;
      }
      try{
