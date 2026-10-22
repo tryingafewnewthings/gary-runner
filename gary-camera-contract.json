@@ -1,7 +1,7 @@
 {
   "schema": "gary-eats-visual-camera-v1",
   "version": 1,
-  "baseline": "feat/forgotten-bridge (PR #4, unmerged on 2026-10-20)",
+  "baseline": "current main active bridge geometry; PR #18 painted overlay merged 2026-10-22; raised architecture not visually approved",
   "principles": {
     "projection": "fixed-screen-parallel-2.5d",
     "cameraMovement": false,

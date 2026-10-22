@@ -1,3 +1,5 @@
+> **22 October 2026 current release override:** PR #18's painted bridge is merged and deployed in normal Play (`main` 48be6fea), but its Asset Quality Gate failed and it has no artistic approval. PRs #11/#12 are merged. Raised camera remains provisional, DRAFT01 wilderness art remains visually rejected, and physical iPhone testing is unverified. Dated PR/branch/deployment claims below are historical; use `GARY_EATS_MASTER_REFERENCE.md` and `GARY_VISUAL_PRODUCTION.md` for current decisions.
+
 # The Other Side — first wilderness
 
 **22 October 2026 override:** The bridge, wilderness and camera/tooling branch stack reached `main` through merged PR #9 (`688f09c4`). Date-specific claims below that PR #4/5 or the factory are unmerged are historical. DRAFT01 wilderness art is **visually rejected**, even where the renderer still loads it. Painted bridge art remains a **debug review candidate**, not production-approved. Raised architecture is provisional. Do not infer iPhone/Pages verification from main-branch presence. See [current conflict register](docs/camera/CONFLICT_REGISTER_2026-10-22.md).

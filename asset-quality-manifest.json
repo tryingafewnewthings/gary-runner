@@ -514,6 +514,21 @@
       "width": 246,
       "height": 93,
       "alpha": true
+    },
+    "docs/bridge-painted/day.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-painted/night.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-painted/rain.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
     }
   }
 }

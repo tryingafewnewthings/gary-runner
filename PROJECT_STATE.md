@@ -1,3 +1,5 @@
+**22 October 2026 CURRENT STATUS (main 48be6fea):** PR #18's painted bridge is merged/deployed in normal Play but NOT artistically approved (asset gate failed); PRs #11/#12 are merged. Active runtime is `gary-difficulty-data.js` + `gary-difficulty-runtime.js`. The original first-30-seconds recording is not committed, DRAFT01 wilderness is visually rejected, and physical iPhone QA is unverified. Dated contrary statements below are historical. Current decision source: `GARY_EATS_MASTER_REFERENCE.md`; one asset workflow: `GARY_VISUAL_PRODUCTION.md`.
+
 <!-- GARY_EATS_REFERENCE_20261019_START -->
 
 **22 October 2026 override:** The active `index.html` and latest `main` commit `688f09c4` supersede this document's historical status claims: `gary-difficulty-runtime.js` is the live-loaded engine, the bridge/wilderness modules are on `main`, painted bridge art is an unapproved debug candidate, and DRAFT01 wilderness graphics are USER-REJECTED. Do not treat an older 'not implemented' or 'unmerged' statement as current. See [conflicts](docs/camera/CONFLICT_REGISTER_2026-10-22.md). Public deployment and iPhone playback are unverified.

@@ -1,5 +1,14 @@
 # GARY EATS! — Master game reference and developer handoff
 
+## Current release truth — 22 October 2026, main `48be6fea`
+
+- PR #18 is **merged** and GitHub Pages deployment succeeded. Normal Play now loads `gary-bridge-painted.js` and `art/bridge/painted/bridge-atlas.webp`, on the existing 84-unit deck and original cobbles. The previous supplied three-PNG bridge remains a debug-only candidate.
+- Node and active-engine browser tests passed, but the **Asset Quality Gate failed**. Three new `docs/bridge-painted/{day,night,rain}.png` captures were missing structural manifest entries, so the separate visual-release check did not run. `art-visual-ledger.json` has no approved bridge entry. **Do not claim this is artist-approved or AAA.**
+- Physical iPhone Safari testing and raised-architecture artistic sign-off are **UNVERIFIED**. DRAFT01 wilderness remains user-rejected as art, even where runtime sprites are registered. PR #11 and PR #12 are already merged.
+- The original first ~30 seconds of gameplay recording and owner-approved raised-profile captures are **not committed**. The original shop/Gary/cobble images are available; `docs/biome-workspace/layout-street-day.png` is an engine QA screenshot, not the complete approved style master.
+- Current sources: `index.html` for active runtime; `gary-camera-contract.json` for fixed geometry; `STYLE.txt` for art; `GARY_VISUAL_PRODUCTION.md` for one-step asset creation; `ASSET_GRID_PROMPT.txt` and `ASSET_QUALITY_GATE.md` for validation. Dated claims below are retained as history, not current deployment status. CI must be configured as a required merge check by repository administration; the available GitHub connector cannot configure branch protection.
+
+
 **22 October 2026 override:** The active `index.html` and latest `main` commit `688f09c4` supersede this document's historical status claims: `gary-difficulty-runtime.js` is the live-loaded engine, the bridge/wilderness modules are on `main`, painted bridge art is an unapproved debug candidate, and DRAFT01 wilderness graphics are USER-REJECTED. Do not treat an older 'not implemented' or 'unmerged' statement as current. See [conflicts](docs/camera/CONFLICT_REGISTER_2026-10-22.md). Public deployment and iPhone playback are unverified.
 
 ## 20 October supplied bridge artwork integration

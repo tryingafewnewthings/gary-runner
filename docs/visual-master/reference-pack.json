@@ -84,5 +84,11 @@
     "bridge-parapet-left",
     "bridge-parapet-right"
   ],
-  "visualEvidenceRequirement": "art-visual-ledger.json plus 360x640 actual engine screenshots in DAY, NIGHT, RAIN; never approve merely from generator text"
+  "visualEvidenceRequirement": "art-visual-ledger.json plus 360x640 actual engine screenshots in DAY, NIGHT, RAIN; never approve merely from generator text",
+  "productionCautions": {
+    "paintedBridge": "LIVE_BUT_VISUAL_UNAPPROVED; PR18 merged despite failed asset gate; NOT a style master",
+    "wildernessDraft01": "USER_REJECTED_AS_ART",
+    "first30SecondsRecording": "NOT_COMMITTED",
+    "raisedArchitecture": "PROVISIONAL_NEEDS_VISUAL_APPROVAL"
+  }
 }

@@ -1,4 +1,6 @@
-# Gary Eats! — Biome Workspace (PR #12, awaiting approval)
+**22 October 2026 CURRENT STATUS (main 48be6fea):** PR #18's painted bridge is merged/deployed in normal Play but NOT artistically approved (asset gate failed); PRs #11/#12 are merged. Active runtime is `gary-difficulty-data.js` + `gary-difficulty-runtime.js`. The original first-30-seconds recording is not committed, DRAFT01 wilderness is visually rejected, and physical iPhone QA is unverified. Dated contrary statements below are historical. Current decision source: `GARY_EATS_MASTER_REFERENCE.md`; one asset workflow: `GARY_VISUAL_PRODUCTION.md`.
+
+# Gary Eats! — Biome Workspace (PR #12 merged; historic implementation notes)
 
 **Status 22 October 2026:** review-only visual/editor extension. New page: `gary-biome-workspace.html`. **Not a replacement for the actual runtime or approved wilderness art.** PR #12 is stacked on the separate mobile Asset Factory PR #11; merge upstream first, review CI, then merge PR #12. The `main` branch remains the production rollback until both are approved.
 
