@@ -23,6 +23,7 @@
   if(!SCENES.includes(value))return;
   state.scene=value;$('scene').value=value;$('timeline').value=String(SCENES.indexOf(value));
   if(state.ready){
+   $('motion').textContent='▶ Play scrolling to check placement';$('motion').dataset.playing='0';
    const api=engine();
    try{if(!api.startScene(value))throw Error('Scene unavailable');renderPack();}
    catch(e){status('Cannot load scene: '+e.message);}
@@ -373,6 +374,20 @@
   $('timeline').addEventListener('input',()=>setScene(SCENES[Number($('timeline').value)]));
   $('previous').addEventListener('click',()=>setScene(SCENES[clamp(SCENES.indexOf(state.scene)-1,0,7)]));
   $('next').addEventListener('click',()=>setScene(SCENES[clamp(SCENES.indexOf(state.scene)+1,0,7)]));
+  $('motion').addEventListener('click',()=>{
+   if(!state.ready){ensureEngine();waitEngine();return;}
+   const bridge=game.contentWindow?.GaryBridgePreview;
+   const playing=$('motion').dataset.playing==='1';
+   if(playing){
+    bridge.freeze();$('motion').dataset.playing='0';
+    $('motion').textContent='▶ Play scrolling to check placement';
+    status('Preview frozen for exact placement.');
+   }else{
+    bridge.resume();$('motion').dataset.playing='1';
+    $('motion').textContent='❚❚ Freeze world';
+    status('Playing actual debug-game scrolling. Preview assets follow world positions.');
+   }
+  });
   $('start').addEventListener('click',()=>{ensureEngine();waitEngine();});
   $('mobilePreview').addEventListener('click',()=>{ensureEngine();waitEngine();});
   $('addFiles').addEventListener('change',e=>addFiles(e.target.files||[]));
