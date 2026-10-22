@@ -1059,19 +1059,18 @@ let shutterMix = 0;
   // spawn, difficulty or normal Play state can reference them.
   let candidateAsset=null;
   let biomeCandidates=[];
+  function drawOneCandidate(a,pass){
+    if(!a||a.pass!==pass)return;
+    const y=a.y+(a.scrollWithWorld?view.distance-a.placedDistance:0);
+    if(y>H+32||y+a.height< -32)return;
+    ctx.save();ctx.globalAlpha=a.opacity;
+    ctx.drawImage(a.image,a.x,y,a.width,a.height);ctx.restore();
+  }
   function drawCandidate(pass){
     if(!bridgePreviewSession)return;
-    // Production render passes remain unchanged; only debug previews draw these
-    // reusable, decoded images. No image/canvas allocation in the frame loop.
-    const draw=a=>{
-      if(!a||a.pass!==pass)return;
-      const y=a.y+(a.scrollWithWorld?view.distance-a.placedDistance:0);
-      if(y>H+32||y+a.height< -32)return;
-      ctx.save();ctx.globalAlpha=a.opacity;
-      ctx.drawImage(a.image,a.x,y,a.width,a.height);ctx.restore();
-    };
-    draw(candidateAsset);
-    for(let i=0;i<biomeCandidates.length;i++)draw(biomeCandidates[i]);
+    // No candidate image or callback allocations in the frame loop.
+    drawOneCandidate(candidateAsset,pass);
+    for(let i=0;i<biomeCandidates.length;i++)drawOneCandidate(biomeCandidates[i],pass);
   }
   const legacyBridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
   let bridgePaint=legacyBridgePaint;
