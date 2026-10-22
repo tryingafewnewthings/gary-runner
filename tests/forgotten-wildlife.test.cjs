@@ -4,15 +4,15 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const api=require('../gary-forgotten-wildlife.js');
-const hedgehog={ready:true,naturalWidth:480,naturalHeight:60};
+const hedgehog={ready:true,naturalWidth:432,naturalHeight:54};
 const bush={ready:true,naturalWidth:512,naturalHeight:512};
 function scene(distance=5600,foot=-1000,opts={}){
  const calls=[],ctx={save(){},restore(){},translate(){},scale(){},drawImage(...args){calls.push(args);}};
  api.create({hedgehog,bush}).draw(ctx,distance,8,10,foot,opts);
  return calls;
 }
-test('sprite source is six equal 80 by 60 cells, exact view is stationary fixed-camera',()=>{
- assert.equal(api.SPEC.cols,6);assert.equal(api.SPEC.cellWidth,80);assert.equal(api.SPEC.cellHeight,60);
+test('sprite source is six equal 72 by 54 cells, exact view is stationary fixed-camera',()=>{
+ assert.equal(api.SPEC.cols,6);assert.equal(api.SPEC.cellWidth,72);assert.equal(api.SPEC.cellHeight,54);
  const a=scene(6500,-200),b=scene(6500,-200);
  assert.deepEqual(a,b);
 });
@@ -35,8 +35,8 @@ test('hedgehogs never occupy traffic lanes and animated sprites slice legal fram
   for(const call of scene(distance,-1000)){
    if(call.length===9){
     animals++;const [,sx,sy,sw,sh,x,y,w,h]=call;
-    assert.equal(sy,0);assert.equal(sw,80);assert.equal(sh,60);
-    assert.equal(sx%80,0);assert.ok(sx>=0&&sx<480);
+    assert.equal(sy,0);assert.equal(sw,72);assert.equal(sh,54);
+    assert.equal(sx%72,0);assert.ok(sx>=0&&sx<432);
     assert.equal(w,40);assert.equal(h,28);
     assert.ok(x+w<=105||x>=255,'no hedge may overlap the road');
    }else if(call.length===5){
