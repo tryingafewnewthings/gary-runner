@@ -90,6 +90,8 @@
     "art/forgotten-road/decay-light.png": { "width": 512, "height": 512, "alpha": true },
     "art/forgotten-road/decay-medium.png": { "width": 512, "height": 512, "alpha": true },
     "art/forgotten-road/decay-heavy.png": { "width": 512, "height": 512, "alpha": true },
-    "art/forgotten-road/decay-kerb.png": { "width": 512, "height": 512, "alpha": true }
+    "art/forgotten-road/decay-kerb.png": { "width": 512, "height": 512, "alpha": true },
+    "art/forgotten-road/hedgehog-scurrying.png": { "width": 432, "height": 54, "alpha": true, "grid": { "cols": 6, "rows": 1, "cellWidth": 72, "cellHeight": 54 } },
+    "art/forgotten-road/fox-bush-verge.png": { "width": 512, "height": 512, "alpha": true }
   }
 }

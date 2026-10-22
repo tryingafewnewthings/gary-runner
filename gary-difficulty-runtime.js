@@ -365,6 +365,9 @@ let shutterMix = 0;
       simulation.reset();
       button.textContent = 'Play Game';
       status.textContent = 'Ready. Let’s give it a go.';
+      // Decorative downloads/decode never participate in the startup gate.
+      roadsideImages.hedgehog=loadOptionalRoadside('art/forgotten-road/hedgehog-scurrying.png',432,54);
+      roadsideImages.bush=loadOptionalRoadside('art/forgotten-road/fox-bush-verge.png',512,512);
     } catch (_) {
       button.textContent = 'Try again';
       status.textContent = 'Some artwork could not load. Check your connection and tap Try again.';
@@ -1056,6 +1059,20 @@ let shutterMix = 0;
   // GaryFoxEncounterV1: authored, non-hazard encounter on the Forgotten Road.
   const foxImages={approach:loadGary('art/fox/fox-approach.png?v=fox2',im=>validateSheet(im,'Fox approach',6,1,256,256)),snatch:loadGary('art/fox/fox-snatch.png?v=fox2',im=>validateSheet(im,'Fox snatch',4,1,256,256)),
     turn:loadGary('art/fox/fox-turn.png?v=fox2',im=>validateSheet(im,'Fox turn',3,1,256,256)),return:loadGary('art/fox/fox-return.png?v=fox2',im=>validateSheet(im,'Fox return',6,1,256,256)),bush:loadGary('art/fox/fox-bush.png?v=fox2')};
+  const roadsideImages={hedgehog:null,bush:null};
+  function loadOptionalRoadside(file,width,height){
+    const image=new Image();
+    image.onload=async()=>{
+      try{
+        if(image.naturalWidth!==width||image.naturalHeight!==height)return;
+        if(image.decode)await image.decode();
+        image.ready=true;
+      }catch(_){ /* Optional scenery stays hidden if decoding fails. */ }
+    };
+    image.onerror=()=>{};
+    image.src=file;
+    return image;
+  }
   const bridge=window.GaryBridge.create();
   let bridgePreviewFrozen=false;
   // Factory candidates are an isolated review-only render layer. No save, collision,
@@ -2545,6 +2562,33 @@ function updateRain(dt, advancing) {
     ctx.restore();
   }
 
+  function drawRoadsideWildlife(){
+    const foot=mystery.footAt(view.distance);
+    if(!Number.isFinite(visualClearFrom)||state==='cutscene'||
+       mystery.visible(view.distance)||(foot>=-36&&foot<=H+136)||
+       fox.quiet()||bridge.visible()||wilderness.active())return;
+    const {hedgehog,bush}=roadsideImages;
+    if(!hedgehog?.ready&&!bush?.ready)return;
+    const base=Math.floor((view.distance+56)/STREET_SEGMENT_H);
+    for(let segment=Math.max(0,base-1,visualClearFrom+1);segment<=base+3;segment++){
+      // Stable cosmetic placement: no gameplay RNG, timers, pools or colliders.
+      const hash=Math.imul(segment+17,0x9e3779b1)>>>0;
+      const right=(hash>>>8)&1,center=right?308:52;
+      const y=view.distance-segment*STREET_SEGMENT_H+304;
+      if(bush?.ready&&segment%3===0&&y+145>-20&&y+145<H+76)
+        ctx.drawImage(bush,center-38,y+145-76,76,76);
+      if(!hedgehog?.ready||segment%4!==0)continue;
+      const stride=view.clock*2.75+(hash%31)*.14;
+      const x=center+Math.sin(stride)*12,hy=y+210;
+      if(hy<-28||hy>H+28)continue;
+      const frame=(Math.floor(view.clock/.115)+hash%6)%6;
+      ctx.save();
+      if(Math.cos(stride)<0){ctx.translate(2*x,0);ctx.scale(-1,1);}
+      ctx.drawImage(hedgehog,frame*72,0,72,54,x-20,hy-28,40,28);
+      ctx.restore();
+    }
+  }
+
   function render(dt,cutscenePlate=false){
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
@@ -2561,6 +2605,7 @@ function updateRain(dt, advancing) {
         drawHighStreet('ground');drawPavements();drawRoad();drawCandidate('ground');drawHighStreet('decor');
       }else{drawHighStreet();drawPavements();drawRoad();}
       pigeons.draw();
+      if(!cutscenePlate)drawRoadsideWildlife();
       if (nightOn) {
         drawNightAmbient();
         drawNightRoadLight();
