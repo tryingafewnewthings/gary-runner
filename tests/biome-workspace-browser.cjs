@@ -76,6 +76,7 @@ async function main(){
   await page.locator('#packFile').setInputFiles({name:'whole-biome.zip',mimeType:'application/zip',buffer:archive.buffer});
   await page.waitForFunction(()=>window.GaryBiomeWorkspace.snapshot().assetCount===2);
   assert.equal(await page.locator('#scene').inputValue(),'bridge-middle');
+  await page.locator('#advanced').evaluate(el=>el.open=true);
   await page.locator('#pass').selectOption('front');
   const selectedPass=await page.evaluate(()=>{
     const s=window.GaryBiomeWorkspace.snapshot();
