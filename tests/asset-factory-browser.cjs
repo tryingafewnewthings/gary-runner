@@ -24,7 +24,7 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector('#reference').complete&&document.querySelector('#reference').naturalWidth>0);
   const stage=await page.locator('#stage').boundingBox();
   assert.ok(Math.abs(stage.width/stage.height-9/16)<.012,'360×640 ratio preserved on iPhone');
-  assert.equal(await page.locator('#asset option').count(),4);
+  assert.equal(await page.locator('#asset option').count(),7);
   assert.equal(await page.locator('#advanced').evaluate(el=>el.open),false,'technical controls should start collapsed');
   assert.equal(await page.locator('#quickPreview').isVisible(),true,'mobile action dock should be visible');
   assert.equal(await page.locator('#upload').count(),1,'one primary artwork picker');
