@@ -8,7 +8,7 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
 const root=path.resolve(__dirname,'..');
 const parse=dir=>JSON.parse(fs.readFileSync(path.join(dir,'art-visual-ledger.json'),'utf8'));
-const isNewArt=f=>/^art\/(?!candidates\/).+\.(?:png|webp)$/i.test(f);
+const isNewArt=f=>(/^art\/(?!candidates\/).+\.(?:png|webp)$/i.test(f)||/^[^/]+\.(?:png|webp)$/i.test(f));
 const isCandidate=f=>/^art\/candidates\/.+\.(?:png|webp)$/i.test(f);
 const within=(dir,file)=>!file.includes('..')&&!path.isAbsolute(file)&&
  fs.existsSync(path.join(dir,file));
