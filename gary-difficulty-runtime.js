@@ -1055,6 +1055,19 @@ let shutterMix = 0;
     turn:loadGary('art/fox/fox-turn.png?v=fox2',im=>validateSheet(im,'Fox turn',3,1,256,256)),return:loadGary('art/fox/fox-return.png?v=fox2',im=>validateSheet(im,'Fox return',6,1,256,256)),bush:loadGary('art/fox/fox-bush.png?v=fox2')};
   const bridge=window.GaryBridge.create();
   let bridgePreviewFrozen=false;
+  // Factory candidates are an isolated review-only render layer. No save, collision,
+  // spawn, difficulty or normal Play state can reference them.
+  let candidateAsset=null;
+  function drawCandidate(pass){
+    const a=candidateAsset;
+    if(!bridgePreviewSession||!a||a.pass!==pass)return;
+    const y=a.y+(a.scrollWithWorld?view.distance-a.placedDistance:0);
+    if(y>H+32||y+a.height< -32)return;
+    ctx.save();
+    ctx.globalAlpha=a.opacity;
+    ctx.drawImage(a.image,a.x,y,a.width,a.height);
+    ctx.restore();
+  }
   const legacyBridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
   let bridgePaint=legacyBridgePaint;
   const wildernessImages=Object.fromEntries(Object.entries(window.GaryWildernessData.assets).map(([key,def])=>[key,itemImages[key]||loadGary('art/wilderness/'+def.path)]));
@@ -2547,9 +2560,9 @@ function updateRain(dt, advancing) {
       if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
       drawRainSplashes();
     }
-    if(bridge.visible()&&!wilderness.covers(view.distance)){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);}
+    if(bridge.visible()&&!wilderness.covers(view.distance)){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);drawCandidate('under-water');bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);drawCandidate('deck');}
 
-    wilderness.drawGround(ctx,view.distance,view.clock);wilderness.drawDecor(ctx,view.distance,view.clock,false);
+    wilderness.drawGround(ctx,view.distance,view.clock);drawCandidate('ground');wilderness.drawDecor(ctx,view.distance,view.clock,false);drawCandidate('rear');
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
@@ -2571,6 +2584,7 @@ function updateRain(dt, advancing) {
     }
     wilderness.drawDecor(ctx,view.distance,view.clock,true);
     if(bridge.visible()&&!wilderness.covers(view.distance))bridgePaint.drawForeground(ctx,bridge.nearAt(view.distance));
+    drawCandidate('front');
     drawRainStreaks();
     ctx.restore();drawVignette();
     if (nightOn) drawNightVignette();
@@ -2730,6 +2744,48 @@ function updateRain(dt, advancing) {
         rememberPositions();prepareView(1);render();return true;
       },snapshot:()=>wilderness.snapshot(),pause:()=>window.GaryBridgePreview.pause(),freeze:()=>window.GaryBridgePreview.freeze(),resume:()=>window.GaryBridgePreview.resume()
     });
+    // No runtime candidate API exists outside ?debug=1&bridgepreview=1.
+    if(bridgePreviewSession){
+      const passes=new Set(['ground','rear','under-water','deck','front']);
+      window.GaryAssetPreview=Object.freeze({
+        ready:()=>startupReady,
+        startScene:(scene='bridge-middle')=>{
+          let ok=false;
+          if(scene==='street-day'||scene==='street-rain'){
+            ok=window.GaryBridgePreview.start('approach');
+            if(!ok)return false;
+            bridge.reset();wilderness.reset(director.seed);
+            distance=scrollY=0;nightOn=scene==='street-rain';
+            nightMix=rainMix=shutterMix=nightOn?1:0;
+            rainSaid=nightOn;visualClearFrom=Infinity;
+            rememberPositions();prepareView(1);render();
+          }else if(scene==='bridge-approach'||scene==='bridge-enter'||scene==='bridge-middle'||scene==='bridge-exit'){
+            ok=window.GaryBridgePreview.start(scene.slice(7));
+          }else if(scene==='wilderness-reveal'||scene==='wilderness-dense'){
+            ok=window.GaryWildernessPreview.start(scene.slice(11));
+          }else throw Error('Unknown asset review scene');
+          if(ok)window.GaryBridgePreview.freeze();
+          return ok;
+        },
+        set:({image,draw,pass='rear',scrollWithWorld=true,opacity=1})=>{
+          const sourceW=image?.naturalWidth||image?.width;
+          const sourceH=image?.naturalHeight||image?.height;
+          if(!(sourceW>0&&sourceH>0))throw Error('Decoded artwork required');
+          if(!draw||![draw.x,draw.y,draw.width,draw.height,opacity].every(Number.isFinite)||
+            draw.width<=0||draw.height<=0||draw.width>360||draw.height>1000||
+            !(opacity>0&&opacity<=1)||!passes.has(pass))
+            throw Error('Invalid preview geometry or render pass');
+          candidateAsset={image,x:draw.x,y:draw.y,width:draw.width,height:draw.height,
+            opacity,pass,scrollWithWorld:!!scrollWithWorld,placedDistance:view.distance};
+          prepareView(1);render();
+          return {pass,registered:false,collision:'NOT_DEFINED',worldDepth:candidateAsset.placedDistance};
+        },
+        clear:()=>{candidateAsset=null;prepareView(1);render();},
+        snapshot:()=>candidateAsset?{pass:candidateAsset.pass,
+          draw:{x:candidateAsset.x,y:candidateAsset.y,width:candidateAsset.width,height:candidateAsset.height},
+          scrollWithWorld:candidateAsset.scrollWithWorld,registered:false}:null
+      });
+    }
     window.GaryRuntimeStats=Object.freeze({snapshot:()=>({state,distance,lane,target,
       ticks:simulation.ticks,droppedSeconds:simulation.droppedSeconds,
       items:objs.length,itemPeak:itemPool.peak,itemMisses:itemPool.misses,
