@@ -9,13 +9,13 @@
   hedgehogWidth:40,hedgehogHeight:28,frameSeconds:.115,
   bush:'art/fox/fox-bush.png?v=fox2',ambientBush:'art/forgotten-road/fox-bush-verge.png',bushWidth:76,bushHeight:76,
   segmentHeight:360,roadLeft:105,roadRight:255,screenHeight:640,
-  clearingSkip:1,benchOffset:2
+  clearingSkip:1
  });
  const hash=(a,b)=>{let h=Math.imul(a+17,0x9e3779b1)^Math.imul(b+11,0x85ebca6b);h=Math.imul(h^(h>>>16),0x7feb352d);return (h^(h>>>15))>>>0;};
  function create({hedgehog,bush}={}){
   // Deterministic positions derived from world-segment index, not render FPS.
   // Avoid a second RNG that would change the fox's 90% event or row director.
-  function draw(ctx,distance,clock,clearingStart,benchFoot,{foxActive=false,bridgeVisible=false,wildernessActive=false,readerVisible=false}={}){
+  function draw(ctx,distance,clock,clearingStart,benchFoot,{foxActive=false,bridgeVisible=false,wildernessActive=false,readerVisible=false,benchSegment=Infinity}={}){
    if(!Number.isFinite(clearingStart)||!Number.isFinite(distance)||!Number.isFinite(clock)||bridgeVisible||wildernessActive)return;
    // The stranger's actual sprite spans the whole viewport while in frame;
    // enforce a margin on BOTH sides of that period, including his cutscene.
@@ -27,7 +27,7 @@
    ctx.save();
    for(let segment=Math.max(first,clearingStart+SPEC.clearingSkip);segment<=first+6;segment++){
     // The bench itself remains an uncluttered narrative focal point.
-    if(segment===clearingStart+SPEC.benchOffset)continue;
+    if(segment===benchSegment)continue;
     // No wildlife or extra background bush on the fox's reserved encounter.
     if(foxActive)continue;
     const h=hash(segment,42),base=distance-segment*SPEC.segmentHeight+304;
