@@ -47,6 +47,16 @@ test('hedgehogs never occupy traffic lanes and animated sprites slice legal fram
  }
  assert.ok(animals>2);assert.ok(bushes>0);
 });
+test('standalone ambient bush source bytes match original fox hiding bush exactly',()=>{
+ const a=fs.readFileSync(path.join(__dirname,'../art/fox/fox-bush.png'));
+ const b=fs.readFileSync(path.join(__dirname,'../art/forgotten-road/fox-bush-verge.png'));
+ assert.deepEqual(a,b);
+});
+test('hedgehog PNG header matches six-by-one cell contract',()=>{
+ const file=fs.readFileSync(path.join(__dirname,'../art/forgotten-road/hedgehog-scurrying.png'));
+ assert.equal(file.subarray(1,4).toString(),'PNG'); 
+ assert.equal(file.readUInt32BE(16),432);assert.equal(file.readUInt32BE(20),54);
+});
 test('does not alter fox controller, score or item pools',()=>{
  const script=fs.readFileSync(path.join(__dirname,'../gary-forgotten-wildlife.js'),'utf8');
  assert.doesNotMatch(script,/itemPool|spawnFood|onTheft|localStorage|collision|score\s*=/);
