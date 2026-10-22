@@ -74,7 +74,7 @@ details{border:1px solid #435a57;border-radius:12px;margin-top:10px;padding:11px
 <p>Choose up to 20 transparent PNGs. Every image stays local until you export a package.</p>
 <div class="filebtn"><span>＋ Add multiple PNG images</span><input id="addFiles" type="file" accept="image/png" multiple aria-label="Import PNG artwork files"></div>
 <div class="columns" style="margin-top:8px"><button id="importPack">Import saved biome</button><button id="demo">Show sample layout</button></div>
-<input id="packFile" type="file" accept=".json,application/json" hidden>
+<input id="packFile" type="file" accept=".zip,.json,application/zip,application/json" hidden>
 <p class="info">Known game filenames reuse measured display sizes. New artwork uses a clearly provisional preview size; exact final registration still requires approval.</p>
 <h2 style="margin-top:13px">Assets <small id="count">0 / 20</small></h2>
 <div id="assets" aria-label="Assets included in this biome"><div class="empty">No artwork yet. Add some PNGs to begin.</div></div>
@@ -100,15 +100,18 @@ details{border:1px solid #435a57;border-radius:12px;margin-top:10px;padding:11px
 <div class="columns" style="margin-top:10px"><button id="duplicate">Duplicate placement</button><button id="remove">Remove</button></div>
 </div>
 <div class="panel"><h2>Export the whole biome</h2>
-<p>A single portable file includes all imported PNGs, dimensions, placements, render layers, scene and approval status.</p>
-<div class="columns"><button id="export" class="primary">Save complete biome</button><button id="exportLayout">Save layout JSON</button></div>
+<p>Export one ZIP containing all source PNGs and a complete placement manifest, ready for review or integration.</p>
+<button id="exportZip" class="primary" style="width:100%;margin-bottom:8px">Save full biome ZIP</button>
+<details><summary>Other formats</summary>
+<div class="columns" style="margin-top:8px"><button id="export">Self-contained JSON</button><button id="exportLayout">Layout-only JSON</button></div>
+</details>
 <p class="info">Exports are marked <strong>UNAPPROVED</strong> and do not install assets in the live game. Collision, animation and actual mobile performance are still separate checks.</p>
 </div>
 <div id="busy" role="status"></div>
 </section>
 </div>
 </main>
-<nav class="mobile-bar" aria-label="Biome quick actions"><button id="mobileAdd">＋ Add PNGs</button><button id="mobilePreview" class="primary">▶ Preview</button><button id="mobileSave">Export biome</button></nav>
-<script src="gary-wilderness-data.js"></script>
+<nav class="mobile-bar" aria-label="Biome quick actions"><button id="mobileAdd">＋ Add PNGs</button><button id="mobilePreview" class="primary">▶ Preview</button><button id="mobileSave">Save ZIP</button></nav>
+<script src="gary-wilderness-data.js"></script><script src="gary-biome-zip.js"></script>
 <script src="gary-biome-workspace.js"></script>
 </body></html>
