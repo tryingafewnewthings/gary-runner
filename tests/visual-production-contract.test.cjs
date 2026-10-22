@@ -48,7 +48,7 @@ test('Factory default and copied prompt enforce real first-biome source and reje
   assert.equal(factory.scenes.street.image,'docs/biome-workspace/layout-street-day.png');
   assert.match(html,/id="reference" src="docs\/biome-workspace\/layout-street-day\.png"/);
   assert.match(html,/STRICT REFERENCE-LOCKED ART GENERATION/);
-  for(const word of ['ATTACH SOURCE IMAGES','high_street_sprites.webp','gary_walk_sheet.PNG','UPPER-LEFT','no vanishing point','TRUE','UNVERIFIED'])assert.ok(html.includes(word),word);
+  for(const word of ['ATTACH SOURCE IMAGES','high_street_sprites.webp','gary_walk_sheet.PNG','UPPER-LEFT','no vanishing point','RGBA','UNVERIFIED'])assert.ok(html.includes(word),word);
   assert.match(html,/REVIEW AT NATIVE 360×640/);
   assert.ok(html.includes("].join('\\n');"),'copied brief must separate lines by real newline characters');
 });
