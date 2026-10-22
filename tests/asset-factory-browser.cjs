@@ -20,11 +20,17 @@ async function main(){
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,acceptDownloads:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/gary-asset-factory.html',{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>document.querySelector('#result')?.textContent.includes('Four deterministic'),null,{timeout:25000});
+  await page.waitForFunction(()=>document.querySelector('#result')?.textContent.includes('Select an asset'),null,{timeout:25000});
   await page.waitForFunction(()=>document.querySelector('#reference').complete&&document.querySelector('#reference').naturalWidth>0);
   const stage=await page.locator('#stage').boundingBox();
   assert.ok(Math.abs(stage.width/stage.height-9/16)<.012,'360×640 ratio preserved on iPhone');
   assert.equal(await page.locator('#asset option').count(),4);
+  assert.equal(await page.locator('#advanced').evaluate(el=>el.open),false,'technical controls should start collapsed');
+  assert.equal(await page.locator('#quickPreview').isVisible(),true,'mobile action dock should be visible');
+  assert.equal(await page.locator('#upload').count(),1,'one primary artwork picker');
+  const bodyWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
+  assert.ok(bodyWidth<=390,'no horizontal scrolling on 390px iPhone');
+  await page.locator('#advanced').evaluate(el=>el.open=true);
 
   // User's approved original-biome screenshot is compared locally, without publishing it or changing the game.
   const referenceCanvas=createCanvas(360,640),referenceCtx=referenceCanvas.getContext('2d');
@@ -56,6 +62,9 @@ async function main(){
    assert.equal(bytes.readUInt32BE(20),spec.source.height);
   }
 
+  await page.locator('#upload').setInputFiles({name:'fake.png',mimeType:'image/png',buffer:Buffer.from('not a PNG')});
+  await page.waitForFunction(()=>document.querySelector('#report').textContent.includes('invalid PNG source dimensions'));
+  assert.equal(await page.locator('#final').isEnabled(),false);
   const specimen=contract.templates[2];
   await page.locator('#asset').selectOption(specimen.id);
   const c=createCanvas(specimen.source.width,specimen.source.height),ctx=c.getContext('2d');
@@ -75,7 +84,9 @@ async function main(){
   await page.locator('#brief').click();
   assert.match(await page.locator('#copyField').inputValue(),/Do NOT crop, resize, rotate/);
 
-  await page.locator('#real').click();
+  await page.locator('#quickPreview').click();
+  await page.waitForFunction(()=>document.querySelector('#stageTip')?.textContent.includes('Drag to position'));
+
   assert.ok((await page.locator('#game').getAttribute('src')).includes('bridgepreview=1'));
   // This assertion reads the ACTUAL isolated runtime, not the Factory overlay.
   await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='front',
@@ -98,6 +109,25 @@ async function main(){
   assert.notEqual(fromEngine.withCandidate,fromEngine.withoutCandidate,'candidate must alter actual engine canvas pixels');
   assert.equal(fromEngine.snapshot.registered,false);
   assert.equal(fromEngine.snapshot.scrollWithWorld,true);
+  // Real pointer movement must adjust the candidate world position on a phone,
+  // without changing collision/physics or the camera contract.
+  const initial=await page.evaluate(()=>document.querySelector('#placeX').valueAsNumber);
+  await page.locator('#advanced').evaluate(el=>el.open=false);
+  await page.locator('#preview').scrollIntoViewIfNeeded();
+  const dragBounds=await page.locator('#preview').boundingBox();
+  const sx=dragBounds.x+(178+specimen.draw.width/2)*dragBounds.width/360,
+   sy=dragBounds.y+(350+specimen.draw.height/2)*dragBounds.height/640;
+  await page.mouse.move(sx,sy);
+  await page.mouse.down();
+  await page.mouse.move(sx+34,sy+20,{steps:4});
+  await page.mouse.up();
+  await page.waitForFunction(before=>Number(document.querySelector('#placeX').value)>before,initial);
+  await page.locator('#advanced').evaluate(el=>el.open=true);
+  // Restore an overlap with Gary before proving rear/front painter's ordering.
+  await page.locator('#placeX').fill('178');
+  await page.locator('#placeY').fill('350');
+  await page.locator('#placeY').evaluate(el=>el.blur());
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.draw.x===178);
   await page.locator('#renderPass').selectOption('rear');
   await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='rear');
   const rearPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
@@ -110,7 +140,7 @@ async function main(){
   assert.equal(candidate.approved,false);assert.equal(candidate.registered,false);
   assert.equal(candidate.review.actualRenderPassPreview,true);
   assert.equal(candidate.review.pass,'front');
-  assert.equal(candidate.review.draw.x,178);
+  assert.equal(candidate.review.draw.x,Number(await page.locator('#placeX').inputValue()));
   await page.locator('#scenePreset').selectOption('wilderness-reveal');
   await page.waitForFunction(()=>{
    const w=document.querySelector('#game')?.contentWindow;
@@ -118,11 +148,14 @@ async function main(){
    return state?.origin!==null&&state?.progress>0;
   },null,{timeout:20000});
   await page.locator('#still').click();
+  await page.locator('#resetPlacement').click();
+  assert.equal(await page.locator('#placeX').inputValue(),String(specimen.draw.x));
   await page.setViewportSize({width:375,height:667});
   const compact=await page.locator('#stage').boundingBox();
   assert.ok(Math.abs(compact.width/compact.height-9/16)<.012);
+  assert.ok((await page.evaluate(()=>document.documentElement.scrollWidth))<=375,'compact phone viewport must not scroll sideways');
   assert.deepEqual(errors,[]);
-  console.log(engineName+': four templated silhouettes, exports, PNG import validation, isolated engine option and iPhone layout PASS');
+  console.log(engineName+': mobile workflow, hidden advanced controls, drag placement, real-engine layering, PNG QA and handoff PASS');
  }finally{await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

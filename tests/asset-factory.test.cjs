@@ -87,6 +87,6 @@ test('candidate artwork is debug-only and inserted at actual game layer boundari
  assert.ok(rear>ground&&actor>rear&&front>actor&&hud>front,'world draw order must be deliberate');
  assert.doesNotMatch(frame,/createElement\('canvas'\)/,'no candidate canvas allocation in the game renderer');
  const factoryHtml=fs.readFileSync(path.join(root,'gary-asset-factory.html'),'utf8');
- assert.match(factoryHtml,/const image=art&&valid\?artCanvas\('art'\):artCanvas\('mask'\)/);
+ assert.match(factoryHtml,/cachedCandidateCanvas=art&&valid\?artCanvas\('art'\):artCanvas\('mask'\)/);
  assert.match(factoryHtml,/not.*registered|No collisions/i);
 });
