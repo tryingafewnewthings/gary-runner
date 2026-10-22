@@ -76,7 +76,25 @@ input[type=checkbox]{accent-color:#d9b879}
 <p style="font-size:12px">Adjust imported artwork's apparent height, skew or individual face corners. You will need to select the PNG again in the editor; originals stay on your device.</p>
 </div>
 <div class="panel">
-<h2>4. Preview / evidence</h2>
+<h2>4. Real-engine review</h2>
+<label for="scenePreset">Gameplay position</label>
+<select id="scenePreset">
+<option value="street-day">High street · daylight</option><option value="street-rain">High street · night/rain</option>
+<option value="bridge-approach">Bridge · approach</option><option value="bridge-enter">Bridge · entrance</option>
+<option value="bridge-middle">Bridge · middle</option><option value="bridge-exit">Bridge · exit</option>
+<option value="wilderness-reveal">Wilderness · reveal</option><option value="wilderness-dense">Wilderness · dense</option>
+</select>
+<label for="renderPass">Renderer layer</label>
+<select id="renderPass">
+<option value="ground">Ground — below scenery/actors</option>
+<option value="rear">Rear scenery — behind Gary</option>
+<option value="under-water">Bridge masonry — beneath water mask</option>
+<option value="deck">Bridge deck — beneath Gary</option>
+<option value="front">Foreground — in front of Gary</option>
+</select>
+<label><input id="worldScroll" type="checkbox" checked> Scroll with world position</label>
+<p style="font-size:12px">Isolated debug view: actual game pass and layering, no collisions, production registration, saves or perspective approval.</p>
+<h2>5. Preview / evidence</h2>
 <div class="controls">
 <button id="still">Game screenshot</button>
 <button id="real">Real engine (bridge debug)</button>
@@ -85,7 +103,7 @@ input[type=checkbox]{accent-color:#d9b879}
 <button id="screenshot">Export annotated preview</button>
 <button id="instructions">Copy handoff</button>
 </div>
-<p style="font-size:12px">Real engine is shown behind the overlay in its own isolated debug session. Imported art is NOT inserted into gameplay render passes or assigned collisions until integrated separately.</p>
+<p style="font-size:12px">Real engine inserts the candidate inside its selected rendering pass. This does not approve its art, modify collisions or register it for normal Play.</p>
 </div>
 <textarea id="copyField" readonly aria-label="Copyable prompt and registration output"></textarea>
 <p style="font-size:12px"><a href="GARY_ASSET_FACTORY.md">Implementation and QA status</a> · <a href="gary-camera-lab.html">Existing Camera Lab</a></p>
@@ -95,7 +113,7 @@ input[type=checkbox]{accent-color:#d9b879}
 (async function(){
 'use strict';
 const $=id=>document.getElementById(id);
-let camera,contract,spec,mode='screenshot',art=null,valid=false,uploadName='';
+let camera,contract,spec,mode='screenshot',art=null,valid=false,uploadName='',liveCandidateActive=false;
 let artworkUrl=null,customScreenshot=null;
 const view=$('preview'),ctx=view.getContext('2d');
 const frame=$('game'),reference=$('reference');
@@ -111,10 +129,10 @@ function picture(){
  if(!spec)return;
  const d=spec.draw;
  ctx.save();ctx.translate(d.x,d.y);
- if(art){
+ if(art && !(mode==='live'&&liveCandidateActive)){
   GaryAssetFactory.draw(ctx,spec,{mode:'clip',image:art});
   if($('guides').checked)GaryAssetFactory.draw(ctx,spec,{mode:'outline'});
- }else GaryAssetFactory.draw(ctx,spec,{mode:'template'});
+ }else if(!(mode==='live'&&liveCandidateActive))GaryAssetFactory.draw(ctx,spec,{mode:'template'});
  ctx.restore();
  ctx.save();ctx.strokeStyle='#e8b67c';ctx.setLineDash([4,3]);ctx.lineWidth=1.1;ctx.strokeRect(d.x,d.y,d.width,d.height);
  ctx.fillStyle='#f4d49e';ctx.beginPath();
@@ -125,10 +143,12 @@ function switchAsset(id){
  if(!spec)throw Error('Unknown template '+id);
  const prevScene=$('scene').value;
  if(prevScene!==spec.scene)$('scene').value=spec.scene;
+ $('scenePreset').value=spec.scene==='bridge'?'bridge-middle':spec.scene==='wilderness'?'wilderness-reveal':'street-day';
+ $('renderPass').value=({'ground-overlays':'ground','shops-and-props':'rear','lower-masonry-under-water':'under-water','foreground-props':'front'})[spec.layer]||'rear';
  if(artworkUrl){URL.revokeObjectURL(artworkUrl);artworkUrl=null;}
  art=null;valid=false;uploadName='';$('upload').value='';$('final').disabled=true;
  $('report').textContent='No artwork imported.';
- setScene();picture();
+ setScene();if(mode==='live')gameStart();picture();
  $('perspectiveLink').href='gary-perspective-editor.html?asset='+encodeURIComponent(spec.id);
  $('spec').textContent=spec.source.width+'×'+spec.source.height+' source pixels · '+spec.draw.width+'×'+spec.draw.height+
   ' design units · x'+spec.draw.x+' y'+spec.draw.y+' · anchor ('+spec.anchor.x+','+spec.anchor.y+') · '+contract.profiles[spec.profile].status;
@@ -227,6 +247,7 @@ async function importArt(file){
   status(valid?'PNG structural checks pass; artistic approval and integration remain outstanding.':
    'PNG failed structural checks. Keep artwork available for comparison; masked export disabled.');
  }catch(e){$('report').textContent='FAIL: '+e.message;}
+ if(mode==='live')syncCandidate();
  picture();
 }
 async function screenshot(){
