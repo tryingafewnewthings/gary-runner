@@ -7,7 +7,7 @@
  const SPEC=Object.freeze({
   sheet:'art/forgotten-road/hedgehog-scurrying.png?v=1',cols:6,cellWidth:72,cellHeight:54,
   hedgehogWidth:40,hedgehogHeight:28,frameSeconds:.115,
-  bush:'art/fox/fox-bush.png?v=fox2',bushWidth:76,bushHeight:76,
+  bush:'art/fox/fox-bush.png?v=fox2',ambientBush:'art/forgotten-road/fox-bush-verge.png',bushWidth:76,bushHeight:76,
   segmentHeight:360,roadLeft:105,roadRight:255,screenHeight:640,
   clearingSkip:1,benchOffset:2
  });
