@@ -3,12 +3,12 @@
  * Gary Eats visual release gate. New production artwork must have a traceable
  * reference/geometry/in-engine visual evidence record. Pixel validators cannot
  * decide artistic quality; the ledger deliberately does not claim that.
- * Existing images are grandfathered; only newly ADDED files are checked.
+ * Existing files are grandfathered only until changed; all newly added OR modified\n * production PNG/WebP images require updated evidence.
  */
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..');
 const parse=dir=>JSON.parse(fs.readFileSync(path.join(dir,'art-visual-ledger.json'),'utf8'));
-const isNewArt=f=>(/^art\/(?!candidates\/).+\.(?:png|webp)$/i.test(f)||/^[^/]+\.(?:png|webp)$/i.test(f));
+const isNewArt=f=>/\.(?:png|webp)$/i.test(f)&&! /^(?:docs|tests|tools|test-results|\.github)\//.test(f)&&!isCandidate(f);
 const isCandidate=f=>/^art\/candidates\/.+\.(?:png|webp)$/i.test(f);
 const within=(dir,file)=>!file.includes('..')&&!path.isAbsolute(file)&&
  fs.existsSync(path.join(dir,file));
@@ -68,7 +68,7 @@ function checkNewFiles(files,ledger,dir=root){
 }
 function gitAdded(base){
  if(!/^[a-f0-9]{7,40}$/i.test(base))throw Error('Invalid base SHA');
- return cp.execFileSync('git',['-C',root,'diff','--name-only','--diff-filter=A',base+'...HEAD'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+ return cp.execFileSync('git',['-C',root,'diff','--name-only','--diff-filter=ACMR',base+'...HEAD'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
 }
 if(require.main===module){
  try{
