@@ -54,6 +54,7 @@ async function main(){
   await page.waitForFunction(before=>window.GaryBiomeWorkspace.snapshot().pack.assets[0].draw.x>before,select.original);
   await page.locator('#timeline').evaluate(el=>{el.value='4';el.dispatchEvent(new Event('input',{bubbles:true}));});
   await page.waitForFunction(()=>window.GaryBiomeWorkspace.snapshot().scene==='bridge-middle');
+  await page.locator('#export').evaluate(el=>el.closest('details').open=true);
   const first=await downloadBytes(page,'#export');
   assert.match(first.name,/gary-biome\.json$/);
   const pack=JSON.parse(first.buffer.toString('utf8'));
