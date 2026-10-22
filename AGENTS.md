@@ -6,7 +6,7 @@ For every request such as **“Generate a bridge/tree/shop/sprite for Gary Eats!
 
 **Bridge-specific stop rule:** never generate a one-piece bridge illustration with integrated water/banks/vanishing geometry. Use measured 84-unit straight deck, 17-unit parapet strips, modular water and masonry as independent render layers. Templates `bridge-deck-tile`, `bridge-parapet-left`, `bridge-parapet-right` are geometry-only, NOT owner-approved artistic profiles. User-rejected bridge/wilderness artwork is a NEGATIVE reference, not a style master.
 
-**Production hard gate:** all newly added production PNG/WebP imagery outside `art/candidates/` must satisfy `tools/visual-release-gate.cjs` with native gameplay screenshots and a provenance entry in `art-visual-ledger.json`; passing this gate is evidence/metadata validation only, never an automatic artistic pass. Check active script dependency order and keep the last working release intact before gameplay integration.
+**Production hard gate:** all newly added **or modified** production PNG/WebP imagery outside `art/candidates/` must satisfy `tools/visual-release-gate.cjs` with native gameplay screenshots and a provenance entry in `art-visual-ledger.json`; passing this gate is evidence/metadata validation only, never an automatic artistic pass. Check active script dependency order and keep the last working release intact before gameplay integration.
 
 ## NEW CHAT / NEW ART GENERATION — PRODUCTION LOCK (22 October 2026)
 
