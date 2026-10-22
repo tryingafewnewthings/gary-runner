@@ -118,6 +118,11 @@ async function main(){
   await page.mouse.up();
   await page.waitForFunction(before=>Number(document.querySelector('#placeX').value)>before,initial);
   await page.locator('#advanced').evaluate(el=>el.open=true);
+  // Restore an overlap with Gary before proving rear/front painter's ordering.
+  await page.locator('#placeX').fill('178');
+  await page.locator('#placeY').fill('350');
+  await page.locator('#placeY').evaluate(el=>el.blur());
+  await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.draw.x===178);
   await page.locator('#renderPass').selectOption('rear');
   await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='rear');
   const rearPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
