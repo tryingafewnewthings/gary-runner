@@ -25,7 +25,7 @@ test('no wildlife in daylight or before reader-zone clearing',()=>{
 test('wildlife is present during early decay clearing, before the reader is scheduled',()=>{
  const visible=scene(4000,-Infinity);
  assert.ok(visible.some(c=>c.length===9),'hedgehog should appear well before bench scheduling');
- const withoutBenchSegment=scene(4000,-Infinity,{benchSegment:14});
+ const withoutBenchSegment=scene(4000,-Infinity,{benchSegment:12});
  assert.ok(withoutBenchSegment.filter(c=>c.length===9).length<visible.filter(c=>c.length===9).length,
    'the bench segment itself must remain free of hedgehogs');
 });
