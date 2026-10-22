@@ -42,6 +42,21 @@ test('bridge asset brief is automatically split into physically measurable parts
  }
  assert.throws(()=>build('full-3d-bridge-scene'),/Uncalibrated family/);
 });
+test('automated native capture command accepts measured templates without touching normal gameplay',()=>{
+ const tool=require('../tools/capture-asset-previews.cjs');
+ const png=createCanvas(336,1024),g=png.getContext('2d');
+ const spec=contract.templates.find(x=>x.id==='bridge-deck-tile');
+ g.scale(336/spec.draw.width,1024/spec.draw.height);
+ f.draw(g,spec,{mode:'mask'});
+ const dir=path.join(root,'test-results');fs.mkdirSync(dir,{recursive:true});
+ const file=path.join(dir,'bridge-preview-unit.png');
+ fs.writeFileSync(file,png.toBuffer('image/png'));
+ return tool.inspect(tool.argumentsFrom(['--asset','test-results/bridge-preview-unit.png',
+   '--template','bridge-deck-tile'])).then(r=>{
+   assert.equal(r.report.pass,true);
+   assert.ok(r.png.length>100);
+ }).finally(()=>fs.rmSync(file,{force:true}));
+});
 test('auto-built original-pixel reference board cannot silently use draft wilderness master',()=>{
  const page=fs.readFileSync(path.join(root,'gary-visual-reference-board.html'),'utf8');
  for(const asset of ['high_street_sprites.webp','gary_walk_sheet.PNG','IMG_7141.webp','docs/biome-workspace/layout-street-day.png'])
