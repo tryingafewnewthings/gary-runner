@@ -41,7 +41,7 @@ async function main(){
   assert.match(await page.locator('#referenceInfo').textContent(),/360×640/);
   assert.match(await page.locator('#reference').getAttribute('alt'),/first-biome-360x640/);
   await page.locator('#resetReference').click();
-  await page.waitForFunction(()=>document.querySelector('#reference').src.includes('/docs/bridge/'));
+  await page.waitForFunction(()=>document.querySelector('#reference').src.includes('/docs/biome-workspace/'));
   assert.equal(await page.locator('#referenceUpload').inputValue(),'');
   await page.locator('#referenceUpload').setInputFiles({name:'wrong-size.png',mimeType:'image/png',buffer:createCanvas(300,300).toBuffer('image/png')});
   await page.waitForFunction(()=>document.querySelector('#result').textContent.includes('Reference rejected:'));
