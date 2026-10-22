@@ -130,7 +130,7 @@ async function main(){
   assert.equal(candidate.approved,false);assert.equal(candidate.registered,false);
   assert.equal(candidate.review.actualRenderPassPreview,true);
   assert.equal(candidate.review.pass,'front');
-  assert.equal(candidate.review.draw.x,178);
+  assert.equal(candidate.review.draw.x,Number(await page.locator('#placeX').inputValue()));
   await page.locator('#scenePreset').selectOption('wilderness-reveal');
   await page.waitForFunction(()=>{
    const w=document.querySelector('#game')?.contentWindow;
