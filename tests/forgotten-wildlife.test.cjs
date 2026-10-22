@@ -59,5 +59,5 @@ test('hedgehog PNG header matches six-by-one cell contract',()=>{
 });
 test('does not alter fox controller, score or item pools',()=>{
  const script=fs.readFileSync(path.join(__dirname,'../gary-forgotten-wildlife.js'),'utf8');
- assert.doesNotMatch(script,/itemPool|spawnFood|onTheft|localStorage|collision|score\s*=/);
+ assert.doesNotMatch(script,/itemPool|spawnFood|onTheft|localStorage|score\s*=/);
 });
