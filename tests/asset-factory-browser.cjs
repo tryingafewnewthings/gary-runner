@@ -135,6 +135,16 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector('#game')?.contentWindow?.GaryAssetPreview?.snapshot()?.pass==='front');
   const frontPixels=await page.locator('#game').evaluate(f=>f.contentDocument.querySelector('#c').toDataURL('image/png'));
   assert.notEqual(frontPixels,rearPixels,'front/rear render passes should change candidate occlusion');
+  const lighting=await page.locator('#game').evaluate(f=>{
+    const w=f.contentWindow,api=w.GaryAssetPreview,out={};
+    for(const mode of ['day','night','rain']){
+      if(!api.startScene('bridge-middle',mode))throw Error('Missing isolated lighting preset');
+      out[mode]=w.document.querySelector('#c').toDataURL('image/png');
+    }
+    return out;
+  });
+  assert.notEqual(lighting.day,lighting.night,'day/night visual evidence must differ');
+  assert.notEqual(lighting.night,lighting.rain,'night/rain visual evidence must differ');
   await page.locator('#registration').click();
   const candidate=JSON.parse(await page.locator('#copyField').inputValue());
   assert.equal(candidate.approved,false);assert.equal(candidate.registered,false);
