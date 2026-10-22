@@ -1,5 +1,5 @@
 /* Gary Eats! painted bridge: optional texture overlay on exact existing bridge geometry.
- * One 246×93 RGBA WebP atlas, one preload, three cached render passes. No gameplay changes.
+ * One 246×93 RGBA WebP atlas, one preload, four cached render passes. No gameplay changes.
  * If image missing/incompatible the entire renderer safely falls back to the current procedural bridge.
  */
 (function(root){'use strict';
@@ -28,16 +28,27 @@
        reason='invalid atlas dimensions';return;
      }
      try{
-       const under=canvas(),deck=canvas(),front=canvas();
-       const u=under.getContext('2d'),d=deck.getContext('2d'),f=front.getContext('2d');
-       drawStrip(u,'leftBank',0,138);drawStrip(u,'rightBank',222,138);
+       const under=canvas(),lower=canvas(),deck=canvas(),front=canvas();
+       const u=under.getContext('2d'),m=lower.getContext('2d'),d=deck.getContext('2d'),f=front.getContext('2d');
+       // Keep dark water outside masonry, not behind the player's deck.
+       drawStrip(u,'leftBank',0,103);drawStrip(u,'rightBank',257,103);
+       // Fade both stream endpoints into the existing river terrain rather
+       // than revealing a horizontal rectangular tile boundary.
+       u.save();u.globalCompositeOperation='destination-in';
+       const fade=u.createLinearGradient(0,SPEC.far,0,SPEC.end);
+       fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(.09,'rgba(0,0,0,1)');
+       fade.addColorStop(.90,'rgba(0,0,0,1)');fade.addColorStop(1,'rgba(0,0,0,0)');
+       u.fillStyle=fade;u.fillRect(0,SPEC.far,360,SPEC.end-SPEC.far);u.restore();
+       // Texture over old detached arches: continuous parallel bridge side
+       // masonry, with independent foreground parapets and centre walkway.
+       drawStrip(m,'leftWall',101,37);drawStrip(m,'rightWall',222,37);
        drawStrip(d,'deck',138,84);
        drawStrip(f,'leftWall',117,17);drawStrip(f,'rightWall',223,17);
        // Two short masonry seam details mark entry/exit, without covering Gary's lane.
        const [sx,sy,sw,sh]=SPEC.src.lip;
        f.drawImage(img,sx,sy,sw,sh,138,166,84,16);
        f.drawImage(img,sx,sy,sw,sh,138,800,84,16);
-       caches={under,deck,front};ready=true;reason='ready';onReady?.();
+       caches={under,lower,deck,front};ready=true;reason='ready';onReady?.();
      }catch(e){ready=false;reason=String(e?.message||e);}
    }
    img.onload=build;
@@ -49,6 +60,7 @@
    }
    return Object.freeze({ready:()=>ready,reason:()=>reason,source:SRC,
      drawUnder:(ctx,near)=>draw('under',ctx,near),
+     drawLower:(ctx,near)=>draw('lower',ctx,near),
      drawDeck:(ctx,near)=>draw('deck',ctx,near),
      drawFront:(ctx,near)=>draw('front',ctx,near)});
  }
