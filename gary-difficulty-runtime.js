@@ -1058,15 +1058,20 @@ let shutterMix = 0;
   // Factory candidates are an isolated review-only render layer. No save, collision,
   // spawn, difficulty or normal Play state can reference them.
   let candidateAsset=null;
+  let biomeCandidates=[];
   function drawCandidate(pass){
-    const a=candidateAsset;
-    if(!bridgePreviewSession||!a||a.pass!==pass)return;
-    const y=a.y+(a.scrollWithWorld?view.distance-a.placedDistance:0);
-    if(y>H+32||y+a.height< -32)return;
-    ctx.save();
-    ctx.globalAlpha=a.opacity;
-    ctx.drawImage(a.image,a.x,y,a.width,a.height);
-    ctx.restore();
+    if(!bridgePreviewSession)return;
+    // Production render passes remain unchanged; only debug previews draw these
+    // reusable, decoded images. No image/canvas allocation in the frame loop.
+    const draw=a=>{
+      if(!a||a.pass!==pass)return;
+      const y=a.y+(a.scrollWithWorld?view.distance-a.placedDistance:0);
+      if(y>H+32||y+a.height< -32)return;
+      ctx.save();ctx.globalAlpha=a.opacity;
+      ctx.drawImage(a.image,a.x,y,a.width,a.height);ctx.restore();
+    };
+    draw(candidateAsset);
+    for(let i=0;i<biomeCandidates.length;i++)draw(biomeCandidates[i]);
   }
   const legacyBridgePaint=window.GaryBridge.renderer(()=>document.createElement('canvas'));
   let bridgePaint=legacyBridgePaint;
@@ -2781,6 +2786,25 @@ function updateRain(dt, advancing) {
           return {pass,registered:false,collision:'NOT_DEFINED',worldDepth:candidateAsset.placedDistance};
         },
         clear:()=>{candidateAsset=null;prepareView(1);render();},
+        // Entire biome-pack candidates render together, each in its own actual
+        // world depth pass. This is a review-only, bounded ephemeral collection.
+        setPack:(assets)=>{
+          if(!Array.isArray(assets)||assets.length>20)throw Error('Maximum 20 biome candidates');
+          const next=assets.map((entry,i)=>{
+            const {image,draw,pass='rear',opacity=1,scrollWithWorld=true}=entry||{};
+            const width=image?.naturalWidth||image?.width,height=image?.naturalHeight||image?.height;
+            if(!(width>0&&height>0)||!draw||![draw.x,draw.y,draw.width,draw.height,opacity].every(Number.isFinite)||
+               draw.width<=0||draw.height<=0||draw.width>360||draw.height>1000||
+               Math.abs(draw.x)>1000||Math.abs(draw.y)>10000||
+               !(opacity>0&&opacity<=1)||!passes.has(pass))throw Error('Invalid biome candidate '+i);
+            return {image,x:draw.x,y:draw.y,width:draw.width,height:draw.height,
+              opacity,pass,scrollWithWorld:!!scrollWithWorld,placedDistance:view.distance};
+          });
+          candidateAsset=null;biomeCandidates=next;prepareView(1);render();
+          return {count:next.length,registered:false,collision:'NOT_DEFINED'};
+        },
+        clearPack:()=>{biomeCandidates=[];prepareView(1);render();},
+        packSnapshot:()=>biomeCandidates.map(a=>({pass:a.pass,x:a.x,y:a.y,width:a.width,height:a.height,registered:false})),
         snapshot:()=>candidateAsset?{pass:candidateAsset.pass,
           draw:{x:candidateAsset.x,y:candidateAsset.y,width:candidateAsset.width,height:candidateAsset.height},
           scrollWithWorld:candidateAsset.scrollWithWorld,registered:false}:null
