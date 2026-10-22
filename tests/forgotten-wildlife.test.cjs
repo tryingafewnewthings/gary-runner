@@ -54,6 +54,11 @@ test('hedgehogs never occupy traffic lanes and animated sprites slice legal fram
  }
  assert.ok(animals>2);assert.ok(bushes>0);
 });
+test('active runtime loads the separate roadside bush instead of reusing fox encounter image',()=>{
+ const runtime=fs.readFileSync(path.join(__dirname,'../gary-difficulty-runtime.js'),'utf8');
+ assert.match(runtime,/imgForgottenBush=loadGary\('art\/forgotten-road\/fox-bush-verge\.png/);
+ assert.match(runtime,/create\(\{hedgehog:imgForgottenHedgehog,bush:imgForgottenBush\}\)/);
+});
 test('standalone ambient bush source bytes match original fox hiding bush exactly',()=>{
  const a=fs.readFileSync(path.join(__dirname,'../art/fox/fox-bush.png'));
  const b=fs.readFileSync(path.join(__dirname,'../art/forgotten-road/fox-bush-verge.png'));
