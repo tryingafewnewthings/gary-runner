@@ -19,20 +19,21 @@ test('single painted atlas is decoded and source regions stay inside the 246x93 
  assert.ok(data.some((v,i)=>i%4===3&&v===0),'true transparent padding must survive encoding');
  assert.ok(data.some((v,i)=>i%4===3&&v>240),'visible painted pixels required');
 });
-test('bridge overlays use three cached draw surfaces, no per-frame allocations',()=>{
+test('bridge overlays use four cached draw surfaces, no per-frame allocations',()=>{
  let allocated=0;
  class FakeImage{
    naturalWidth=246;naturalHeight=93;
    set src(v){this.loaded=v;this.onload?.();}
  }
- const fakeContext={save(){},restore(){},beginPath(){},rect(){},clip(){},drawImage(){}};
+ const fakeContext={save(){},restore(){},beginPath(){},rect(){},clip(){},drawImage(){},fillRect(){},createLinearGradient(){return {addColorStop(){}}}};
  const makeCanvas=()=>{allocated++;return {width:1,height:1,getContext:()=>fakeContext};};
  const inst=art.create({makeCanvas,ImageType:FakeImage});
  assert.equal(inst.ready(),true);
- assert.equal(allocated,3);
+ assert.equal(allocated,4);
  const g=fakeContext;
  for(let i=0;i<300;i++){
    assert.equal(inst.drawUnder(g,800),true);
+   assert.equal(inst.drawLower(g,800),true);
    assert.equal(inst.drawDeck(g,800),true);
    assert.equal(inst.drawFront(g,800),true);
  }
