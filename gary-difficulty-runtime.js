@@ -2623,9 +2623,9 @@ function updateRain(dt, advancing) {
       if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
       drawRainSplashes();
     }
-    if(bridge.visible()&&!wilderness.covers(view.distance)){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);paintedBridge?.drawUnder(ctx,n);bridgePaint.drawLower(ctx,n);drawCandidate('under-water');bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);paintedBridge?.drawDeck(ctx,n);drawCandidate('deck');}
+    if(bridge.visible()&&!wilderness.covers(view.distance)){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);paintedBridge?.drawLower(ctx,n);drawCandidate('under-water');bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);paintedBridge?.drawDeck(ctx,n);drawCandidate('deck');}
 
-    wilderness.drawGround(ctx,view.distance,view.clock);if(!streetCandidateGround)drawCandidate('ground');wilderness.drawDecor(ctx,view.distance,view.clock,false);drawCandidate('rear');
+    wilderness.drawGround(ctx,view.distance,view.clock);if(bridge.visible()&&!wilderness.covers(view.distance))paintedBridge?.drawUnder(ctx,bridge.nearAt(view.distance));if(!streetCandidateGround)drawCandidate('ground');wilderness.drawDecor(ctx,view.distance,view.clock,false);drawCandidate('rear');
 
     if (state === 'intro_transition' && window.GaryIntroTransition) window.GaryIntroTransition.draw(ctx);
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
