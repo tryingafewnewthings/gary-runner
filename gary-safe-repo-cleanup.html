@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101a29">
+<title>Gary Eats! · Safe Repository Cleanup</title>
+<style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#101a29;color:#f2f5fa}
+*{box-sizing:border-box}body{margin:0;padding:max(20px,env(safe-area-inset-top)) 16px max(35px,env(safe-area-inset-bottom))}
+main{max-width:720px;margin:auto}h1{font-size:clamp(1.85rem,5vw,2.5rem);line-height:1.14;margin:8px 0 10px;letter-spacing:-.03em}
+h2{font-size:1.05rem;margin:0 0 10px}p{line-height:1.5;color:#c9d4e4}
+header p{margin:0 0 22px}.eyebrow{font-weight:800;color:#e9be66;font-size:.77rem;letter-spacing:.11em;text-transform:uppercase}
+.card{padding:19px 17px;background:#18263b;border:1px solid #34445c;border-radius:16px;margin:14px 0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+.metric{background:#0d192b;border-radius:11px;padding:12px}.metric b{font-size:1.7rem;display:block;font-variant-numeric:tabular-nums}
+.metric span{display:block;color:#b9c8dc;font-size:.83rem}
+a.btn{display:flex;align-items:center;justify-content:center;min-height:51px;text-align:center;margin:10px 0;text-decoration:none;border-radius:11px;font-weight:750;padding:12px 15px;background:#f1c45e;color:#201909}
+a.btn.secondary{background:#324a67;color:#f4f8ff}
+.warning{border-left:3px solid #e5b657;padding:11px 14px;background:#263149;border-radius:0 7px 7px 0;color:#f0d9a7;font-size:.9rem;line-height:1.5}
+details{border-top:1px solid #384963;margin-top:12px;padding-top:13px}
+summary{font-weight:700;cursor:pointer;padding:6px 0}
+ul{list-style:none;padding:0;margin:9px 0}li{border-top:1px solid #314159;padding:8px 0;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
+code{font-size:.88em;color:#f5d58b}footer{color:#9fb2cb;font-size:.85rem;padding:10px 0 30px}
+#status{font-size:.9rem;color:#b2c6e2}
+a{color:#ffe0a0}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="eyebrow">Gary Eats! / repository maintenance</div>
+<h1>Safe cleanup installer</h1>
+<p>A prepared GitHub cleanup, ready for your review. No access token, code editing or terminal required.</p>
+</header>
+<section class="card" aria-label="Cleanup overview">
+<div class="stats">
+<div class="metric"><b>19</b><span>files proposed for removal</span></div>
+<div class="metric"><b>20.8 MiB</b><span>removed from current file tree</span></div>
+</div>
+<p><strong>Removal:</strong> 18 retired installer/redirect pages and the rejected duplicate wilderness ZIP.</p>
+<p><strong>Preserved:</strong> live game, all referenced sprites, Fox, Gary, shops, bridge, current wilderness images, Food Catalogue, cutscenes, editors, source standards, tests, backups and Git history.</p>
+<div class="warning">Nothing is deleted until you merge the prepared pull request. Old direct installer links will stop working after merge and Pages deployment. This does not reduce historic Git storage or fix rejected game artwork.</div>
+<a class="btn" href="https://github.com/tryingafewnewthings/gary-runner/pull/13" target="_blank" rel="noopener noreferrer">Review &amp; apply cleanup on GitHub ↗</a>
+<a class="btn secondary" href="https://github.com/tryingafewnewthings/gary-runner/pull/13/files" target="_blank" rel="noopener noreferrer">Inspect exact file changes ↗</a>
+<p id="status" role="status">Before merging, check that GitHub's automated tests have passed.</p>
+</section>
+<section class="card">
+<h2>Exactly what this installer changes</h2>
+<p>One GitHub pull request removes these existing paths. It also adds a written audit; no existing source file is changed.</p>
+<details>
+<summary>Show all 19 deletion paths</summary>
+<ul><li>GaryEats_Wilderness_Asset_Pack_DRAFT01.zip</li><li>Gary_Eats_Cutscene_Studio_Installer.html</li><li>gary-cleanup-installer-v2.html</li><li>gary-decay-v3-repair-installer.html</li><li>gary-decay-v4-performance-installer.html</li><li>gary-eats-balance-safari-installer.html</li><li>gary-eats-difficulty-installer.html</li><li>gary-first-run-camera-stability-installer.html</li><li>gary-forgotten-road-decay-installer.html</li><li>gary-intro-border-fix-installer.html</li><li>gary-reference-quality-installer-v2.html</li><li>gary-reference-quality-installer.html</li><li>gary-repository-cleanup-installer.html</li><li>gary-road-transition-installer.html</li><li>gary-street-sequence-installer.html</li><li>gary-street-sequence-v2-installer.html</li><li>gary-visual-director-installer.html</li><li>gary-wilderness-bridge-installer.html</li><li>installer.html</li></ul>
+</details>
+<p><a href="https://github.com/tryingafewnewthings/gary-runner/blob/cleanup/superseded-pages-20261022/docs/maintenance/SAFE_REPOSITORY_CLEANUP_2026-10-22.md" target="_blank" rel="noopener noreferrer">Full audit, exclusions and rollback instructions ↗</a></p>
+</section>
+<section class="card">
+<h2>Install from Safari</h2>
+<p>Open the cleanup pull request above. Review the deleted filenames and wait for successful checks. If GitHub shows <strong>Merge pull request</strong>, select it and confirm. Once GitHub Pages refreshes, the retired files will no longer be served.</p>
+<p>If GitHub reports conflicts or failed checks, <strong>do not merge</strong>. No further action is required to keep the working game safe.</p>
+<a class="btn secondary" href="https://tryingafewnewthings.github.io/gary-runner/" target="_blank" rel="noopener noreferrer">Open the current game ↗</a>
+</section>
+<footer>Built for the main branch as a read-only installer launcher. Production files are not modified by viewing this page. Repository baseline: <code>b39af28</code>.</footer>
+</main>
+<script>
+'use strict';
+fetch('https://api.github.com/repos/tryingafewnewthings/gary-runner/pulls/13',{headers:{Accept:'application/vnd.github+json'},cache:'no-store'})
+ .then(r=>r.ok?r.json():null).then(pr=>{
+  if(!pr)return;
+  const s=document.getElementById('status');
+  if(pr.merged_at)s.textContent='This cleanup pull request has been merged. GitHub Pages may still need to deploy.';
+  else if(pr.state==='closed')s.textContent='This cleanup pull request was closed without merging; no deletion applied.';
+  else s.textContent='The cleanup pull request is open. Review the checks and exact diff before merging.';
+ }).catch(()=>{});
+</script>
+</body>
+</html>
