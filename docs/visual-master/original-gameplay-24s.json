@@ -1,6 +1,6 @@
 {
   "schema": "gary-eats-original-video-reference-v1",
-  "status": "SOURCE_MEDIA_NOT_YET_COMMITTED",
+  "status": "SOURCE_MEDIA_COMMITTED_VERIFIED",
   "source": "User-supplied original 24-second gameplay recording, 2026-10-23",
   "nativeCanvas": [
     360,
@@ -29,5 +29,5 @@
     "c31f260852b17dd03216a002ec7d94c3e77e5db668cb8eaff0cf3484da9a9682"
   ],
   "approval": "ORIGINAL_FIRST_BIOME_GAMEPLAY_POSITIVE_REFERENCE",
-  "caution": "This record alone is NOT image data; future generation must load actual source pixels. Do not claim the reference frames are committed until all 8 binary files are present and hash verified."
+  "caution": "All eight original PNGs imported and hash-verified; supply actual pixels to image generation, not only this manifest."
 }

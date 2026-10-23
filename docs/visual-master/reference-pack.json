@@ -4,6 +4,12 @@
   "purpose": "Consistent future-generation source anchors; no automatic art approval.",
   "primaryStyleEvidence": [
     {
+      "path": "docs/visual-master/original-gameplay-24s/",
+      "kind": "owner-supplied-original-first-biome-gameplay-frames",
+      "status": "VERIFIED_SOURCE_FRAMES",
+      "notes": "Eight 360x640 PNGs extracted from original 24-second video, hash-verified. Use as visual gold standard with original engine sprite pixels."
+    },
+    {
       "path": "high_street_sprites.webp",
       "kind": "original-shop-atlas",
       "status": "CURRENT_ENGINE_SOURCE",
@@ -31,8 +37,8 @@
   "neededForFullStyleLock": [
     {
       "asset": "Owner's original ~30-second daytime gameplay recording",
-      "status": "NOT_COMMITTED",
-      "notes": "Extract multiple real gameplay compositions at 360x640: early clean street, shops/props, pickups, Gary transition, day/night/rain as available. Do not pretend this is in repository."
+      "status": "SOURCE_FRAMES_COMMITTED_VERIFIED",
+      "notes": "Original 24-second gameplay reference supplied; eight native 360x640 frames extracted, hashed and registered."
     },
     {
       "asset": "Owner-signed-off Freestanding family overlay",
@@ -88,7 +94,7 @@
   "productionCautions": {
     "paintedBridge": "LIVE_BUT_VISUAL_UNAPPROVED; PR18 merged despite failed asset gate; NOT a style master",
     "wildernessDraft01": "USER_REJECTED_AS_ART",
-    "first30SecondsRecording": "NOT_COMMITTED",
+    "first30SecondsRecording": "24_SECONDS_EIGHT_FRAMES_VERIFIED",
     "raisedArchitecture": "PROVISIONAL_NEEDS_VISUAL_APPROVAL"
   }
 }
