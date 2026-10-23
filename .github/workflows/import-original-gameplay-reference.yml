@@ -1,0 +1,62 @@
+name: Import original Gary Eats gameplay reference
+on:
+  push:
+    paths:
+      - '.github/workflows/import-original-gameplay-reference.yml'
+      - 'GaryEats_24s_Visual_Reference.zip'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify-and-import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Extract and validate approved original gameplay reference
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,zipfile,pathlib,struct
+          root=pathlib.Path('.')
+          manifest_path=root/'docs/visual-master/original-gameplay-24s.json'
+          manifest=json.loads(manifest_path.read_text())
+          archive=root/'GaryEats_24s_Visual_Reference.zip'
+          digest=hashlib.sha256(archive.read_bytes()).hexdigest()
+          assert digest==manifest['zipSha256'], 'Reference ZIP checksum mismatch'
+          target=root/manifest['expectedLocation']
+          target.mkdir(parents=True,exist_ok=True)
+          with zipfile.ZipFile(archive) as z:
+              assert sorted(z.namelist())==sorted(manifest['frames']), 'Unexpected ZIP members'
+              for name,expected in zip(manifest['frames'],manifest['frameSha256']):
+                  data=z.read(name)
+                  assert hashlib.sha256(data).hexdigest()==expected, 'Frame SHA mismatch: '+name
+                  assert data[:8]==b'\x89PNG\r\n\x1a\n', 'Not PNG: '+name
+                  w,h=struct.unpack('>II',data[16:24])
+                  assert (w,h)==(360,640), 'Incorrect native dimensions: '+name
+                  (target/name).write_bytes(data)
+          manifest['status']='SOURCE_MEDIA_COMMITTED_VERIFIED'
+          manifest['caution']='All eight original PNGs imported and hash-verified; supply actual pixels to image generation, not only this manifest.'
+          manifest_path.write_text(json.dumps(manifest,indent=2)+'\n')
+          pack_path=root/'docs/visual-master/reference-pack.json'
+          pack=json.loads(pack_path.read_text())
+          pack['primaryStyleEvidence'].insert(0,{'path':'docs/visual-master/original-gameplay-24s/','kind':'owner-supplied-original-first-biome-gameplay-frames','status':'VERIFIED_SOURCE_FRAMES','notes':'Eight 360x640 PNGs extracted from original 24-second video, hash-verified. Use as visual gold standard with original engine sprite pixels.'})
+          for item in pack['neededForFullStyleLock']:
+              if 'gameplay recording' in item.get('asset',''):
+                  item['status']='SOURCE_FRAMES_COMMITTED_VERIFIED'
+                  item['notes']='Original 24-second gameplay reference supplied; eight native 360x640 frames extracted, hashed and registered.'
+          pack['productionCautions']['first30SecondsRecording']='24_SECONDS_EIGHT_FRAMES_VERIFIED'
+          pack_path.write_text(json.dumps(pack,indent=2)+'\n')
+          print('Verified eight original 360x640 reference frames')
+          PY
+      - name: Commit permanent reference frames
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/visual-master/original-gameplay-24s/ docs/visual-master/original-gameplay-24s.json docs/visual-master/reference-pack.json
+          if git diff --cached --quiet; then
+            echo 'Already imported'
+          else
+            git commit -m "Import eight verified original Gary Eats gameplay reference frames"
+            git push origin HEAD:main
+          fi
