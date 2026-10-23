@@ -1,0 +1,33 @@
+{
+  "schema": "gary-eats-original-video-reference-v1",
+  "status": "SOURCE_MEDIA_NOT_YET_COMMITTED",
+  "source": "User-supplied original 24-second gameplay recording, 2026-10-23",
+  "nativeCanvas": [
+    360,
+    640
+  ],
+  "frames": [
+    "frame_01.png",
+    "frame_02.png",
+    "frame_03.png",
+    "frame_04.png",
+    "frame_05.png",
+    "frame_06.png",
+    "frame_07.png",
+    "frame_08.png"
+  ],
+  "expectedLocation": "docs/visual-master/original-gameplay-24s/",
+  "zipSha256": "564a8992f5965b155913ae56f2a8d40afe913b85844052d71da9f8408a2e049f",
+  "frameSha256": [
+    "1a8238e15ee6f9bc7e9bd9d15e6da69e2510818c957770352c13c476096c8b6c",
+    "3f44e41871cb1a6a51ecb75dc4c08948c8fe9820368587b42bf01e4d066f3c70",
+    "f9d63536f656f5b9b913ef2824a734cc9282029d77d8a7ccf7218b741896f72e",
+    "41ee0358141ed682fee739d964451a5a7760452be25166d3762090bd933c0781",
+    "37c21729a8c22d30f7f9a41b78e277fddef15047fc2f6cba0e5601744610a320",
+    "46fb3fdb3e38b015ae1775346afe9f42e6fd358d9c2e61625428d5785e07f9f1",
+    "a13ecc1931afa5992919ee1e02a6ed4794486a2e06e643e87f9e8176e970852d",
+    "c31f260852b17dd03216a002ec7d94c3e77e5db668cb8eaff0cf3484da9a9682"
+  ],
+  "approval": "ORIGINAL_FIRST_BIOME_GAMEPLAY_POSITIVE_REFERENCE",
+  "caution": "This record alone is NOT image data; future generation must load actual source pixels. Do not claim the reference frames are committed until all 8 binary files are present and hash verified."
+}
