@@ -1,0 +1,64 @@
+name: Stage supplied bridge and animated river
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - GaryEats_Bridge_User_Install.zip
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  stage-bridge:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Verify and unpack supplied bridge installer
+        run: |
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          from pathlib import Path
+          import hashlib
+          src=Path('GaryEats_Bridge_User_Install.zip')
+          if not src.is_file(): raise SystemExit('Upload GaryEats_Bridge_User_Install.zip to the repository root first')
+          names={'install-bridge.py','gary-bridge-user.js','art/bridge/user/bridge-user-supplied.webp','tests/bridge-user.test.cjs','tests/bridge-user-capture.cjs'}
+          with ZipFile(src) as z:
+            if set(z.namelist())!=names: raise SystemExit('Unexpected installer contents')
+            if any(z.getinfo(n).file_size>250000 for n in names): raise SystemExit('Oversize file')
+            z.extractall('/tmp/gary-bridge-user-pack')
+          print('Verified installer:',hashlib.sha256(src.read_bytes()).hexdigest())
+          PY
+      - name: Install artwork and code in an isolated review branch
+        run: |
+          git switch -c bridge-user-art-${GITHUB_RUN_ID}
+          python3 -m pip install --user Pillow
+          python3 /tmp/gary-bridge-user-pack/install-bridge.py "$GITHUB_WORKSPACE"
+          node --check gary-bridge-user.js
+          node --check gary-difficulty-runtime.js
+          node --test tests/bridge-user.test.cjs
+      - name: Regression tests and native game screenshots
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          node --test --test-concurrency=1 tests/bridge.test.cjs tests/bridge-painted.test.cjs tests/bridge-user.test.cjs
+          node tests/bridge-user-capture.cjs
+      - name: Stage candidate for visual approval (never auto-merge)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html gary-difficulty-runtime.js gary-bridge-user.js art/bridge/user/bridge-user-supplied.webp tests/bridge-user.test.cjs tests/bridge-user-capture.cjs docs/bridge-user-review
+          git commit -m "Stage supplied bridge and independently animated river for native visual review"
+          git push origin HEAD
+          gh pr create --draft --base main --head "$(git branch --show-current)" --title "Review: supplied stone bridge and animated river" --body "Uses owner-supplied bridge image with alpha and fixed camera geometry. Animated river is cached and drawn independently on both sides. Old bridge is a safe fallback. Day/night/rain 360x640 real-engine screenshots in docs/bridge-user-review. Do not merge until visual approval and art-visual-ledger release gate are satisfied." || echo "PR creation unavailable; review pushed branch and create PR manually."
