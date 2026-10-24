@@ -2604,12 +2604,16 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
-    // Opaque world underpaint: wilderness entrance sprites have feathered alpha.
-    // Prevent transparent holes when the old street is skipped beneath the bridge.
-    if(wilderness.active()){ctx.fillStyle='#465348';ctx.fillRect(0,0,W,H);}
-    // At near>=500 the existing terrain provider covers all 640 rows opaquely.
-    // Avoid drawing (and lazily caching) the entire hidden street underneath it.
+    // The renderer must CLEAR every native frame, including debug frozen
+    // checkpoints where wilderness.update() has not been called. Previously
+    // bridgeCoversWorld skipped the street and left a ghost of earlier pixels.
+    // This also prevents the old opaque olive underpaint from leaking through.
     const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
+    if(wilderness.active()||bridgeCoversWorld){
+      ctx.fillStyle=bridge.visible()&&useUserBridge()?'#2e5360':'#465348';
+      ctx.fillRect(0,0,W,H);
+    }
+    // Preserve the original full-street skip/performance guard below this line.
     // Split only isolated street-ground previews, retaining normal Play's exact
     // draw sequence. Decals must sit beneath real shop/prop alpha silhouettes.
     const streetCandidateGround=bridgePreviewSession&&!bridge.visible()&&!wilderness.active()&&
@@ -2636,7 +2640,16 @@ function updateRain(dt, advancing) {
 
     wilderness.drawGround(ctx,view.distance,view.clock);
     if(bridge.visible()&&!wilderness.covers(view.distance)){
-      if(useUserBridge()){const n=bridge.nearAt(view.distance);userBridge.drawWater(ctx,n,view.clock);drawCandidate('under-water');userBridge.drawDeck(ctx,n);drawCandidate('deck');}
+      if(useUserBridge()){
+        const n=bridge.nearAt(view.distance);
+        userBridge.drawWater(ctx,n,view.clock);
+        drawCandidate('under-water');
+        // The native high-street cobble/road remains visible right up to the
+        // 84-unit stone sill. Both materials share the bridge's near anchor.
+        userBridge.drawStreetTail(ctx,n,{drawCobbles,drawPavements,drawRoad});
+        userBridge.drawDeck(ctx,n);
+        drawCandidate('deck');
+      }
       else paintedBridge?.drawUnder(ctx,bridge.nearAt(view.distance));
     }
     if(!streetCandidateGround)drawCandidate('ground');wilderness.drawDecor(ctx,view.distance,view.clock,false);drawCandidate('rear');
@@ -2793,6 +2806,10 @@ function updateRain(dt, advancing) {
         const n={approach:210,enter:560,middle:850,exit:1210}[position]??210;
         distance=scrollY=bridge.snapshot().anchor+n;
         bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+        // Align debug-only bridge views with real gameplay's wilderness origin.
+        // Without this, captures omitted the far bank and misleadingly
+        // preserved earlier water/bridge pixels when scrolling checkpoints.
+        wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:true});
         rememberPositions();prepareView(1);render();return true;
       },
       artwork:(pack,images={})=>{
@@ -2928,6 +2945,10 @@ function updateRain(dt, advancing) {
           const n=120+f*1250;
           distance=scrollY=bridge.snapshot().anchor+n;
           bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+          // Frozen viewer follows the same far-bank start as live Play.
+          // Existing wilderness imagery remains user-rejected, never a style
+          // reference; showing it in QA is evidence of remaining issues.
+          wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:true});
         }else{
           const origin=bridge.snapshot().anchor+770;
           const progress=idx===3?f*3700:3700+f*9000;
