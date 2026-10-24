@@ -41,7 +41,7 @@ const types={'.html':'text/html','.js':'text/javascript','.json':'application/js
   await page.locator('#hud').check();
   assert.equal(await page.evaluate(()=>document.querySelector('#game').contentWindow.GaryWorldExplorer.snapshot().showHud),true);
   await page.locator('#distance').evaluate(el=>{el.value='14500';el.dispatchEvent(new Event('input',{bubbles:true}));});
-  assert.equal(await page.evaluate(()=>document.querySelector('#game').contentWindow.GaryWorldExplorer.snapshot().distance),14500);
+  await page.waitForFunction(()=>document.querySelector('#game').contentWindow.GaryWorldExplorer.snapshot().distance===14500,null,{timeout:10000});
   const image=await page.evaluate(()=>{
    const src=document.querySelector('#game').contentDocument.querySelector('#c');
    const c=document.createElement('canvas');c.width=360;c.height=640;c.getContext('2d').drawImage(src,0,0,360,640);
