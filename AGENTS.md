@@ -1,5 +1,7 @@
 # Gary Eats! — Mandatory AI project/asset instructions
 
+**24 October owner directive — no wilderness visual references:** ALL existing `art/wilderness/**` assets are explicitly USER-REJECTED and must not be sampled, imitated, repurposed or treated as reference art for new assets. Follow original high-street first-biome pixels and the owner-accepted bridge mock-up as the bridge visual target; never confuse a target illustration with registered runtime sprite files. See GARY_VISUAL_PRODUCTION.md.
+
 **Operational rule (22 October late audit):** `GARY_VISUAL_PRODUCTION.md` is the single asset-creation procedure; `STYLE.txt` is the art contract and `ASSET_GRID_PROMPT.txt` the review checklist. Do not create another editor or send routine art tasks to Codex. Actually provide original source pixels to image editing/generation where supported; merely reading a GitHub image is NOT image conditioning. Otherwise label text-only outputs UNVERIFIED. PR #18's painted bridge was merged/deployed with a failed Asset Quality Gate and is NOT a positive style master. Never bypass a red release check.
 
 ## AUTOMATIC REFERENCE-FIRST DELIVERY — IMMEDIATE PROJECT STANDARD (22 October 2026)
