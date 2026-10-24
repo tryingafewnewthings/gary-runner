@@ -2606,7 +2606,12 @@ function updateRain(dt, advancing) {
     crashScene.camera();
     // Opaque world underpaint: wilderness entrance sprites have feathered alpha.
     // Prevent transparent holes when the old street is skipped beneath the bridge.
-    if(wilderness.active()){ctx.fillStyle='#465348';ctx.fillRect(0,0,W,H);}
+    if(wilderness.active()){
+      // Do not expose flat olive wilderness underpaint beneath the accepted
+      // bridge. This is a neutral river-colour fallback, not a new art master.
+      ctx.fillStyle=bridge.visible()&&useUserBridge()?'#2e5360':'#465348';
+      ctx.fillRect(0,0,W,H);
+    }
     // At near>=500 the existing terrain provider covers all 640 rows opaquely.
     // Avoid drawing (and lazily caching) the entire hidden street underneath it.
     const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
@@ -2636,7 +2641,16 @@ function updateRain(dt, advancing) {
 
     wilderness.drawGround(ctx,view.distance,view.clock);
     if(bridge.visible()&&!wilderness.covers(view.distance)){
-      if(useUserBridge()){const n=bridge.nearAt(view.distance);userBridge.drawWater(ctx,n,view.clock);drawCandidate('under-water');userBridge.drawDeck(ctx,n);drawCandidate('deck');}
+      if(useUserBridge()){
+        const n=bridge.nearAt(view.distance);
+        userBridge.drawWater(ctx,n,view.clock);
+        drawCandidate('under-water');
+        // The native high-street cobble/road remains visible right up to the
+        // 84-unit stone sill. Both materials share the bridge's near anchor.
+        userBridge.drawStreetTail(ctx,n,{drawCobbles,drawPavements,drawRoad});
+        userBridge.drawDeck(ctx,n);
+        drawCandidate('deck');
+      }
       else paintedBridge?.drawUnder(ctx,bridge.nearAt(view.distance));
     }
     if(!streetCandidateGround)drawCandidate('ground');wilderness.drawDecor(ctx,view.distance,view.clock,false);drawCandidate('rear');
