@@ -38,3 +38,8 @@ Requires jsdom and @napi-rs/canvas. Test runs clear hazards to exercise later na
 
 ## Installation and rollback
 Use gary-decay-v4-performance-installer.html. It validates all affected file SHAs against the audited installed V3 baseline, then publishes one atomic commit. It refuses to overwrite newer changes and checks the branch head again before promotion. The previous V3 installer is retired in the same commit. No art sources, published shop JSON, actor scale, collision, score or controls change. Revert the V4 installation commit to recover V3, preserving independent later changes.
+
+
+## Subtle asphalt wear and tiny rain puddles (24 October 2026; candidate)
+
+The 30-second settled-night depth history and all original roadside-cobble art remain intact. Two pre-baked 150x512 transparent road atlases add faint cracks, small repair marks, fine grain, lightly chipped lane paint and still puddles (about 8–17 by 2–5 logical pixels each). Puddles are limited to road edges and emerge with significant rainfall (rainMix above 0.22). World-distance anchoring means visible patches do not pop into being under Gary; the existing asphalt and white lane markers remain recognizable. No changes to lane geometry, collision, bridge art, events, scoring or player controls. Render the new road pass after existing lane markings and before narrow edge vegetation. Both atlases build and warm before Play with no new image files or draw-time canvas allocation. New QA verifies low contrast, placement, wetness threshold, fixed-world scrolling and bounded blits. Physical iPhone and artistic sign-off remain unverified.

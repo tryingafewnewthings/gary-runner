@@ -1826,6 +1826,7 @@ let shutterMix = 0;
   function drawRoad(){
     ctx.fillStyle='#3a3f47';ctx.fillRect(ROAD_LEFT,0,ROAD_WIDTH,H);
     paintLaneMarkings('#c5c8cc');
+    window.GaryRoadEvolution?.drawRoadSurface(ctx, {height:H, distance:view.distance, rain:rainMix});
     if (window.GaryRoadEvolution) {
       window.GaryRoadEvolution.drawRoad(ctx, {left: ROAD_LEFT, width: ROAD_WIDTH, height: H, scrollY: view.scrollY, distance: view.distance});
     }
