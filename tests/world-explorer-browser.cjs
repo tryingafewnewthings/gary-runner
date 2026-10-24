@@ -28,7 +28,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.json':'application/jso
     segment:window.GaryWorldExplorer.snapshot().segment,
     frozen:window.GaryWorldExplorer.snapshot().frozen
    }));
-   assert.ok(snap.width>=360&&snap.height>=640,'native engine canvas is not ready');
+   assert.ok(snap.width>=200&&snap.height>=350&&Math.abs(snap.width/snap.height-9/16)<.012,'responsive native 360x640 camera aspect is incorrect');
    assert.ok(snap.data>0,'blank scene at '+p);
    assert.equal(snap.frozen,true,'simulation must be frozen');
   }
