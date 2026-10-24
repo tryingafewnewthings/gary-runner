@@ -170,7 +170,7 @@ function main(argv=process.argv.slice(2)){
  if(argv.includes('--all'))images=Object.keys(m.assets);
  else{
   const changes=gitFiles(argv);
-  images=changes.filter(f=>/\.(png|webp|jpe?g)$/i.test(f));
+  // Raw owner uploads are unregistered inputs, never production sprites.\n  // They are validated by the staging workflow before any asset is registered.\n  images=changes.filter(f=>/\.(png|webp|jpe?g)$/i.test(f)&&!/^art\/bridge\/uploads\//.test(f));
   if(changes.includes('asset-quality-manifest.json'))images=[...new Set([...images,...Object.keys(m.assets)])];
  }
  const out=checkFiles(root,images,m);
