@@ -1,3 +1,9 @@
+## 24 October 2026 — owner-approved bridge and wilderness exclusion
+- The owner accepted the latest stone-bridge entrance/riverbank composition in conversation as the visual TARGET, not proof that that flattened mock-up has been registered as individual game sprites.
+- **ALL existing wilderness artwork** (`art/wilderness/**`, including earlier DRAFT01, vegetation, ground and rocks) is USER REJECTED and MUST NEVER be used as a visual reference, style source, palette source, texture sample or automatic fallback when producing new artwork.
+- For bridge terrain transitions, reuse ONLY current original high-street cobble pixels and owner-approved bridge visual guidance. Keep asphalt to the short stone sill; no stretched cobble ramp, full-width green bank rectangle or texture borrowed from rejected wilderness sources.
+- Resolve street/bridge terrain seams in one common bridge-world coordinate system and verify native 360×640 daylight/night/rain frames through the actual renderer; do not report screenshot capture as artistic or physical-device approval.
+
 # Gary Eats! — Visual Asset Production Standard
 **Version:** 22 October 2026 • **Status:** enforceable producer workflow; NOT a claim that generative models can reproduce exact art on every attempt.
 
