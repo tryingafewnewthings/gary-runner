@@ -9,7 +9,8 @@ const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_pro
 const root=path.resolve(__dirname,'..');
 const parse=dir=>JSON.parse(fs.readFileSync(path.join(dir,'art-visual-ledger.json'),'utf8'));
 const isNewArt=f=>/\.(?:png|webp)$/i.test(f)&&! /^(?:docs|tests|tools|test-results|\.github)\//.test(f)&&!isCandidate(f)&&!isRawBridgeInput(f);
-const isRawBridgeInput=f=>/^art\/bridge\/uploads\/[^/]+\.(?:png|webp)$/i.test(f);\nconst isCandidate=f=>/^art\/candidates\/.+\.(?:png|webp)$/i.test(f);
+const isRawBridgeInput=f=>/^art\/bridge\/uploads\/[^/]+\.(?:png|webp)$/i.test(f);
+const isCandidate=f=>/^art\/candidates\/.+\.(?:png|webp)$/i.test(f);
 const within=(dir,file)=>!file.includes('..')&&!path.isAbsolute(file)&&
  fs.existsSync(path.join(dir,file));
 function imageSize(dir,file){
