@@ -1,6 +1,6 @@
 /* Gary Eats! supplied bridge with independent animated river. Candidate only until approved. */
 (function(root){'use strict';
-const SPEC=Object.freeze({source:'art/bridge/user/bridge-user-supplied.webp?v=20261024',sourceWidth:174,sourceHeight:620,cacheHeight:1000,far:180,end:800,deck:[138,222],road:[105,255],x:93,width:174,waterLeft:[0,101],waterRight:[259,360],tileHeight:256});
+const SPEC=Object.freeze({source:'art/candidates/bridge/bridge-user-supplied.webp?v=20261024',sourceWidth:174,sourceHeight:620,cacheHeight:1000,far:180,end:800,deck:[138,222],road:[105,255],x:93,width:174,waterLeft:[0,101],waterRight:[259,360],tileHeight:256});
 function create({makeCanvas,ImageType,environment}={}){
  if(typeof makeCanvas!=='function'||typeof ImageType!=='function')throw Error('Bridge dependencies unavailable');
  const image=new ImageType();let loaded=false,reason='pending';
