@@ -37,7 +37,7 @@ function init(){
   const small=document.createElement('span');small.textContent='Jump to checkpoint';b.append(small);
   b.addEventListener('click',()=>{stop();paint(seg.from+20);});$('checkpoints').append(b);
  }
- for(const id of ['position','previous','next','tour','shot','sheet'])$(id).disabled=false;
+ for(const id of ['position','previous','next','tour','shot','sheet','seam-composite','seam-top-edge','seam-bottom-edge','seam-manifest'])$(id).disabled=false;
  $('loading').hidden=true;paint(0);$('status').textContent='Ready. Drag the timeline to inspect the game.';
  return true;
 }
@@ -95,5 +95,43 @@ $('sheet').addEventListener('click',async()=>{
  }catch(e){$('status').textContent='Contact sheet error: '+e.message;}
  finally{paint(previous,previousTime);busy=false;button.disabled=false;}
 });
+// Cache one immutable capture so all four downloads share pixels and timestamp.
+let seamCache=null;
+function seamExport(){
+ const heights=['top','gap','bottom'].map(key=>Number($('seam-'+key).value));
+ if(heights.some(n=>!Number.isInteger(n)||n<1||n>640)||heights[0]+heights[2]>640)
+   throw Error('Use whole heights from 1–640; top + bottom must not exceed 640.');
+ const [top,gap,bottom]=heights,hidden={hideGary:$('seam-gary').checked,hideHud:$('seam-hud').checked,hideRain:$('seam-rain').checked};
+ const mode=$('seam-mode').value;
+ const key=JSON.stringify([api.snapshot(),clock,mode,heights,hidden]);
+ if(seamCache?.key===key)return seamCache;
+ const capture=api.captureFrame(hidden);
+ const make=(height)=>{const c=document.createElement('canvas');c.width=360;c.height=height;return c;};
+ const topEdge=make(top),bottomEdge=make(bottom),composite=make(top+gap+bottom);
+ topEdge.getContext('2d').drawImage(capture.canvas,0,0,360,top,0,0,360,top);
+ bottomEdge.getContext('2d').drawImage(capture.canvas,0,640-bottom,360,bottom,0,0,360,bottom);
+ const ctx=composite.getContext('2d');ctx.drawImage(topEdge,0,0);ctx.drawImage(bottomEdge,0,top+gap);
+ const manifest={version:1,mode,timestamp:new Date().toISOString(),...capture.metadata,
+   logicalFrame:{width:360,height:640},topCropHeight:top,gapHeight:gap,bottomCropHeight:bottom,
+   sourceCrops:{top:{x:0,y:0,width:360,height:top},bottom:{x:0,y:640-bottom,width:360,height:bottom}},
+   composite:{width:360,height:top+gap+bottom,gapY:top,bottomY:top+gap},
+   referencePolicy:'Exact gameplay geometry evidence only. All existing wilderness artwork is user-rejected and must not be used as a positive art reference.'};
+ seamCache={key,composite,'top-edge':topEdge,'bottom-edge':bottomEdge,manifest};return seamCache;
+}
+for(const kind of ['composite','top-edge','bottom-edge','manifest']){
+ $('seam-'+kind).addEventListener('click',()=>{
+  if(!api||busy){$('seam-status').textContent='Wait for the contact sheet to finish.';return;}
+  stop();
+  try{
+   const result=seamExport();
+   const blob=kind==='manifest'?new Blob([JSON.stringify(result.manifest,null,2)],{type:'application/json'}):null;
+   const url=blob?URL.createObjectURL(blob):result[kind].toDataURL('image/png');
+   const a=document.createElement('a');a.href=url;a.download='seam-template-'+kind+(blob?'.json':'.png');
+   document.body.append(a);a.click();a.remove();
+   if(blob)setTimeout(()=>URL.revokeObjectURL(url),60000);
+   $('seam-status').textContent='Prepared '+a.download+'. Safari may open it for sharing.';
+  }catch(e){$('seam-status').textContent='Export error: '+e.message;}
+ });
+}
 boot();
 })();

@@ -14,7 +14,7 @@
   const {FixedStepClock, ObjectPool, sweptContact, lerp} = window.GaryCore;
   const bridgePreviewSession=new URLSearchParams(location.search).get('debug')==='1'&&new URLSearchParams(location.search).get('bridgepreview')==='1';
   const worldExplorerSession=bridgePreviewSession&&new URLSearchParams(location.search).get('worldexplorer')==='1';
-  let explorerHideGary=false,explorerHideHud=false;
+  let explorerHideGary=false,explorerHideHud=false,explorerHideRain=false;
   const bestStorageKey=bridgePreviewSession?'gary-bridge-preview-best':'garyBest';
   const simulation = new FixedStepClock(60, 6);
   const director = window.GaryDifficulty.create(DIFFICULTY, BIOMES, ITEMS);
@@ -2634,7 +2634,7 @@ function updateRain(dt, advancing) {
       drawKeepersAboveWindowLighting();
       drawShopShutters();
       if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
-      drawRainSplashes();
+      if(!explorerHideRain)drawRainSplashes();
     }
     if(bridge.visible()&&!wilderness.covers(view.distance)&&!useUserBridge()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);paintedBridge?.drawLower(ctx,n);drawCandidate('under-water');bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);paintedBridge?.drawDeck(ctx,n);drawCandidate('deck');}
 
@@ -2675,7 +2675,7 @@ function updateRain(dt, advancing) {
     wilderness.drawDecor(ctx,view.distance,view.clock,true);
     if(bridge.visible()&&!wilderness.covers(view.distance)){const n=bridge.nearAt(view.distance);if(useUserBridge())userBridge.drawFront(ctx,n);else{bridgePaint.drawForeground(ctx,n);paintedBridge?.drawFront(ctx,n);}}
     drawCandidate('front');
-    drawRainStreaks();
+    if(!explorerHideRain)drawRainStreaks();
     ctx.restore();drawVignette();
     if (nightOn) drawNightVignette();
 
@@ -2977,6 +2977,26 @@ function updateRain(dt, advancing) {
         layers:({gary,hud}={})=>{if(typeof gary==='boolean')explorerHideGary=!gary;if(typeof hud==='boolean')explorerHideHud=!hud;return seekExplorer(position);},
         time:(seconds)=>{if(!Number.isFinite(seconds))throw Error('Invalid animation time');animationTime=clamp(seconds,0,86400);return seekExplorer(position);},
         snapshot:()=>({position,segment:segments[selected]?.key||'loading',distance,nightMix,rainMix,bridge:bridge.snapshot(),wilderness:wilderness.snapshot(),frozen:bridgePreviewFrozen}),
+        captureFrame:({hideGary=true,hideHud=true,hideRain=true}={})=>{
+          if(!startupReady||!bridgePreviewFrozen)throw Error('Wait for the frozen preview');
+          const previous=[cv.width,cv.height,K,explorerHideGary,explorerHideHud,explorerHideRain];
+          const output=document.createElement('canvas');output.width=W;output.height=H;
+          try{
+            cv.width=W;cv.height=H;K=1;
+            explorerHideGary=!!hideGary;explorerHideHud=!!hideHud;explorerHideRain=!!hideRain;
+            render();output.getContext('2d').drawImage(cv,0,0);
+            const b=bridge.snapshot(),spec=window.GaryUserBridge.SPEC;
+            return {canvas:output,metadata:{position,segment:segments[selected]?.key,distance,scrollY,
+              animationTime,lightingMode:visualMode,weather:{nightMix,rainMix},
+              roadBounds:{left:ROAD_LEFT,right:ROAD_RIGHT,top:0,bottom:H},
+              bridgeBounds:b.phase==='dormant'?null:{left:spec.deck[0],right:spec.deck[1],
+                top:b.near-spec.end+spec.far,bottom:b.near,phase:b.phase,anchor:b.anchor},
+              hidden:{gary:!!hideGary,hud:!!hideHud,rain:!!hideRain}}};
+          }finally{
+            [cv.width,cv.height,K,explorerHideGary,explorerHideHud,explorerHideRain]=previous;
+            render();
+          }
+        },
         capture:()=>cv.toDataURL('image/png')
       });
     }
