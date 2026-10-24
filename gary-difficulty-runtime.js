@@ -2974,7 +2974,7 @@ function updateRain(dt, advancing) {
           gary:explorerShowGary,hud:explorerShowHud,clock:explorerClock,
           state,distance,bridge:bridge.snapshot(),wilderness:wilderness.snapshot(),
           note:'Visual inspection only; narrative triggers are not simulated'}),
-        capture:()=>cv.toDataURL('image/png')
+        capture:()=>{const shot=document.createElement('canvas');shot.width=W;shot.height=H;shot.getContext('2d').drawImage(cv,0,0,W,H);return shot.toDataURL('image/png');}
       });
     }
     window.GaryRuntimeStats=Object.freeze({snapshot:()=>({state,distance,lane,target,
