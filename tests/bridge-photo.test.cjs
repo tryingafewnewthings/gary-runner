@@ -23,3 +23,22 @@ test('artwork exists and has correct native alpha and dimensions',async()=>{
  assert.equal(ctx.getImageData(0,100,1,1).data[3],0);
  assert.ok(ctx.getImageData(87,300,1,1).data[3]>230);
 });
+
+test('river crosses the full canvas, meets textured banks and has no rectangular cutoff',()=>{
+ class FakeImage{naturalWidth=174;naturalHeight=620;set src(v){this.onload?.();}}
+ const bridge=create({makeCanvas:()=>createCanvas(1,1),ImageType:FakeImage});
+ const c=createCanvas(360,640),ctx=c.getContext('2d');
+ // Bridge image spans y=-80..540, so the lower shoreline must cross near y=540.
+ assert.equal(bridge.drawWater(ctx,540,1),true);
+ const pixel=(x,y)=>Array.from(ctx.getImageData(x,y,1,1).data);
+ assert.ok(pixel(25,300)[3]>200,'water on left');
+ assert.ok(pixel(330,300)[3]>200,'water on right');
+ assert.ok(pixel(25,560)[3]>200,'natural bank after river');
+ assert.ok(pixel(330,560)[3]>200,'natural bank after river');
+ assert.equal(pixel(25,638)[3],0,'bank ends and underlying world resumes');
+});
+test('bridge approach and river span retain fixed world registration',()=>{
+ assert.equal(SPEC.end-SPEC.far,SPEC.sourceHeight);
+ assert.equal(SPEC.approach,150);
+ assert.deepEqual(SPEC.road,[105,255]);
+});
