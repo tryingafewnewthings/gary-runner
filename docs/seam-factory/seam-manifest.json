@@ -1,0 +1,263 @@
+{
+  "schema": "gary-seam-manifest-v1",
+  "version": 3,
+  "mode": "bridge-entrance",
+  "transition": {
+    "defaults": {
+      "top": 96,
+      "gap": 64,
+      "bottom": 96
+    },
+    "anchor": {
+      "type": "world-boundary",
+      "x": 0,
+      "pass": "deck",
+      "occlusion": "After bridge deck, before actors and foreground masonry/rope barriers; no collisions."
+    },
+    "forbidden": [
+      "art/wilderness/**"
+    ],
+    "requirements": [
+      "Original first-biome source pixels",
+      "Preserve supplied bridge; generated candidate needs separate visual approval"
+    ],
+    "id": "bridge-entrance",
+    "name": "High street → Bridge",
+    "sourceBiome": "high-street",
+    "destinationBiome": "bridge",
+    "resolver": {
+      "kind": "bridge",
+      "lengthFactor": 0
+    },
+    "sourceRegistration": "gary-difficulty-data.js:WORLD",
+    "destinationRegistration": "gary-bridge-user.js:SPEC",
+    "references": [
+      "high_street_sprites.webp",
+      "IMG_7141.webp",
+      "IMG_7142.webp",
+      "IMG_7143.webp",
+      "IMG_7144.webp",
+      "IMG_7145.webp",
+      "IMG_7146.webp",
+      "IMG_7147.webp",
+      "IMG_7148.webp",
+      "art/candidates/bridge/bridge-user-supplied.webp"
+    ],
+    "approval": {
+      "status": "reference-context",
+      "reason": "Original street and supplied bridge are context, not approval of new art."
+    }
+  },
+  "repository": {
+    "url": "https://github.com/tryingafewnewthings/gary-runner",
+    "sourceRevision": "0690412d6b945613852c0043784861aa101f988f",
+    "fingerprint": "9d96f72cf81088b1fcecf1781bade0bdac0960ead836de66918a3e0777ac23c3",
+    "files": {
+      "gary-difficulty-runtime.js": "41038bccd01f2b0c8a558161d7b70918efce832bf536e2c1a1ec46d4f8c7ac7e",
+      "gary-seam-registry.json": "fc21620c0d584b0146c9da0c230ab30c836b40793eda35b0366cd2c748a37c7e",
+      "gary-seam-factory.js": "2ce4b70d4518120219559ce2ae51a68cb3fd66395dee19a3327d21e4d681f620",
+      "gary-world-explorer.js": "42e4144a2468ce000a26e610048f8bb5fcf9dcccdbdd220a6a9dcbbe1c5fe5ba",
+      "gary-bridge-user.js": "cbc26cca4e26e638dd22d97c1347482ef936211beec8c139da6882a662c44ff0",
+      "gary-difficulty-data.js": "988d65f747496d10039bc96af4723ee6539796852d704afb4248fcb0131ff73b"
+    },
+    "images": {
+      "IMG_7141.webp": {
+        "sha256": "3a5b5691e014c3b6ff26f816f44ef2eeb9d5068a41f977c2a2e5e056f3867379",
+        "width": 640,
+        "height": 640
+      },
+      "IMG_7142.webp": {
+        "sha256": "c7d325f45813ba1ff4d34207f90003187eab7250d6dcfe589e0bd899940899d2",
+        "width": 640,
+        "height": 640
+      },
+      "IMG_7143.webp": {
+        "sha256": "87355190a8b90781441f6b50045a8563642d2ced70ac437019d98d0fc6c327b5",
+        "width": 640,
+        "height": 640
+      },
+      "IMG_7144.webp": {
+        "sha256": "3bd2c6aab0bdb9b039cd41e8e232d72c6a823b6021830e6f36a00c350808f528",
+        "width": 640,
+        "height": 640
+      },
+      "IMG_7145.webp": {
+        "sha256": "2c03a41dc712e26a4ceb6ababd80d4a45d7f26c9aa6f38f48cc56f582fe2bee5",
+        "width": 640,
+        "height": 640
+      },
+      "IMG_7146.webp": {
+        "sha256": "71b44a5f54e34f97aa04eddb682e6843794c614f839680d90c9c4eb0ea7b7bb7",
+        "width": 640,
+        "height": 640
+      },
+      "IMG_7147.webp": {
+        "sha256": "3455a46766e290e8c84199c1772f49858aa89e1e061310e13b43d76ab32bfe31",
+        "width": 640,
+        "height": 640
+      },
+      "IMG_7148.webp": {
+        "sha256": "e2df1e5859e7197cad64673b2a6e3c249b671cb510128570af5d137591d56100",
+        "width": 640,
+        "height": 640
+      },
+      "art/candidates/bridge/bridge-user-supplied.webp": {
+        "sha256": "ed1c151000bb2d036b35fe9c98d10872d3488739dc3933a72ec4ad7f24d5a4c6",
+        "width": 174,
+        "height": 620
+      },
+      "high_street_sprites.webp": {
+        "sha256": "a3d6dac6620cd15822c7ebe64145a3f2e353876c5a840ab1cfd13a0ec50e7f65",
+        "width": 2912,
+        "height": 2688
+      }
+    }
+  },
+  "worldBoundary": {
+    "world": 20180,
+    "screenY": 320,
+    "bridgeAnchor": 20180
+  },
+  "registration": {
+    "bridge": {
+      "source": "art/candidates/bridge/bridge-user-supplied.webp?v=20261024",
+      "sourceWidth": 174,
+      "sourceHeight": 620,
+      "far": 180,
+      "end": 800,
+      "deck": [
+        138,
+        222
+      ],
+      "road": [
+        105,
+        255
+      ],
+      "x": 93,
+      "width": 174,
+      "waterLeft": [
+        0,
+        101
+      ],
+      "waterRight": [
+        259,
+        360
+      ],
+      "tileHeight": 256,
+      "threshold": 26,
+      "wingLength": 52
+    },
+    "bridgeReady": true,
+    "road": {
+      "left": 105,
+      "right": 255
+    },
+    "width": 360,
+    "height": 640
+  },
+  "sourceGeometry": {
+    "left": 105,
+    "right": 255
+  },
+  "destinationGeometry": {
+    "deck": [
+      138,
+      222
+    ],
+    "length": 620
+  },
+  "originalReferencePack": "docs/visual-master/reference-pack.json",
+  "originalReferences": [
+    "high_street_sprites.webp",
+    "IMG_7141.webp",
+    "IMG_7142.webp",
+    "IMG_7143.webp",
+    "IMG_7144.webp",
+    "IMG_7145.webp",
+    "IMG_7146.webp",
+    "IMG_7147.webp",
+    "IMG_7148.webp",
+    "art/candidates/bridge/bridge-user-supplied.webp"
+  ],
+  "referenceApproval": {
+    "status": "REFERENCE_CONTEXT",
+    "reason": "Original street and supplied bridge are context, not approval of new art."
+  },
+  "exportDimensions": {
+    "width": 360,
+    "height": 256
+  },
+  "transparentMask": {
+    "x": 0,
+    "y": 96,
+    "width": 360,
+    "height": 64
+  },
+  "assetRegistration": {
+    "worldTop": 20308,
+    "x": 0,
+    "width": 360,
+    "height": 256,
+    "pass": "deck",
+    "scale": 1
+  },
+  "occlusion": "After bridge deck, before actors and foreground masonry/rope barriers; no collisions.",
+  "timestamp": "2026-10-24T20:49:12.655Z",
+  "position": 400,
+  "segment": "bridge",
+  "distance": 20500,
+  "scrollY": 20500,
+  "animationTime": 0,
+  "lightingMode": "day",
+  "weather": {
+    "nightMix": 0,
+    "rainMix": 0
+  },
+  "roadBounds": {
+    "left": 105,
+    "right": 255,
+    "top": 0,
+    "bottom": 640
+  },
+  "bridgeBounds": {
+    "left": 138,
+    "right": 222,
+    "top": -300,
+    "bottom": 320,
+    "phase": "approach",
+    "anchor": 20180
+  },
+  "hidden": {
+    "gary": true,
+    "hud": true,
+    "rain": true
+  },
+  "logicalFrame": {
+    "width": 360,
+    "height": 640
+  },
+  "topCropHeight": 96,
+  "gapHeight": 64,
+  "bottomCropHeight": 96,
+  "sourceCrops": {
+    "top": {
+      "x": 0,
+      "y": 192,
+      "width": 360,
+      "height": 96
+    },
+    "bottom": {
+      "x": 0,
+      "y": 352,
+      "width": 360,
+      "height": 96
+    }
+  },
+  "composite": {
+    "width": 360,
+    "height": 256,
+    "gapY": 96,
+    "bottomY": 160
+  },
+  "referencePolicy": "Exact gameplay geometry evidence only. All existing wilderness artwork is user-rejected and must not be used as a positive art reference."
+}

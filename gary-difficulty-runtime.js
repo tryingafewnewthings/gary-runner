@@ -2921,7 +2921,7 @@ function updateRain(dt, advancing) {
         {key:'wilderness-entry',label:'Wilderness · transition',scene:'wilderness-reveal',from:600,to:799},
         {key:'wilderness-deep',label:'Wilderness · deeper path',scene:'wilderness-dense',from:800,to:1000}
       ]);
-      let selected=-1,position=0,visualMode='natural',animationTime=0;
+      let selected=-1,position=0,visualMode='natural',animationTime=0,registeredNear=null,registeredWorld=null;
       const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
       function seekExplorer(value){
         if(!startupReady)return false;
@@ -2942,7 +2942,7 @@ function updateRain(dt, advancing) {
           rainMix=idx===1?(.2+.8*f):0;
           shutterMix=idx===1?(.35+.65*f):0;
         }else if(idx===2){
-          const n=120+f*1250;
+          const n=registeredNear??(120+f*1250);
           distance=scrollY=bridge.snapshot().anchor+n;
           bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
           // Frozen viewer follows the same far-bank start as live Play.
@@ -2958,6 +2958,10 @@ function updateRain(dt, advancing) {
           wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:false});
           nightOn=true;nightMix=1-.86*wilderness.warmth();rainMix=wilderness.weather();shutterMix=1;
         }
+        if(registeredWorld!==null){distance=scrollY=registeredWorld;
+          if(bridge.visible())bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+          wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:true});
+        }
         if(visualMode!=='natural'){
           nightOn=visualMode!=='day';nightMix=nightOn?1:0;
           rainMix=visualMode==='rain'?1:0;shutterMix=nightOn?1:0;
@@ -2972,17 +2976,37 @@ function updateRain(dt, advancing) {
       window.GaryWorldExplorer=Object.freeze({
         ready:()=>startupReady&&!!window.GaryAssetPreview?.ready(),
         segments,
-        seek:(value,seconds)=>{if(Number.isFinite(seconds))animationTime=clamp(seconds,0,86400);return seekExplorer(value);},
+        seek:(value,seconds)=>{registeredNear=null;registeredWorld=null;if(Number.isFinite(seconds))animationTime=clamp(seconds,0,86400);return seekExplorer(value);},
         mode:(mode)=>{if(!['natural','day','night','rain'].includes(mode))throw Error('Invalid lighting');visualMode=mode;return seekExplorer(position);},
         layers:({gary,hud}={})=>{if(typeof gary==='boolean')explorerHideGary=!gary;if(typeof hud==='boolean')explorerHideHud=!hud;return seekExplorer(position);},
         time:(seconds)=>{if(!Number.isFinite(seconds))throw Error('Invalid animation time');animationTime=clamp(seconds,0,86400);return seekExplorer(position);},
         snapshot:()=>({position,segment:segments[selected]?.key||'loading',distance,nightMix,rainMix,bridge:bridge.snapshot(),wilderness:wilderness.snapshot(),frozen:bridgePreviewFrozen}),
-        captureFrame:({hideGary=true,hideHud=true,hideRain=true}={})=>{
+        alignSeam:(resolver,screenY=H/2)=>{
+          if(!startupReady||!Number.isFinite(screenY))throw Error('Renderer not ready');
+          const spec=window.GaryUserBridge.SPEC;
+          registeredWorld=null;registeredNear=null;
+          if(resolver?.kind==='world'){
+            const segment=segments.find(s=>s.scene===resolver.scene);
+            if(!segment||!Number.isFinite(resolver.world))throw Error('Unregistered world scene or boundary');
+            registeredWorld=resolver.world+screenY;selected=-1;seekExplorer(segment.from);
+            return {world:resolver.world,screenY,bridgeAnchor:bridge.snapshot().anchor};
+          }
+          if(resolver?.kind!=='bridge'||!Number.isFinite(resolver.lengthFactor))throw Error('Unsupported boundary resolver');
+          registeredNear=screenY+(spec.end-spec.far)*resolver.lengthFactor;
+          selected=-1;seekExplorer(segments.find(s=>s.key==='bridge').from);
+          return {world:bridge.snapshot().anchor+(spec.end-spec.far)*resolver.lengthFactor,screenY,
+            bridgeAnchor:bridge.snapshot().anchor,length:spec.end-spec.far};
+        },
+        registration:()=>({bridge:window.GaryUserBridge.SPEC,bridgeReady:!!userBridge?.ready(),
+          road:{left:ROAD_LEFT,right:ROAD_RIGHT},width:W,height:H}),
+        captureFrame:({hideGary=true,hideHud=true,hideRain=true,excludeCandidate=false}={})=>{
           if(!startupReady||!bridgePreviewFrozen)throw Error('Wait for the frozen preview');
           const previous=[cv.width,cv.height,K,explorerHideGary,explorerHideHud,explorerHideRain];
+          const previousCandidate=candidateAsset,previousPack=biomeCandidates;
           const output=document.createElement('canvas');output.width=W;output.height=H;
           try{
             cv.width=W;cv.height=H;K=1;
+            if(excludeCandidate){candidateAsset=null;biomeCandidates=[];}
             explorerHideGary=!!hideGary;explorerHideHud=!!hideHud;explorerHideRain=!!hideRain;
             render();output.getContext('2d').drawImage(cv,0,0);
             const b=bridge.snapshot(),spec=window.GaryUserBridge.SPEC;
@@ -2993,6 +3017,7 @@ function updateRain(dt, advancing) {
                 top:b.near-spec.end+spec.far,bottom:b.near,phase:b.phase,anchor:b.anchor},
               hidden:{gary:!!hideGary,hud:!!hideHud,rain:!!hideRain}}};
           }finally{
+            candidateAsset=previousCandidate;biomeCandidates=previousPack;
             [cv.width,cv.height,K,explorerHideGary,explorerHideHud,explorerHideRain]=previous;
             render();
           }

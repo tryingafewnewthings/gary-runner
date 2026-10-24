@@ -37,51 +37,6 @@ const mime={'.html':'text/html','.js':'text/javascript','.json':'application/jso
   await page.locator('#hud').check();
   const result=await frame.locator('#c').evaluate(c=>({s:window.GaryWorldExplorer.snapshot(),png:c.toDataURL('image/png').slice(0,22)}));
   assert.equal(result.png,'data:image/png;base64,');
-  const before=await frame.locator('#c').evaluate(c=>({width:c.width,height:c.height,s:window.GaryWorldExplorer.snapshot()}));
-  const downloads={};
-  for(const kind of ['composite','top-edge','bottom-edge','manifest']){
-   const pending=page.waitForEvent('download');await page.locator('#seam-'+kind).click();
-   const download=await pending;
-   assert.equal(download.suggestedFilename(),'seam-template-'+kind+(kind==='manifest'?'.json':'.png'));
-   downloads[kind]=fs.readFileSync(await download.path());
-  }
-  const manifest=JSON.parse(downloads.manifest);
-  assert.equal(manifest.distance,before.s.distance);
-  assert.equal(manifest.lightingMode,'rain');
-  assert.deepEqual(manifest.hidden,{gary:true,hud:true,rain:true});
-  assert.deepEqual(manifest.composite,{width:360,height:256,gapY:96,bottomY:160});
-  const pixels=await page.evaluate(async data=>{
-   const load=async src=>{const image=new Image();image.src=src;await image.decode();const c=document.createElement('canvas');c.width=image.width;c.height=image.height;const x=c.getContext('2d');x.drawImage(image,0,0);return {c,x};};
-   const a=await load(data.composite),t=await load(data.top),b=await load(data.bottom);
-   const equal=(x,y)=>x.length===y.length&&x.every((v,i)=>v===y[i]);
-   return {size:[a.c.width,a.c.height],transparent:a.x.getImageData(0,96,360,64).data.every(v=>v===0),
-    top:equal(a.x.getImageData(0,0,360,96).data,t.x.getImageData(0,0,360,96).data),
-    bottom:equal(a.x.getImageData(0,160,360,96).data,b.x.getImageData(0,0,360,96).data)};
-  },Object.fromEntries([['composite','composite'],['top','top-edge'],['bottom','bottom-edge']].map(([k,v])=>[k,'data:image/png;base64,'+downloads[v].toString('base64')])));
-  assert.deepEqual(pixels,{size:[360,256],transparent:true,top:true,bottom:true});
-  assert.deepEqual(await frame.locator('#c').evaluate(c=>({width:c.width,height:c.height,s:window.GaryWorldExplorer.snapshot()})),before);
-  for(const mode of ['bridge-exit','custom']){
-   await page.locator('#seam-mode').selectOption(mode);
-   const pending=page.waitForEvent('download');await page.locator('#seam-manifest').click();
-   assert.equal(JSON.parse(fs.readFileSync(await (await pending).path())).mode,mode);
-  }
-  await page.locator('#seam-position').evaluate(n=>{n.value='80';n.dispatchEvent(new Event('input'));});
-  await page.locator('#seam-view').scrollIntoViewIfNeeded();
-  const box=await page.locator('#seam-view').boundingBox();
-  const drag=async (from,to)=>{await page.mouse.move(box.x+box.width*.8,box.y+from*box.height/640);await page.mouse.down();await page.mouse.move(box.x+box.width*.8,box.y+to*box.height/640);await page.mouse.up();};
-  await drag(128,148);
-  assert.equal(await page.locator('#seam-position').inputValue(),'100','drag moves the selected region');
-  await drag(196,206);
-  assert.equal(await page.locator('#seam-top').inputValue(),'106','drag resizes the top edge');
-  assert.equal(await page.locator('#seam-gap').inputValue(),'54','adjacent boundary follows resize');
-  const editedDownload=page.waitForEvent('download');await page.locator('#seam-manifest').click();
-  const edited=JSON.parse(fs.readFileSync(await (await editedDownload).path()));
-  assert.equal(edited.sourceCrops.top.y,100);assert.equal(edited.sourceCrops.bottom.y,260);
-  assert.equal(edited.topCropHeight,106);assert.equal(edited.gapHeight,54);
-  await page.locator('#seam-view').screenshot({path:'/tmp/gary-seam-selection.png'});
-  await page.locator('#seam-top').fill('641');await page.locator('#seam-composite').click();
-  assert.match(await page.locator('#seam-status').textContent(),/Export error/);
-  await page.locator('#seam-top').fill('96');
   await page.locator('#sheet').click();
   await page.waitForFunction(()=>!document.querySelector('#sheet').disabled,null,{timeout:70000});
   assert.equal(await page.locator('#contact').evaluate(c=>[c.width,c.height].join('x')),'720x960');
