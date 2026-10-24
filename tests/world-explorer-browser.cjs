@@ -65,6 +65,20 @@ const mime={'.html':'text/html','.js':'text/javascript','.json':'application/jso
    const pending=page.waitForEvent('download');await page.locator('#seam-manifest').click();
    assert.equal(JSON.parse(fs.readFileSync(await (await pending).path())).mode,mode);
   }
+  await page.locator('#seam-position').evaluate(n=>{n.value='80';n.dispatchEvent(new Event('input'));});
+  await page.locator('#seam-view').scrollIntoViewIfNeeded();
+  const box=await page.locator('#seam-view').boundingBox();
+  const drag=async (from,to)=>{await page.mouse.move(box.x+box.width*.8,box.y+from*box.height/640);await page.mouse.down();await page.mouse.move(box.x+box.width*.8,box.y+to*box.height/640);await page.mouse.up();};
+  await drag(128,148);
+  assert.equal(await page.locator('#seam-position').inputValue(),'100','drag moves the selected region');
+  await drag(196,206);
+  assert.equal(await page.locator('#seam-top').inputValue(),'106','drag resizes the top edge');
+  assert.equal(await page.locator('#seam-gap').inputValue(),'54','adjacent boundary follows resize');
+  const editedDownload=page.waitForEvent('download');await page.locator('#seam-manifest').click();
+  const edited=JSON.parse(fs.readFileSync(await (await editedDownload).path()));
+  assert.equal(edited.sourceCrops.top.y,100);assert.equal(edited.sourceCrops.bottom.y,260);
+  assert.equal(edited.topCropHeight,106);assert.equal(edited.gapHeight,54);
+  await page.locator('#seam-view').screenshot({path:'/tmp/gary-seam-selection.png'});
   await page.locator('#seam-top').fill('641');await page.locator('#seam-composite').click();
   assert.match(await page.locator('#seam-status').textContent(),/Export error/);
   await page.locator('#seam-top').fill('96');

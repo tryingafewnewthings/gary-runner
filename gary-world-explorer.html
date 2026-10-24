@@ -38,11 +38,25 @@ select{width:100%;font-size:16px}
 .note{border-left:3px solid #e5bb65;padding-left:9px}
 @media(max-width:700px){main{padding:11px}.layout{display:flex;flex-direction:column}.layout>section{width:100%}.stage{width:min(100%,280px)}.panel{width:100%;padding:11px}.controls{display:contents}.viewer{order:0}.travel{order:1}.tools{order:2}h1{font-size:20px}}
 .seam-sizes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.seam-sizes input{display:block;width:100%;min-height:44px;font:16px system-ui;margin-top:6px}.checks label{min-height:44px}
+#seam-view{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}#seam-position{width:100%;min-height:44px;accent-color:#f0c66f}.seam-panel .buttons{margin-top:12px}
 </style></head><body><main>
 <header><div><h1>Gary Eats! World Explorer</h1><p>See the real game world without playing</p></div><a href="index.html">Play game ↗</a></header>
 <div class="layout">
 <section class="viewer" aria-label="Live 360 by 640 game engine">
-<div class="panel"><div class="stage"><iframe id="game" title="Gary Eats native game render" src="index.html?debug=1&amp;bridgepreview=1&amp;worldexplorer=1" loading="eager"></iframe><div class="loading" id="loading">Loading real game artwork…</div></div><p style="text-align:center">Native 360 × 640 gameplay camera · preview mode only</p></div>
+<div class="panel"><div class="stage"><iframe id="game" title="Gary Eats native game render" src="index.html?debug=1&amp;bridgepreview=1&amp;worldexplorer=1" loading="eager"></iframe><canvas id="seam-view" width="360" height="640" aria-label="Editable seam selection. Drag the middle to move; drag boundary lines to resize."></canvas><div class="loading" id="loading">Loading real game artwork…</div></div><p style="text-align:center">Native 360 × 640 gameplay camera · preview mode only</p></div>
+<div class="panel seam-panel"><h2>Transition Seam Export</h2>
+<p>Drag the seam in the viewer to move it. Drag its four boundary lines to resize the top strip, transparent gap and bottom strip. Bridge modes jump to the entrance or exit; Custom keeps your current view.</p>
+<label for="seam-mode">Mode</label><select id="seam-mode"><option value="bridge-entrance">Bridge entrance seam</option><option value="bridge-exit">Bridge exit seam</option><option value="custom">Custom seam</option></select>
+<label for="seam-position">Selection top · logical pixels</label><input id="seam-position" type="range" min="0" max="384" value="192" step="1"><p id="seam-selection" role="status"></p><div class="seam-sizes">
+<label>Top crop height<input id="seam-top" type="number" min="1" max="640" step="1" value="96" inputmode="numeric"></label>
+<label>Gap height<input id="seam-gap" type="number" min="1" max="640" step="1" value="64" inputmode="numeric"></label>
+<label>Bottom crop height<input id="seam-bottom" type="number" min="1" max="640" step="1" value="96" inputmode="numeric"></label>
+</div>
+<div class="checks"><label><input id="seam-gary" type="checkbox" checked> Hide Gary</label><label><input id="seam-hud" type="checkbox" checked> Hide HUD</label><label><input id="seam-rain" type="checkbox" checked> Hide rain</label></div>
+<div class="buttons"><button id="seam-composite" disabled>Download composite template</button><button id="seam-top-edge" disabled>Download top edge</button><button id="seam-bottom-edge" disabled>Download bottom edge</button><button id="seam-manifest" disabled>Download manifest JSON</button></div>
+<p id="seam-status" role="status" aria-live="polite">360 px wide · transparent gap · default 96 / 64 / 96</p>
+<p>Geometry evidence only. Existing wilderness artwork is rejected and must not be used as a positive art reference.</p>
+</div>
 </section>
 <section class="controls">
 <div class="panel travel"><h2>Explore the world</h2>
@@ -62,17 +76,4 @@ select{width:100%;font-size:16px}
 <p id="status" role="status" aria-live="polite">Starting preview…</p>
 <p class="note">This is a visual route through implemented environment checkpoints, not a literal complete map. Story encounters (including the stranger and fox) are triggered by gameplay and are not reconstructed by the scrubber. Planned biomes are not shown as playable content. No changes are saved to the game.</p>
 </div>
-<div class="panel tools"><h2>Transition Seam Export</h2>
-<p>Freeze the desired transition with the timeline. Crops use the top and bottom edges of this view; mode labels the export without moving the camera.</p>
-<label for="seam-mode">Mode</label><select id="seam-mode"><option value="bridge-entrance">Bridge entrance seam</option><option value="bridge-exit">Bridge exit seam</option><option value="custom">Custom seam</option></select>
-<div class="seam-sizes">
-<label>Top crop height<input id="seam-top" type="number" min="1" max="640" step="1" value="96" inputmode="numeric"></label>
-<label>Gap height<input id="seam-gap" type="number" min="1" max="640" step="1" value="64" inputmode="numeric"></label>
-<label>Bottom crop height<input id="seam-bottom" type="number" min="1" max="640" step="1" value="96" inputmode="numeric"></label>
-</div>
-<div class="checks"><label><input id="seam-gary" type="checkbox" checked> Hide Gary</label><label><input id="seam-hud" type="checkbox" checked> Hide HUD</label><label><input id="seam-rain" type="checkbox" checked> Hide rain</label></div>
-<div class="buttons"><button id="seam-composite" disabled>Download composite template</button><button id="seam-top-edge" disabled>Download top edge</button><button id="seam-bottom-edge" disabled>Download bottom edge</button><button id="seam-manifest" disabled>Download manifest JSON</button></div>
-<p id="seam-status" role="status" aria-live="polite">360 px wide · transparent gap · default 96 / 64 / 96</p>
-<p>Geometry evidence only. Existing wilderness artwork is rejected and must not be used as a positive art reference.</p>
-</div>
-</section></div></main><script src="gary-world-explorer.js?v=2"></script></body></html>
+</section></div></main><script src="gary-world-explorer.js?v=3"></script></body></html>

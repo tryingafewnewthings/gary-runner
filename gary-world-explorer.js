@@ -12,7 +12,7 @@ function label(){
 function paint(value,seconds=clock){
  if(!api)return;
  slider.value=String(Math.max(0,Math.min(1000,Math.round(value))));
- try{api.seek(+slider.value,seconds);label();}
+ try{api.seek(+slider.value,seconds);label();refreshSeam();}
  catch(e){stop();$('status').textContent='Preview error: '+e.message;}
 }
 function tick(t){
@@ -65,8 +65,8 @@ $('tour').addEventListener('click',()=>{
  playing=true;last=0;$('tour').textContent='Ⅱ Pause flythrough';$('stop').disabled=false;raf=requestAnimationFrame(tick);
 });
 $('stop').addEventListener('click',stop);
-$('lighting').addEventListener('change',()=>{if(api){api.mode($('lighting').value);label();}});
-for(const id of ['gary','hud'])$(id).addEventListener('change',()=>{if(api)api.layers({gary:$('gary').checked,hud:$('hud').checked});});
+$('lighting').addEventListener('change',()=>{if(api){api.mode($('lighting').value);label();refreshSeam();}});
+for(const id of ['gary','hud'])$(id).addEventListener('change',()=>{if(api){api.layers({gary:$('gary').checked,hud:$('hud').checked});refreshSeam();}});
 $('shot').addEventListener('click',()=>{
  if(!api)return;
  const source=frame.contentDocument.getElementById('c');
@@ -99,24 +99,26 @@ $('sheet').addEventListener('click',async()=>{
 let seamCache=null;
 function seamExport(){
  const heights=['top','gap','bottom'].map(key=>Number($('seam-'+key).value));
- if(heights.some(n=>!Number.isInteger(n)||n<1||n>640)||heights[0]+heights[2]>640)
-   throw Error('Use whole heights from 1–640; top + bottom must not exceed 640.');
+ if(heights.some(n=>!Number.isInteger(n)||n<1||n>640)||heights.reduce((a,b)=>a+b,0)>640)
+   throw Error('Use whole heights from 1–640; top + gap + bottom must not exceed 640.');
  const [top,gap,bottom]=heights,hidden={hideGary:$('seam-gary').checked,hideHud:$('seam-hud').checked,hideRain:$('seam-rain').checked};
  const mode=$('seam-mode').value;
- const key=JSON.stringify([api.snapshot(),clock,mode,heights,hidden]);
+ const start=Number($('seam-position').value);
+ if(!Number.isInteger(start)||start<0||start+top+gap+bottom>640)throw Error('Selection must fit inside the view.');
+ const key=JSON.stringify([api.snapshot(),clock,mode,heights,hidden,start]);
  if(seamCache?.key===key)return seamCache;
  const capture=api.captureFrame(hidden);
  const make=(height)=>{const c=document.createElement('canvas');c.width=360;c.height=height;return c;};
  const topEdge=make(top),bottomEdge=make(bottom),composite=make(top+gap+bottom);
- topEdge.getContext('2d').drawImage(capture.canvas,0,0,360,top,0,0,360,top);
- bottomEdge.getContext('2d').drawImage(capture.canvas,0,640-bottom,360,bottom,0,0,360,bottom);
+ topEdge.getContext('2d').drawImage(capture.canvas,0,start,360,top,0,0,360,top);
+ bottomEdge.getContext('2d').drawImage(capture.canvas,0,start+top+gap,360,bottom,0,0,360,bottom);
  const ctx=composite.getContext('2d');ctx.drawImage(topEdge,0,0);ctx.drawImage(bottomEdge,0,top+gap);
- const manifest={version:1,mode,timestamp:new Date().toISOString(),...capture.metadata,
+ const manifest={version:2,mode,timestamp:new Date().toISOString(),...capture.metadata,
    logicalFrame:{width:360,height:640},topCropHeight:top,gapHeight:gap,bottomCropHeight:bottom,
-   sourceCrops:{top:{x:0,y:0,width:360,height:top},bottom:{x:0,y:640-bottom,width:360,height:bottom}},
+   sourceCrops:{top:{x:0,y:start,width:360,height:top},bottom:{x:0,y:start+top+gap,width:360,height:bottom}},
    composite:{width:360,height:top+gap+bottom,gapY:top,bottomY:top+gap},
    referencePolicy:'Exact gameplay geometry evidence only. All existing wilderness artwork is user-rejected and must not be used as a positive art reference.'};
- seamCache={key,composite,'top-edge':topEdge,'bottom-edge':bottomEdge,manifest};return seamCache;
+ seamCache={key,frame:capture.canvas,composite,'top-edge':topEdge,'bottom-edge':bottomEdge,manifest};return seamCache;
 }
 for(const kind of ['composite','top-edge','bottom-edge','manifest']){
  $('seam-'+kind).addEventListener('click',()=>{
@@ -133,5 +135,66 @@ for(const kind of ['composite','top-edge','bottom-edge','manifest']){
   }catch(e){$('seam-status').textContent='Export error: '+e.message;}
  });
 }
+
+function refreshSeam(){
+ if(!api)return;
+ const canvas=$('seam-view'),ctx=canvas.getContext('2d');
+ try{
+  const r=seamExport(),m=r.manifest,start=m.sourceCrops.top.y;
+  const a=start+m.topCropHeight,b=a+m.gapHeight,end=b+m.bottomCropHeight;
+  ctx.clearRect(0,0,360,640);ctx.drawImage(r.frame,0,0);
+  ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,0,360,start);ctx.fillRect(0,end,360,640-end);
+  for(let y=a;y<b;y+=8)for(let x=0;x<360;x+=8){ctx.fillStyle=((x/8+Math.floor((y-a)/8))%2)?'#536064':'#788589';ctx.fillRect(x,y,8,Math.min(8,b-y));}
+  ctx.strokeStyle='#ffdc82';ctx.lineWidth=2;
+  for(const y of [start,a,b,end]){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(360,y);ctx.stroke();ctx.fillStyle='#ffdc82';ctx.fillRect(155,y-3,50,6);}
+  ctx.font='bold 13px system-ui';ctx.textAlign='left';
+  for(const [text,y] of [['TOP EDGE',start],['TRANSPARENT GAP',a],['BOTTOM EDGE',b]]){
+   ctx.fillStyle='rgba(0,0,0,.8)';ctx.fillRect(4,y+5,150,20);ctx.fillStyle='#fff';ctx.fillText(text,9,y+20);
+  }
+  $('seam-selection').textContent=`Top: y ${start}–${a} · Gap: ${m.gapHeight} px · Bottom: y ${b}–${end}`;
+  canvas.setAttribute('aria-label',`Editable seam: top ${start} to ${a}, gap ${a} to ${b}, bottom ${b} to ${end}. Use selection top and height controls to edit with a keyboard.`);
+ }catch(e){ctx.clearRect(0,0,360,640);$('seam-selection').textContent=e.message;}
+}
+function fitSeam(){
+ const size=['top','gap','bottom'].reduce((sum,k)=>sum+Number($('seam-'+k).value),0);
+ const max=Math.max(0,640-size);$('seam-position').max=String(max);
+ if(+$('seam-position').value>max)$('seam-position').value=String(max);
+ refreshSeam();
+}
+for(const k of ['top','gap','bottom'])$('seam-'+k).addEventListener('input',()=>{stop();fitSeam();});
+$('seam-position').addEventListener('input',()=>{stop();refreshSeam();});
+for(const k of ['gary','hud','rain'])$('seam-'+k).addEventListener('change',()=>{stop();refreshSeam();});
+$('seam-mode').addEventListener('change',()=>{
+ stop();
+ if($('seam-mode').value!=='custom'){
+  for(const [k,n] of [['top',96],['gap',64],['bottom',96]])$('seam-'+k).value=n;
+  $('seam-position').max='384';$('seam-position').value='192';
+  // near = 120 + (position - 400) / 199 * 1250; far edge = near - 620.
+  paint($('seam-mode').value==='bridge-entrance'?432:531);
+ }
+ refreshSeam();
+});
+let seamDrag=null;
+const seamY=e=>Math.max(0,Math.min(640,(e.clientY-$('seam-view').getBoundingClientRect().top)*640/$('seam-view').getBoundingClientRect().height));
+$('seam-view').addEventListener('pointerdown',e=>{
+ if(!api||busy)return;
+ try{seamExport();}catch(_){return;}
+ stop();const y=seamY(e),start=+$('seam-position').value,t=+$('seam-top').value,g=+$('seam-gap').value,b=+$('seam-bottom').value;
+ const edges=[start,start+t,start+t+g,start+t+g+b];
+ let edge=-1,nearest=24;
+ edges.forEach((v,i)=>{if(Math.abs(v-y)<nearest){nearest=Math.abs(v-y);edge=i;}});
+ if(edge<0&&(y<start||y>edges[3]))return;
+ seamDrag={y,edges,edge};e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault();
+});
+$('seam-view').addEventListener('pointermove',e=>{
+ if(!seamDrag)return;
+ const {edges,edge,y}=seamDrag,delta=Math.round(seamY(e)-y),next=edges.slice();
+ if(edge<0){const d=Math.max(-edges[0],Math.min(640-edges[3],delta));for(let i=0;i<4;i++)next[i]+=d;}
+ else next[edge]=Math.max(edge===0?0:edges[edge-1]+1,Math.min(edge===3?640:edges[edge+1]-1,edges[edge]+delta));
+ $('seam-position').max=String(640-(next[3]-next[0]));$('seam-position').value=String(next[0]);
+ ['top','gap','bottom'].forEach((k,i)=>$('seam-'+k).value=String(next[i+1]-next[i]));
+ refreshSeam();
+});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])$('seam-view').addEventListener(event,()=>{seamDrag=null;});
 boot();
 })();
