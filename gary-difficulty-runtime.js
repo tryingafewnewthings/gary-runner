@@ -2603,6 +2603,9 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
+    // Opaque world underpaint: wilderness entrance sprites have feathered alpha.
+    // Prevent transparent holes when the old street is skipped beneath the bridge.
+    if(wilderness.active()){ctx.fillStyle='#465348';ctx.fillRect(0,0,W,H);}
     // At near>=500 the existing terrain provider covers all 640 rows opaquely.
     // Avoid drawing (and lazily caching) the entire hidden street underneath it.
     const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
