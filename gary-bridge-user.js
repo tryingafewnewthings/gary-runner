@@ -35,10 +35,16 @@ function create({makeCanvas,ImageType}={}){
   const top=topY(near),bottom=top+620;
   if(top>740||bottom< -100)return true;
   ctx.save();
-  // Softly painted banks replace the previous abrupt rectangular water cut-off.
-  // Their vertical texture remains fixed to the bridge's world position.
-  ctx.drawImage(shore,0,top-92,360,100);
-  ctx.save();ctx.translate(0,bottom+92);ctx.scale(1,-1);ctx.drawImage(shore,0,0,360,100);ctx.restore();
+  // Bank textures belong to the VERGES, never to the 150-unit roadway.
+  // In the old implementation a full-width 360×100 band painted grass straight
+  // across the asphalt at both bridge ends.
+  ctx.save();
+  ctx.beginPath();ctx.rect(0,top-96,104,96);ctx.rect(256,top-96,104,96);
+  ctx.rect(0,bottom,104,96);ctx.rect(256,bottom,104,96);ctx.clip();
+  ctx.drawImage(shore,0,top-94,360,100);
+  ctx.save();ctx.translate(0,bottom+94);ctx.scale(1,-1);
+  ctx.drawImage(shore,0,0,360,100);ctx.restore();
+  ctx.restore();
   ctx.beginPath();ctx.moveTo(0,top+edge(0,true));
   for(let x=8;x<=360;x+=8)ctx.lineTo(x,top+edge(x,true));
   for(let x=360;x>=0;x-=8)ctx.lineTo(x,bottom+edge(x,false));
@@ -61,12 +67,16 @@ function create({makeCanvas,ImageType}={}){
   // A narrow, irregular foamy contact edge, with no hard horizontal seam.
   ctx.save();ctx.lineWidth=2;ctx.strokeStyle='rgba(169,204,189,.5)';
   for(const isTop of [true,false]){
-   ctx.beginPath();
-   for(let x=0;x<=360;x+=8){
-    const y=(isTop?top:bottom)+edge(x,isTop);
-    if(!x)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+   // Short shoreline contact marks only on the visible banks. The stone deck
+   // and asphalt keep clean edges instead of a foamy line through the road.
+   for(const [a,b] of [[0,101],[259,360]]){
+    ctx.beginPath();
+    for(let x=a;x<=b;x+=6){
+     const y=(isTop?top:bottom)+edge(x,isTop);
+     if(x===a)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
    }
-   ctx.stroke();
   }
   ctx.restore();
   return true;
@@ -80,6 +90,15 @@ function create({makeCanvas,ImageType}={}){
   ctx.fillRect(138,y+SPEC.threshold-3,84,6);
   // Sample the same original bridge image instead of inventing a new stone scale.
   ctx.drawImage(image,45,228,84,28,138,y,84,SPEC.threshold);
+  // On the wilderness end only, embed a few sub-pixel soil/weed contacts
+  // over the last stone course, not a long path carpet.
+  if(isExit){
+   for(let i=0;i<14;i++){
+    const xx=141+(i*31)%77,yy=y+3+(i*13)%21;
+    ctx.fillStyle=i%4===0?'rgba(81,92,66,.52)':'rgba(88,80,63,.27)';
+    ctx.beginPath();ctx.ellipse(xx,yy,1+(i%3)*.55,.7+(i%2)*.35,0,0,Math.PI*2);ctx.fill();
+   }
+  }
   ctx.strokeStyle='rgba(32,38,37,.33)';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(138,y+.5);ctx.lineTo(222,y+.5);ctx.stroke();
   ctx.restore();
