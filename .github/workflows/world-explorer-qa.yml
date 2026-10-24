@@ -6,6 +6,8 @@ on:
       - 'gary-world-explorer.js'
       - 'gary-difficulty-runtime.js'
       - 'tests/world-explorer-browser.cjs'
+      - 'gary-seam-*'
+      - 'tests/seam-factory*'
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,9 +23,10 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npx --no-install playwright install --with-deps chromium webkit
+      - run: node --test tests/seam-factory.test.cjs
       - name: Chromium iPhone-size visual inspection
-        run: node tests/world-explorer-browser.cjs
+        run: node tests/world-explorer-browser.cjs && node tests/seam-factory-browser.cjs
       - name: WebKit iPhone-size visual inspection
         env:
           GARY_TEST_ENGINE: webkit
-        run: node tests/world-explorer-browser.cjs
+        run: node tests/world-explorer-browser.cjs && node tests/seam-factory-browser.cjs

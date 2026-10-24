@@ -534,6 +534,71 @@
       "width": 174,
       "height": 620,
       "alpha": true
+    },
+    "docs/seam-factory/chromium-candidate-rain.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/seam-factory/webkit-candidate-rain.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/seam-factory/upper-reference.png": {
+      "width": 360,
+      "height": 96,
+      "alpha": false
+    },
+    "docs/seam-factory/webkit-candidate-day.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/seam-factory/webkit-interface.png": {
+      "width": 390,
+      "height": 2612,
+      "alpha": false
+    },
+    "docs/seam-factory/lower-reference.png": {
+      "width": 360,
+      "height": 96,
+      "alpha": false
+    },
+    "docs/seam-factory/chromium-interface.png": {
+      "width": 390,
+      "height": 2585,
+      "alpha": false
+    },
+    "docs/seam-factory/webkit-candidate-night.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/seam-factory/chromium-candidate-night.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/seam-factory/webkit-entrance.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/seam-factory/seam-template.png": {
+      "width": 360,
+      "height": 256,
+      "alpha": true
+    },
+    "docs/seam-factory/chromium-candidate-day.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/seam-factory/chromium-entrance.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
     }
   }
 }

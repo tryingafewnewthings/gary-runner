@@ -87,3 +87,21 @@ Approval labels:
 The user should be able to say simply **"Generate a [specific] Gary Eats asset"**. Retrieve current anchors and specs without requesting them again; generate/edit image; provide precise dimensions, alpha status and the remaining game-level QA. If reference bytes or a distinct family silhouette are genuinely unavailable, disclose the missing approval, make the strongest feasible candidate, and do not claim perfection.
 
 **Current blocker to claiming a fully locked visual factory:** approved native image crops from the user's first ~30 seconds of gameplay are not deposited in the repo; some raised silhouettes have never received gameplay visual approval. Fix these once and reuse them in every future chat.
+
+## Registered Transition Seam Factory — 24 October 2026
+Use the existing World Explorer's **Transition Seam Factory** for reference preparation.
+Select **High street → Bridge**, then **Prepare AI Seam**. Save the PNG and copy the
+prompt, or use the native share sheet. The transparent middle is an editable asset
+mask; the reference strips are context and must not be returned as opaque scenery.
+Bridge entrance registration comes from `GaryWorldExplorer.alignSeam()` and the
+loaded `GaryUserBridge.SPEC`, never an approximate timeline value. One immutable
+native capture supplies the five-file kit. The desired overlay remains unregistered
+and must pass actual in-engine art review before production.
+
+`gary-seam-registry.json` owns transition identity, references, resolver and approval
+requirements. Bridge exit and unregistered Custom selections are diagnostic-only;
+all existing `art/wilderness/**` remains forbidden. Missing approved source bytes
+also block preparation. No procedural stand-in is considered approved.
+See [factory QA and extension guide](docs/seam-factory/README.md) for the exact mask,
+world-anchor convention, source fingerprint, tests and example entrance kit. Preview
+imports use the existing isolated `GaryAssetPreview` pass; never normal Play.

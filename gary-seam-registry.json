@@ -1,0 +1,132 @@
+{
+  "schema": "gary-seam-registry-v1",
+  "sourceRevision": "0690412d6b945613852c0043784861aa101f988f",
+  "transitions": [
+    {
+      "defaults": {
+        "top": 96,
+        "gap": 64,
+        "bottom": 96
+      },
+      "anchor": {
+        "type": "world-boundary",
+        "x": 0,
+        "pass": "deck",
+        "occlusion": "After bridge deck, before actors and foreground masonry/rope barriers; no collisions."
+      },
+      "forbidden": [
+        "art/wilderness/**"
+      ],
+      "requirements": [
+        "Original first-biome source pixels",
+        "Preserve supplied bridge; generated candidate needs separate visual approval"
+      ],
+      "id": "bridge-entrance",
+      "name": "High street \u2192 Bridge",
+      "sourceBiome": "high-street",
+      "destinationBiome": "bridge",
+      "resolver": {
+        "kind": "bridge",
+        "lengthFactor": 0
+      },
+      "sourceRegistration": "gary-difficulty-data.js:WORLD",
+      "destinationRegistration": "gary-bridge-user.js:SPEC",
+      "references": [
+        "high_street_sprites.webp",
+        "IMG_7141.webp",
+        "IMG_7142.webp",
+        "IMG_7143.webp",
+        "IMG_7144.webp",
+        "IMG_7145.webp",
+        "IMG_7146.webp",
+        "IMG_7147.webp",
+        "IMG_7148.webp",
+        "art/candidates/bridge/bridge-user-supplied.webp"
+      ],
+      "approval": {
+        "status": "reference-context",
+        "reason": "Original street and supplied bridge are context, not approval of new art."
+      }
+    },
+    {
+      "defaults": {
+        "top": 96,
+        "gap": 64,
+        "bottom": 96
+      },
+      "anchor": {
+        "type": "world-boundary",
+        "x": 0,
+        "pass": "deck",
+        "occlusion": "After bridge deck, before actors and foreground masonry/rope barriers; no collisions."
+      },
+      "forbidden": [
+        "art/wilderness/**"
+      ],
+      "requirements": [
+        "Original first-biome source pixels",
+        "Preserve supplied bridge; generated candidate needs separate visual approval"
+      ],
+      "id": "bridge-exit",
+      "name": "Bridge exit \u2192 Approved successor (unavailable)",
+      "sourceBiome": "bridge",
+      "destinationBiome": "approved-successor-pending",
+      "resolver": {
+        "kind": "bridge",
+        "lengthFactor": 1
+      },
+      "sourceRegistration": "gary-bridge-user.js:SPEC",
+      "destinationRegistration": null,
+      "references": [
+        "high_street_sprites.webp",
+        "IMG_7141.webp",
+        "IMG_7142.webp",
+        "IMG_7143.webp",
+        "IMG_7144.webp",
+        "IMG_7145.webp",
+        "IMG_7146.webp",
+        "IMG_7147.webp",
+        "IMG_7148.webp",
+        "art/candidates/bridge/bridge-user-supplied.webp"
+      ],
+      "approval": {
+        "status": "blocked",
+        "reason": "Current successor uses user-rejected art/wilderness/**. Approved replacement required."
+      }
+    },
+    {
+      "defaults": {
+        "top": 96,
+        "gap": 64,
+        "bottom": 96
+      },
+      "anchor": {
+        "type": "world-boundary",
+        "x": 0,
+        "pass": "deck",
+        "occlusion": "After bridge deck, before actors and foreground masonry/rope barriers; no collisions."
+      },
+      "forbidden": [
+        "art/wilderness/**"
+      ],
+      "requirements": [
+        "Original first-biome source pixels",
+        "Preserve supplied bridge; generated candidate needs separate visual approval"
+      ],
+      "id": "custom",
+      "name": "Custom registered terrain join",
+      "sourceBiome": "unregistered",
+      "destinationBiome": "unregistered",
+      "resolver": {
+        "kind": "manual"
+      },
+      "sourceRegistration": null,
+      "destinationRegistration": null,
+      "references": [],
+      "approval": {
+        "status": "blocked",
+        "reason": "Custom diagnostic selection: register verified source/target assets before preparing AI references."
+      }
+    }
+  ]
+}
