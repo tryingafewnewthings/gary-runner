@@ -13,6 +13,9 @@
    */
   const {FixedStepClock, ObjectPool, sweptContact, lerp} = window.GaryCore;
   const bridgePreviewSession=new URLSearchParams(location.search).get('debug')==='1'&&new URLSearchParams(location.search).get('bridgepreview')==='1';
+  // Isolated visual-only world scrubber. Never enabled in ordinary gameplay.
+  const worldExplorerSession=bridgePreviewSession&&new URLSearchParams(location.search).get('worldexplorer')==='1';
+  let explorerShowGary=true,explorerShowHud=false;
   const bestStorageKey=bridgePreviewSession?'gary-bridge-preview-best':'garyBest';
   const simulation = new FixedStepClock(60, 6);
   const director = window.GaryDifficulty.create(DIFFICULTY, BIOMES, ITEMS);
@@ -2639,7 +2642,7 @@ function updateRain(dt, advancing) {
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
       for(let i=objs.length-1;i>=0;i--)if(!objs[i].d)drawObj(objs[i]);
       if(!cutscenePlate)fox.draw(ctx,view.distance,view.alpha,view.clock);
-      if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
+      if(!cutscenePlate&&(!worldExplorerSession||explorerShowGary)&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
       for(const f of fx){
         const k=f.t/f.life;
         const pop=f.pop?1.25-k*0.25:1;
@@ -2661,7 +2664,7 @@ function updateRain(dt, advancing) {
     if (nightOn) drawNightVignette();
 
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
-      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
+      if(!state.startsWith('crash') && state!=='cutscene'&&(!worldExplorerSession||explorerShowHud)){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
       crashScene.screen();
     }
     if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
@@ -2885,6 +2888,82 @@ function updateRain(dt, advancing) {
         snapshot:()=>candidateAsset?{pass:candidateAsset.pass,
           draw:{x:candidateAsset.x,y:candidateAsset.y,width:candidateAsset.width,height:candidateAsset.height},
           scrollWithWorld:candidateAsset.scrollWithWorld,registered:false}:null
+      });
+    }
+    // World Explorer: inspect actual canvas artwork at any authored review position.
+    // A fixed visual route is intentionally NOT a claim about run timing or scripted
+    // encounter order. The live game's state machine, spawns and saves are untouched.
+    if(worldExplorerSession){
+      const EXPLORER_BRIDGE_TRIGGER=20000;
+      const EXPLORER_BRIDGE_ANCHOR=EXPLORER_BRIDGE_TRIGGER-window.GaryBridge.SPEC.warningAt;
+      const EXPLORER_WILDERNESS_ORIGIN=EXPLORER_BRIDGE_ANCHOR+770;
+      const EXPLORER_MAX=EXPLORER_WILDERNESS_ORIGIN+546+12500;
+      let explorerStarted=false;
+      let explorerMode='natural';
+      const clampExplorer=d=>Math.max(0,Math.min(EXPLORER_MAX,Number(d)||0));
+      function explorerSeek(raw,settings={}){
+        if(!startupReady)return null;
+        if(!explorerStarted){
+          if(!window.GaryBridgePreview.start('approach'))return null;
+          explorerStarted=true;
+        }
+        bridgePreviewFrozen=true;simulation.reset();
+        const d=clampExplorer(raw);
+        const mode=['natural','day','night','rain'].includes(settings.mode)?settings.mode:explorerMode;
+        explorerMode=mode;
+        if(typeof settings.gary==='boolean')explorerShowGary=settings.gary;
+        if(typeof settings.hud==='boolean')explorerShowHud=settings.hud;
+        // Rebuild only the isolated presentation state on every seek. Reversing the
+        // slider cannot leave bridge/wilderness in a stale state from a later biome.
+        bridge.reset();wilderness.reset(director.seed);
+        mystery.reset();fox.reset();
+        itemPool.clear();effectPool.clear();starPool.clear();
+        distance=scrollY=d;clock=d/220;playTime=d/220;
+        lane=target=laneStart=1;laneTime=laneDuration=LANE_CHANGE_SECONDS;
+        laneLean=0;sideAnimTime=SIDE_ANIM_SECONDS;sideAnimDir=0;
+        cap=null;grinTimer=0;
+        visualClearFrom=d>=12000?0:Infinity;
+        if(d>=EXPLORER_BRIDGE_TRIGGER){
+          bridge.update(1/60,{distance:EXPLORER_BRIDGE_TRIGGER,foxFinished:true,hazardsClear:true});
+          bridge.update(1/60,{distance:d,foxFinished:true,hazardsClear:true});
+          if(d>=EXPLORER_WILDERNESS_ORIGIN){
+            wilderness.begin(EXPLORER_WILDERNESS_ORIGIN);
+            wilderness.update(1/60,{distance:d,bridge:bridge.snapshot(),hazardsClear:true,blocked:false});
+          }
+        }
+        const naturalNight=d>=8000;
+        nightOn=mode==='day'?false:mode==='natural'?naturalNight:true;
+        nightMix=nightOn?(mode==='natural'?Math.min(1,Math.max(0,(d-8000)/1600)):1):0;
+        rainMix=mode==='rain'?1:mode==='natural'?(d>=10500?1:d>=8000?.5:0):0;
+        shutterMix=nightOn?Math.min(1,mode==='natural'?Math.max(0,(d-8000)/1500):1):0;
+        if(wilderness.active()&&mode==='natural'){
+          rainMix=wilderness.weather();
+          nightMix=1-.86*wilderness.warmth();
+          nightOn=true;
+        }
+        rainSaid=rainMix>0;rememberPositions();prepareView(1);render();
+        return {distance:d,mode,bridge:bridge.snapshot(),wilderness:wilderness.snapshot(),
+          showGary:explorerShowGary,showHud:explorerShowHud,
+          label:d<8000?'High street':d<12000?'Night transition':d<EXPLORER_BRIDGE_TRIGGER?'Abandoned street':
+            d<EXPLORER_WILDERNESS_ORIGIN?'Stone bridge':'Wilderness'};
+      }
+      window.GaryWorldExplorer=Object.freeze({
+        ready:()=>startupReady,
+        seek:explorerSeek,
+        max:EXPLORER_MAX,
+        landmarks:Object.freeze([
+          {name:'High street',distance:0},{name:'Shops',distance:1800},
+          {name:'Nightfall',distance:8200},{name:'Heavy rain',distance:10500},
+          {name:'Empty street',distance:14500},{name:'Bridge approach',distance:EXPLORER_BRIDGE_TRIGGER+210},
+          {name:'Bridge entrance',distance:EXPLORER_BRIDGE_TRIGGER+560},
+          {name:'Bridge center',distance:EXPLORER_BRIDGE_TRIGGER+850},
+          {name:'Bridge exit',distance:EXPLORER_BRIDGE_TRIGGER+1210},
+          {name:'Wilderness reveal',distance:EXPLORER_WILDERNESS_ORIGIN+546+2400},
+          {name:'Deep wilderness',distance:EXPLORER_WILDERNESS_ORIGIN+546+5600},
+          {name:'Wilderness ruins',distance:EXPLORER_WILDERNESS_ORIGIN+546+10170}
+        ]),
+        snapshot:()=>({distance,mode:explorerMode,bridge:bridge.snapshot(),
+          wilderness:wilderness.snapshot(),showGary:explorerShowGary,showHud:explorerShowHud})
       });
     }
     window.GaryRuntimeStats=Object.freeze({snapshot:()=>({state,distance,lane,target,
