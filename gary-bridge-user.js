@@ -26,6 +26,15 @@ function create({makeCanvas,ImageType}={}){
   s.fillStyle=i%7===0?'#89877a':i%3===0?'#3b4e49':i%2?'#696c5b':'#49564e';
   s.beginPath();s.ellipse(x,y,1.5+(i%5),1+(i%3),0,0,Math.PI*2);s.fill();
  }
+ // One small cached 80-unit earth-toning wash. This gently breaks up the last
+ // original cobbles near the shoreline without importing rejected wilderness
+ // pixels or allocating gradients on each frame.
+ const wear=canvas(1,80),wc=wear.getContext('2d');
+ const wg=wc.createLinearGradient(0,0,0,80);
+ wg.addColorStop(0,'rgba(53,57,52,.21)');
+ wg.addColorStop(.44,'rgba(53,57,52,.075)');
+ wg.addColorStop(1,'rgba(53,57,52,0)');
+ wc.fillStyle=wg;wc.fillRect(0,0,1,80);
  image.onload=()=>{loaded=image.naturalWidth===SPEC.sourceWidth&&image.naturalHeight===SPEC.sourceHeight;reason=loaded?'ready':'invalid dimensions';};
  image.onerror=()=>{loaded=false;reason='artwork unavailable';};image.src=SPEC.source;
  const topY=near=>near-SPEC.end+SPEC.far; // near-620, image top
@@ -97,11 +106,15 @@ function create({makeCanvas,ImageType}={}){
   if(end<=top)return true;
   const bank=(left,right)=>{
    ctx.save();ctx.beginPath();
-   ctx.moveTo(left,end);ctx.lineTo(left,near+edge(left,false));
-   for(let x=left+6;x<right;x+=6)ctx.lineTo(x,near+edge(x,false));
-   ctx.lineTo(right,near+edge(right,false));ctx.lineTo(right,end);
+   // Preserve a variable 3–9-unit strip of wet earth between running water
+   // and paving, then very gently tone the next 80 units of original cobbles.
+   const landEdge=x=>near+edge(x,false)+6+3*Math.sin(x*.093+2.7);
+   ctx.moveTo(left,end);ctx.lineTo(left,landEdge(left));
+   for(let x=left+6;x<right;x+=6)ctx.lineTo(x,landEdge(x));
+   ctx.lineTo(right,landEdge(right));ctx.lineTo(right,end);
    ctx.closePath();ctx.clip();
    drawCobbles(left,top,right-left,end-top,'base');
+   ctx.drawImage(wear,left,near+5,right-left,80);
    ctx.restore();
   };
   bank(0,SPEC.road[0]);bank(SPEC.road[1],360);
