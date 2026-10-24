@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111a18">
+<title>Gary Eats! — World Explorer</title>
+<style>
+:root{color-scheme:dark;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#101715;color:#eef0e9}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh}main{max-width:860px;margin:auto;padding:12px 12px max(20px,env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}h1{font-size:18px;margin:0}header a{color:#c9d9b7;font-size:12px}
+.layout{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:14px;justify-content:center}
+.viewport{width:min(100%,calc((100dvh - 205px)*.5625));max-width:360px;min-width:175px;aspect-ratio:9/16;position:relative;margin:auto;background:#080c0d;border:1px solid #47544a;border-radius:8px;overflow:hidden}
+iframe{width:100%;height:100%;display:block;border:0;pointer-events:none;background:#080c0d}
+#loading{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;background:#111a18;color:#cad4c5;font-weight:600}
+.controls{min-width:0;display:flex;flex-direction:column;gap:10px}.panel{border:1px solid #35483d;border-radius:12px;padding:12px;background:#1b2721}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:#b8c8b4;margin:0 0 9px}
+.chapter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+button,select{min-height:40px;border:1px solid #576958;background:#2a3a30;color:#f4f6ef;border-radius:8px;font-weight:700;font-size:12px;padding:7px;touch-action:manipulation}
+button[aria-pressed=true]{background:#e6d350;color:#161a13;border-color:#e6d350}
+button:disabled{opacity:.4}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #f4df69;outline-offset:2px}
+label{font-size:12px;color:#e1e8dc}input[type=range]{width:100%;height:35px;accent-color:#e6d350;touch-action:pan-y}
+.progress{display:flex;justify-content:space-between;gap:10px;margin:4px 0 0;color:#c4d1c0;font-size:12px}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.options{display:flex;flex-wrap:wrap;gap:10px;margin-top:9px}.options label{display:flex;align-items:center;gap:4px;min-height:30px}
+#status{font-size:12px;line-height:1.45;color:#c5d2c0;margin:4px 0 0}small{font-size:11px;color:#a5b7a7;line-height:1.4;display:block;margin-top:8px}
+#captures{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}#captures img{width:100%;aspect-ratio:9/16;object-fit:contain;background:#0a0c0a;border:1px solid #44584a}
+#captures:empty{display:none}
+@media(max-width:610px){.layout{display:block}.viewport{width:min(100%,calc((100dvh - 340px)*.5625));min-width:0;margin:0 auto 12px}.controls{gap:8px}.panel{padding:10px}header{margin-bottom:7px}}
+@media(max-height:620px) and (max-width:610px){.viewport{width:min(100%,calc((100dvh - 230px)*.5625))}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>GARY EATS! <span style="color:#e6d350">WORLD EXPLORER</span></h1><a href="index.html">Play game ↗</a></header>
+<div class="layout">
+<section class="viewport" aria-label="Native 360 by 640 real game render">
+<iframe id="game" title="Actual Gary Eats game renderer" src="index.html?debug=1&amp;bridgepreview=1&amp;worldexplorer=1&amp;seed=12345"></iframe>
+<div id="loading" role="status">Loading the real game renderer…</div>
+</section>
+<section class="controls">
+<div class="panel"><h2>World regions</h2>
+<div class="chapter" id="chapters">
+<button data-chapter="street" aria-pressed="true">High street</button>
+<button data-chapter="bridge" aria-pressed="false">Bridge</button>
+<button data-chapter="wilderness" aria-pressed="false">Wilderness</button>
+</div>
+<div class="progress"><span id="region">High street</span><output id="position">0 / 7200</output></div>
+<input id="seek" aria-label="Scroll through the current region" type="range" min="0" max="7200" step="10" value="0">
+<div class="actions"><button id="back">← Back 100</button><button id="next">Forward 100 →</button></div>
+</div>
+<div class="panel"><h2>Jump to an implemented scene</h2>
+<div class="quick" id="bookmarks">
+<button data-chapter="street" data-offset="0">Start</button>
+<button data-chapter="street" data-offset="1800">Street</button>
+<button data-chapter="street" data-offset="5000">Late street*</button>
+<button data-chapter="bridge" data-offset="210">Approach</button>
+<button data-chapter="bridge" data-offset="850">Bridge deck</button>
+<button data-chapter="bridge" data-offset="1210">Bridge exit</button>
+<button data-chapter="wilderness" data-offset="2400">Wilderness</button>
+<button data-chapter="wilderness" data-offset="5600">Dense woods</button>
+<button data-chapter="wilderness" data-offset="10170">Ruins</button>
+</div></div>
+<div class="panel"><h2>Visual controls</h2>
+<label for="weather">Lighting and weather</label>
+<select id="weather" style="width:100%;margin-top:6px">
+<option value="natural">Scene default</option><option value="day">Day</option><option value="night">Night</option><option value="rain">Heavy rain</option>
+</select>
+<div class="options">
+<label><input type="checkbox" id="gary" checked> Show Gary</label>
+<label><input type="checkbox" id="hud" checked> Show HUD</label>
+</div>
+<div class="actions">
+<button id="tour">▶ Auto-tour</button><button id="freeze">Freeze</button>
+<button id="shot">Save screenshot</button><button id="sheet">Make contact sheet</button>
+</div>
+<p id="status" role="status">Waiting for assets…</p>
+<small>Uses the real 360×640 engine. This is a visual-only inspection: no collision, food pickup or story advancement. The late-street shortcut* scrolls the original street; it does not recreate the timed shutters, stranger dialogue or fox encounter. Region transitions are staged individually rather than invented as one continuous world map.</small>
+<div id="captures" aria-label="Contact sheet previews"></div>
+</div>
+</section>
+</div>
+</main>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const iframe=$('game'),loading=$('loading'),status=$('status'),slider=$('seek'),position=$('position'),region=$('region');
+const regions={street:{min:0,max:7200,title:'High street'},bridge:{min:-150,max:1500,title:'Stone bridge'},wilderness:{min:0,max:10500,title:'Wilderness'}};
+let api=null,chapter='street',offset=0,touring=false,last=0,elapsed=0,frameId=0,building=false;
+const bookmarks=[
+['street',0,'High street'],['street',1800,'Street'],['street',5000,'Late street'],
+['bridge',210,'Bridge approach'],['bridge',850,'Bridge deck'],['bridge',1210,'Bridge exit'],
+['wilderness',2400,'Wilderness'],['wilderness',5600,'Dense woods'],['wilderness',10170,'Ruins']
+];
+function message(value){status.textContent=value;}
+function buttons(){for(const b of document.querySelectorAll('[data-chapter]'))if(b.parentElement.id==='chapters')b.setAttribute('aria-pressed',String(b.dataset.chapter===chapter));}
+function sync(){
+ const r=regions[chapter];slider.min=r.min;slider.max=r.max;slider.value=offset;position.value=Math.round(offset)+' / '+r.max;region.textContent=r.title;buttons();
+}
+function seek(c,o){
+ if(!api?.ready())return false;
+ if(!regions[c])return false;
+ const r=regions[c];o=Math.max(r.min,Math.min(r.max,Number(o)));
+ if(!Number.isFinite(o)||!api.seek(c,o))return false;
+ chapter=c;offset=o;sync();return true;
+}
+function stop(){touring=false;$('tour').textContent='▶ Auto-tour';last=0;}
+function animation(t){
+ if(!api)return;
+ if(touring&&!building){
+  const dt=last?Math.min(.08,(t-last)/1000):0;last=t;
+  let next=offset+dt*180;
+  if(next>regions[chapter].max){
+   if(chapter==='street'){chapter='bridge';next=regions.bridge.min;}
+   else if(chapter==='bridge'){chapter='wilderness';next=0;}
+   else{stop();next=regions.wilderness.max;}
+  }
+  seek(chapter,next);
+ }
+ elapsed+=last?0:0; // Animation is presentation-only; gameplay time never advances.
+ if(!building)api.frame(t/1000%3600);
+ frameId=requestAnimationFrame(animation);
+}
+for(const b of document.querySelectorAll('#chapters [data-chapter]'))b.addEventListener('click',()=>{stop();seek(b.dataset.chapter,regions[b.dataset.chapter].min);});
+for(const b of document.querySelectorAll('#bookmarks button'))b.addEventListener('click',()=>{stop();seek(b.dataset.chapter,Number(b.dataset.offset));});
+slider.addEventListener('input',()=>{stop();seek(chapter,Number(slider.value));});
+$('back').onclick=()=>{stop();seek(chapter,offset-100);};
+$('next').onclick=()=>{stop();seek(chapter,offset+100);};
+$('weather').onchange=()=>api?.mode($('weather').value);
+function layers(){api?.layers({gary:$('gary').checked,hud:$('hud').checked});}
+$('gary').onchange=layers;$('hud').onchange=layers;
+$('tour').onclick=()=>{if(!api)return;if(touring)stop();else{touring=true;last=0;$('tour').textContent='❚❚ Stop tour';message('Auto-touring real rendered regions · 180 world units/s');}};
+$('freeze').onclick=()=>{stop();message('View frozen · drag the slider to inspect a frame');};
+function saveData(data,name){
+ const a=document.createElement('a');a.href=data;a.download=name;document.body.append(a);a.click();a.remove();
+}
+$('shot').onclick=()=>{if(!api)return;stop();try{saveData(api.capture(),'gary-'+chapter+'-'+Math.round(offset)+'.png');message('360×640 screenshot requested. On iPhone, use Share → Save Image if Safari opens it.');}catch(e){message('Screenshot unavailable: '+e.message);}};
+function afterPaint(){return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}
+$('sheet').onclick=async()=>{
+ if(!api||building)return;stop();building=true;$('sheet').disabled=true;message('Capturing nine actual gameplay frames…');
+ const previous={chapter,offset,weather:$('weather').value,gary:$('gary').checked,hud:$('hud').checked};
+ try{
+  api.layers({gary:false,hud:false});
+  const canvas=document.createElement('canvas');canvas.width=360*3;canvas.height=680*3;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#142018';ctx.fillRect(0,0,canvas.width,canvas.height);
+  $('captures').replaceChildren();
+  for(let i=0;i<bookmarks.length;i++){
+   const [c,o,title]=bookmarks[i];if(!seek(c,o))throw Error('Could not render '+title);
+   await afterPaint();const image=new Image();image.src=api.capture();await image.decode();
+   const x=(i%3)*360,y=Math.floor(i/3)*680;
+   ctx.drawImage(image,x,y,360,640);ctx.fillStyle='#e7db6c';ctx.font='bold 20px system-ui';ctx.fillText(title,x+12,y+665);
+   const thumb=document.createElement('img');thumb.src=image.src;thumb.alt=title;$('captures').append(thumb);
+  }
+  saveData(canvas.toDataURL('image/png'),'gary-world-explorer-contact-sheet.png');
+  message('Nine scene captures created at native game resolution.');
+ }catch(e){message('Contact sheet error: '+e.message);}
+ finally{seek(previous.chapter,previous.offset);api.mode(previous.weather);api.layers({gary:previous.gary,hud:previous.hud});building=false;$('sheet').disabled=false;}
+};
+const timeout=setTimeout(()=>{if(!api)message('Game startup is taking longer than expected. Check network and reload.');},30000);
+const poll=setInterval(()=>{
+ try{
+  const candidate=iframe.contentWindow.GaryWorldExplorer;
+  if(!candidate?.ready())return;
+  clearInterval(poll);clearTimeout(timeout);api=candidate;loading.hidden=true;
+  api.mode('natural');seek('street',0);message('Ready · drag to inspect the world without playing.');
+  frameId=requestAnimationFrame(animation);
+ }catch(e){clearInterval(poll);message('Explorer failed to initialize: '+e.message);}
+},250);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+})();
+</script>
+</body>
+</html>
