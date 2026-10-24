@@ -2806,6 +2806,10 @@ function updateRain(dt, advancing) {
         const n={approach:210,enter:560,middle:850,exit:1210}[position]??210;
         distance=scrollY=bridge.snapshot().anchor+n;
         bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+        // Align debug-only bridge views with real gameplay's wilderness origin.
+        // Without this, captures omitted the far bank and misleadingly
+        // preserved earlier water/bridge pixels when scrolling checkpoints.
+        wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:true});
         rememberPositions();prepareView(1);render();return true;
       },
       artwork:(pack,images={})=>{
@@ -2941,6 +2945,10 @@ function updateRain(dt, advancing) {
           const n=120+f*1250;
           distance=scrollY=bridge.snapshot().anchor+n;
           bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+          // Frozen viewer follows the same far-bank start as live Play.
+          // Existing wilderness imagery remains user-rejected, never a style
+          // reference; showing it in QA is evidence of remaining issues.
+          wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:true});
         }else{
           const origin=bridge.snapshot().anchor+770;
           const progress=idx===3?f*3700:3700+f*9000;
