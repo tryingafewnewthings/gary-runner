@@ -41,6 +41,9 @@ async function main(){
      canvas.width=360;canvas.height=640;
      canvas.getContext('2d').drawImage(source,0,0,360,640);
      return {base64:canvas.toDataURL('image/png').split(',')[1],
+      // Small, selected JPEG review thumbnails in job logs let the producer
+      // actually inspect game pixels without committing candidate art.
+      preview:canvas.toDataURL('image/jpeg',.60).split(',')[1],
       near:snap.bridge.near,segment:snap.segment,frozen:snap.frozen};
     },{mode,position});
     if(result.segment!=='bridge'||!result.frozen||Math.abs(result.near-near)>1.5)
@@ -51,6 +54,13 @@ async function main(){
     const filename=mode+'-'+name+'.png';fs.writeFileSync(path.join(dir,filename),bytes);
     captures.push({file:filename,mode,checkpoint:name,near:result.near,
       width:360,height:640,actualEngine:true});
+    if(engine==='chromium'&&(
+     mode==='day'&&name==='entrance'||
+     mode==='rain'&&name==='preHandover'||
+     mode==='night'&&name==='farExit')){
+      console.log('GARY_BRIDGE_REVIEW_'+mode.toUpperCase()+'_'+name.toUpperCase()+
+       '_JPEG='+result.preview);
+    }
    }
   }
   if(errors.length)throw Error(errors.join('; '));
