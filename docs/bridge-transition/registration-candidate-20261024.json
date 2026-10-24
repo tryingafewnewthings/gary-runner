@@ -1,0 +1,201 @@
+{
+  "schema": "gary-eats-bridge-transition-candidate-v1",
+  "status": "ART_CANDIDATE_NOT_LOADED_IN_NORMAL_PLAY",
+  "note": "Candidate source image files are distributed separately pending original-first-biome reference comparison and true 360x640 engine day/night/rain screenshots. This manifest does not register unavailable PNGs into production.",
+  "canvas": [
+    360,
+    640
+  ],
+  "bridge": {
+    "source": "art/candidates/bridge/bridge-user-supplied.webp",
+    "imageWorldRect": [
+      93,
+      180,
+      174,
+      620
+    ],
+    "deckWorldX": [
+      138,
+      222
+    ],
+    "cacheY": [
+      180,
+      800
+    ],
+    "entryY": 800,
+    "exitY": 180,
+    "screenY": "bridgeNear-800+worldRect[1]"
+  },
+  "layerOrder": [
+    "terrain",
+    "lower-masonry",
+    "ground-shadow",
+    "deck",
+    "actor",
+    "foreground-parapet"
+  ],
+  "assets": [
+    {
+      "name": "A_entrance_threshold",
+      "path": "art/candidates/bridge-transition/A_entrance_threshold.png",
+      "sourcePixels": [
+        336,
+        112
+      ],
+      "worldRect": [
+        138,
+        791,
+        84,
+        28
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "deck",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "B_left_stone_abutment",
+      "path": "art/candidates/bridge-transition/B_left_stone_abutment.png",
+      "sourcePixels": [
+        176,
+        312
+      ],
+      "worldRect": [
+        94,
+        778,
+        44,
+        78
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "lower-masonry",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "C_right_stone_abutment",
+      "path": "art/candidates/bridge-transition/C_right_stone_abutment.png",
+      "sourcePixels": [
+        176,
+        312
+      ],
+      "worldRect": [
+        222,
+        778,
+        44,
+        78
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "lower-masonry",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "D_road_contact_shadow",
+      "path": "art/candidates/bridge-transition/D_road_contact_shadow.png",
+      "sourcePixels": [
+        336,
+        80
+      ],
+      "worldRect": [
+        138,
+        799,
+        84,
+        20
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "ground-shadow",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "E_left_riverbank",
+      "path": "art/candidates/bridge-transition/E_left_riverbank.png",
+      "sourcePixels": [
+        440,
+        432
+      ],
+      "worldRect": [
+        0,
+        740,
+        113,
+        96
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "terrain",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "F_right_riverbank",
+      "path": "art/candidates/bridge-transition/F_right_riverbank.png",
+      "sourcePixels": [
+        440,
+        432
+      ],
+      "worldRect": [
+        247,
+        740,
+        113,
+        96
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "terrain",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "G_wilderness_exit_threshold",
+      "path": "art/candidates/bridge-transition/G_wilderness_exit_threshold.png",
+      "sourcePixels": [
+        336,
+        112
+      ],
+      "worldRect": [
+        138,
+        151,
+        84,
+        28
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "deck",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "H1_exit_left_bank_masonry",
+      "path": "art/candidates/bridge-transition/H1_exit_left_bank_masonry.png",
+      "sourcePixels": [
+        208,
+        336
+      ],
+      "worldRect": [
+        93,
+        109,
+        52,
+        84
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "lower-masonry",
+      "approval": "UNVERIFIED"
+    },
+    {
+      "name": "H2_exit_right_bank_masonry",
+      "path": "art/candidates/bridge-transition/H2_exit_right_bank_masonry.png",
+      "sourcePixels": [
+        208,
+        336
+      ],
+      "worldRect": [
+        215,
+        109,
+        52,
+        84
+      ],
+      "realTransparencyRequired": true,
+      "anchor": "bridge-cache-local-top-left",
+      "layer": "lower-masonry",
+      "approval": "UNVERIFIED"
+    }
+  ]
+}

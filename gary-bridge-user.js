@@ -1,6 +1,6 @@
 /* Gary Eats! owner-approved stone bridge; independent cross-stream, banks and entrance. */
 (function(root){'use strict';
-const SPEC=Object.freeze({source:'art/candidates/bridge/bridge-user-supplied.webp?v=20261024',sourceWidth:174,sourceHeight:620,far:180,end:800,deck:[138,222],road:[105,255],x:93,width:174,waterLeft:[0,101],waterRight:[259,360],tileHeight:256,approach:150});
+const SPEC=Object.freeze({source:'art/candidates/bridge/bridge-user-supplied.webp?v=20261024',sourceWidth:174,sourceHeight:620,far:180,end:800,deck:[138,222],road:[105,255],x:93,width:174,waterLeft:[0,101],waterRight:[259,360],tileHeight:256,threshold:26,wingLength:52});
 function create({makeCanvas,ImageType}={}){
  if(typeof makeCanvas!=='function'||typeof ImageType!=='function')throw Error('Bridge dependencies unavailable');
  const image=new ImageType();let loaded=false,reason='pending';
@@ -71,28 +71,47 @@ function create({makeCanvas,ImageType}={}){
   ctx.restore();
   return true;
  }
- // Reuse the bridge's OWN cobblestone pixels for its entry and exit.
- // This replaces the flat grey legacy trapezoid with a matching stone path.
- function drawApproach(ctx,top,isExit){
-  const start=isExit?top+620:top-SPEC.approach;
-  const srcX=45,srcW=84,srcY=228,srcH=76;
-  ctx.save();ctx.beginPath();
-  if(isExit){ctx.moveTo(138,start);ctx.lineTo(222,start);ctx.lineTo(255,start+150);ctx.lineTo(105,start+150);}
-  else{ctx.moveTo(105,start);ctx.lineTo(255,start);ctx.lineTo(222,start+150);ctx.lineTo(138,start+150);}
-  ctx.closePath();ctx.clip();
-  ctx.fillStyle='#6d716b';ctx.fillRect(105,start,150,150);
-  for(let i=0;i<13;i++){
-   const yy=start+i*12;
-   ctx.drawImage(image,srcX,srcY+(i*11)%srcH,srcW,12,105,yy,150,12.5);
-  }
-  // Side shading tapers into the existing 150-unit road without painted guide lines.
+ // Only two SHORT 26-unit stone sills. Existing asphalt stays asphalt beyond
+ // each sill; no 150-unit cropped-cobble trapezoids or stretched bridge pixels.
+ function drawSill(ctx,top,isExit){
+  const y=isExit?top-SPEC.threshold:top+620;
+  ctx.save();
+  ctx.fillStyle='rgba(27,34,34,.17)';
+  ctx.fillRect(138,y+SPEC.threshold-3,84,6);
+  // Sample the same original bridge image instead of inventing a new stone scale.
+  ctx.drawImage(image,45,228,84,28,138,y,84,SPEC.threshold);
+  ctx.strokeStyle='rgba(32,38,37,.33)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(138,y+.5);ctx.lineTo(222,y+.5);ctx.stroke();
   ctx.restore();
+ }
+ // Two compact architectural wing-walls, beneath the existing bridge picture.
+ // They occupy outer margins only: the straight x138..222 gameplay deck never
+ // narrows further and the central asphalt is not replaced with cobblestones.
+ function drawWingPair(ctx,top,isExit){
+  const seam=isExit?top:top+620,dir=isExit?-1:1,far=seam+dir*SPEC.wingLength;
+  for(const right of [false,true]){
+   const p=right
+    ?[[224,seam-dir*7],[222,seam+dir*5],[253,far],[261,far],[243,seam+dir*3]]
+    :[[136,seam-dir*7],[138,seam+dir*5],[107,far],[99,far],[117,seam+dir*3]];
+   ctx.save();ctx.beginPath();
+   for(let i=0;i<p.length;i++)i?ctx.lineTo(p[i][0],p[i][1]):ctx.moveTo(p[i][0],p[i][1]);
+   ctx.closePath();ctx.clip();
+   const bx=right?222:99,by=Math.min(seam,far)-8;
+   ctx.fillStyle='#696d64';ctx.fillRect(bx,by,40,SPEC.wingLength+16);
+   ctx.drawImage(image,right?130:26,303,20,66,bx,by,40,SPEC.wingLength+16);
+   ctx.restore();
+   ctx.save();ctx.strokeStyle='rgba(36,40,38,.57)';ctx.lineWidth=1.1;
+   ctx.beginPath();for(let i=0;i<p.length;i++)i?ctx.lineTo(p[i][0],p[i][1]):ctx.moveTo(p[i][0],p[i][1]);ctx.closePath();ctx.stroke();ctx.restore();
+  }
  }
  function drawDeck(ctx,near){
   if(!loaded)return false;const top=topY(near);
-  drawApproach(ctx,top,false);
-  drawApproach(ctx,top,true);
+  // Structural abutments first, then preserve the ENTIRE supplied bridge image.
+  drawWingPair(ctx,top,false);
+  drawWingPair(ctx,top,true);
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);
+  drawSill(ctx,top,false);
+  drawSill(ctx,top,true);
   return true;
  }
  function drawFront(ctx,near){
