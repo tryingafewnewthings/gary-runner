@@ -17,7 +17,7 @@ test('bridge renders cached moving water and never allocates per frame',()=>{
 });
 test('artwork exists and has correct native alpha and dimensions',async()=>{
  const {loadImage}=require('@napi-rs/canvas');
- const im=await loadImage(fs.readFileSync(path.join(__dirname,'../art/bridge/user/bridge-user-supplied.webp')));
+ const im=await loadImage(fs.readFileSync(path.join(__dirname,'../art/candidates/bridge/bridge-user-supplied.webp')));
  assert.equal(im.width,174);assert.equal(im.height,620);
  const ctx=createCanvas(174,620).getContext('2d');ctx.drawImage(im,0,0);
  assert.equal(ctx.getImageData(0,100,1,1).data[3],0);
