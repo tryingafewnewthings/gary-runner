@@ -7,7 +7,7 @@
 <title>Gary Eats! — World Explorer</title>
 <style>
 :root{color-scheme:dark;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#101715;color:#eef0e9}
-*{box-sizing:border-box}body{margin:0;min-height:100dvh}main{max-width:860px;margin:auto;padding:12px 12px max(20px,env(safe-area-inset-bottom))}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;min-height:100dvh}main{max-width:860px;margin:auto;padding:12px 12px max(20px,env(safe-area-inset-bottom))}
 header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}h1{font-size:18px;margin:0}header a{color:#c9d9b7;font-size:12px}
 .layout{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:14px;justify-content:center}
 .viewport{width:min(100%,calc((100dvh - 205px)*.5625));max-width:360px;min-width:175px;aspect-ratio:9/16;position:relative;margin:auto;background:#080c0d;border:1px solid #47544a;border-radius:8px;overflow:hidden}
@@ -118,7 +118,7 @@ function animation(t){
   }
   seek(chapter,next);
  }
- elapsed+=last?0:0; // Animation is presentation-only; gameplay time never advances.
+ // Animation is presentation-only; gameplay time never advances.
  if(!building)api.frame(t/1000%3600);
  frameId=requestAnimationFrame(animation);
 }
