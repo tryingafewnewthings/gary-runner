@@ -12,7 +12,12 @@ async function setup(search=''){
  const proxy=new Proxy(ctx,{get:(target,k)=>typeof target[k]==='function'?(...args)=>{if(k==='drawImage')args[0]=args[0].native||args[0];return target[k](...args);}:target[k],set:(t,k,v)=>{t[k]=v;return true;}});
  const api=w.GaryRoadEvolution;await api.prepare();
  function render(d){ctx.clearRect(0,0,360,640);api.drawCobbles(proxy,{x:0,y:0,w:105,h:640,distance:d});api.drawCobbles(proxy,{x:255,y:0,w:105,h:640,distance:d});api.drawRoad(proxy,{height:640,distance:d});return ctx.getImageData(0,0,360,640).data;}
- return {api,render,canvas};
+ function renderRoad(d,rain=0){
+  ctx.clearRect(0,0,360,640);
+  api.drawRoadSurface(proxy,{height:640,distance:d,rain});
+  return ctx.getImageData(0,0,360,640).data;
+ }
+ return {api,render,renderRoad,canvas};
 }
 test('normal and historical installer links remain clean; debug requires explicit flag',async()=>{
  for(const search of ['', '?roadstage=5','?roadstage=','?debug=1&roadstage=2.5']){const f=await setup(search);assert.ok(f.render(0).every(v=>v===0));assert.equal(f.api.snapshot().debugStage,null);}
@@ -56,4 +61,45 @@ test('mature decay hides at least 95 percent of the cobbled area; render work is
  const before=api.stats().blits;for(let i=0;i<100;i++)render(15000+i*3.25);
  assert.ok((api.stats().blits-before)/100<=48);assert.equal(api.snapshot().buildCount,initial);
  console.log('mature cobble cover:',(covered/total*100).toFixed(1)+'%; cached blits/frame:',(api.stats().blits-before)/100);
+});
+
+
+test('asphalt wear is faint, world-fixed, inside the 150-unit road and uses baked atlases',async()=>{
+ const {api,renderRoad}=await setup('?debug=1&roadstage=5');
+ assert.equal(api.stats().roadAtlases,2);
+ const a=renderRoad(15000,0),b=renderRoad(15010,0);
+ let painted=0,maxAlpha=0,maxDrift=0;
+ for(let y=0;y<640;y++)for(let x=0;x<360;x++){
+  const i=(y*360+x)*4;
+  if(x<105||x>=255)assert.equal(a[i+3],0,'overlay leaked beyond road at '+x);
+  else{if(a[i+3])painted++;maxAlpha=Math.max(maxAlpha,a[i+3]);}
+  if(x>=105&&x<255&&y>25&&y<610){
+   const j=((y+10)*360+x)*4;
+   maxDrift=Math.max(maxDrift,Math.abs(a[i+3]-b[j+3]));
+  }
+ }
+ assert.ok(painted>250,'wear must remain visible at maturity');
+ assert.ok(maxAlpha<110,'weathering must stay visually quiet');
+ assert.ok(maxDrift<=2,'wear must stay fixed in world depth; drift='+maxDrift);
+ assert.equal(api.snapshot().buildCount,10,'existing side atlases remain intact');
+});
+test('tiny puddles appear in rain only and stay unobtrusive near the road edges',async()=>{
+ const {api,renderRoad}=await setup('?debug=1&roadstage=5');
+ const dry=renderRoad(15000,0),drizzle=renderRoad(15000,.18),wet=renderRoad(15000,1);
+ let changed=0,peak=0,centreChanged=0;
+ for(let y=0;y<640;y++)for(let x=0;x<360;x++){
+  const i=(y*360+x)*4;
+  assert.equal(drizzle[i+3],dry[i+3],'no standing puddles in very light rain');
+  if(wet[i+3]!==dry[i+3]){
+   changed++;peak=Math.max(peak,wet[i+3]-dry[i+3]);
+   if(x>=148&&x<=212)centreChanged++;
+  }
+ }
+ assert.ok(changed>10&&changed<1600,'puddles should be tiny scattered shapes: '+changed);
+ assert.equal(centreChanged,0,'puddles must avoid the central lane markings');
+ assert.ok(peak<80,'water highlights must remain faint');
+ const before=api.stats().roadBlits;
+ for(let i=0;i<15;i++)renderRoad(15000+i*2.25,1);
+ assert.ok((api.stats().roadBlits-before)/15<=16,'bounded cached draw work');
+ assert.equal(api.stats().roadAtlases,2);
 });
