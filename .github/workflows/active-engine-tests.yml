@@ -54,6 +54,12 @@ jobs:
         env:
           GARY_TEST_ENGINE: webkit
         run: npm run test:browser
+      - name: World Explorer native capture and mobile controls (Chromium)
+        run: node tests/world-explorer-browser.cjs
+      - name: World Explorer iPhone-like WebKit controls
+        env:
+          GARY_TEST_ENGINE: webkit
+        run: node tests/world-explorer-browser.cjs
       - name: Upload browser and integration failure diagnostics
         if: always()
         uses: actions/upload-artifact@v4
