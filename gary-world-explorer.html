@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gary Eats! — World Explorer</title>
+<style>
+:root{color-scheme:dark;font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#10171a;color:#f5f1e7}
+*{box-sizing:border-box}body{margin:0;padding:0 0 calc(30px + env(safe-area-inset-bottom))}
+main{max-width:940px;margin:auto;padding:12px}
+header{display:flex;align-items:start;justify-content:space-between;gap:12px;margin:2px 0 12px}
+h1{font-size:22px;letter-spacing:-.6px;margin:0}h2{font-size:15px;margin:0 0 10px}
+p{font-size:12px;color:#b3c3c2;margin:5px 0 10px}a{color:#f1ca7b}
+header a{font-size:12px;white-space:nowrap;padding-top:7px}
+.layout{display:grid;grid-template-columns:minmax(0,390px) minmax(0,1fr);gap:14px;align-items:start}
+.panel{background:#1b272a;border:1px solid #354a4c;border-radius:14px;padding:13px;margin-bottom:12px}
+.stage{margin:auto;width:min(100%,340px);aspect-ratio:9/16;overflow:hidden;border-radius:10px;background:#172327;position:relative}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.stage .loading{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;background:#172327;color:#f1ca7b;font-weight:700;z-index:2}
+.stage .loading[hidden]{display:none}
+#position{width:100%;accent-color:#e8bc64;touch-action:pan-y;height:40px;margin:0}
+.timeline{display:flex;justify-content:space-between;font-size:11px;color:#b6c7c6;margin:0 0 8px}
+#location{font-weight:800;font-size:15px;margin:0 0 5px}
+#detail{font-size:12px;color:#b5c8c4;min-height:17px}
+.buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+button,select{font:inherit;min-height:44px;border-radius:10px;border:1px solid #506362;background:#2b4141;color:#fff;padding:9px;cursor:pointer;touch-action:manipulation}
+button.primary{background:#f0c66f;color:#182124;border-color:#f0c66f;font-weight:800}
+button:disabled{opacity:.45;cursor:not-allowed}
+button[aria-pressed=true]{border-color:#f0c66f;background:#3b4739}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #f0c66f;outline-offset:3px}
+label{display:block;color:#d8e1dd;font-size:12px;font-weight:750;margin:12px 0 6px}
+select{width:100%;font-size:16px}
+.checks{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0 4px}
+.checks label{display:flex;align-items:center;gap:6px;margin:0;font-size:13px}
+.checks input{width:19px;height:19px;accent-color:#f0c66f}
+#checkpoints{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#checkpoints button{text-align:left;font-size:12px;min-height:52px}
+#checkpoints button span{display:block;font-size:10px;color:#b5c9c4}
+#status{font-size:12px;color:#bdd3c9;min-height:19px;overflow-wrap:anywhere}
+#contact{display:none;width:100%;margin-top:10px;border-radius:7px}
+.note{border-left:3px solid #e5bb65;padding-left:9px}
+@media(max-width:700px){main{padding:11px}.layout{display:flex;flex-direction:column}.layout>section{width:100%}.stage{width:min(100%,280px)}.panel{width:100%;padding:11px}.controls{display:contents}.viewer{order:0}.travel{order:1}.tools{order:2}h1{font-size:20px}}
+</style></head><body><main>
+<header><div><h1>Gary Eats! World Explorer</h1><p>See the real game world without playing</p></div><a href="index.html">Play game ↗</a></header>
+<div class="layout">
+<section class="viewer" aria-label="Live 360 by 640 game engine">
+<div class="panel"><div class="stage"><iframe id="game" title="Gary Eats native game render" src="index.html?debug=1&amp;bridgepreview=1&amp;worldexplorer=1" loading="eager"></iframe><div class="loading" id="loading">Loading real game artwork…</div></div><p style="text-align:center">Native 360 × 640 gameplay camera · preview mode only</p></div>
+</section>
+<section class="controls">
+<div class="panel travel"><h2>Explore the world</h2>
+<div id="location">Loading…</div><div id="detail">Waiting for game assets</div>
+<label for="position">Journey timeline</label>
+<input id="position" type="range" min="0" max="1000" step="1" value="0" disabled aria-label="Scrub through game locations">
+<div class="timeline"><span>High street</span><span>Bridge</span><span>Wilderness</span></div>
+<div class="buttons"><button id="previous" disabled>← Previous area</button><button id="next" disabled>Next area →</button>
+<button id="tour" class="primary" disabled>▶ Auto flythrough</button><button id="stop" disabled>■ Stop</button></div>
+<label>Jump to an implemented area</label><div id="checkpoints"></div>
+</div>
+<div class="panel tools"><h2>Visual inspection</h2>
+<label for="lighting">Lighting and weather</label><select id="lighting"><option value="natural">Natural story conditions</option><option value="day">Daylight</option><option value="night">Night</option><option value="rain">Heavy rain</option></select>
+<div class="checks"><label><input id="gary" type="checkbox" checked> Show Gary</label><label><input id="hud" type="checkbox"> Show HUD</label></div>
+<div class="buttons" style="margin-top:12px"><button id="shot" disabled>Capture screenshot</button><button id="sheet" disabled>Make 12-view contact sheet</button></div>
+<canvas id="contact" width="720" height="1280" aria-label="World preview contact sheet"></canvas>
+<p id="status" role="status" aria-live="polite">Starting preview…</p>
+<p class="note">This is a visual route through implemented environment checkpoints, not a literal complete map. Story encounters (including the stranger and fox) are triggered by gameplay and are not reconstructed by the scrubber. Planned biomes are not shown as playable content. No changes are saved to the game.</p>
+</div>
+</section></div></main><script src="gary-world-explorer.js?v=1"></script></body></html>

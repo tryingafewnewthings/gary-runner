@@ -1,0 +1,29 @@
+name: World Explorer native preview QA
+on:
+  pull_request:
+    paths:
+      - 'gary-world-explorer.html'
+      - 'gary-world-explorer.js'
+      - 'gary-difficulty-runtime.js'
+      - 'tests/world-explorer-browser.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  explorer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Chromium iPhone-size visual inspection
+        run: node tests/world-explorer-browser.cjs
+      - name: WebKit iPhone-size visual inspection
+        env:
+          GARY_TEST_ENGINE: webkit
+        run: node tests/world-explorer-browser.cjs
