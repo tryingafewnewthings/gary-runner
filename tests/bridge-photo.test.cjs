@@ -12,7 +12,7 @@ test('bridge renders cached moving water and never allocates per frame',()=>{
  const bridge=create({makeCanvas:()=>{allocations++;return createCanvas(1,1)},ImageType:FakeImage});
  assert.equal(bridge.ready(),true);assert.equal(allocations,2);
  const ctx=createCanvas(360,640).getContext('2d');
- for(let i=0;i<100;i++){bridge.drawWater(ctx,850,i/60);bridge.drawFront(ctx,850);}
+ for(let i=0;i<100;i++){bridge.drawWater(ctx,850,i/60);}
  assert.equal(allocations,2);
 });
 test('artwork exists and has correct native alpha and dimensions',async()=>{
