@@ -1101,7 +1101,7 @@ let shutterMix = 0;
   const paintedBridge=bridgePaintedEnabled&&window.GaryBridgePainted?.create({makeCanvas:()=>document.createElement('canvas'),ImageType:Image,cobble:cobbleImgs.base})||null;
   if(bridgePreviewSession&&bridgePaintedEnabled)window.GaryPaintedBridgeStatus=Object.freeze({ready:()=>!!paintedBridge?.ready(),reason:()=>paintedBridge?.reason()});
   let bridgePaint=legacyBridgePaint;
-  const userBridge=window.GaryUserBridge?.create({makeCanvas:()=>document.createElement('canvas'),ImageType:Image,environment:legacyBridgePaint})||null;
+  const userBridge=window.GaryUserBridge?.create({makeCanvas:()=>document.createElement('canvas'),ImageType:Image,environment:legacyBridgePaint,previewEntrance:bridgePreviewSession&&new URLSearchParams(location.search).get('entranceCandidate')==='1'})||null;
   const useUserBridge=()=>!!userBridge?.ready()&&(!bridgePreviewSession||bridgePaint===legacyBridgePaint);
   if(bridgePreviewSession)window.GaryUserBridgeStatus=Object.freeze({ready:()=>!!userBridge?.ready(),reason:()=>userBridge?.reason()||'unavailable'});
   const wildernessImages=Object.fromEntries(Object.entries(window.GaryWildernessData.assets).map(([key,def])=>[key,itemImages[key]||loadGary('art/wilderness/'+def.path)]));

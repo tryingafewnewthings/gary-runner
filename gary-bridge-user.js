@@ -1,9 +1,19 @@
 /* Gary Eats! owner-approved stone bridge; independent cross-stream, banks and entrance. */
 (function(root){'use strict';
 const SPEC=Object.freeze({source:'art/candidates/bridge/bridge-user-supplied.webp?v=20261024',sourceWidth:174,sourceHeight:620,far:180,end:800,deck:[138,222],road:[105,255],x:93,width:174,waterLeft:[0,101],waterRight:[259,360],tileHeight:256,threshold:26,wingLength:52});
-function create({makeCanvas,ImageType}={}){
+function create({makeCanvas,ImageType,previewEntrance=false}={}){
  if(typeof makeCanvas!=='function'||typeof ImageType!=='function')throw Error('Bridge dependencies unavailable');
  const image=new ImageType();let loaded=false,reason='pending';
+ // Preview-only seam derived from the supplied approved bridge entrance composition.
+ // The candidate cannot appear in normal Play; a missing/corrupt PNG falls back
+ // to the existing drawn sill and wings, preserving collision and gameplay.
+ const entranceImage=previewEntrance?new ImageType():null;
+ let entranceReady=false;
+ if(entranceImage){
+  entranceImage.onload=()=>{entranceReady=entranceImage.naturalWidth===360&&entranceImage.naturalHeight===256;};
+  entranceImage.onerror=()=>{entranceReady=false;};
+  entranceImage.src='art/candidates/bridge/entrance-seam-user-20261024.png';
+ }
  const canvas=(width,height)=>{const c=makeCanvas();c.width=width;c.height=height;return c;};
  // All textured passes are built once. No image allocations in gameplay frames.
  const water=canvas(360,256),w=water.getContext('2d');
@@ -163,11 +173,14 @@ function create({makeCanvas,ImageType}={}){
  }
  function drawDeck(ctx,near){
   if(!loaded)return false;const top=topY(near);
-  // Structural abutments first, then preserve the ENTIRE supplied bridge image.
-  drawWingPair(ctx,top,false);
+  // Keep the existing exit untouched. In debug preview only, substitute the
+  // extracted entrance sill/shoulders for the old long procedural entrance wings.
+  // The seam PNG is native 360x256 with pixels only inside its 64px center mask.
+  if(!entranceReady)drawWingPair(ctx,top,false);
   drawWingPair(ctx,top,true);
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);
-  drawSill(ctx,top,false);
+  if(entranceReady)ctx.drawImage(entranceImage,0,near-128,360,256);
+  else drawSill(ctx,top,false);
   drawSill(ctx,top,true);
   return true;
  }

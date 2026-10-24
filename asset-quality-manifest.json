@@ -599,6 +599,11 @@
       "width": 360,
       "height": 640,
       "alpha": false
+    },
+    "art/candidates/bridge/entrance-seam-user-20261024.png": {
+      "width": 360,
+      "height": 256,
+      "alpha": true
     }
   }
 }

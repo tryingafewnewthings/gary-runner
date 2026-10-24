@@ -82,4 +82,14 @@ summary{min-height:44px;padding:12px;cursor:pointer}#seam-prepare{width:100%;mar
 <p id="status" role="status" aria-live="polite">Starting preview…</p>
 <p class="note">This is a visual route through implemented environment checkpoints, not a literal complete map. Story encounters (including the stranger and fox) are triggered by gameplay and are not reconstructed by the scrubber. Planned biomes are not shown as playable content. No changes are saved to the game.</p>
 </div>
-</section></div></main><script src="gary-biome-zip.js?v=1"></script><script src="gary-seam-factory.js?v=1"></script><script src="gary-world-explorer.js?v=seam-factory1"></script></body></html>
+</section></div></main><script>
+// Candidate option is inspect-only. Preserve baseline when flag is absent.
+if(new URLSearchParams(location.search).get('entranceCandidate')==='1'){
+ const stage=document.getElementById('game');
+ const u=new URL(stage.getAttribute('src'),location.href);
+ u.searchParams.set('entranceCandidate','1');stage.src=u.href;
+ const note=document.createElement('p');note.className='note';
+ note.textContent='BRIDGE ENTRANCE CANDIDATE: inspection only; normal Play is unchanged.';
+ document.querySelector('header')?.append(note);
+}
+</script><script src="gary-biome-zip.js?v=1"></script><script src="gary-seam-factory.js?v=1"></script><script src="gary-world-explorer.js?v=seam-factory1"></script></body></html>
