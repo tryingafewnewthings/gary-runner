@@ -68,7 +68,11 @@ $('stop').addEventListener('click',stop);
 $('lighting').addEventListener('change',()=>{if(api){api.mode($('lighting').value);label();}});
 for(const id of ['gary','hud'])$(id).addEventListener('change',()=>{if(api)api.layers({gary:$('gary').checked,hud:$('hud').checked});});
 $('shot').addEventListener('click',()=>{
- if(api)save(frame.contentDocument.getElementById('c'),'gary-eats-world-'+slider.value+'.png');
+ if(!api)return;
+ const source=frame.contentDocument.getElementById('c');
+ const output=document.createElement('canvas');output.width=360;output.height=640;
+ output.getContext('2d').drawImage(source,0,0,360,640);
+ save(output,'gary-eats-world-'+slider.value+'.png');
 });
 $('sheet').addEventListener('click',async()=>{
  if(!api||busy)return;
