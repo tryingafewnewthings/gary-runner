@@ -116,9 +116,9 @@
       ],
       "worldRect": [
         0,
-        705,
+        740,
         113,
-        111
+        96
       ],
       "realTransparencyRequired": true,
       "anchor": "bridge-cache-local-top-left",
@@ -134,9 +134,9 @@
       ],
       "worldRect": [
         247,
-        705,
+        740,
         113,
-        111
+        96
       ],
       "realTransparencyRequired": true,
       "anchor": "bridge-cache-local-top-left",
