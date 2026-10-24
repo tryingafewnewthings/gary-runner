@@ -46,6 +46,12 @@ jobs:
         run: npm run test:assets
       - name: Native Canvas and active engine integration checks
         run: npm run test:integration
+      - name: World Explorer real-engine scrubbing (Chromium and WebKit)
+        run: |
+          node --check gary-world-explorer.js
+          node --check gary-difficulty-runtime.js
+          node tests/world-explorer-browser.cjs
+          GARY_TEST_ENGINE=webkit node tests/world-explorer-browser.cjs
       - name: Chromium smoke
         run: npm run test:browser
       - name: Capture painted bridge at native 360x640 in three lighting modes
