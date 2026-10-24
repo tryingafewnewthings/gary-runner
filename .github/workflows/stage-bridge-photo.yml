@@ -1,0 +1,48 @@
+name: Stage bridge directly from uploaded photo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'art/bridge/uploads/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  stage-photo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --user Pillow numpy
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Baseline bridge regression before candidate replacement
+        run: node --test --test-concurrency=1 tests/bridge.test.cjs tests/bridge-painted.test.cjs
+      - name: Build candidate in isolated review branch
+        run: |
+          git switch -c bridge-photo-${GITHUB_RUN_ID}
+          python3 tools/bridge-photo/stage.py
+          node --check gary-bridge-user.js
+          node --check gary-difficulty-runtime.js
+          node --test tests/bridge-photo.test.cjs
+          node tests/bridge-photo-capture.cjs
+      - name: Open draft visual-review pull request (never merge automatically)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html gary-difficulty-runtime.js gary-bridge-user.js art/bridge/user/bridge-user-supplied.webp docs/bridge-user-review
+          git commit -m "Stage owner-supplied bridge and moving river for visual review"
+          git push origin HEAD
+          gh pr create --draft --base main --head "$(git branch --show-current)" --title "Review: supplied stone bridge and animated river" --body "Stages the original owner-supplied bridge photo with transparency and fixed 84-unit deck, independent cached animated river strips, original fox/story/collision logic unchanged and legacy fallback. Includes 360x640 day/night/rain real-engine screenshots under docs/bridge-user-review. Do not merge before artistic approval and release quality gate." || echo "PR creation unavailable; pushed branch is available for review."
