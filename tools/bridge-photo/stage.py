@@ -9,7 +9,7 @@ uploads=root/'art/bridge/uploads'
 sources=[p for p in uploads.iterdir() if p.suffix.lower() in ('.jpg','.jpeg','.png','.webp')]
 if len(sources)!=1: raise SystemExit(f'Expected exactly one bridge photo in {uploads}, found {len(sources)}')
 source=sources[0]
-src=Image.open(source).convert('RGB')
+src=Image.open(source).convert('RGBA')
 w,h=src.size
 if not (w>=400 and h>=700 and abs(w/h-864/1536)<.03):
     raise SystemExit(f'Expected a portrait 9:16 source matching supplied artwork; got {w}x{h}')
@@ -17,15 +17,26 @@ if not (w>=400 and h>=700 and abs(w/h-864/1536)<.03):
 left=round(w*235/864);right=round(w*629/864)
 cropped=src.crop((left,0,right,h))
 a=np.asarray(cropped,dtype=np.float32)
-d=np.max(255-a,axis=2)
-alpha=np.clip((d-12)/45,0,1)
-# Remove white matte from antialiased edges, preserve the painted stone/rope.
-aa=alpha[:,:,None]
-rgb=np.where(aa>.08,(a-255*(1-aa))/np.maximum(aa,.08),a).clip(0,255).astype('uint8')
-rgba=np.dstack([rgb,(alpha*255).astype('uint8')])
+original_alpha=a[:,:,3]/255
+# Preserve real PNG transparency; for an opaque image, key only near-white
+# matte pixels. A rail can touch the crop edge: never assume corner transparency.
+if np.mean(original_alpha<.98)>.001:
+    alpha=original_alpha
+    rgb=a[:,:,:3]
+else:
+    rgb=a[:,:,:3]
+    distance=np.min(255-rgb,axis=2)
+    alpha=np.clip((distance-12)/46,0,1)
+    aa=alpha[:,:,None]
+    rgb=np.where(aa>.08,(rgb-255*(1-aa))/np.maximum(aa,.08),rgb).clip(0,255)
+rgba=np.dstack([rgb.astype('uint8'),(alpha*255).astype('uint8')])
 art=Image.fromarray(rgba,'RGBA').resize((174,620),Image.Resampling.LANCZOS)
-if art.getpixel((0,100))[3]>16 or art.getpixel((87,300))[3]<230:
-    raise SystemExit('Artwork alpha test failed; upload the exact original bridge image')
+native_alpha=np.asarray(art.getchannel('A'))
+opaque=float(np.mean(native_alpha>220))
+clear=float(np.mean(native_alpha<24))
+print(f'Bridge alpha diagnostics: opaque={opaque:.3f} transparent={clear:.3f} center={int(native_alpha[310,87])}')
+if opaque<.10 or clear<.005 or int(native_alpha[310,87])<150:
+    raise SystemExit('Artwork segmentation is implausible; refusing to stage image without visual inspection')
 dest=root/'art/bridge/user/bridge-user-supplied.webp'
 dest.parent.mkdir(parents=True,exist_ok=True)
 art.save(dest,'WEBP',quality=77,method=6)
