@@ -85,5 +85,7 @@ test('main runtime paints native street tail after water and before the bridge p
  const street=src.indexOf('userBridge.drawStreetTail(ctx,n,{drawCobbles,drawPavements,drawRoad})');
  const deck=src.indexOf('userBridge.drawDeck(ctx,n)');
  assert.ok(water>=0&&street>water&&deck>street);
+ assert.match(src,/if\(wilderness\.active\(\)\|\|bridgeCoversWorld\)/,
+  'bridge scene must clear its background even during frozen preview');
  assert.ok(!src.includes("ctx.fillStyle='#465348';ctx.fillRect(0,0,W,H);"));
 });
