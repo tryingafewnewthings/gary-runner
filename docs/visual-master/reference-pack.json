@@ -50,6 +50,7 @@
     }
   ],
   "rejectedAsStyleReferences": [
+    "art/wilderness/**",
     "art/wilderness/verge/verge_grass_dense_olive_01.png",
     "docs/wilderness/reveal.png",
     "art/bridge/production/lower.png"
@@ -95,6 +96,13 @@
     "paintedBridge": "LIVE_BUT_VISUAL_UNAPPROVED; PR18 merged despite failed asset gate; NOT a style master",
     "wildernessDraft01": "USER_REJECTED_AS_ART",
     "first30SecondsRecording": "24_SECONDS_EIGHT_FRAMES_VERIFIED",
-    "raisedArchitecture": "PROVISIONAL_NEEDS_VISUAL_APPROVAL"
-  }
+    "raisedArchitecture": "PROVISIONAL_NEEDS_VISUAL_APPROVAL",
+    "wildernessCurrentAssets": "OWNER_REJECTED_ALL_2026_10_24; do not use any existing art/wilderness image or its colours/composition as positive reference for new assets",
+    "acceptedBridgeTarget": "OWNER_ACCEPTED_2026_10_24 bridge shoreline mock-up is visual TARGET in conversation; confirm separately whether its pixels have been installed as game sprites"
+  },
+  "forbiddenStyleSources": [
+    "art/wilderness/**",
+    "previous DRAFT01 wilderness artwork",
+    "legacy procedural olive-green bank underpaint"
+  ]
 }
