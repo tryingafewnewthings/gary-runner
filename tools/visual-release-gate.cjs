@@ -8,8 +8,8 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..');
 const parse=dir=>JSON.parse(fs.readFileSync(path.join(dir,'art-visual-ledger.json'),'utf8'));
-const isNewArt=f=>/\.(?:png|webp)$/i.test(f)&&! /^(?:docs|tests|tools|test-results|\.github)\//.test(f)&&!isCandidate(f);
-const isCandidate=f=>/^art\/candidates\/.+\.(?:png|webp)$/i.test(f);
+const isNewArt=f=>/\.(?:png|webp)$/i.test(f)&&! /^(?:docs|tests|tools|test-results|\.github)\//.test(f)&&!isCandidate(f)&&!isRawBridgeInput(f);
+const isRawBridgeInput=f=>/^art\/bridge\/uploads\/[^/]+\.(?:png|webp)$/i.test(f);\nconst isCandidate=f=>/^art\/candidates\/.+\.(?:png|webp)$/i.test(f);
 const within=(dir,file)=>!file.includes('..')&&!path.isAbsolute(file)&&
  fs.existsSync(path.join(dir,file));
 function imageSize(dir,file){
@@ -22,7 +22,7 @@ function checkNewFiles(files,ledger,dir=root){
  if(ledger.schema!=='gary-eats-art-visual-ledger-v1'||typeof ledger.assets!=='object')
    return {pass:false,failures:['Invalid art-visual-ledger.json'],notes};
  for(const file of files){
-  if(isCandidate(file)){notes.push(file+' — quarantined candidate, never normal runtime');continue;}
+  if(isRawBridgeInput(file)){notes.push(file+' — owner-supplied raw input, must be staged and reviewed before registration');continue;}\n  if(isCandidate(file)){notes.push(file+' — quarantined candidate, never normal runtime');continue;}
   if(!isNewArt(file))continue;
   const item=ledger.assets[file];
   if(!item){failures.push(file+': no visual provenance/QA ledger record');continue;}
@@ -80,4 +80,4 @@ if(require.main===module){
   else console.log('Visual release ledger: PASS (evidence/metadata only; aesthetic quality is independently assessed)');
  }catch(e){console.error('FAIL:',e.message);process.exitCode=1;}
 }
-module.exports={checkNewFiles,isNewArt,isCandidate,imageSize};
+module.exports={checkNewFiles,isNewArt,isCandidate,isRawBridgeInput,imageSize};
