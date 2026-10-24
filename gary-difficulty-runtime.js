@@ -2666,7 +2666,7 @@ function updateRain(dt, advancing) {
       if(!explorerHideHud&&!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
       crashScene.screen();
     }
-    if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
+    if(!worldExplorerSession&&/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
     drawDiagnostics();
   }
 
