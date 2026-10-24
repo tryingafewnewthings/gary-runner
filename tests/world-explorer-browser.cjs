@@ -40,7 +40,7 @@ const types={'.html':'text/html','.js':'text/javascript','.json':'application/js
   assert.equal(await page.evaluate(()=>document.querySelector('#game').contentWindow.GaryWorldExplorer.snapshot().showGary),false);
   await page.locator('#hud').check();
   assert.equal(await page.evaluate(()=>document.querySelector('#game').contentWindow.GaryWorldExplorer.snapshot().showHud),true);
-  await page.locator('#distance').fill('14500');
+  await page.locator('#distance').evaluate(el=>{el.value='14500';el.dispatchEvent(new Event('input',{bubbles:true}));});
   assert.equal(await page.evaluate(()=>document.querySelector('#game').contentWindow.GaryWorldExplorer.snapshot().distance),14500);
   const image=await page.evaluate(()=>{
    const src=document.querySelector('#game').contentDocument.querySelector('#c');
