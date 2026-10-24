@@ -1075,6 +1075,9 @@ let shutterMix = 0;
   }
   const bridge=window.GaryBridge.create();
   let bridgePreviewFrozen=false;
+  // Only the isolated debug iframe may hide presentation layers.
+  const worldExplorerSession=bridgePreviewSession&&new URLSearchParams(location.search).get('worldexplorer')==='1';
+  let explorerShowGary=true,explorerShowHud=true;
   // Factory candidates are an isolated review-only render layer. No save, collision,
   // spawn, difficulty or normal Play state can reference them.
   let candidateAsset=null;
@@ -2639,7 +2642,7 @@ function updateRain(dt, advancing) {
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
       for(let i=objs.length-1;i>=0;i--)if(!objs[i].d)drawObj(objs[i]);
       if(!cutscenePlate)fox.draw(ctx,view.distance,view.alpha,view.clock);
-      if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
+      if(!cutscenePlate&&(!worldExplorerSession||explorerShowGary)&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
       for(const f of fx){
         const k=f.t/f.life;
         const pop=f.pop?1.25-k*0.25:1;
@@ -2661,10 +2664,10 @@ function updateRain(dt, advancing) {
     if (nightOn) drawNightVignette();
 
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
-      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
+      if(!state.startsWith('crash') && state!=='cutscene'&&(!worldExplorerSession||explorerShowHud)){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
       crashScene.screen();
     }
-    if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
+    if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)&&!worldExplorerSession){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
     drawDiagnostics();
   }
 
@@ -2885,6 +2888,93 @@ function updateRain(dt, advancing) {
         snapshot:()=>candidateAsset?{pass:candidateAsset.pass,
           draw:{x:candidateAsset.x,y:candidateAsset.y,width:candidateAsset.width,height:candidateAsset.height},
           scrollWithWorld:candidateAsset.scrollWithWorld,registered:false}:null
+      });
+    }
+    // World Explorer: an isolated, read-only render seek. It never advances
+    // collision, scoring, pickups, persistence, or the story event state machine.
+    // Event-gated chapters are deliberate debug reconstructions, not one
+    // fabricated continuous timeline.
+    if(worldExplorerSession){
+      const explorerRanges=Object.freeze({street:[0,7200],bridge:[-150,1500],wilderness:[0,10500]});
+      let explorerChapter=null,explorerMode='natural',explorerOffset=0,explorerClock=0;
+      const clampExplorer=(n,min,max)=>Math.max(min,Math.min(max,n));
+      function explorerLighting(){
+        const natural=explorerMode==='natural';
+        if(!natural){
+          nightOn=explorerMode!=='day';
+          nightMix=nightOn?1:0;
+          rainMix=explorerMode==='rain'?1:0;
+          shutterMix=nightOn?1:0;
+          rainSaid=nightOn;
+        }else if(explorerChapter==='street'){
+          nightOn=false;nightMix=rainMix=shutterMix=0;rainSaid=false;
+        }else if(explorerChapter==='bridge'){
+          nightOn=true;nightMix=rainMix=shutterMix=1;rainSaid=true;
+        }else{
+          nightOn=true;nightMix=1-.86*wilderness.warmth();
+          rainMix=wilderness.weather();shutterMix=1;rainSaid=true;
+        }
+      }
+      function explorerPaint(){
+        // No gameplay update: image pixels and animation clocks only.
+        clock=explorerClock;
+        rememberPositions();prepareView(1);render();
+      }
+      function explorerSeek(chapter,offset=0){
+        if(!Object.prototype.hasOwnProperty.call(explorerRanges,chapter))throw Error('Unknown explorer chapter');
+        if(!Number.isFinite(offset))throw Error('Invalid explorer offset');
+        const [low,high]=explorerRanges[chapter];offset=clampExplorer(offset,low,high);
+        if(explorerChapter!==chapter){
+          let ok=false;
+          if(chapter==='street')ok=window.GaryAssetPreview.startScene('street-day','natural');
+          else if(chapter==='bridge')ok=window.GaryBridgePreview.start('middle');
+          else ok=window.GaryWildernessPreview.start('reveal');
+          if(!ok)return false;
+          window.GaryBridgePreview.freeze();
+          explorerChapter=chapter;
+        }
+        if(chapter==='street'){
+          // The street tiles scroll at their real authored world coordinates.
+          // Narrative triggers (shutters, fox, dialogue) require gameplay and
+          // are not silently faked by jumping to a large distance.
+          distance=scrollY=offset;bridge.reset();wilderness.reset(director.seed);
+          visualClearFrom=Infinity;
+        }else if(chapter==='bridge'){
+          const anchor=bridge.snapshot().anchor;
+          distance=scrollY=anchor+offset;
+          bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+        }else{
+          const origin=bridge.snapshot().anchor+770;
+          wilderness.begin(origin);
+          distance=scrollY=origin+546+offset;
+          bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+          wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:false});
+        }
+        explorerOffset=offset;explorerLighting();explorerPaint();return true;
+      }
+      window.GaryWorldExplorer=Object.freeze({
+        ready:()=>startupReady,
+        ranges:explorerRanges,
+        seek:explorerSeek,
+        mode:(mode)=>{
+          if(!['natural','day','night','rain'].includes(mode))throw Error('Unknown lighting mode');
+          explorerMode=mode;if(explorerChapter){explorerLighting();explorerPaint();}
+          return explorerMode;
+        },
+        layers:({gary=true,hud=true}={})=>{
+          explorerShowGary=!!gary;explorerShowHud=!!hud;
+          if(explorerChapter)explorerPaint();
+        },
+        frame:(elapsed)=>{
+          if(!Number.isFinite(elapsed))throw Error('Invalid animation clock');
+          explorerClock=clampExplorer(elapsed,0,3600);
+          if(explorerChapter)explorerPaint();
+        },
+        snapshot:()=>({chapter:explorerChapter,offset:explorerOffset,mode:explorerMode,
+          gary:explorerShowGary,hud:explorerShowHud,clock:explorerClock,
+          state,distance,bridge:bridge.snapshot(),wilderness:wilderness.snapshot(),
+          note:'Visual inspection only; narrative triggers are not simulated'}),
+        capture:()=>cv.toDataURL('image/png')
       });
     }
     window.GaryRuntimeStats=Object.freeze({snapshot:()=>({state,distance,lane,target,
