@@ -2947,7 +2947,7 @@ function updateRain(dt, advancing) {
       window.GaryWorldExplorer=Object.freeze({
         ready:()=>startupReady&&!!window.GaryAssetPreview?.ready(),
         segments,
-        seek:seekExplorer,
+        seek:(value,seconds)=>{if(Number.isFinite(seconds))animationTime=clamp(seconds,0,86400);return seekExplorer(value);},
         mode:(mode)=>{if(!['natural','day','night','rain'].includes(mode))throw Error('Invalid lighting');visualMode=mode;return seekExplorer(position);},
         layers:({gary,hud}={})=>{if(typeof gary==='boolean')explorerHideGary=!gary;if(typeof hud==='boolean')explorerHideHud=!hud;return seekExplorer(position);},
         time:(seconds)=>{if(!Number.isFinite(seconds))throw Error('Invalid animation time');animationTime=clamp(seconds,0,86400);return seekExplorer(position);},
