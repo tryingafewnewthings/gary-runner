@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111b1b">
+<title>Gary Eats! — World Explorer</title>
+<style>
+:root{color-scheme:dark;font:15px/1.42 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0e1517;color:#f4f4ed}
+*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:1100px;margin:auto;padding:12px 14px 30px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+h1{font-size:22px;margin:0;letter-spacing:-.5px}h2{font-size:15px;margin:0 0 9px}
+p{margin:5px 0 12px;color:#c4cfca;font-size:13px}
+a{color:#f4ca77}small{color:#b9c7c2}
+.layout{display:grid;grid-template-columns:minmax(285px,375px) minmax(290px,1fr);gap:14px;align-items:start}
+.panel{border:1px solid #334c49;border-radius:15px;background:#1a2829;padding:13px;margin-bottom:12px}
+.viewport{background:#0c1518;border:1px solid #3e5956;border-radius:14px;padding:8px;display:grid;place-items:center}
+.screen{position:relative;width:min(100%,360px);aspect-ratio:9/16;background:#172222;border-radius:9px;overflow:hidden}
+.screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.status{display:flex;gap:7px;align-items:center;justify-content:space-between;font-size:12px;margin:9px 0 0;color:#c3d1cb}
+.chip{padding:4px 8px;border:1px solid #597168;border-radius:30px;background:#243634}
+label{display:block;font-weight:750;font-size:13px;margin:10px 0 5px}
+input,button,select{font:inherit}
+input[type=range]{width:100%;min-height:37px;accent-color:#e8c16e}
+button,select{min-height:43px;padding:9px 12px;border-radius:10px;border:1px solid #536e68;background:#293c3b;color:#f7f5ed;font-size:13px;font-weight:720;touch-action:manipulation}
+button{cursor:pointer}button:disabled{opacity:.45;cursor:default}
+button.primary{background:#e8c16e;border-color:#e8c16e;color:#1c241c}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #e8c16e;outline-offset:2px}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.controls.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+#locations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#locations button{text-align:left;font-size:12px;min-height:40px}
+#locations button[aria-pressed=true]{background:#80673e;border-color:#e8c16e}
+#mode{width:100%}.toggles{display:flex;gap:16px;flex-wrap:wrap}
+.toggles label{display:flex;gap:7px;align-items:center;margin:5px 0}
+.toggles input{width:18px;height:18px;accent-color:#e8c16e}
+.progress{height:8px;background:#30423f;border-radius:30px;overflow:hidden;margin:8px 0}
+.progress>div{height:100%;background:#e8c16e;width:0}
+#position{font-variant-numeric:tabular-nums}
+#message{min-height:20px;font-size:12px;color:#d6b879}
+#filmstrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.thumb{border:1px solid #4d625c;border-radius:7px;overflow:hidden;background:#0d1516;min-width:0;padding:0;text-align:left}
+.thumb img{width:100%;display:block;aspect-ratio:9/16;object-fit:cover}
+.thumb span{display:block;padding:5px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+footer{font-size:12px;color:#aebbb7;margin-top:8px}
+@media(max-width:730px){.layout{grid-template-columns:1fr}.viewport{max-width:395px;margin:auto}.panel{max-width:520px;margin-left:auto;margin-right:auto}}
+</style>
+</head>
+<body><main>
+<header><div><h1>Gary Eats! World Explorer</h1><small>Real-engine visual inspection • 360 × 640</small></div><a href="index.html">Play game</a></header>
+<div class="layout">
+<section>
+<div class="viewport"><div class="screen"><iframe id="game" title="Gary Eats actual game renderer" src="index.html?debug=1&amp;bridgepreview=1&amp;worldexplorer=1" loading="eager"></iframe></div></div>
+<div class="status"><span id="status" role="status">Loading game assets…</span><span class="chip" id="location">High street</span></div>
+</section>
+<section>
+<div class="panel">
+<h2>Explore the world</h2>
+<div class="status"><strong id="position">0 / 0</strong><span id="percent">0%</span></div>
+<input id="distance" aria-label="World position" type="range" min="0" max="34000" step="10" value="0" disabled>
+<div class="progress"><div id="progress"></div></div>
+<div class="controls"><button id="back" disabled>◀ Back</button><button id="tour" class="primary" disabled>▶ Flythrough</button><button id="next" disabled>Next ▶</button></div>
+<div class="controls two" style="margin-top:7px"><button id="minus" disabled>− 200 units</button><button id="plus" disabled>+ 200 units</button></div>
+<label for="mode">Lighting and weather</label>
+<select id="mode" disabled><option value="natural">World progression</option><option value="day">Daylight</option><option value="night">Night</option><option value="rain">Heavy rain</option></select>
+<div class="toggles"><label><input id="gary" type="checkbox" checked disabled> Show Gary</label><label><input id="hud" type="checkbox" disabled> Show HUD</label></div>
+<div id="message" aria-live="polite">Visual-only mode. No collisions, pickups or saved progress.</div>
+</div>
+<div class="panel"><h2>Jump to a location</h2><div id="locations"></div><p style="margin:9px 0 0">Positions are fixed visual-review coordinates, not exact run timing. Scripted stranger/fox encounters are not replayed by this scrubber.</p></div>
+<div class="panel">
+<h2>Capture the world</h2>
+<div class="controls two"><button id="shot" disabled>Save screenshot</button><button id="strip" disabled>Build contact sheet</button></div>
+<p>Captures the actual game canvas. The contact sheet samples all named locations and can be saved as one PNG.</p>
+<div id="filmstrip"></div>
+</div>
+</section>
+</div>
+<footer>Read-only QA tool. Ordinary gameplay, scores, encounters and asset registration are unchanged. Unimplemented biomes are not shown.</footer>
+</main>
+<script src="gary-world-explorer.js?v=1"></script>
+</body></html>
