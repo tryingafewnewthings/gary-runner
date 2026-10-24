@@ -529,6 +529,11 @@
       "width": 360,
       "height": 640,
       "alpha": false
+    },
+    "art/candidates/bridge/bridge-user-supplied.webp": {
+      "width": 174,
+      "height": 620,
+      "alpha": true
     }
   }
 }
