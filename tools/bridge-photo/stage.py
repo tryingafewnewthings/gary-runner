@@ -37,10 +37,10 @@ clear=float(np.mean(native_alpha<24))
 print(f'Bridge alpha diagnostics: opaque={opaque:.3f} transparent={clear:.3f} center={int(native_alpha[310,87])}')
 if opaque<.10 or clear<.005 or int(native_alpha[310,87])<150:
     raise SystemExit('Artwork segmentation is implausible; refusing to stage image without visual inspection')
-dest=root/'art/bridge/user/bridge-user-supplied.webp'
+dest=root/'art/candidates/bridge/bridge-user-supplied.webp'
 dest.parent.mkdir(parents=True,exist_ok=True)
 art.save(dest,'WEBP',quality=77,method=6)
-def replace_once(text,old,new,label):
+manifest=root/'asset-quality-manifest.json'\nimport json\nm=json.loads(manifest.read_text())\nm['assets']['art/candidates/bridge/bridge-user-supplied.webp']={'width':174,'height':620,'alpha':True}\nmanifest.write_text(json.dumps(m,indent=2)+'\\n')\ndef replace_once(text,old,new,label):
     if text.count(old)!=1: raise SystemExit(f'{label}: expected one anchor, got {text.count(old)}')
     return text.replace(old,new,1)
 idx=root/'index.html';run=root/'gary-difficulty-runtime.js'
