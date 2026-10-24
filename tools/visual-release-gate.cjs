@@ -23,7 +23,8 @@ function checkNewFiles(files,ledger,dir=root){
  if(ledger.schema!=='gary-eats-art-visual-ledger-v1'||typeof ledger.assets!=='object')
    return {pass:false,failures:['Invalid art-visual-ledger.json'],notes};
  for(const file of files){
-  if(isRawBridgeInput(file)){notes.push(file+' — owner-supplied raw input, must be staged and reviewed before registration');continue;}\n  if(isCandidate(file)){notes.push(file+' — quarantined candidate, never normal runtime');continue;}
+  if(isRawBridgeInput(file)){notes.push(file+' — owner-supplied raw input, must be staged and reviewed before registration');continue;}
+  if(isCandidate(file)){notes.push(file+' — quarantined candidate, never normal runtime');continue;}
   if(!isNewArt(file))continue;
   const item=ledger.assets[file];
   if(!item){failures.push(file+': no visual provenance/QA ledger record');continue;}
