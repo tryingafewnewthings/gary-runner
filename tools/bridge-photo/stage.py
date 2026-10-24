@@ -25,7 +25,7 @@ if np.mean(original_alpha<.98)>.001:
     rgb=a[:,:,:3]
 else:
     rgb=a[:,:,:3]
-    distance=np.min(255-rgb,axis=2)
+    distance=np.max(255-rgb,axis=2)
     alpha=np.clip((distance-12)/46,0,1)
     aa=alpha[:,:,None]
     rgb=np.where(aa>.08,(rgb-255*(1-aa))/np.maximum(aa,.08),rgb).clip(0,255)
