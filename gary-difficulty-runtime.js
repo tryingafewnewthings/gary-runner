@@ -2661,7 +2661,7 @@ function updateRain(dt, advancing) {
     if (nightOn) drawNightVignette();
 
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
-      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.quiet()){ctx.save();ctx.fillStyle="rgba(24,36,31,.92)";ctx.fillRect(35,109,290,43);txt(bridge.warning()?"NARROW BRIDGE AHEAD":"THE FORGOTTEN BRIDGE",180,127,12,"#e6d2ab","center");txt(bridge.warning()?"Keep centre · Gary will follow the path":"Centre path · Stream below",180,144,10,"#c5cfba","center");ctx.restore();}}
+      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
       crashScene.screen();
     }
     if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
