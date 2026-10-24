@@ -2604,17 +2604,16 @@ function updateRain(dt, advancing) {
     if(state==='intro')drawIntroAvatar();
     ctx.setTransform(K,0,0,K,0,0);ctx.save();
     crashScene.camera();
-    // Opaque world underpaint: wilderness entrance sprites have feathered alpha.
-    // Prevent transparent holes when the old street is skipped beneath the bridge.
-    if(wilderness.active()){
-      // Do not expose flat olive wilderness underpaint beneath the accepted
-      // bridge. This is a neutral river-colour fallback, not a new art master.
+    // The renderer must CLEAR every native frame, including debug frozen
+    // checkpoints where wilderness.update() has not been called. Previously
+    // bridgeCoversWorld skipped the street and left a ghost of earlier pixels.
+    // This also prevents the old opaque olive underpaint from leaking through.
+    const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
+    if(wilderness.active()||bridgeCoversWorld){
       ctx.fillStyle=bridge.visible()&&useUserBridge()?'#2e5360':'#465348';
       ctx.fillRect(0,0,W,H);
     }
-    // At near>=500 the existing terrain provider covers all 640 rows opaquely.
-    // Avoid drawing (and lazily caching) the entire hidden street underneath it.
-    const bridgeCoversWorld=bridge.visible()&&bridge.nearAt(view.distance)>=500;
+    // Preserve the original full-street skip/performance guard below this line.
     // Split only isolated street-ground previews, retaining normal Play's exact
     // draw sequence. Decals must sit beneath real shop/prop alpha silhouettes.
     const streetCandidateGround=bridgePreviewSession&&!bridge.visible()&&!wilderness.active()&&
