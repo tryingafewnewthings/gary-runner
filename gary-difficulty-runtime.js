@@ -13,6 +13,8 @@
    */
   const {FixedStepClock, ObjectPool, sweptContact, lerp} = window.GaryCore;
   const bridgePreviewSession=new URLSearchParams(location.search).get('debug')==='1'&&new URLSearchParams(location.search).get('bridgepreview')==='1';
+  const worldExplorerSession=bridgePreviewSession&&new URLSearchParams(location.search).get('worldexplorer')==='1';
+  let explorerHideGary=false,explorerHideHud=false;
   const bestStorageKey=bridgePreviewSession?'gary-bridge-preview-best':'garyBest';
   const simulation = new FixedStepClock(60, 6);
   const director = window.GaryDifficulty.create(DIFFICULTY, BIOMES, ITEMS);
@@ -2639,7 +2641,7 @@ function updateRain(dt, advancing) {
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
       for(let i=objs.length-1;i>=0;i--)if(!objs[i].d)drawObj(objs[i]);
       if(!cutscenePlate)fox.draw(ctx,view.distance,view.alpha,view.clock);
-      if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
+      if(!cutscenePlate&&!explorerHideGary&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawPlayer();ctx.restore();}
       for(const f of fx){
         const k=f.t/f.life;
         const pop=f.pop?1.25-k*0.25:1;
@@ -2661,7 +2663,7 @@ function updateRain(dt, advancing) {
     if (nightOn) drawNightVignette();
 
     if(state!=='menu'&&state!=='intro'&&state!=='intro_transition'){
-      if(!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
+      if(!explorerHideHud&&!state.startsWith('crash') && state!=='cutscene'){drawHud();drawCap();if(bridge.warning()){ctx.save();ctx.fillStyle="rgba(24,36,31,.76)";rr(ctx,103,84,154,23,7);ctx.fill();txt("KEEP CENTRE · BRIDGE",180,96,10,"#e6d2ab","center");ctx.restore();}}
       crashScene.screen();
     }
     if(/(?:\?|&)debug=1(?:&|$)/.test(location.search)){ctx.save();ctx.setTransform(K,0,0,K,0,0);ctx.font="700 11px Arial";ctx.fillStyle="#ffe600";ctx.fillText("Seed: "+director.seed+" Level: "+director.state.level,10,15);ctx.restore();}
@@ -2885,6 +2887,72 @@ function updateRain(dt, advancing) {
         snapshot:()=>candidateAsset?{pass:candidateAsset.pass,
           draw:{x:candidateAsset.x,y:candidateAsset.y,width:candidateAsset.width,height:candidateAsset.height},
           scrollWithWorld:candidateAsset.scrollWithWorld,registered:false}:null
+      });
+    }
+    if(worldExplorerSession){
+      // Debug-only, read-only inspection. Uses the same render passes as Play,
+      // never advances simulation or spawns/collides with gameplay objects.
+      // Checkpoints are visual inspection segments, NOT fictional game metres.
+      const segments=Object.freeze([
+        {key:'street-day',label:'High street · daylight',scene:'street-day',from:0,to:199},
+        {key:'street-night',label:'High street · night and rain',scene:'street-rain',from:200,to:399},
+        {key:'bridge',label:'Stone bridge · cross-stream',scene:'bridge-middle',from:400,to:599},
+        {key:'wilderness-entry',label:'Wilderness · transition',scene:'wilderness-reveal',from:600,to:799},
+        {key:'wilderness-deep',label:'Wilderness · deeper path',scene:'wilderness-dense',from:800,to:1000}
+      ]);
+      let selected=-1,position=0,visualMode='natural',animationTime=0;
+      const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+      function seekExplorer(value){
+        if(!startupReady)return false;
+        const p=clamp(Number(value)||0,0,1000);
+        const idx=segments.findIndex((v,i)=>p<=v.to||i===segments.length-1);
+        const segment=segments[idx];
+        if(idx!==selected){
+          if(!window.GaryAssetPreview.startScene(segment.scene))return false;
+          selected=idx;
+        }
+        const f=clamp((p-segment.from)/(segment.to-segment.from),0,1);
+        if(idx<2){
+          distance=scrollY=idx===0?f*4300:4300+f*6700;
+          bridge.reset();wilderness.reset(director.seed);
+          visualClearFrom=idx===0?Infinity:0;
+          nightOn=idx===1;
+          nightMix=idx===1?(.55+.45*f):0;
+          rainMix=idx===1?(.2+.8*f):0;
+          shutterMix=idx===1?(.35+.65*f):0;
+        }else if(idx===2){
+          const n=120+f*1250;
+          distance=scrollY=bridge.snapshot().anchor+n;
+          bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+        }else{
+          const origin=bridge.snapshot().anchor+770;
+          const progress=idx===3?f*3700:3700+f*9000;
+          wilderness.begin(origin);
+          distance=scrollY=origin+546+progress;
+          bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
+          wilderness.update(1/60,{distance,bridge:bridge.snapshot(),hazardsClear:true,blocked:false});
+          nightOn=true;nightMix=1-.86*wilderness.warmth();rainMix=wilderness.weather();shutterMix=1;
+        }
+        if(visualMode!=='natural'){
+          nightOn=visualMode!=='day';nightMix=nightOn?1:0;
+          rainMix=visualMode==='rain'?1:0;shutterMix=nightOn?1:0;
+        }
+        clock=animationTime;
+        lane=target=1;laneLean=0;sideAnimTime=SIDE_ANIM_SECONDS;
+        position=p;
+        bridgePreviewFrozen=true;
+        rememberPositions();prepareView(1);render();
+        return true;
+      }
+      window.GaryWorldExplorer=Object.freeze({
+        ready:()=>startupReady&&!!window.GaryAssetPreview?.ready(),
+        segments,
+        seek:seekExplorer,
+        mode:(mode)=>{if(!['natural','day','night','rain'].includes(mode))throw Error('Invalid lighting');visualMode=mode;return seekExplorer(position);},
+        layers:({gary,hud}={})=>{if(typeof gary==='boolean')explorerHideGary=!gary;if(typeof hud==='boolean')explorerHideHud=!hud;return seekExplorer(position);},
+        time:(seconds)=>{if(!Number.isFinite(seconds))throw Error('Invalid animation time');animationTime=clamp(seconds,0,86400);return seekExplorer(position);},
+        snapshot:()=>({position,segment:segments[selected]?.key||'loading',distance,nightMix,rainMix,bridge:bridge.snapshot(),wilderness:wilderness.snapshot(),frozen:bridgePreviewFrozen}),
+        capture:()=>cv.toDataURL('image/png')
       });
     }
     window.GaryRuntimeStats=Object.freeze({snapshot:()=>({state,distance,lane,target,
