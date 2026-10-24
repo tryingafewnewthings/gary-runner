@@ -4,7 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'art/bridge/uploads/**'\n      - 'tools/bridge-photo/**'\n      - 'tests/bridge-photo*.cjs'\n      - '.github/workflows/stage-bridge-photo.yml'
+      - 'art/bridge/uploads/**'
+      - 'tools/bridge-photo/**'
+      - 'tests/bridge-photo*.cjs'
+      - '.github/workflows/stage-bridge-photo.yml'
 
 permissions:
   contents: write
