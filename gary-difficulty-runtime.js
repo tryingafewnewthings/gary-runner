@@ -2806,7 +2806,7 @@ function updateRain(dt, advancing) {
         distance=scrollY=20000;nightOn=true;nightMix=rainMix=shutterMix=1;rainSaid=true;playTime=60;
         visualClearFrom=0;
         bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
-        const n={approach:210,enter:560,middle:850,exit:1210}[position]??210;
+        const n={approach:210,composition:380,enter:560,middle:850,exit:1210}[position]??210;
         distance=scrollY=bridge.snapshot().anchor+n;
         bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
         // Align debug-only bridge views with real gameplay's wilderness origin.
@@ -2856,7 +2856,7 @@ function updateRain(dt, advancing) {
             nightMix=rainMix=shutterMix=nightOn?1:0;
             rainSaid=nightOn;visualClearFrom=Infinity;
             rememberPositions();prepareView(1);render();
-          }else if(scene==='bridge-approach'||scene==='bridge-enter'||scene==='bridge-middle'||scene==='bridge-exit'){
+          }else if(scene==='bridge-approach'||scene==='bridge-enter'||scene==='bridge-middle'||scene==='bridge-exit'||scene==='bridge-composition'){
             ok=window.GaryBridgePreview.start(scene.slice(7));
           }else if(scene==='wilderness-reveal'||scene==='wilderness-dense'){
             ok=window.GaryWildernessPreview.start(scene.slice(11));
