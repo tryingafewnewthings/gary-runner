@@ -85,8 +85,8 @@ async function main(){
     const bytes=Buffer.from(raw,'base64');
     if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Not native 360x640');
     fs.writeFileSync(path.join(composition,scene+'-'+mode+'.png'),bytes);
-    if(scene==='bridge-composition'&&mode==='day'){
-     console.log('GARY_APPROVED_COMPOSITION_DAY='+raw);
+    if(scene==='bridge-composition'){
+     console.log('GARY_APPROVED_COMPOSITION_'+mode.toUpperCase()+'='+raw);
     }
    }
   }
