@@ -72,8 +72,11 @@ function create({makeCanvas,ImageType}={}){
   // Shore texture lives ONLY on the two verges. Never paint a 360px
   // opaque green band over the road or over the bridge's narrow stone deck.
   ctx.save();ctx.beginPath();
-  for(const [x,width] of [[0,104],[256,104]]){
-   ctx.rect(x,top-96,width,96);ctx.rect(x,bottom,width,96);
+  // The approved transparent bank replaces the old green shoreline at
+  // this end. Keep the old strip only as a fallback if its image fails.
+  for(const [x,width,side] of [[0,104,0],[256,104,1]]){
+   ctx.rect(x,top-96,width,96);
+   if(!bankImages[side].loaded)ctx.rect(x,bottom,width,96);
   }
   ctx.clip();
   ctx.drawImage(shore,0,top-92,360,100);
