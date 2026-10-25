@@ -168,16 +168,30 @@ function create({makeCanvas,ImageType}={}){
    ctx.beginPath();for(let i=0;i<p.length;i++)i?ctx.lineTo(p[i][0],p[i][1]):ctx.moveTo(p[i][0],p[i][1]);ctx.closePath();ctx.stroke();ctx.restore();
   }
  }
+ // Existing bridge is the single authoritative source of walkway stones.
+ // The entrance image contains a foreign cobblestone lip across the road.
+ // Retain ONLY its outer masonry at x92..138 and x222..268, aligned to
+ // the SAME near coordinate, and never draw its central x138..222 portion.
+ function drawEntranceMasonry(ctx,near){
+  if(!entranceReady)return false;
+  ctx.save();
+  // Side sections of the 176x88 source share the fixed 360-unit coordinates.
+  // No centre strip, no scale, no new stone material, no screen-space drift.
+  ctx.drawImage(entranceImage,0,0,46,88,92,near-13,46,88);
+  ctx.drawImage(entranceImage,130,0,46,88,222,near-13,46,88);
+  ctx.restore();
+  return true;
+ }
  function drawDeck(ctx,near){
   if(!loaded)return false;const top=topY(near);
-  // The approved entrance PNG replaces the old tall procedural entrance wings
-  // and sill. Keep the EXIT entirely unchanged. If PNG decoding fails, the
-  // prior functioning entrance is retained, without affecting gameplay.
   if(!entranceReady)drawWingPair(ctx,top,false);
   drawWingPair(ctx,top,true);
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);
-  if(entranceReady)ctx.drawImage(entranceImage,92,near-13,176,88);
-  else drawSill(ctx,top,false);
+  if(entranceReady)drawEntranceMasonry(ctx,near);
+  // Preserve a stone-free centre contact at the end of the original deck.
+  // The native asphalt is already drawn below through drawStreetTail().
+  // Exit retains its previous short sill until a separate exit treatment
+  // is designed and validated against the wilderness ground.
   drawSill(ctx,top,true);
   return true;
  }
