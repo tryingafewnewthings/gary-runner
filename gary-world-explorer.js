@@ -15,7 +15,13 @@ function label(){
 function paint(value,seconds=clock){
  if(!api)return;
  slider.value=String(Math.max(0,Math.min(1000,Math.round(value))));
- try{api.seek(+slider.value,seconds);if(registry){$('seam-mode').value='custom';boundary=null;invalidateKit();importedManifest=null;if(candidate){candidate=null;frame.contentWindow.GaryAssetPreview.clear();$('seam-candidate').hidden=true;}}label();refreshSeam();}
+ try{api.seek(+slider.value,seconds);if(registry){
+   // Timeline scrubbing is diagnostic: it must never silently export a seam
+   // without a registered world boundary. Make the one-tap recovery explicit.
+   $('seam-mode').value='custom';boundary=null;invalidateKit();importedManifest=null;
+   if(candidate){candidate=null;frame.contentWindow.GaryAssetPreview.clear();$('seam-candidate').hidden=true;}
+   $('seam-status').textContent='Timeline moved. Tap “Align High street → Bridge seam” to enable Prepare AI Seam.';
+  }label();refreshSeam();}
  catch(e){stop();$('status').textContent='Preview error: '+e.message;}
 }
 function tick(t){
@@ -40,7 +46,7 @@ function init(){
   const small=document.createElement('span');small.textContent='Jump to checkpoint';b.append(small);
   b.addEventListener('click',()=>{stop();paint(seg.from+20);});$('checkpoints').append(b);
  }
- for(const id of ['position','previous','next','tour','shot','sheet','seam-mode','seam-import'])$(id).disabled=false;
+ for(const id of ['position','previous','next','tour','shot','sheet','seam-mode','seam-import','seam-align'])$(id).disabled=false;
  $('loading').hidden=true;selectTransition();$('status').textContent='Ready. Select a transition or explore the timeline.';
  return true;
 }
@@ -183,7 +189,14 @@ function refreshSeam(){
   }
   $('seam-selection').textContent=`Top: y ${start}–${a} · Gap: ${m.gapHeight} px · Bottom: y ${b}–${end}`;
   canvas.setAttribute('aria-label',`Editable seam: top ${start} to ${a}, gap ${a} to ${b}, bottom ${b} to ${end}. Use selection top and height controls to edit with a keyboard.`);
- }catch(e){ctx.clearRect(0,0,360,640);$('seam-selection').textContent=e.message;$('seam-prepare').disabled=true;invalidateKit();}
+  }catch(e){
+  ctx.clearRect(0,0,360,640);
+  $('seam-selection').textContent=e.message;
+  $('seam-approval').textContent='Cannot prepare at this position: '+e.message+' Tap “Align High street → Bridge seam” to restore the verified entrance.';
+  $('seam-prepare').disabled=true;
+  for(const id of ['composite','top-edge','bottom-edge','manifest'])$('seam-'+id).disabled=true;
+  invalidateKit();
+ }
 }
 function fitSeam(){
  const size=['top','gap','bottom'].reduce((sum,k)=>sum+Number($('seam-'+k).value),0);
@@ -195,6 +208,19 @@ for(const k of ['top','gap','bottom'])$('seam-'+k).addEventListener('input',()=>
 $('seam-position').addEventListener('input',()=>{stop();refreshSeam();});
 for(const k of ['gary','hud','rain'])$('seam-'+k).addEventListener('change',()=>{stop();refreshSeam();});
 $('seam-mode').addEventListener('change',selectTransition);
+$('seam-align').addEventListener('click',()=>{
+ if(!api||!registry||busy)return;
+ // Only the known entrance has approved source reference registration. Never
+ // unlock rejected bridge-exit or custom candidates by bypassing eligibility.
+ $('seam-mode').value='bridge-entrance';
+ try{
+  selectTransition();
+  const reason=blockedReason();
+  $('seam-status').textContent=reason
+   ?'Bridge entrance aligned, but source verification still blocks export: '+reason
+   :'Bridge entrance aligned to real gameplay geometry. Prepare AI Seam is ready.';
+ }catch(e){$('seam-prepare').disabled=true;$('seam-status').textContent='Bridge alignment failed: '+e.message;}
+});
 let seamDrag=null;
 const seamY=e=>Math.max(0,Math.min(640,(e.clientY-$('seam-view').getBoundingClientRect().top)*640/$('seam-view').getBoundingClientRect().height));
 $('seam-view').addEventListener('pointerdown',e=>{
@@ -237,6 +263,7 @@ async function loadRegistry(){
 }
 function blockedReason(){
  const entry=transition();
+ if(entry.id==='custom')return 'Timeline position is not a registered seam. Tap “Align High street → Bridge seam” below.';
  const missing=entry.references.find(p=>!provenance.images[p]||provenance.images[p].missing);
  if(missing)return 'Required original image unavailable: '+missing;
  return factory.eligibility(entry,api.registration(),api.snapshot());
