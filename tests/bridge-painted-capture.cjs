@@ -43,7 +43,7 @@ async function main(){
    const bytes=Buffer.from(raw,'base64');
    if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Invalid banks capture dimensions');
    fs.writeFileSync(path.join(banksDir,mode+'.png'),bytes);
-   console.log('GARY_APPROVED_BANKS_CAPTURE_'+mode.toUpperCase()+'='+raw);
+   if(process.env.GARY_VERBOSE_OLD_CAPTURES==='1')console.log('GARY_APPROVED_BANKS_CAPTURE_'+mode.toUpperCase()+'='+raw);
   }
   const reviewData=side=>({schema:'gary-eats-native-engine-art-evidence-v1',
    asset:'art/bridge/approved-shore/'+side+'_riverbank_approved.png',
@@ -65,7 +65,7 @@ async function main(){
    const bytes=Buffer.from(raw,'base64');
    if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Invalid native screenshot size');
    fs.writeFileSync(path.join(out,mode+'.png'),bytes);
-   console.log('GARY_PAINTED_CAPTURE_'+mode.toUpperCase()+'='+raw);
+   if(process.env.GARY_VERBOSE_OLD_CAPTURES==='1')console.log('GARY_PAINTED_CAPTURE_'+mode.toUpperCase()+'='+raw);
   }
   // Owner-approved framing: stone bridge meets the asphalt above Gary,
   // so the road, vegetation, water and entrance appear together as in the
