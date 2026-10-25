@@ -599,6 +599,11 @@
       "width": 360,
       "height": 640,
       "alpha": false
+    },
+    "art/bridge/entrance/entrance-seam.png": {
+      "width": 176,
+      "height": 88,
+      "alpha": true
     }
   }
 }

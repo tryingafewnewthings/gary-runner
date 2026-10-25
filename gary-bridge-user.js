@@ -4,6 +4,13 @@ const SPEC=Object.freeze({source:'art/candidates/bridge/bridge-user-supplied.web
 function create({makeCanvas,ImageType}={}){
  if(typeof makeCanvas!=='function'||typeof ImageType!=='function')throw Error('Bridge dependencies unavailable');
  const image=new ImageType();let loaded=false,reason='pending';
+ // Owner-approved road-to-bridge masonry, extracted from the approved 24 Oct
+ // 2026 entrance composition. This is a world-locked 1:1 game-unit overlay,
+ // never a stretched or whole-scene replacement. Old sill/wings are fallback.
+ const entranceImage=new ImageType();let entranceReady=false;
+ entranceImage.onload=()=>{entranceReady=entranceImage.naturalWidth===176&&entranceImage.naturalHeight===88;};
+ entranceImage.onerror=()=>{entranceReady=false;};
+ entranceImage.src='art/bridge/entrance/entrance-seam.png?v=20261025a';
  const canvas=(width,height)=>{const c=makeCanvas();c.width=width;c.height=height;return c;};
  // All textured passes are built once. No image allocations in gameplay frames.
  const water=canvas(360,256),w=water.getContext('2d');
@@ -163,11 +170,14 @@ function create({makeCanvas,ImageType}={}){
  }
  function drawDeck(ctx,near){
   if(!loaded)return false;const top=topY(near);
-  // Structural abutments first, then preserve the ENTIRE supplied bridge image.
-  drawWingPair(ctx,top,false);
+  // The approved entrance PNG replaces the old tall procedural entrance wings
+  // and sill. Keep the EXIT entirely unchanged. If PNG decoding fails, the
+  // prior functioning entrance is retained, without affecting gameplay.
+  if(!entranceReady)drawWingPair(ctx,top,false);
   drawWingPair(ctx,top,true);
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);
-  drawSill(ctx,top,false);
+  if(entranceReady)ctx.drawImage(entranceImage,92,near-13,176,88);
+  else drawSill(ctx,top,false);
   drawSill(ctx,top,true);
   return true;
  }
@@ -176,7 +186,7 @@ function create({makeCanvas,ImageType}={}){
   ctx.save();ctx.beginPath();ctx.rect(0,top,138,620);ctx.rect(222,top,138,620);ctx.clip();
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);ctx.restore();return true;
  }
- return Object.freeze({ready:()=>loaded,reason:()=>reason,drawWater,drawStreetTail,drawDeck,drawFront,SPEC});
+ return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,drawWater,drawStreetTail,drawDeck,drawFront,SPEC});
 }
 const api=Object.freeze({SPEC,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryUserBridge=api;
 })(typeof window==='object'?window:globalThis);
