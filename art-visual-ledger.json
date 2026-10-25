@@ -1,5 +1,40 @@
 {
   "schema": "gary-eats-art-visual-ledger-v1",
   "description": "Hard evidence required for every NEW art/** production sprite. Previous images unchanged; all generation starts as art/candidates/ until actual 360x640 visual approval. This ledger is not proof of artistic fidelity by itself.",
-  "assets": {}
+  "assets": {
+    "art/bridge/entrance/entrance-seam.png": {
+      "stage": "VISUAL_REVIEWED_360",
+      "family": "bridge",
+      "cameraStatus": "CODE_LOCKED",
+      "source": {
+        "width": 176,
+        "height": 88
+      },
+      "draw": {
+        "x": 92,
+        "y": 547,
+        "width": 176,
+        "height": 88
+      },
+      "groundContact": {
+        "x": 180,
+        "y": 560
+      },
+      "references": [
+        "high_street_sprites.webp",
+        "docs/biome-workspace/layout-street-day.png",
+        "docs/visual-master/original-gameplay-24s/frame_01.png",
+        "art/candidates/bridge/bridge-user-supplied.webp"
+      ],
+      "engineEvidence": {
+        "day": "docs/bridge-seam/native/day.png",
+        "night": "docs/bridge-seam/native/night.png",
+        "rain": "docs/bridge-seam/native/rain.png"
+      },
+      "nativeReviewFile": "docs/bridge-seam/native/review.json",
+      "reviewedBy": "ChatGPT-visual-review",
+      "runtimeStartValidated": true,
+      "notes": "World-locked at bridgeNear−13; y547 is captured at bridgeNear560. Owner approved source composition. Actual full-colour captures from CI run 40148448811; these checked-in images are heavily palette-quantized review copies, not full-fidelity originals. Visual inspection of full-colour original performed. Physical iPhone Safari remains unverified."
+    }
+  }
 }

@@ -1,0 +1,58 @@
+{
+  "schema": "gary-eats-native-engine-art-evidence-v1",
+  "sourceSha256": "a20519076d3f8db2035de55df5bfb27e847c3d497b4f1568a08c46d293f0f4c2",
+  "registered": false,
+  "technical": {
+    "pass": true,
+    "tests": "Active Engine, Node unit and controller, and World Explorer native preview QA passed",
+    "render": "Real native 360×640 game renderer, Chromium, day/night/rain; full-colour source images in CI artifact",
+    "note": "Metadata's registered:false records that candidate art was not previously approved; this production PR registers asset after review."
+  },
+  "capture": {
+    "workflowRun": 40148448811,
+    "githubArtifactId": 12581421652,
+    "sourcePaths": {
+      "day": "bridge-ground-handover/chromium/day-entrance.png",
+      "night": "bridge-ground-handover/chromium/night-entrance.png",
+      "rain": "bridge-ground-handover/chromium/rain-entrance.png"
+    },
+    "sourceFullColourSha256": {
+      "day": "f45e3b39fbf85469312fadb3159e727ae8d96f0103a9ff002641d67df73a84c8",
+      "night": "62056d720ee978a874a95e5f0d56596b3c489802f384e6ef85d87ed66eec9105",
+      "rain": "b264a5f481c451e1db211dcd5945df7c7dea05247866c67847b234461c419ccf"
+    },
+    "archive": "docs/bridge-seam/native/{day,night,rain}.png (heavily palette-reduced copies of these images; full-resolution colour source kept in CI artifact and inspected by reviewer)"
+  },
+  "engineRegistration": {
+    "image": "art/bridge/entrance/entrance-seam.png",
+    "sourceDimensions": [
+      176,
+      88
+    ],
+    "draw": {
+      "x": 92,
+      "nearOffset": -13,
+      "width": 176,
+      "height": 88
+    },
+    "bridgeDeck": [
+      138,
+      222
+    ],
+    "bridgeLength": 620,
+    "road": [
+      105,
+      255
+    ],
+    "roadMarkings": "unchanged",
+    "collisions": "unchanged",
+    "rendererPass": "deck"
+  },
+  "review": {
+    "reviewer": "ChatGPT-visual-review",
+    "day": "Reviewed full-colour native capture; positioned entrance at near=560, no white matte visible",
+    "night": "Reviewed full-colour native capture; same anchored masonry",
+    "rain": "Reviewed full-colour native capture; visible entrance with preserved bridge; physical phone not verified",
+    "physicalIphone": "UNVERIFIED"
+  }
+}
