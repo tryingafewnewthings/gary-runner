@@ -2647,6 +2647,9 @@ function updateRain(dt, advancing) {
         // The native high-street cobble/road remains visible right up to the
         // 84-unit stone sill. Both materials share the bridge's near anchor.
         userBridge.drawStreetTail(ctx,n,{drawCobbles,drawPavements,drawRoad});
+        // Approved shore art follows the SAME bridge world anchor as the deck.
+        // Keep it above procedural river and native cobbles but below all masonry.
+        userBridge.drawBanks(ctx,n);
         userBridge.drawDeck(ctx,n);
         drawCandidate('deck');
       }
