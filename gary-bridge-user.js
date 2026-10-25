@@ -135,7 +135,13 @@ function create({makeCanvas,ImageType}={}){
    ctx.save();ctx.beginPath();
    // Preserve a variable 3–9-unit strip of wet earth between running water
    // and paving, then very gently tone the next 80 units of original cobbles.
-   const landEdge=x=>near+edge(x,false)+6+3*Math.sin(x*.093+2.7);
+   // When the approved shoreline image is present, extend the ORIGINAL
+   // street cobbles slightly behind its feathered lower edge. Otherwise the
+   // former river-water cutoff shines through as a turquoise horizontal seam.
+   const hasArt=bankImages[0].loaded&&bankImages[1].loaded;
+   const landEdge=x=>hasArt
+     ?near-14+edge(x,false)*.22+2*Math.sin(x*.093+2.7)
+     :near+edge(x,false)+6+3*Math.sin(x*.093+2.7);
    ctx.moveTo(left,end);ctx.lineTo(left,landEdge(left));
    for(let x=left+6;x<right;x+=6)ctx.lineTo(x,landEdge(x));
    ctx.lineTo(right,landEdge(right));ctx.lineTo(right,end);
