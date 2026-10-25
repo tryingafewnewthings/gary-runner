@@ -28,6 +28,12 @@ function create({makeCanvas,ImageType}={}){
   }
   return bankImages.every(art=>art.loaded);
  }
+ // Owner-approved PHOTO-derived river colour/waves, stored separately from
+ // masonry and banks. A small seamless texture loops under a true water mask.
+ const waterImage=new ImageType();let waterReady=false;
+ waterImage.onload=()=>{waterReady=waterImage.naturalWidth===160&&waterImage.naturalHeight===192;};
+ waterImage.onerror=()=>{waterReady=false;};
+ waterImage.src='art/bridge/approved-shore/approved-water-tile.webp?v=20261025e';
  const canvas=(width,height)=>{const c=makeCanvas();c.width=width;c.height=height;return c;};
  // All textured passes are built once. No image allocations in gameplay frames.
  const water=canvas(360,256),w=water.getContext('2d');
@@ -118,6 +124,17 @@ function create({makeCanvas,ImageType}={}){
   const drift=((clock*18)%360+360)%360;
   for(let y=top-256;y<bottom+256;y+=256){
    for(let x=-360+drift;x<360;x+=360)ctx.drawImage(water,x,y,360,256);
+  }
+  // The approved bridge picture supplied this actual water material. Sampled
+  // world-scale 1:1 and animated at walking-current speed, never a static
+  // full-scene backdrop or a sprite painted into the bridge deck.
+  if(waterReady){
+   ctx.save();ctx.globalAlpha=.95;
+   const offset=((clock*6)%160+160)%160;
+   for(let y=top-192;y<bottom+192;y+=192){
+    for(let x=-160+offset;x<360;x+=160)ctx.drawImage(waterImage,x,y,160,192);
+   }
+   ctx.restore();
   }
   // Subtle current and shoreline foam. Strokes never extend beyond the water mask.
   ctx.lineCap='round';
@@ -282,7 +299,7 @@ function create({makeCanvas,ImageType}={}){
   ctx.save();ctx.beginPath();ctx.rect(0,top,138,620);ctx.rect(222,top,138,620);ctx.clip();
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);ctx.restore();return true;
  }
- return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,banksReady:()=>bankImages.every(art=>art.loaded),drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
+ return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,banksReady:()=>bankImages.every(art=>art.loaded),waterReady:()=>waterReady,drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
 }
 const api=Object.freeze({SPEC,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryUserBridge=api;
 })(typeof window==='object'?window:globalThis);
