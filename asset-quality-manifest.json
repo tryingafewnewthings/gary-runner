@@ -599,6 +599,26 @@
       "width": 360,
       "height": 640,
       "alpha": false
+    },
+    "art/bridge/entrance/entrance-seam.png": {
+      "width": 176,
+      "height": 88,
+      "alpha": true
+    },
+    "docs/bridge-seam/native/day.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-seam/native/night.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-seam/native/rain.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
     }
   }
 }
