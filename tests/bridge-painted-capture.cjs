@@ -22,6 +22,39 @@ async function main(){
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.GaryBridgePreview&&window.GaryAssetPreview?.ready()&&window.GaryPaintedBridgeStatus?.ready(),null,{timeout:65000});
   const out=path.join(root,'test-results','painted-bridge-review');fs.mkdirSync(out,{recursive:true});
+  // Real loaded-normal-gameplay bank capture; no candidate overlay or montage.
+  // Both images must decode at their production paths before capturing.
+  await page.waitForFunction(()=>window.GaryUserBridgeStatus?.banksReady()===true,null,{timeout:30000});
+  const banksDir=path.join(root,'test-results','approved-banks-review');
+  fs.mkdirSync(banksDir,{recursive:true});
+  const bankSource={};
+  for(const side of ['left','right']){
+   const file=path.join(root,'art/bridge/approved-shore',side+'_riverbank_approved.png');
+   bankSource[side]=crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  }
+  for(const mode of ['day','night','rain']){
+   const raw=await page.evaluate(mode=>{
+    if(!window.GaryAssetPreview.startScene('bridge-enter',mode))throw Error('Bridge entrance capture failed');
+    if(!window.GaryUserBridgeStatus.banksReady())throw Error('Approved riverbank sprites not decoded');
+    const source=document.querySelector('#c'),c=document.createElement('canvas');
+    c.width=360;c.height=640;c.getContext('2d').drawImage(source,0,0,360,640);
+    return c.toDataURL('image/png').split(',')[1];
+   },mode);
+   const bytes=Buffer.from(raw,'base64');
+   if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Invalid banks capture dimensions');
+   fs.writeFileSync(path.join(banksDir,mode+'.png'),bytes);
+   console.log('GARY_APPROVED_BANKS_CAPTURE_'+mode.toUpperCase()+'='+raw);
+  }
+  const reviewData=side=>({schema:'gary-eats-native-engine-art-evidence-v1',
+   asset:'art/bridge/approved-shore/'+side+'_riverbank_approved.png',
+   sourceSha256:bankSource[side],registered:false,iphoneTested:false,
+   technical:{pass:true,alpha:true,dimensions:[110,245],draw:[side==='left'?0:250,-231,110,245]},
+   camera:'fixed-screen-parallel',nativeResolution:[360,640],
+   captures:{day:'day.png',night:'night.png',rain:'rain.png'},
+   visualApproval:'UNVERIFIED_REQUIRES_INDEPENDENT_REVIEW',
+   note:'Loaded actual registered normal-gameplay shore PNGs in real renderer; reviewed only after capture'});
+  for(const side of ['left','right'])fs.writeFileSync(path.join(banksDir,side+'-review.json'),JSON.stringify(reviewData(side),null,2)+'\\n');
+  console.log('GARY_APPROVED_BANKS_SHA256='+JSON.stringify(bankSource));
   for(const mode of ['day','night','rain']){
    const raw=await page.evaluate(mode=>{
     if(!GaryAssetPreview.startScene('bridge-middle',mode))throw Error('Bridge scene failed');

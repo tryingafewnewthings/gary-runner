@@ -1,0 +1,81 @@
+{
+  "schema": "gary-eats-approved-bridge-shore-v1",
+  "production": "DRAFT_AWAITING_REAL_ENGINE_VISUAL_REVIEW",
+  "source": "GaryEats_Approved_Bridge_Riverbanks.zip",
+  "reference": "Owner-approved bridge composition in conversation, 2026-10-25",
+  "canvas": [
+    360,
+    640
+  ],
+  "bridge": {
+    "roadX": [
+      105,
+      255
+    ],
+    "deckX": [
+      138,
+      222
+    ],
+    "cacheFar": 180,
+    "cacheEnd": 800,
+    "structuralLength": 620,
+    "scrollAnchor": "bridgeNear"
+  },
+  "layerOrder": [
+    "original-high-street-ground",
+    "cross-stream-water",
+    "original-street-tail",
+    "approved-transparent-riverbanks",
+    "original-stone-deck",
+    "actor",
+    "original-front-rope-and-posts"
+  ],
+  "assets": [
+    {
+      "name": "left_riverbank_approved",
+      "path": "art/bridge/approved-shore/left_riverbank_approved.png",
+      "source": [
+        110,
+        245
+      ],
+      "destination": {
+        "x": 0,
+        "yFormula": "bridgeNear - 231",
+        "width": 110,
+        "height": 245
+      },
+      "sha256": "95593c890374819bde9bdd0fa92c8b82c95aaef9e804bf538a2db17282e7ba57",
+      "alpha": true,
+      "mirror": false
+    },
+    {
+      "name": "right_riverbank_approved",
+      "path": "art/bridge/approved-shore/right_riverbank_approved.png",
+      "source": [
+        110,
+        245
+      ],
+      "destination": {
+        "x": 250,
+        "yFormula": "bridgeNear - 231",
+        "width": 110,
+        "height": 245
+      },
+      "sha256": "b04042aee8af7e897e14cef8a4f2ff6f66a3ede48375fde77d36b44e1853f7a5",
+      "alpha": true,
+      "mirror": false
+    }
+  ],
+  "preservation": [
+    "Do not stretch artwork",
+    "Do not reintroduce 150-unit trapezoid cobbles",
+    "Do not replace original bridge deck",
+    "Keep true water animation below cutout bank pixels",
+    "Never sample user-rejected wilderness textures"
+  ],
+  "approval": {
+    "technical": "SOURCE_BYTES_INSTALLED",
+    "visual": "ENGINE_REVIEW_PENDING",
+    "iphone": "UNVERIFIED"
+  }
+}

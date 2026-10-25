@@ -33,7 +33,7 @@ test('source bridge remains 174×620 and straight deck is 84 units',()=>{
  assert.equal(b.SPEC.wingLength,52);
  assert.equal(b.SPEC.approach,undefined);
 });
-test('no 150-unit repeating cobbles; entrance and exit get two SHORT original-pixel stone sills',()=>{
+test('no 150-unit repeating cobbles; exit keeps a SHORT stone sill but entrance uses original deck',()=>{
  const b=bridgeInstance(),ctx=context();
  assert.equal(b.drawDeck(ctx,800),true);
  const calls=ctx.calls;
@@ -41,7 +41,8 @@ test('no 150-unit repeating cobbles; entrance and exit get two SHORT original-pi
  assert.equal(original.length,1,'original bridge image is drawn once, unmodified');
  const scaled=calls.filter(a=>a.length===9);
  const sills=scaled.filter(a=>a[5]===138&&a[7]===84&&a[8]===26);
- assert.deepEqual(sills.map(a=>a[6]).sort((a,b)=>a-b),[154,800]);
+ assert.deepEqual(sills.map(a=>a[6]).sort((a,b)=>a-b),[154]);
+ assert.ok(!scaled.some(a=>a[5]===138&&a[6]===800&&a[7]===84),'no nonmatching entrance strip');
  assert.ok(!scaled.some(a=>a[7]>=100&&a[8]>=100),'no wide stretched cobblestone carpet');
 });
 test('no art or physics changes occur on unready image',()=>{

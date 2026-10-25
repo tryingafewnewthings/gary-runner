@@ -11,6 +11,23 @@ function create({makeCanvas,ImageType}={}){
  entranceImage.onload=()=>{entranceReady=entranceImage.naturalWidth===176&&entranceImage.naturalHeight===88;};
  entranceImage.onerror=()=>{entranceReady=false;};
  entranceImage.src='art/bridge/entrance/entrance-seam.png?v=20261025a';
+ // Independently registered transparent shoreline sprites cut from the owner-
+ // approved bridge composition. Exact world anchors are shared with near.
+ const bankImages=['left','right'].map(side=>{
+  const art=new ImageType();art.loaded=false;
+  art.onload=()=>{art.loaded=art.naturalWidth===110&&art.naturalHeight===245;};
+  art.onerror=()=>{art.loaded=false;};
+  art.src='art/bridge/approved-shore/'+side+'_riverbank_approved.png?v=20261025b';
+  return art;
+ });
+ function drawBanks(ctx,near){
+  if(!loaded||!Number.isFinite(near))return false;
+  for(let i=0;i<2;i++){
+   const art=bankImages[i];
+   if(art.loaded)ctx.drawImage(art,i===0?0:250,near-231,110,245);
+  }
+  return bankImages.every(art=>art.loaded);
+ }
  const canvas=(width,height)=>{const c=makeCanvas();c.width=width;c.height=height;return c;};
  // All textured passes are built once. No image allocations in gameplay frames.
  const water=canvas(360,256),w=water.getContext('2d');
@@ -55,8 +72,11 @@ function create({makeCanvas,ImageType}={}){
   // Shore texture lives ONLY on the two verges. Never paint a 360px
   // opaque green band over the road or over the bridge's narrow stone deck.
   ctx.save();ctx.beginPath();
-  for(const [x,width] of [[0,104],[256,104]]){
-   ctx.rect(x,top-96,width,96);ctx.rect(x,bottom,width,96);
+  // The approved transparent bank replaces the old green shoreline at
+  // this end. Keep the old strip only as a fallback if its image fails.
+  for(const [x,width,side] of [[0,104,0],[256,104,1]]){
+   ctx.rect(x,top-96,width,96);
+   if(!bankImages[side].loaded)ctx.rect(x,bottom,width,96);
   }
   ctx.clip();
   ctx.drawImage(shore,0,top-92,360,100);
@@ -115,7 +135,13 @@ function create({makeCanvas,ImageType}={}){
    ctx.save();ctx.beginPath();
    // Preserve a variable 3–9-unit strip of wet earth between running water
    // and paving, then very gently tone the next 80 units of original cobbles.
-   const landEdge=x=>near+edge(x,false)+6+3*Math.sin(x*.093+2.7);
+   // When the approved shoreline image is present, extend the ORIGINAL
+   // street cobbles slightly behind its feathered lower edge. Otherwise the
+   // former river-water cutoff shines through as a turquoise horizontal seam.
+   const hasArt=bankImages[0].loaded&&bankImages[1].loaded;
+   const landEdge=x=>hasArt
+     ?near-14+edge(x,false)*.22+2*Math.sin(x*.093+2.7)
+     :near+edge(x,false)+6+3*Math.sin(x*.093+2.7);
    ctx.moveTo(left,end);ctx.lineTo(left,landEdge(left));
    for(let x=left+6;x<right;x+=6)ctx.lineTo(x,landEdge(x));
    ctx.lineTo(right,landEdge(right));ctx.lineTo(right,end);
@@ -200,7 +226,7 @@ function create({makeCanvas,ImageType}={}){
   ctx.save();ctx.beginPath();ctx.rect(0,top,138,620);ctx.rect(222,top,138,620);ctx.clip();
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);ctx.restore();return true;
  }
- return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,drawWater,drawStreetTail,drawDeck,drawFront,SPEC});
+ return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,banksReady:()=>bankImages.every(art=>art.loaded),drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
 }
 const api=Object.freeze({SPEC,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryUserBridge=api;
 })(typeof window==='object'?window:globalThis);
