@@ -22,18 +22,6 @@ async function main(){
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.GaryBridgePreview&&window.GaryAssetPreview?.ready()&&window.GaryPaintedBridgeStatus?.ready(),null,{timeout:65000});
   const out=path.join(root,'test-results','painted-bridge-review');fs.mkdirSync(out,{recursive:true});
-  for(const mode of ['day','night','rain']){
-   const raw=await page.evaluate(mode=>{
-    if(!GaryAssetPreview.startScene('bridge-middle',mode))throw Error('Bridge scene failed');
-    const source=document.querySelector('#c'),c=document.createElement('canvas');
-    c.width=360;c.height=640;c.getContext('2d').drawImage(source,0,0,360,640);
-    return c.toDataURL('image/png').split(',')[1];
-   },mode);
-   const bytes=Buffer.from(raw,'base64');
-   if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Invalid native screenshot size');
-   fs.writeFileSync(path.join(out,mode+'.png'),bytes);
-   console.log('GARY_PAINTED_CAPTURE_'+mode.toUpperCase()+'='+raw);
-  }
   // Real loaded-normal-gameplay bank capture; no candidate overlay or montage.
   // Both images must decode at their production paths before capturing.
   await page.waitForFunction(()=>window.GaryUserBridgeStatus?.banksReady()===true,null,{timeout:30000});
@@ -67,6 +55,18 @@ async function main(){
    note:'Loaded actual registered normal-gameplay shore PNGs in real renderer; reviewed only after capture'});
   for(const side of ['left','right'])fs.writeFileSync(path.join(banksDir,side+'-review.json'),JSON.stringify(reviewData(side),null,2)+'\\n');
   console.log('GARY_APPROVED_BANKS_SHA256='+JSON.stringify(bankSource));
+  for(const mode of ['day','night','rain']){
+   const raw=await page.evaluate(mode=>{
+    if(!GaryAssetPreview.startScene('bridge-middle',mode))throw Error('Bridge scene failed');
+    const source=document.querySelector('#c'),c=document.createElement('canvas');
+    c.width=360;c.height=640;c.getContext('2d').drawImage(source,0,0,360,640);
+    return c.toDataURL('image/png').split(',')[1];
+   },mode);
+   const bytes=Buffer.from(raw,'base64');
+   if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Invalid native screenshot size');
+   fs.writeFileSync(path.join(out,mode+'.png'),bytes);
+   console.log('GARY_PAINTED_CAPTURE_'+mode.toUpperCase()+'='+raw);
+  }
   if(errors.length)throw Error(errors.join('; '));
   const atlas=fs.readFileSync(path.join(root,'art/bridge/painted/bridge-atlas.webp'));
   const sha256=crypto.createHash('sha256').update(atlas).digest('hex');
