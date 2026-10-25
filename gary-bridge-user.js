@@ -28,16 +28,49 @@ function create({makeCanvas,ImageType}={}){
   }
   return bankImages.every(art=>art.loaded);
  }
+ // Owner-approved PHOTO-derived river colour/waves, stored separately from
+ // masonry and banks. A small seamless texture loops under a true water mask.
+ const waterImage=new ImageType();let waterReady=false;
+ waterImage.onload=()=>{waterReady=waterImage.naturalWidth===160&&waterImage.naturalHeight===192;};
+ waterImage.onerror=()=>{waterReady=false;};
+ waterImage.src='art/bridge/approved-shore/approved-water-tile.webp?v=20261025e';
  const canvas=(width,height)=>{const c=makeCanvas();c.width=width;c.height=height;return c;};
  // All textured passes are built once. No image allocations in gameplay frames.
  const water=canvas(360,256),w=water.getContext('2d');
+ // A restrained, cached painted-water texture. Its colour and broad current
+ // shapes use the owner-approved teal river as their reference. It remains a
+ // standalone moving water pass; NO shoreline or masonry is baked into it.
  const g=w.createLinearGradient(0,0,360,0);
- g.addColorStop(0,'#244b59');g.addColorStop(.26,'#356977');g.addColorStop(.53,'#2e5d70');g.addColorStop(.77,'#3a7180');g.addColorStop(1,'#254e5e');
+ g.addColorStop(0,'#194e65');g.addColorStop(.22,'#286d80');
+ g.addColorStop(.53,'#24677d');g.addColorStop(.80,'#287187');g.addColorStop(1,'#1c5267');
  w.fillStyle=g;w.fillRect(0,0,360,256);
- for(let i=0;i<310;i++){
+ // Broad washes underneath narrow animated ripples, all prerendered.
+ for(let i=0;i<70;i++){
+  const x=(i*157+11)%382-11,y=(i*73+41)%256,rx=17+(i*19)%48;
+  w.strokeStyle=i%3===0?'rgba(139,199,199,.085)':'rgba(13,56,76,.085)';
+  w.lineWidth=2+(i%4)*1.2;w.beginPath();w.moveTo(x-rx,y+1);
+  w.bezierCurveTo(x-rx*.36,y-3,x+rx*.3,y+4,x+rx,y-1);w.stroke();
+ }
+ // Submerged slate stones are intentionally low-contrast and few in number.
+ // Paint them once into the moving-water cache (not a separate game obstacle).
+ for(let i=0;i<14;i++){
+  const x=(i*137+37)%356,y=(i*89+49)%252,rx=4+(i*3)%10,ry=2.4+(i%4)*1.4;
+  const shade=w.createRadialGradient(x-1,y-1,1,x,y,rx*1.9);
+  // The real Canvas has a radial gradient; headless draw-call stubs may not.
+  if(shade&&typeof shade.addColorStop==='function'){
+   shade.addColorStop(0,'rgba(100,140,149,.27)');
+   shade.addColorStop(.55,'rgba(62,105,121,.19)');
+   shade.addColorStop(1,'rgba(18,76,98,0)');
+   w.fillStyle=shade;
+  }else w.fillStyle='rgba(62,105,121,.16)';w.beginPath();w.ellipse(x,y,rx*1.9,ry*2.2,0,0,Math.PI*2);w.fill();
+  w.fillStyle='rgba(75,116,130,.31)';w.beginPath();w.ellipse(x,y,rx,ry,-.15,0,Math.PI*2);w.fill();
+  w.strokeStyle='rgba(144,193,191,.23)';w.lineWidth=.8;
+  w.beginPath();w.ellipse(x-1,y-1,rx,ry,-.15,Math.PI*1.08,Math.PI*1.89);w.stroke();
+ }
+ for(let i=0;i<360;i++){
   const x=(i*97+17)%360,y=(i*71+33)%256,rx=4+(i*13)%30;
-  w.lineWidth=i%7===0?1.7:.8;
-  w.strokeStyle=i%9===0?'rgba(206,232,224,.33)':i%3===0?'rgba(129,184,185,.27)':'rgba(15,61,78,.27)';
+  w.lineWidth=i%7===0?1.4:.7;
+  w.strokeStyle=i%11===0?'rgba(204,231,222,.36)':i%3===0?'rgba(136,193,197,.23)':'rgba(10,62,84,.19)';
   w.beginPath();w.moveTo(x-rx/2,y);w.quadraticCurveTo(x,y-2.4,x+rx/2,y);w.stroke();
  }
  const shore=canvas(360,100),s=shore.getContext('2d');
@@ -92,6 +125,17 @@ function create({makeCanvas,ImageType}={}){
   for(let y=top-256;y<bottom+256;y+=256){
    for(let x=-360+drift;x<360;x+=360)ctx.drawImage(water,x,y,360,256);
   }
+  // The approved bridge picture supplied this actual water material. Sampled
+  // world-scale 1:1 and animated at walking-current speed, never a static
+  // full-scene backdrop or a sprite painted into the bridge deck.
+  if(waterReady){
+   ctx.save();ctx.globalAlpha=.95;
+   const offset=((clock*6)%160+160)%160;
+   for(let y=top-192;y<bottom+192;y+=192){
+    for(let x=-160+offset;x<360;x+=160)ctx.drawImage(waterImage,x,y,160,192);
+   }
+   ctx.restore();
+  }
   // Subtle current and shoreline foam. Strokes never extend beyond the water mask.
   ctx.lineCap='round';
   for(let i=0;i<48;i++){
@@ -104,7 +148,10 @@ function create({makeCanvas,ImageType}={}){
   // A narrow, irregular foamy contact edge, with no hard horizontal seam.
   ctx.save();ctx.lineWidth=2;ctx.strokeStyle='rgba(169,204,189,.5)';
   for(const isTop of [true,false]){
-   for(const [left,right] of [[0,101],[259,360]]){
+   for(const [left,right,side] of [[0,101,0],[259,360,1]]){
+    // The photographed bank PNG already owns its own contact foam: adding the
+    // former straight game-water line below it creates a visible artificial rim.
+    if(!isTop&&bankImages[side].loaded)continue;
     ctx.beginPath();
     for(let x=left;x<=right;x+=6){
      const y=(isTop?top:bottom)+edge(x,isTop);
@@ -154,9 +201,39 @@ function create({makeCanvas,ImageType}={}){
   // The 150-unit original asphalt reaches the stone sill; never paint a
   // tapering cobblestone carpet across it. Two narrow kerbs stay registered.
   const asphaltY=Math.max(0,Math.floor(near));
-  if(asphaltY<end){
-   ctx.save();ctx.beginPath();ctx.rect(SPEC.road[0]-3,asphaltY,156,end-asphaltY);ctx.clip();
+  // Repaint asphalt continuously to the screen bottom, not only the short
+  // shoreline zone: otherwise night lighting leaves a visible horizontal band
+  // at near+102 where the clipped second road pass stops.
+  const roadEnd=640;
+  if(asphaltY<roadEnd){
+   ctx.save();ctx.beginPath();ctx.rect(SPEC.road[0]-3,asphaltY,156,roadEnd-asphaltY);ctx.clip();
    drawPavements();drawRoad();
+   ctx.restore();
+   // Bridge entrance curb stones continue the real high-street stone edges.
+   // They are deliberately OUTSIDE x105..255, never across the walkable road.
+   const stoneStart=Math.max(asphaltY,near+3);
+   for(const x of [99,255]){
+    ctx.save();ctx.beginPath();ctx.rect(x,stoneStart,6,Math.max(0,roadEnd-stoneStart));ctx.clip();
+    ctx.fillStyle='#777772';ctx.fillRect(x,stoneStart,6,roadEnd-stoneStart);
+    ctx.fillStyle='rgba(31,38,40,.3)';ctx.fillRect(x+5,stoneStart,1,roadEnd-stoneStart);
+    ctx.fillStyle='rgba(212,204,179,.19)';ctx.fillRect(x,stoneStart,1,roadEnd-stoneStart);
+    const phase=Math.floor((stoneStart-near)/27);
+    for(let k=phase-1;k<phase+26;k++){
+     const yy=near+k*27;
+     ctx.fillStyle='rgba(23,28,29,.56)';ctx.fillRect(x,yy,6,1.4);
+     ctx.fillStyle='rgba(173,170,150,.19)';ctx.fillRect(x,yy+2,5,1);
+    }
+    ctx.restore();
+   }
+   // A dusting of fine stone grit under the abutment, not a cobbled ramp.
+   ctx.save();ctx.beginPath();ctx.rect(105,near-3,150,17);ctx.clip();
+   for(let i=0;i<92;i++){
+    const xx=106+(i*43)%147,yy=near+(i*17)%15-2;
+    const dx=Math.min(Math.abs(xx-138),Math.abs(xx-222));
+    if(xx>142&&xx<218&&i%5!==0)continue;
+    ctx.fillStyle=i%4===0?'rgba(165,153,130,.3)':'rgba(22,30,34,.22)';
+    ctx.fillRect(xx,yy,.6+(i%3)*.45,.6+(i%2)*.6);
+   }
    ctx.restore();
   }
   return true;
@@ -226,7 +303,7 @@ function create({makeCanvas,ImageType}={}){
   ctx.save();ctx.beginPath();ctx.rect(0,top,138,620);ctx.rect(222,top,138,620);ctx.clip();
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);ctx.restore();return true;
  }
- return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,banksReady:()=>bankImages.every(art=>art.loaded),drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
+ return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,banksReady:()=>bankImages.every(art=>art.loaded),waterReady:()=>waterReady,drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
 }
 const api=Object.freeze({SPEC,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryUserBridge=api;
 })(typeof window==='object'?window:globalThis);

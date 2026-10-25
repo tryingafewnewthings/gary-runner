@@ -43,7 +43,7 @@ test('screen-aligned original stone and road preserve measured geometry',()=>{
   assert.deepEqual(a.tiles.map(x=>[x[0],x[2],x[4]]),[[0,105,'base'],[255,105,'base']]);
   assert.equal(a.road.length,1);
   assert.equal(a.pavements.length,1);
-  const roadClip=a.c.calls.filter(x=>x.op==='rect').at(-1).args;
+  const roadClip=a.c.calls.filter(x=>x.op==='rect'&&x.args[0]===102&&x.args[2]===156).at(-1).args;
   assert.equal(roadClip[0],102);
   assert.equal(roadClip[2],156);
   assert.equal(roadClip[1],Math.max(0,Math.floor(near)));

@@ -101,6 +101,39 @@
       "reviewedBy": "ChatGPT-visual-review",
       "runtimeStartValidated": true,
       "notes": "Owner approved source bridge composition; 110x245 RGBA extracted source pixels independently. Normal game renderer captured 360x640 in day/night/rain on CI run 40158011957 and visually reviewed: original stone bridge retained, left and right shore anchored correctly, green procedural strip suppressed, blue shoreline seam removed by native cobble underlap. No physical iPhone Safari test or approval of far wilderness exit claimed."
+    },
+    "art/bridge/approved-shore/approved-water-tile.webp": {
+      "stage": "VISUAL_REVIEWED_360",
+      "family": "bridge",
+      "cameraStatus": "CODE_LOCKED",
+      "source": {
+        "width": 160,
+        "height": 192
+      },
+      "draw": {
+        "x": 0,
+        "y": 0,
+        "width": 160,
+        "height": 192
+      },
+      "groundContact": {
+        "x": 101,
+        "y": 380
+      },
+      "references": [
+        "high_street_sprites.webp",
+        "docs/biome-workspace/layout-street-day.png",
+        "art/candidates/bridge/bridge-user-supplied.webp"
+      ],
+      "engineEvidence": {
+        "day": "docs/bridge-water/native/day.png",
+        "night": "docs/bridge-water/native/night.png",
+        "rain": "docs/bridge-water/native/rain.png"
+      },
+      "nativeReviewFile": "docs/bridge-water/native/review.json",
+      "reviewedBy": "ChatGPT-visual-review",
+      "runtimeStartValidated": true,
+      "notes": "Source water texture extracted from the owner-approved 2026-10-25 bridge composition, stored separately as a tiny seamless 160x192 WebP. Actual 360x640 game capture day/night/rain from CI run 40166270765 visually reviewed: original bridge unmodified, bank alpha and flowing water independent, asphalt road-night seam corrected. This is independent bridge-material approval, not a claim that every pixel of the live scene equals the reference; physical iPhone Safari UNVERIFIED."
     }
   }
 }

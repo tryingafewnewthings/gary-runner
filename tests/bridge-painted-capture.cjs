@@ -43,7 +43,7 @@ async function main(){
    const bytes=Buffer.from(raw,'base64');
    if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Invalid banks capture dimensions');
    fs.writeFileSync(path.join(banksDir,mode+'.png'),bytes);
-   console.log('GARY_APPROVED_BANKS_CAPTURE_'+mode.toUpperCase()+'='+raw);
+   if(process.env.GARY_VERBOSE_OLD_CAPTURES==='1')console.log('GARY_APPROVED_BANKS_CAPTURE_'+mode.toUpperCase()+'='+raw);
   }
   const reviewData=side=>({schema:'gary-eats-native-engine-art-evidence-v1',
    asset:'art/bridge/approved-shore/'+side+'_riverbank_approved.png',
@@ -65,7 +65,30 @@ async function main(){
    const bytes=Buffer.from(raw,'base64');
    if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Invalid native screenshot size');
    fs.writeFileSync(path.join(out,mode+'.png'),bytes);
-   console.log('GARY_PAINTED_CAPTURE_'+mode.toUpperCase()+'='+raw);
+   if(process.env.GARY_VERBOSE_OLD_CAPTURES==='1')console.log('GARY_PAINTED_CAPTURE_'+mode.toUpperCase()+'='+raw);
+  }
+  // Owner-approved framing: stone bridge meets the asphalt above Gary,
+  // so the road, vegetation, water and entrance appear together as in the
+  // accepted artwork. This capture is FROM THE ACTIVE 360x640 GAME RENDERER.
+  await page.waitForFunction(()=>window.GaryUserBridgeStatus?.banksReady()&&window.GaryUserBridgeStatus?.waterReady(),null,{timeout:30000});
+  const composition=path.join(root,'test-results','approved-bridge-composition');
+  fs.mkdirSync(composition,{recursive:true});
+  for(const scene of ['bridge-composition','bridge-enter','bridge-middle','bridge-exit']){
+   for(const mode of ['day','night','rain']){
+    const raw=await page.evaluate(({scene,mode})=>{
+     if(!window.GaryAssetPreview.startScene(scene,mode))throw Error('Bridge scene '+scene+' failed');
+     if(!window.GaryUserBridgeStatus?.banksReady())throw Error('Approved shoreline sprites not loaded');
+     const src=document.querySelector('#c'),out=document.createElement('canvas');
+     out.width=360;out.height=640;out.getContext('2d').drawImage(src,0,0);
+     return out.toDataURL('image/png').slice('data:image/png;base64,'.length);
+    },{scene,mode});
+    const bytes=Buffer.from(raw,'base64');
+    if(bytes.readUInt32BE(16)!==360||bytes.readUInt32BE(20)!==640)throw Error('Not native 360x640');
+    fs.writeFileSync(path.join(composition,scene+'-'+mode+'.png'),bytes);
+    if(scene==='bridge-composition'){
+     console.log('GARY_APPROVED_COMPOSITION_'+mode.toUpperCase()+'='+raw);
+    }
+   }
   }
   if(errors.length)throw Error(errors.join('; '));
   const atlas=fs.readFileSync(path.join(root,'art/bridge/painted/bridge-atlas.webp'));

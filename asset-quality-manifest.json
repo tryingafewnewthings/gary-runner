@@ -644,6 +644,11 @@
       "width": 360,
       "height": 640,
       "alpha": false
+    },
+    "art/bridge/approved-shore/approved-water-tile.webp": {
+      "width": 160,
+      "height": 192,
+      "alpha": false
     }
   }
 }

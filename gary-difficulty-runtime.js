@@ -1103,7 +1103,7 @@ let shutterMix = 0;
   let bridgePaint=legacyBridgePaint;
   const userBridge=window.GaryUserBridge?.create({makeCanvas:()=>document.createElement('canvas'),ImageType:Image,environment:legacyBridgePaint})||null;
   const useUserBridge=()=>!!userBridge?.ready()&&(!bridgePreviewSession||bridgePaint===legacyBridgePaint);
-  if(bridgePreviewSession)window.GaryUserBridgeStatus=Object.freeze({ready:()=>!!userBridge?.ready(),entranceReady:()=>!!userBridge?.entranceReady(),banksReady:()=>!!userBridge?.banksReady(),reason:()=>userBridge?.reason()||'unavailable'});
+  if(bridgePreviewSession)window.GaryUserBridgeStatus=Object.freeze({ready:()=>!!userBridge?.ready(),entranceReady:()=>!!userBridge?.entranceReady(),banksReady:()=>!!userBridge?.banksReady(),waterReady:()=>!!userBridge?.waterReady(),reason:()=>userBridge?.reason()||'unavailable'});
   const wildernessImages=Object.fromEntries(Object.entries(window.GaryWildernessData.assets).map(([key,def])=>[key,itemImages[key]||loadGary('art/wilderness/'+def.path)]));
   const wildernessEncounters=window.GaryWildernessEncounters.create({spawnFood:spawnWildernessItem,onStart(){cap={s:'Hang on… that grass moved.',t:0};},onCue(){cap={s:'Something moved beyond the grass.',t:0};}});
   const wilderness=window.GaryWilderness.create({data:window.GaryWildernessData,images:wildernessImages,makeCanvas:()=>document.createElement('canvas'),encounters:wildernessEncounters});
@@ -2806,7 +2806,7 @@ function updateRain(dt, advancing) {
         distance=scrollY=20000;nightOn=true;nightMix=rainMix=shutterMix=1;rainSaid=true;playTime=60;
         visualClearFrom=0;
         bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
-        const n={approach:210,enter:560,middle:850,exit:1210}[position]??210;
+        const n={approach:210,enter:560,middle:850,exit:1210,composition:380}[position]??210;
         distance=scrollY=bridge.snapshot().anchor+n;
         bridge.update(1/60,{distance,foxFinished:true,hazardsClear:true});
         // Align debug-only bridge views with real gameplay's wilderness origin.
@@ -2856,7 +2856,7 @@ function updateRain(dt, advancing) {
             nightMix=rainMix=shutterMix=nightOn?1:0;
             rainSaid=nightOn;visualClearFrom=Infinity;
             rememberPositions();prepareView(1);render();
-          }else if(scene==='bridge-approach'||scene==='bridge-enter'||scene==='bridge-middle'||scene==='bridge-exit'){
+          }else if(scene==='bridge-approach'||scene==='bridge-enter'||scene==='bridge-middle'||scene==='bridge-exit'||scene==='bridge-composition'){
             ok=window.GaryBridgePreview.start(scene.slice(7));
           }else if(scene==='wilderness-reveal'||scene==='wilderness-dense'){
             ok=window.GaryWildernessPreview.start(scene.slice(11));

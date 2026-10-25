@@ -1,0 +1,46 @@
+{
+  "schema": "gary-eats-native-engine-art-evidence-v1",
+  "asset": "art/bridge/approved-shore/approved-water-tile.webp",
+  "sourceSha256": "36348c384f6b0a59bf2eac1961f4afe7d84c19bae37a1465e8c64b422668fb98",
+  "registered": false,
+  "technical": {
+    "pass": true,
+    "sourcePixels": [
+      160,
+      192
+    ],
+    "render": "actual 360x640 game renderer, World Explorer and Active Engine CI run 40166270765 passed",
+    "modes": [
+      "day",
+      "night",
+      "rain"
+    ],
+    "production": "staged PR not merged"
+  },
+  "capture": {
+    "workflowRun": 40166270765,
+    "jobId": 121088041928,
+    "outputPaths": {
+      "day": "docs/bridge-water/native/day.png",
+      "night": "docs/bridge-water/native/night.png",
+      "rain": "docs/bridge-water/native/rain.png"
+    }
+  },
+  "engineRegistration": {
+    "sourcePixels": [
+      160,
+      192
+    ],
+    "destination": "1 native pixel = 1 game world unit",
+    "riverMask": "bridgeNear-620..bridgeNear",
+    "drawPass": "animated water below bank PNGs and stone bridge"
+  },
+  "review": {
+    "reviewer": "ChatGPT-visual-review",
+    "day": "Full-colour native capture inspected against owner screenshot: water texture, bridge alignment and road/river boundary readable",
+    "night": "Native night capture inspected; earlier harsh asphalt brightness band below bridge removed",
+    "rain": "Native rain capture inspected; riverside detail remains discernible without static overlays",
+    "physicalIphone": "UNVERIFIED",
+    "exactScreenshotReplication": "NOT CLAIMED"
+  }
+}
