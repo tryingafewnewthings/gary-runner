@@ -50,10 +50,13 @@ function create({makeCanvas,ImageType}={}){
  for(let i=0;i<14;i++){
   const x=(i*137+37)%356,y=(i*89+49)%252,rx=4+(i*3)%10,ry=2.4+(i%4)*1.4;
   const shade=w.createRadialGradient(x-1,y-1,1,x,y,rx*1.9);
-  shade.addColorStop(0,'rgba(100,140,149,.27)');
-  shade.addColorStop(.55,'rgba(62,105,121,.19)');
-  shade.addColorStop(1,'rgba(18,76,98,0)');
-  w.fillStyle=shade;w.beginPath();w.ellipse(x,y,rx*1.9,ry*2.2,0,0,Math.PI*2);w.fill();
+  // The real Canvas has a radial gradient; headless draw-call stubs may not.
+  if(shade&&typeof shade.addColorStop==='function'){
+   shade.addColorStop(0,'rgba(100,140,149,.27)');
+   shade.addColorStop(.55,'rgba(62,105,121,.19)');
+   shade.addColorStop(1,'rgba(18,76,98,0)');
+   w.fillStyle=shade;
+  }else w.fillStyle='rgba(62,105,121,.16)';w.beginPath();w.ellipse(x,y,rx*1.9,ry*2.2,0,0,Math.PI*2);w.fill();
   w.fillStyle='rgba(75,116,130,.31)';w.beginPath();w.ellipse(x,y,rx,ry,-.15,0,Math.PI*2);w.fill();
   w.strokeStyle='rgba(144,193,191,.23)';w.lineWidth=.8;
   w.beginPath();w.ellipse(x-1,y-1,rx,ry,-.15,Math.PI*1.08,Math.PI*1.89);w.stroke();
