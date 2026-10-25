@@ -201,18 +201,22 @@ function create({makeCanvas,ImageType}={}){
   // The 150-unit original asphalt reaches the stone sill; never paint a
   // tapering cobblestone carpet across it. Two narrow kerbs stay registered.
   const asphaltY=Math.max(0,Math.floor(near));
-  if(asphaltY<end){
-   ctx.save();ctx.beginPath();ctx.rect(SPEC.road[0]-3,asphaltY,156,end-asphaltY);ctx.clip();
+  // Repaint asphalt continuously to the screen bottom, not only the short
+  // shoreline zone: otherwise night lighting leaves a visible horizontal band
+  // at near+102 where the clipped second road pass stops.
+  const roadEnd=640;
+  if(asphaltY<roadEnd){
+   ctx.save();ctx.beginPath();ctx.rect(SPEC.road[0]-3,asphaltY,156,roadEnd-asphaltY);ctx.clip();
    drawPavements();drawRoad();
    ctx.restore();
    // Bridge entrance curb stones continue the real high-street stone edges.
    // They are deliberately OUTSIDE x105..255, never across the walkable road.
    const stoneStart=Math.max(asphaltY,near+3);
    for(const x of [99,255]){
-    ctx.save();ctx.beginPath();ctx.rect(x,stoneStart,6,Math.max(0,end-stoneStart));ctx.clip();
-    ctx.fillStyle='#777772';ctx.fillRect(x,stoneStart,6,end-stoneStart);
-    ctx.fillStyle='rgba(31,38,40,.3)';ctx.fillRect(x+5,stoneStart,1,end-stoneStart);
-    ctx.fillStyle='rgba(212,204,179,.19)';ctx.fillRect(x,stoneStart,1,end-stoneStart);
+    ctx.save();ctx.beginPath();ctx.rect(x,stoneStart,6,Math.max(0,roadEnd-stoneStart));ctx.clip();
+    ctx.fillStyle='#777772';ctx.fillRect(x,stoneStart,6,roadEnd-stoneStart);
+    ctx.fillStyle='rgba(31,38,40,.3)';ctx.fillRect(x+5,stoneStart,1,roadEnd-stoneStart);
+    ctx.fillStyle='rgba(212,204,179,.19)';ctx.fillRect(x,stoneStart,1,roadEnd-stoneStart);
     const phase=Math.floor((stoneStart-near)/27);
     for(let k=phase-1;k<phase+26;k++){
      const yy=near+k*27;
