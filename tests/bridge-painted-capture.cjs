@@ -70,7 +70,7 @@ async function main(){
   // Owner-approved framing: stone bridge meets the asphalt above Gary,
   // so the road, vegetation, water and entrance appear together as in the
   // accepted artwork. This capture is FROM THE ACTIVE 360x640 GAME RENDERER.
-  await page.waitForFunction(()=>window.GaryUserBridgeStatus?.banksReady(),null,{timeout:30000});
+  await page.waitForFunction(()=>window.GaryUserBridgeStatus?.banksReady()&&window.GaryUserBridgeStatus?.waterReady(),null,{timeout:30000});
   const composition=path.join(root,'test-results','approved-bridge-composition');
   fs.mkdirSync(composition,{recursive:true});
   for(const scene of ['bridge-composition','bridge-enter','bridge-middle','bridge-exit']){
