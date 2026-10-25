@@ -619,6 +619,16 @@
       "width": 360,
       "height": 640,
       "alpha": false
+    },
+    "art/bridge/approved-shore/left_riverbank_approved.png": {
+      "width": 110,
+      "height": 245,
+      "alpha": true
+    },
+    "art/bridge/approved-shore/right_riverbank_approved.png": {
+      "width": 110,
+      "height": 245,
+      "alpha": true
     }
   }
 }
