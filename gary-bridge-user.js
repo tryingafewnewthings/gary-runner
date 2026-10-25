@@ -11,6 +11,23 @@ function create({makeCanvas,ImageType}={}){
  entranceImage.onload=()=>{entranceReady=entranceImage.naturalWidth===176&&entranceImage.naturalHeight===88;};
  entranceImage.onerror=()=>{entranceReady=false;};
  entranceImage.src='art/bridge/entrance/entrance-seam.png?v=20261025a';
+ // Independently registered transparent shoreline sprites cut from the owner-
+ // approved bridge composition. Exact world anchors are shared with near.
+ const bankImages=['left','right'].map(side=>{
+  const art=new ImageType();art.loaded=false;
+  art.onload=()=>{art.loaded=art.naturalWidth===110&&art.naturalHeight===245;};
+  art.onerror=()=>{art.loaded=false;};
+  art.src='art/bridge/approved-shore/'+side+'_riverbank_approved.png?v=20261025b';
+  return art;
+ });
+ function drawBanks(ctx,near){
+  if(!loaded||!Number.isFinite(near))return false;
+  for(let i=0;i<2;i++){
+   const art=bankImages[i];
+   if(art.loaded)ctx.drawImage(art,i===0?0:250,near-231,110,245);
+  }
+  return bankImages.every(art=>art.loaded);
+ }
  const canvas=(width,height)=>{const c=makeCanvas();c.width=width;c.height=height;return c;};
  // All textured passes are built once. No image allocations in gameplay frames.
  const water=canvas(360,256),w=water.getContext('2d');
@@ -200,7 +217,7 @@ function create({makeCanvas,ImageType}={}){
   ctx.save();ctx.beginPath();ctx.rect(0,top,138,620);ctx.rect(222,top,138,620);ctx.clip();
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);ctx.restore();return true;
  }
- return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,drawWater,drawStreetTail,drawDeck,drawFront,SPEC});
+ return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
 }
 const api=Object.freeze({SPEC,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryUserBridge=api;
 })(typeof window==='object'?window:globalThis);
