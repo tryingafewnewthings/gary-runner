@@ -1,0 +1,41 @@
+{
+  "schema": "gary-eats-native-engine-art-evidence-v1",
+  "asset": "art/bridge/approved-shore/left_riverbank_approved.png",
+  "sourceSha256": "95593c890374819bde9bdd0fa92c8b82c95aaef9e804bf538a2db17282e7ba57",
+  "registered": false,
+  "technical": {
+    "pass": true,
+    "alpha": true,
+    "dimensions": [
+      110,
+      245
+    ],
+    "draw": [
+      0,
+      -231,
+      110,
+      245
+    ]
+  },
+  "capture": {
+    "workflowRun": 40158011957,
+    "engine": "Chromium",
+    "nativeResolution": [
+      360,
+      640
+    ],
+    "kind": "ACTUAL_RENDERER_REGISTERED_SPRITES",
+    "modes": [
+      "day",
+      "night",
+      "rain"
+    ]
+  },
+  "approvedReference": "Owner-approved entrance composition shared 2026-10-25",
+  "visualReview": {
+    "reviewer": "ChatGPT-visual-review",
+    "status": "COMPARATIVE_PASS",
+    "notes": "Lower bank seam corrected; geometry and rock/vegetation style match approved illustration at native gameplay scale; user iPhone test unverified"
+  },
+  "iphoneTested": false
+}

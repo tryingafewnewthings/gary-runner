@@ -629,6 +629,21 @@
       "width": 110,
       "height": 245,
       "alpha": true
+    },
+    "docs/bridge-banks/native/day.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-banks/native/night.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
+    },
+    "docs/bridge-banks/native/rain.png": {
+      "width": 360,
+      "height": 640,
+      "alpha": false
     }
   }
 }
