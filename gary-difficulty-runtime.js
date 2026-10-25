@@ -1103,7 +1103,7 @@ let shutterMix = 0;
   let bridgePaint=legacyBridgePaint;
   const userBridge=window.GaryUserBridge?.create({makeCanvas:()=>document.createElement('canvas'),ImageType:Image,environment:legacyBridgePaint})||null;
   const useUserBridge=()=>!!userBridge?.ready()&&(!bridgePreviewSession||bridgePaint===legacyBridgePaint);
-  if(bridgePreviewSession)window.GaryUserBridgeStatus=Object.freeze({ready:()=>!!userBridge?.ready(),entranceReady:()=>!!userBridge?.entranceReady(),reason:()=>userBridge?.reason()||'unavailable'});
+  if(bridgePreviewSession)window.GaryUserBridgeStatus=Object.freeze({ready:()=>!!userBridge?.ready(),entranceReady:()=>!!userBridge?.entranceReady(),banksReady:()=>!!userBridge?.banksReady(),reason:()=>userBridge?.reason()||'unavailable'});
   const wildernessImages=Object.fromEntries(Object.entries(window.GaryWildernessData.assets).map(([key,def])=>[key,itemImages[key]||loadGary('art/wilderness/'+def.path)]));
   const wildernessEncounters=window.GaryWildernessEncounters.create({spawnFood:spawnWildernessItem,onStart(){cap={s:'Hang on… that grass moved.',t:0};},onCue(){cap={s:'Something moved beyond the grass.',t:0};}});
   const wilderness=window.GaryWilderness.create({data:window.GaryWildernessData,images:wildernessImages,makeCanvas:()=>document.createElement('canvas'),encounters:wildernessEncounters});
