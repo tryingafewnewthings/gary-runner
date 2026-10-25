@@ -220,7 +220,7 @@ function create({makeCanvas,ImageType}={}){
   ctx.save();ctx.beginPath();ctx.rect(0,top,138,620);ctx.rect(222,top,138,620);ctx.clip();
   ctx.drawImage(image,SPEC.x,top,SPEC.width,620);ctx.restore();return true;
  }
- return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
+ return Object.freeze({ready:()=>loaded,reason:()=>reason,entranceReady:()=>entranceReady,banksReady:()=>bankImages.every(art=>art.loaded),drawWater,drawStreetTail,drawBanks,drawDeck,drawFront,SPEC});
 }
 const api=Object.freeze({SPEC,create});if(typeof module==='object'&&module.exports)module.exports=api;else root.GaryUserBridge=api;
 })(typeof window==='object'?window:globalThis);
