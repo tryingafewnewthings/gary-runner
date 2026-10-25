@@ -22,6 +22,19 @@ const mime={'.html':'text/html','.js':'text/javascript','.json':'application/jso
   await page.waitForFunction(()=>!document.querySelector('#seam-prepare').disabled);
   const snapshot=()=>frame.locator('#c').evaluate(c=>({width:c.width,height:c.height,s:window.GaryWorldExplorer.snapshot()}));
   const before=await snapshot();assert.equal(before.s.bridge.near,320);
+  // Regression: scrubbing the timeline used to silently put the editor in
+  // intentionally blocked Custom mode, leaving Prepare AI Seam grey with no
+  // mobile recovery action. One tap re-aligns real registered bridge geometry.
+  await page.locator('#position').evaluate(n=>{n.value='650';n.dispatchEvent(new Event('input',{bubbles:true}));});
+  assert.equal(await page.locator('#seam-mode').inputValue(),'custom');
+  assert.equal(await page.locator('#seam-prepare').isDisabled(),true);
+  assert.match(await page.locator('#seam-approval').textContent(),/Align High street/);
+  assert.equal(await page.locator('#seam-align').isDisabled(),false);
+  await page.locator('#seam-align').click();
+  assert.equal(await page.locator('#seam-mode').inputValue(),'bridge-entrance');
+  assert.equal(await page.locator('#seam-prepare').isDisabled(),false);
+  assert.equal((await snapshot()).s.bridge.near,320);
+  assert.match(await page.locator('#seam-status').textContent(),/Prepare AI Seam is ready/);
   const visibility=await frame.locator('#c').evaluate(()=>{
    const api=window.GaryWorldExplorer,before=JSON.stringify(api.snapshot());api.mode('rain');
    const hidden=api.captureFrame(),gary=api.captureFrame({hideGary:false}),hud=api.captureFrame({hideHud:false}),rain=api.captureFrame({hideRain:false});
