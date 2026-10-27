@@ -2636,7 +2636,7 @@ function updateRain(dt, advancing) {
       if(!cutscenePlate&&cutscenes.worldActorOpacity()>0){ctx.save();ctx.globalAlpha*=cutscenes.worldActorOpacity();drawMysteriousBench();ctx.restore();}
       if(!explorerHideRain)drawRainSplashes();
     }
-    if(bridge.visible()&&!wilderness.covers(view.distance)&&!useUserBridge()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);paintedBridge?.drawLower(ctx,n);drawCandidate('under-water');bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);bridgePaint.drawDeck(ctx,n);paintedBridge?.drawDeck(ctx,n);drawCandidate('deck');}
+    if(bridge.visible()&&!wilderness.covers(view.distance)&&!useUserBridge()){const n=bridge.nearAt(view.distance);bridgePaint.drawWater(ctx,n,view.clock);bridgePaint.drawLower(ctx,n);paintedBridge?.drawLower(ctx,n);drawCandidate('under-water');bridgePaint.drawWaterOcclusion?.(ctx,n,view.clock);window.GaryRoadEvolution?.drawBridgeApproach(ctx,{near:n,height:H});bridgePaint.drawDeck(ctx,n);paintedBridge?.drawDeck(ctx,n);drawCandidate('deck');}
 
     wilderness.drawGround(ctx,view.distance,view.clock);
     if(bridge.visible()&&!wilderness.covers(view.distance)){
@@ -2647,6 +2647,9 @@ function updateRain(dt, advancing) {
         // The native high-street cobble/road remains visible right up to the
         // 84-unit stone sill. Both materials share the bridge's near anchor.
         userBridge.drawStreetTail(ctx,n,{drawCobbles,drawPavements,drawRoad});
+        // Bridge-anchored dirt and stone are layered AFTER the street-tail
+        // redraw and BEFORE banks/masonry. Never overpaint the bridge itself.
+        window.GaryRoadEvolution?.drawBridgeApproach(ctx,{near:n,height:H});
         // Approved shore art follows the SAME bridge world anchor as the deck.
         // Keep it above procedural river and native cobbles but below all masonry.
         userBridge.drawBanks(ctx,n);
