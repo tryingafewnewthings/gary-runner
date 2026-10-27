@@ -214,6 +214,126 @@
     }
     ctx.restore();
   }
+
+  // Road-to-bridge material handover. This is a single pre-baked, transparent,
+  // 1:1 ground overlay on top of the REAL road, never a replacement scene.
+  // Its Y origin follows the bridge entrance (near), not elapsed time,
+  // score, camera sampling or world randomness. Three lanes stay playable.
+  const TRACK_LENGTH=680, TRACK_FULL=125;
+  let bridgeTrack=null,bridgeTrackBlits=0;
+  function buildBridgeTrack(){
+    const canvas=root.document.createElement('canvas');
+    canvas.width=geometry.roadWidth*rasterScale;
+    canvas.height=TRACK_LENGTH*rasterScale;
+    const g=canvas.getContext('2d');
+    g.scale(rasterScale,rasterScale);
+    g.imageSmoothingEnabled=true;
+    const width=geometry.roadWidth;
+    // Cool grey-brown compacted ground. Alpha reveals the ORIGINAL painted
+    // asphalt gradually; near the stone sill the old lane paint disappears.
+    // Keeping this single soft wash beneath painted fragments avoids a hard
+    // horizontal threshold or a repeating biome tile.
+    const earth=g.createLinearGradient(0,0,0,TRACK_LENGTH);
+    earth.addColorStop(0,'rgba(91,88,79,.98)');
+    earth.addColorStop(.17,'rgba(93,90,81,.97)');
+    earth.addColorStop(.36,'rgba(90,87,79,.82)');
+    earth.addColorStop(.57,'rgba(87,85,79,.48)');
+    earth.addColorStop(.76,'rgba(82,82,78,.16)');
+    earth.addColorStop(.96,'rgba(77,78,74,0)');
+    earth.addColorStop(1,'rgba(77,78,74,0)');
+    g.fillStyle=earth;g.fillRect(0,0,width,TRACK_LENGTH);
+    // Painted-earth islands, with jagged soft contours that reveal glimpses
+    // of original broken asphalt at mid-approach. All marks are deterministic,
+    // small at native 360x640 scale, and entirely inside the 150-unit road.
+    const earthColours=['#716c60','#59584f','#777164','#515550','#8a8171','#626056'];
+    const shaleColours=['#41474a','#555a59','#666b68','#454b4c'];
+    for(let i=0;i<280;i++){
+      const y=fraction(i,142,831)*610+8;
+      const x=2+fraction(i,143,832)*(width-4);
+      const near=smooth((TRACK_LENGTH-y)/TRACK_LENGTH);
+      const rx=(3+fraction(i,144,833)*12)*(0.6+near*.6);
+      const ry=2+fraction(i,145,834)*16;
+      g.save();g.globalAlpha=(.04+.24*near)*smooth((650-y)/500);
+      g.fillStyle=earthColours[i%earthColours.length];
+      g.beginPath();
+      g.moveTo(x-rx,y);
+      g.quadraticCurveTo(x-rx*.7,y-ry*1.13,x-1,y-ry*.8);
+      g.quadraticCurveTo(x+rx*.8,y-ry*.85,x+rx,y-ry*.13);
+      g.quadraticCurveTo(x+rx*.72,y+ry*.9,x,y+ry*.7);
+      g.quadraticCurveTo(x-rx*.8,y+ry*.84,x-rx,y);
+      g.closePath();g.fill();g.restore();
+    }
+    // Worn-out road fragments cluster through the middle of the transition.
+    // These are quiet pieces of the old surface, not obstacles or potholes.
+    for(let i=0;i<100;i++){
+      const y=30+fraction(i,146,835)*555;
+      const x=5+fraction(i,147,836)*(width-10);
+      const s=2+fraction(i,148,837)*6;
+      const transition=smooth((y-40)/190)*(1-smooth((y-480)/170));
+      g.save();g.globalAlpha=(.07+.22*transition);
+      g.fillStyle=shaleColours[i%shaleColours.length];
+      g.beginPath();g.moveTo(x-s,y-s*.1);
+      g.lineTo(x-s*.4,y-s*.55);g.lineTo(x+s*.8,y-s*.38);
+      g.lineTo(x+s,y+s*.26);g.lineTo(x,y+s*.75);
+      g.lineTo(x-s*.8,y+s*.46);g.closePath();g.fill();g.restore();
+    }
+    // Small embedded stones, hand-sized only in the imagined world: most
+    // occupy 1–3 pixels in the actual game. No perspective or cast shadows.
+    for(let i=0;i<500;i++){
+      const y=3+fraction(i,149,838)*615;
+      const x=3+fraction(i,150,839)*(width-6);
+      const near=smooth((TRACK_LENGTH-y)/TRACK_LENGTH);
+      const radius=.48+fraction(i,151,840)*(i%11===0?2.8:1.65);
+      g.save();g.globalAlpha=(.13+.49*near)*smooth((665-y)/480);
+      g.fillStyle=i%7===0?'#b3aa95':i%3===0?'#363e40':i%2===0?'#8b8c81':'#a09888';
+      g.beginPath();g.moveTo(x-radius,y-radius*.35);
+      g.lineTo(x+radius*.55,y-radius*.64);
+      g.lineTo(x+radius,y+radius*.23);
+      g.lineTo(x-radius*.55,y+radius*.55);
+      g.closePath();g.fill();g.restore();
+    }
+    // Painterly grain without per-frame noise or animated particles.
+    for(let i=0;i<1550;i++){
+      const y=fraction(i,152,841)*625;
+      const x=fraction(i,153,842)*width;
+      const near=smooth((TRACK_LENGTH-y)/TRACK_LENGTH);
+      g.fillStyle=i%4===0?'rgba(192,179,151,.19)':'rgba(29,35,37,.17)';
+      g.globalAlpha=near*.7;
+      g.fillRect(x,y,.4+fraction(i,154,843)*1.1,.45+fraction(i,155,844)*.7);
+    }
+    g.globalAlpha=1;
+    // Only narrow verge tips, mostly at the final bridge approach. The
+    // 3 lane centres remain clean; no rejected wilderness sprite is sampled.
+    for(let i=0;i<48;i++){
+      const y=5+fraction(i,156,845)*420;
+      const right=i%2===1;
+      const x=right?width-1-fraction(i,157,846)*7:1+fraction(i,157,846)*7;
+      const h=2+fraction(i,158,847)*5;
+      const strength=.15+.43*smooth((440-y)/380);
+      g.save();g.globalAlpha=strength;
+      g.strokeStyle=i%3===0?'#87846a':'#535c4c';
+      g.lineWidth=.6;g.lineCap='round';
+      g.beginPath();g.moveTo(x,y+h*.65);
+      g.lineTo(x+(right?-1:1)*2,y-h*.48);
+      g.moveTo(x,y+h*.65);
+      g.lineTo(x+(right?-1:1)*4,y-h*.13);
+      g.stroke();g.restore();
+    }
+    return canvas;
+  }
+  function drawBridgeApproach(ctx,{near,height}={}){
+    if(!prepared||!bridgeTrack||!Number.isFinite(near)||!(height>0))return false;
+    // The entrance is y=near. Never overpaint the bridge deck or the river.
+    const top=Math.max(0,near),bottom=Math.min(height,near+TRACK_LENGTH);
+    if(bottom<=top)return false;
+    const sourceY=(top-near)*rasterScale,sourceH=(bottom-top)*rasterScale;
+    ctx.save();ctx.beginPath();ctx.rect(ROAD_LEFT,top,geometry.roadWidth,bottom-top);ctx.clip();
+    ctx.drawImage(bridgeTrack,0,sourceY,geometry.roadWidth*rasterScale,sourceH,
+      ROAD_LEFT,top,geometry.roadWidth,bottom-top);
+    ctx.restore();bridgeTrackBlits++;
+    return true;
+  }
+
   function prepare() {
     if(prepared)return Promise.resolve();
     if(preparing)return preparing;
@@ -226,6 +346,7 @@
         atlases[side][stage]=buildAtlas(stage,side);
       }
       roadAtlases=buildRoadAtlases();
+      bridgeTrack=buildBridgeTrack();
       prepared=true;
     })().catch(error=>{preparing=null;throw error;});
     return preparing;
@@ -268,17 +389,18 @@
   }
   function recordDistance(distance){lastDistance=distance;}
   root.GaryRoadEvolution=Object.freeze({version:'GaryRoadDecay20261017V4',SPEC,
-    DURATION,LENGTH:30,update,trigger,reset,drawCobbles,drawRoad,drawRoadSurface,progressAt,prepare,images,
+    DURATION,LENGTH:30,update,trigger,reset,drawCobbles,drawRoad,drawRoadSurface,drawBridgeApproach,progressAt,prepare,images,
     // Schedule the final empty stretch at 24s; the bench then approaches as
     // the last six seconds bring the entering terrain to heavy deterioration.
     encounterReady:()=>elapsed>=DURATION*.8,recordDistance,
-    stats:()=>({blits,buildCount,roadBlits,roadAtlases:roadAtlases?2:0}),
+    stats:()=>({blits,buildCount,roadBlits,bridgeTrackBlits,roadAtlases:roadAtlases?2:0,bridgeTrackAtlases:bridgeTrack?1:0}),
     warm(ctx){ctx.save();ctx.globalAlpha=.001;
       for(let side=0;side<2;side++)for(let stage=1;stage<=5;stage++)ctx.drawImage(atlases[side][stage],0,0,1,1);
       if(roadAtlases){ctx.drawImage(roadAtlases.wear,0,0,1,1);ctx.drawImage(roadAtlases.puddles,0,0,1,1);}
+      if(bridgeTrack)ctx.drawImage(bridgeTrack,0,0,1,1);
       ctx.restore();},
     snapshot:()=>({start:count?depths[0]:Infinity,debugStage,benchEntryDistance,
-      prepared,buildCount,roadAtlases:roadAtlases?2:0,atlasBytes:10*TILE_WIDTH*PERIOD*rasterScale*rasterScale*4+2*geometry.roadWidth*PERIOD*rasterScale*rasterScale*4,
+      prepared,buildCount,roadAtlases:roadAtlases?2:0,bridgeTrackReady:!!bridgeTrack,bridgeTrackLength:TRACK_LENGTH,atlasBytes:10*TILE_WIDTH*PERIOD*rasterScale*rasterScale*4+2*geometry.roadWidth*PERIOD*rasterScale*rasterScale*4+geometry.roadWidth*TRACK_LENGTH*rasterScale*rasterScale*4,
       elapsed,stage:progressAt(lastDistance)*5,progress:progressAt(lastDistance),
       samples:count,loaded:Object.keys(imgs).filter(k=>imgs[k].ready)})});
 })(window);
