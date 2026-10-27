@@ -219,7 +219,7 @@
   // 1:1 ground overlay on top of the REAL road, never a replacement scene.
   // Its Y origin follows the bridge entrance (near), not elapsed time,
   // score, camera sampling or world randomness. Three lanes stay playable.
-  const TRACK_LENGTH=680, TRACK_FULL=125;
+  const TRACK_LENGTH=680;
   let bridgeTrack=null,bridgeTrackBlits=0;
   function buildBridgeTrack(){
     const canvas=root.document.createElement('canvas');
